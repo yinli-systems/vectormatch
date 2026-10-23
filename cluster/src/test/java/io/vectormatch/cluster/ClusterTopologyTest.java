@@ -1,5 +1,7 @@
 package io.vectormatch.cluster;
 
+import io.aeron.driver.ThreadingMode;
+import org.agrona.concurrent.BackoffIdleStrategy;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -104,6 +106,7 @@ class ClusterTopologyTest {
             assertEquals(normal.topology().members(), configured.topology().members());
             assertEquals(normal.transport(), configured.transport());
             assertEquals(normal.stateProfile(), configured.stateProfile());
+            assertEquals(ThreadingMode.SHARED, configured.driverThreading());
         }
         for (String invalid : List.of("", "0", "-1", "65535", "4194305", "2147483648", "1m", "131072 -Xmx8g")) {
             String[] explicit = java.util.Arrays.copyOf(original, 8);
@@ -111,6 +114,52 @@ class ClusterTopologyTest {
             assertThrows(IllegalArgumentException.class, () -> ClusterNodeMain.configuration(explicit, Map.of()), invalid);
         }
         assertThrows(IllegalArgumentException.class,
-                () -> ClusterNodeMain.configuration(java.util.Arrays.copyOf(original, 9), Map.of()));
+                () -> ClusterNodeMain.configuration(java.util.Arrays.copyOf(original, 10), Map.of()));
+    }
+
+    @Test void nodeDriverThreadingOnlyAcceptsExplicitNinthArgumentAndPreservesOtherSettings() {
+        String[] original = {"0", "build/unused-threading", "23000", "2", "524288", "127.0.0.1", "capacity-190k-v1", "1048576"};
+        var normal = ClusterNodeMain.configuration(original, Map.of("VECTOR_DRIVER_THREADING_MODE", "DEDICATED"));
+        assertEquals(ThreadingMode.SHARED, normal.driverThreading());
+        for (String mode : List.of("SHARED", "DEDICATED")) {
+            String[] explicit = java.util.Arrays.copyOf(original, 9);
+            explicit[8] = mode;
+            var configured = ClusterNodeMain.configuration(explicit, Map.of());
+            assertEquals(ThreadingMode.valueOf(mode), configured.driverThreading());
+            assertEquals(normal.socketReceiveBufferBytes(), configured.socketReceiveBufferBytes());
+            assertEquals(normal.stateProfile(), configured.stateProfile());
+            assertEquals(normal.sync(), configured.sync());
+            assertEquals(normal.outboxCapacity(), configured.outboxCapacity());
+            assertEquals(normal.topology().members(), configured.topology().members());
+        }
+        for (String invalid : List.of("", "shared", "dedicated", "INVOKER", "SHARED_NETWORK", "DEDICATED ", "SHARED -Xmx8g")) {
+            String[] explicit = java.util.Arrays.copyOf(original, 9);
+            explicit[8] = invalid;
+            assertThrows(IllegalArgumentException.class, () -> ClusterNodeMain.configuration(explicit, Map.of()), invalid);
+        }
+        assertThrows(IllegalArgumentException.class,
+                () -> ClusterNodeMain.configuration(java.util.Arrays.copyOf(original, 10), Map.of()));
+    }
+
+    @Test void everyDriverRoleHasIndependentIdenticalBackoffPolicyInBothModes() {
+        for (String mode : List.of("SHARED", "DEDICATED")) {
+            var configuration = ClusterNodeMain.configuration(new String[] {"0", "build/unused-threading-context", "23000", "2",
+                    "524288", "127.0.0.1", "capacity-190k-v1", "1048576", mode}, Map.of(NetworkTransport.MTU_ENV, "1248"));
+            // Context construction is read-only; never launch a driver or bind a socket here.
+            var context = ClusterNodeMain.mediaDriverContext(configuration, "build/unused-threading-driver", error -> fail(error));
+            assertEquals(ThreadingMode.valueOf(mode), context.threadingMode());
+            assertEquals(131072, context.socketSndbufLength());
+            assertEquals(1048576, context.socketRcvbufLength());
+            assertEquals(1248, context.mtuLength());
+            var idles = List.of(context.sharedIdleStrategy(), context.senderIdleStrategy(), context.receiverIdleStrategy(),
+                    context.conductorIdleStrategy(), context.nativeResourceAgentIdleStrategy());
+            var identities = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<org.agrona.concurrent.IdleStrategy, Boolean>());
+            for (var idle : idles) {
+                assertEquals(BackoffIdleStrategy.class, idle.getClass());
+                assertEquals("BackoffIdleStrategy{alias=backoff, maxSpins=10, maxYields=5, minParkPeriodNs=1000, maxParkPeriodNs=1000000}", idle.toString());
+                assertTrue(identities.add(idle), "Mutable idle strategy must not be shared between driver roles");
+            }
+            assertEquals(5, identities.size());
+        }
     }
 }

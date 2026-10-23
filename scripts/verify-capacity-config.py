@@ -69,14 +69,25 @@ def socket_receive_buffer_argument(fixed):
     return value
 
 
+def driver_threading_argument(fixed):
+    if "driverThreadingArgument" not in fixed:
+        return None
+    value = fixed["driverThreadingArgument"]
+    assert value in ("SHARED", "DEDICATED"), "Invalid explicit node driver threading"
+    return value
+
+
 def node_arguments(trial, fixed, node, hosts):
     arguments = [str(node), trial["state"], str(fixed["portBase"]),
                  str(fixed["syncLevel"]), str(fixed["outboxCapacity"]), hosts]
     receive_buffer = socket_receive_buffer_argument(fixed)
-    if fixed.get("stateProfile") or receive_buffer is not None:
+    driver_threading = driver_threading_argument(fixed)
+    if fixed.get("stateProfile") or receive_buffer is not None or driver_threading is not None:
         arguments.append(fixed.get("stateProfile") or "default")
-    if receive_buffer is not None:
-        arguments.append(str(receive_buffer))
+    if receive_buffer is not None or driver_threading is not None:
+        arguments.append(str(131072 if receive_buffer is None else receive_buffer))
+    if driver_threading is not None:
+        arguments.append(driver_threading)
     return arguments
 
 
@@ -88,6 +99,19 @@ def verify_requested_receive_buffer_startup(fixed, startup):
     values = [value for line in started for value in
               re.findall(r"(?:^|\s)requestedSocketReceiveBufferBytes=([0-9]+)(?=\s|$)", line)]
     assert values and set(values) == {str(expected)}, "Missing or differing requested receive buffer startup evidence"
+
+
+def verify_driver_threading_startup(fixed, startup):
+    expected = driver_threading_argument(fixed)
+    if expected is None:
+        return
+    started = [line for line in startup.splitlines() if line.startswith("VECTOR_CLUSTER_STARTED ")]
+    fields = {"driverThreading": expected, "driverIdleMaxSpins": 10, "driverIdleMaxYields": 5,
+              "driverIdleMinParkNs": 1000, "driverIdleMaxParkNs": 1000000}
+    assert started, "Missing driver threading startup evidence"
+    for name, value in fields.items():
+        pattern = r"(?:^|\s)" + name + "=" + str(value) + r"(?=\s|$)"
+        assert all(len(re.findall(pattern, line)) == 1 for line in started), "Missing or differing driver threading/idle startup evidence: " + name
 
 
 def main(root):
@@ -103,6 +127,14 @@ def main(root):
         if "socketReceiveBufferBytes" in campaign["fixed"]:
             assert campaign["fixed"]["socketReceiveBufferBytes"] == receive_buffer, "Conflicting receive buffer declarations"
         fixed["socketReceiveBufferBytes"] = receive_buffer
+    driver_threading = driver_threading_argument(fixed)
+    if driver_threading is not None:
+        expected = {"driverThreading": driver_threading, "driverIdleMaxSpins": 10, "driverIdleMaxYields": 5,
+                    "driverIdleMinParkNs": 1000, "driverIdleMaxParkNs": 1000000}
+        for name, value in expected.items():
+            if name in campaign["fixed"]:
+                assert campaign["fixed"][name] == value, "Conflicting driver threading/idle declaration: " + name
+        fixed.update(expected)
     checked = []
     for directory in sorted((root / "runs").iterdir()):
         if not (directory / "result.json").exists():
@@ -139,7 +171,7 @@ def main(root):
             assert args[args.index("-cp") + 1] == release + "/dist/cluster/lib/*"
             index = args.index("io.vectormatch.cluster.ClusterNodeMain")
             assert args[index + 1:] == node_arguments(trial, fixed, node, hosts)
-            if fixed.get("stateProfile") or receive_buffer is not None:
+            if fixed.get("stateProfile") or receive_buffer is not None or driver_threading is not None:
                 startup = (directory / f"node{node}" / "process.log").read_text()
                 if fixed.get("stateProfile"):
                     assert "profile=" + fixed["stateProfile"] in startup, "Missing state profile startup evidence"
@@ -148,6 +180,10 @@ def main(root):
                     assert "maxRetainedOrders=" + str(fixed["maxRetainedOrders"]) in startup
                     assert "resultCachePerProducer=" + str(fixed["resultCachePerProducer"]) in startup
                 verify_requested_receive_buffer_startup(fixed, startup)
+                if driver_threading is not None:
+                    verify_requested_receive_buffer_startup(
+                        {**fixed, "socketReceiveBufferArgumentBytes": 131072 if receive_buffer is None else receive_buffer}, startup)
+                verify_driver_threading_startup(fixed, startup)
                 hashes[f"node{node}/process.log"] = hashlib.sha256(startup.encode()).hexdigest()
             hashes[str(path.relative_to(directory))] = hashlib.sha256(path.read_bytes()).hexdigest()
         snapshot = directory / "prepared-snapshot.bin"

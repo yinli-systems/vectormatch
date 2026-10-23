@@ -170,6 +170,56 @@ class CapacityConfigTest(unittest.TestCase):
             with self.subTest(startup=startup), self.assertRaisesRegex(AssertionError, "startup evidence"):
                 config.verify_requested_receive_buffer_startup(fixed, startup)
 
+    def test_driver_threading_argument_is_optional_and_strict(self):
+        self.assertIsNone(config.driver_threading_argument({}))
+        for mode in ("SHARED", "DEDICATED"):
+            self.assertEqual(mode, config.driver_threading_argument({"driverThreadingArgument": mode}))
+        for value in (None, True, 1, "", "shared", "dedicated", "SHARED_NETWORK", "INVOKER", "DEDICATED "):
+            with self.subTest(value=value), self.assertRaisesRegex(AssertionError, "Invalid explicit"):
+                config.driver_threading_argument({"driverThreadingArgument": value})
+
+    def test_driver_mode_fills_profile_and_receive_positions_without_changing_legacy_argv(self):
+        fixed = {"portBase": 23000, "syncLevel": 2, "outboxCapacity": 65536}
+        trial = {"state": "/state/trial"}
+        legacy = ["0", "/state/trial", "23000", "2", "65536", "127.0.0.1"]
+        self.assertEqual(legacy, config.node_arguments(trial, fixed, 0, "127.0.0.1"))
+        fixed["socketReceiveBufferArgumentBytes"] = 1048576
+        receive_only = legacy + ["default", "1048576"]
+        self.assertEqual(receive_only, config.node_arguments(trial, fixed, 0, "127.0.0.1"))
+        for mode in ("SHARED", "DEDICATED"):
+            fixed["driverThreadingArgument"] = mode
+            self.assertEqual(receive_only + [mode], config.node_arguments(trial, fixed, 0, "127.0.0.1"))
+        del fixed["socketReceiveBufferArgumentBytes"]
+        self.assertEqual(legacy + ["default", "131072", "DEDICATED"],
+                         config.node_arguments(trial, fixed, 0, "127.0.0.1"))
+
+    def test_explicit_mode_requires_matching_threading_and_exact_idle_policy_startup(self):
+        fixed = {"driverThreadingArgument": "DEDICATED"}
+        startup = ("VECTOR_CLUSTER_STARTED node=0 driverThreading=DEDICATED driverIdleMaxSpins=10 "
+                   "driverIdleMaxYields=5 driverIdleMinParkNs=1000 driverIdleMaxParkNs=1000000\n")
+        config.verify_driver_threading_startup(fixed, startup)
+        config.verify_driver_threading_startup({}, "legacy startup without threading fields")
+        for invalid in (startup.replace("DEDICATED", "SHARED"), startup.replace("MaxYields=5", "MaxYields=20"),
+                        startup.replace("MinParkNs=1000", "MinParkNs=10000"),
+                        startup.replace("driverIdleMaxSpins=10 ", ""),
+                        startup.replace("VECTOR_CLUSTER_STARTED ", "error "), ""):
+            with self.subTest(invalid=invalid), self.assertRaises(AssertionError):
+                config.verify_driver_threading_startup(fixed, invalid)
+
+    def test_node_mode_is_in_nul_delimited_command_digest(self):
+        fixed = {"portBase": 23000, "syncLevel": 2, "outboxCapacity": 524288,
+                 "stateProfile": "capacity-190k-v1", "socketReceiveBufferArgumentBytes": 1048576}
+        trial = {"state": "/state/trial"}
+        old = config.node_arguments(trial, fixed, 0, "127.0.0.1")
+        expected_old = ["0", "/state/trial", "23000", "2", "524288", "127.0.0.1", "capacity-190k-v1", "1048576"]
+        self.assertEqual(config.command_sha256(expected_old), config.command_sha256(old))
+        digests = {config.command_sha256(old)}
+        for mode in ("SHARED", "DEDICATED"):
+            arguments = config.node_arguments(trial, {**fixed, "driverThreadingArgument": mode}, 0, "127.0.0.1")
+            self.assertEqual(config.command_sha256(expected_old + [mode]), config.command_sha256(arguments))
+            digests.add(config.command_sha256(arguments))
+        self.assertEqual(3, len(digests))
+
 
 if __name__ == "__main__":
     unittest.main()

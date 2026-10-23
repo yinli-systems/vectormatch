@@ -41,6 +41,7 @@ CONFIGURATION_KEYS = {
                                          "VM_PROJECTOR_BATCH_SIZE", "VM_PROJECTOR_TIMEOUT_MS", "VM_PROJECTOR_POLL_MS"),
 }
 SOCKET_RECEIVE_BUFFER_ENV = "VECTOR_SOCKET_RECEIVE_BUFFER_BYTES"
+DRIVER_THREADING_ENV = "VECTOR_DRIVER_THREADING_MODE"
 
 
 def configuration_fingerprint(role: str, environment: dict[str, str]) -> str:
@@ -48,6 +49,8 @@ def configuration_fingerprint(role: str, environment: dict[str, str]) -> str:
     # Preserve the exact historical digest when the new opt-in is absent.
     if role == "node" and SOCKET_RECEIVE_BUFFER_ENV in environment:
         safe[SOCKET_RECEIVE_BUFFER_ENV] = environment[SOCKET_RECEIVE_BUFFER_ENV]
+    if role == "node" and DRIVER_THREADING_ENV in environment:
+        safe[DRIVER_THREADING_ENV] = environment[DRIVER_THREADING_ENV]
     payload = {"version": CONFIGURATION_VERSION, "role": role, "settings": safe}
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -192,12 +195,18 @@ def command(role: str, node: int | None, state: Path, action: str) -> tuple[list
             if profile == "capacity-190k-v1" and args[-2] != "524288":
                 raise ValueError("capacity-190k-v1 requires outbox capacity 524288")
             args.append(profile)
-        if SOCKET_RECEIVE_BUFFER_ENV in environment:
+        threading = environment.get(DRIVER_THREADING_ENV)
+        if DRIVER_THREADING_ENV in environment and threading not in ("SHARED", "DEDICATED"):
+            raise ValueError("VECTOR_DRIVER_THREADING_MODE must be SHARED or DEDICATED")
+        if SOCKET_RECEIVE_BUFFER_ENV in environment or DRIVER_THREADING_ENV in environment:
             receive_buffer = positive_int(SOCKET_RECEIVE_BUFFER_ENV, 131072, 65536, 4 * 1024 * 1024)
-            environment[SOCKET_RECEIVE_BUFFER_ENV] = str(receive_buffer)
+            if SOCKET_RECEIVE_BUFFER_ENV in environment:
+                environment[SOCKET_RECEIVE_BUFFER_ENV] = str(receive_buffer)
             if not profile:
                 args.append("default")  # Keep the optional state profile in argument seven.
             args.append(str(receive_buffer))
+        if DRIVER_THREADING_ENV in environment:
+            args.append(threading)
     if role == "projector":
         if not environment.get("VM_PG_URL") or not environment.get("VM_CLUSTER_ID"):
             raise ValueError("Set VM_PG_URL and stable VM_CLUSTER_ID; credentials belong in environment")

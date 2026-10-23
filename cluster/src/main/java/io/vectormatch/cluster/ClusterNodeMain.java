@@ -25,6 +25,8 @@ public final class ClusterNodeMain {
     static final int DEFAULT_SOCKET_RECEIVE_BUFFER_BYTES = 128 * 1024;
     static final int MIN_SOCKET_RECEIVE_BUFFER_BYTES = 64 * 1024;
     static final int MAX_SOCKET_RECEIVE_BUFFER_BYTES = 4 * 1024 * 1024;
+    static final long DRIVER_IDLE_MAX_SPINS = 10, DRIVER_IDLE_MAX_YIELDS = 5;
+    static final long DRIVER_IDLE_MIN_PARK_NS = 1000, DRIVER_IDLE_MAX_PARK_NS = 1_000_000;
     private ClusterNodeMain() {}
 
     @SuppressWarnings("try")
@@ -45,18 +47,7 @@ public final class ClusterNodeMain {
             error.printStackTrace(System.err);
         };
 
-        MediaDriver.Context media = new MediaDriver.Context()
-                .aeronDirectoryName(driverDir)
-                .threadingMode(ThreadingMode.SHARED)
-                .sharedIdleStrategy(new BackoffIdleStrategy())
-                .dirDeleteOnStart(false) // Preserve Aeron's active-driver directory protection.
-                .dirDeleteOnShutdown(true)
-                .termBufferSparseFile(true)
-                .socketSndbufLength(128 * 1024)
-                .socketRcvbufLength(configuration.socketReceiveBufferBytes())
-                .mtuLength(transport.mtuLength())
-                .multicastFlowControlSupplier(new MinMulticastFlowControlSupplier())
-                .errorHandler(errors);
+        MediaDriver.Context media = mediaDriverContext(configuration, driverDir, errors);
 
         Archive.Context archive = new Archive.Context()
                 .aeronDirectoryName(driverDir)
@@ -109,22 +100,49 @@ public final class ClusterNodeMain {
                      consensus.terminationHook(barrier::signalAll));
              ClusteredServiceContainer ignoredService = ClusteredServiceContainer.launch(
                      service.terminationHook(barrier::signalAll))) {
-            System.out.printf("VECTOR_CLUSTER_STARTED node=%d pid=%d sync=%d state=%s members=%s mtu=%d profile=%s limits=%s outbox=%d checkpointMaxBytes=%d resultCachePerProducer=%d requestedSocketReceiveBufferBytes=%d%n",
+            System.out.printf("VECTOR_CLUSTER_STARTED node=%d pid=%d sync=%d state=%s members=%s mtu=%d profile=%s limits=%s outbox=%d checkpointMaxBytes=%d resultCachePerProducer=%d requestedSocketReceiveBufferBytes=%d driverThreading=%s driverIdleMaxSpins=%d driverIdleMaxYields=%d driverIdleMinParkNs=%d driverIdleMaxParkNs=%d%n",
                     node, ProcessHandle.current().pid(), sync, base, topology.members(), transport.mtuLength(),
                     configuration.stateProfile().id(), configuration.stateProfile().limits(), outboxCapacity,
                     configuration.stateProfile().snapshotMaxBytes(), configuration.stateProfile().resultCachePerProducer(),
-                    configuration.socketReceiveBufferBytes());
+                    configuration.socketReceiveBufferBytes(), configuration.driverThreading(),
+                    DRIVER_IDLE_MAX_SPINS, DRIVER_IDLE_MAX_YIELDS, DRIVER_IDLE_MIN_PARK_NS, DRIVER_IDLE_MAX_PARK_NS);
             barrier.await();
         }
     }
 
     record Configuration(int node, Path base, int sync, int outboxCapacity, ClusterTopology topology,
                          NetworkTransport transport, ClusterCapacity.StateProfile stateProfile,
-                         int socketReceiveBufferBytes) {}
+                         int socketReceiveBufferBytes, ThreadingMode driverThreading) {}
+
+    static MediaDriver.Context mediaDriverContext(Configuration configuration, String driverDir, ErrorHandler errors) {
+        // Each role has independent backoff state. Aeron's default role factory
+        // uses 20 yields; explicit 5 preserves the pre-existing shared policy.
+        return new MediaDriver.Context()
+                .aeronDirectoryName(driverDir)
+                .threadingMode(configuration.driverThreading())
+                .sharedIdleStrategy(driverIdleStrategy())
+                .senderIdleStrategy(driverIdleStrategy())
+                .receiverIdleStrategy(driverIdleStrategy())
+                .conductorIdleStrategy(driverIdleStrategy())
+                .nativeResourceAgentIdleStrategy(driverIdleStrategy())
+                .dirDeleteOnStart(false)
+                .dirDeleteOnShutdown(true)
+                .termBufferSparseFile(true)
+                .socketSndbufLength(128 * 1024)
+                .socketRcvbufLength(configuration.socketReceiveBufferBytes())
+                .mtuLength(configuration.transport().mtuLength())
+                .multicastFlowControlSupplier(new MinMulticastFlowControlSupplier())
+                .errorHandler(errors);
+    }
+
+    private static BackoffIdleStrategy driverIdleStrategy() {
+        return new BackoffIdleStrategy(DRIVER_IDLE_MAX_SPINS, DRIVER_IDLE_MAX_YIELDS,
+                DRIVER_IDLE_MIN_PARK_NS, DRIVER_IDLE_MAX_PARK_NS);
+    }
 
     static Configuration configuration(String[] args, Map<String, String> environment) {
-        if (args.length < 2 || args.length > 8) {
-            throw new IllegalArgumentException("Usage: ClusterNodeMain <node> <state-dir> [port-base] [sync:0|2] [outbox-capacity] [hosts-csv] [state-profile] [receive-buffer-bytes:65536..4194304]");
+        if (args.length < 2 || args.length > 9) {
+            throw new IllegalArgumentException("Usage: ClusterNodeMain <node> <state-dir> [port-base] [sync:0|2] [outbox-capacity] [hosts-csv] [state-profile] [receive-buffer-bytes:65536..4194304] [driver-threading:SHARED|DEDICATED]");
         }
         int node = Integer.parseInt(args[0]);
         int ports = Integer.parseInt(args.length > 2 ? args[2] : environment.getOrDefault("VECTOR_PORT_BASE", "19000"));
@@ -141,8 +159,13 @@ public final class ClusterNodeMain {
         int receiveBufferBytes = args.length > 7 ? Integer.parseInt(args[7]) : DEFAULT_SOCKET_RECEIVE_BUFFER_BYTES;
         if (receiveBufferBytes < MIN_SOCKET_RECEIVE_BUFFER_BYTES || receiveBufferBytes > MAX_SOCKET_RECEIVE_BUFFER_BYTES)
             throw new IllegalArgumentException("receive buffer bytes must be 65536..4194304");
+        ThreadingMode driverThreading = args.length > 8 ? switch (args[8]) {
+            case "SHARED" -> ThreadingMode.SHARED;
+            case "DEDICATED" -> ThreadingMode.DEDICATED;
+            default -> throw new IllegalArgumentException("driver threading must be SHARED or DEDICATED");
+        } : ThreadingMode.SHARED;
         Path base = Path.of(args[1]).toAbsolutePath().normalize().resolve("node-" + node);
         return new Configuration(node, base, sync, capacity, topology, NetworkTransport.fromEnvironment(environment), profile,
-                receiveBufferBytes);
+                receiveBufferBytes, driverThreading);
     }
 }

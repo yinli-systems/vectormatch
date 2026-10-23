@@ -143,6 +143,65 @@ class RemoteServiceTest(unittest.TestCase):
                     remote.start("node", 0, state, state / "process.json")
                 launch.assert_not_called()
 
+    def test_driver_threading_opt_in_preserves_ninth_argument_position(self):
+        settings = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4"}
+        with patch.dict(os.environ, settings, clear=True), \
+                patch.object(remote, "distribution", return_value=Path("/bundle/dist/cluster")), \
+                patch.object(remote, "java", return_value="/jdk/bin/java"):
+            original, _ = remote.command("node", 0, Path("/state/node-0"), "start")
+            os.environ["VECTOR_DRIVER_THREADING_MODE"] = "SHARED"
+            explicit, configured = remote.command("node", 0, Path("/state/node-0"), "start")
+            self.assertEqual(explicit[:-3], original)
+            self.assertEqual(explicit[-3:], ["default", "131072", "SHARED"])
+            self.assertNotIn("VECTOR_SOCKET_RECEIVE_BUFFER_BYTES", configured)
+            os.environ.update(VECTOR_STATE_PROFILE="capacity-190k-v1", VECTOR_OUTBOX_CAPACITY="524288",
+                              VECTOR_SOCKET_RECEIVE_BUFFER_BYTES="1048576", VECTOR_DRIVER_THREADING_MODE="DEDICATED")
+            dedicated, _ = remote.command("node", 0, Path("/state/node-0"), "start")
+            self.assertEqual(dedicated[-3:], ["capacity-190k-v1", "1048576", "DEDICATED"])
+
+    def test_driver_threading_rejects_every_non_whitelisted_value(self):
+        settings = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4"}
+        with patch.dict(os.environ, settings, clear=True), \
+                patch.object(remote, "distribution", return_value=Path("/bundle/dist/cluster")), \
+                patch.object(remote, "java", return_value="/jdk/bin/java"):
+            for invalid in ("", "shared", "dedicated", "INVOKER", "SHARED_NETWORK", "SHARED ", "DEDICATED -Xmx8g"):
+                os.environ["VECTOR_DRIVER_THREADING_MODE"] = invalid
+                with self.subTest(invalid=invalid), self.assertRaisesRegex(ValueError, "DRIVER_THREADING_MODE"):
+                    remote.command("node", 0, Path("/state/node-0"), "start")
+
+    def test_absent_threading_keeps_previous_network_fingerprint_and_is_node_only(self):
+        environment = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4", "VECTOR_AERON_MTU_LENGTH": "1248",
+                       "VECTOR_SOCKET_RECEIVE_BUFFER_BYTES": "1048576"}
+        # Byte-for-byte fingerprint contract from the previous receive-only release.
+        historical = {"version": 1, "role": "node", "settings": {
+            "VECTOR_CLUSTER_HOSTS": environment["VECTOR_CLUSTER_HOSTS"], "VECTOR_AERON_MTU_LENGTH": "1248",
+            "VECTOR_APPOINTED_LEADER_ID": None, "VECTOR_MAX_CLUSTER_SESSIONS": None, "VECTOR_STATE_PROFILE": None,
+            "VECTOR_SOCKET_RECEIVE_BUFFER_BYTES": "1048576"}}
+        expected = hashlib.sha256(json.dumps(historical, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        self.assertEqual(expected, remote.configuration_fingerprint("node", environment))
+        shared = {**environment, "VECTOR_DRIVER_THREADING_MODE": "SHARED"}
+        dedicated = {**environment, "VECTOR_DRIVER_THREADING_MODE": "DEDICATED"}
+        self.assertNotEqual(expected, remote.configuration_fingerprint("node", shared))
+        self.assertNotEqual(remote.configuration_fingerprint("node", shared), remote.configuration_fingerprint("node", dedicated))
+        self.assertEqual(remote.configuration_fingerprint("gateway", shared), remote.configuration_fingerprint("gateway", dedicated))
+
+    def test_changed_threading_refuses_to_hot_change_running_driver(self):
+        settings = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4", "VECTOR_DRIVER_THREADING_MODE": "SHARED"}
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(os.environ, settings, clear=True), \
+                patch.object(remote, "distribution", return_value=Path("/bundle/dist/cluster")), \
+                patch.object(remote, "java", return_value="/jdk/bin/java"):
+            state = Path(temporary)
+            args, environment = remote.command("node", 0, state, "start")
+            existing = {"pid": 42, "commandSha256": self.command_hash(args),
+                        "configurationVersion": remote.CONFIGURATION_VERSION,
+                        "configurationSha256": remote.configuration_fingerprint("node", environment)}
+            os.environ["VECTOR_DRIVER_THREADING_MODE"] = "DEDICATED"
+            with patch.object(remote, "record_state", return_value=("running", existing)), \
+                    patch.object(remote.subprocess, "Popen") as launch:
+                with self.assertRaisesRegex(ValueError, "different arguments"):
+                    remote.start("node", 0, state, state / "process.json")
+                launch.assert_not_called()
+
     def test_database_secrets_are_not_command_arguments(self):
         configuration = {"VM_PG_URL": "jdbc:postgresql://127.0.0.1/test", "VM_CLUSTER_ID": "generation-42",
                          "VM_PG_PASSWORD": "secret-value"}
