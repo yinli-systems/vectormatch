@@ -89,9 +89,11 @@ node0 JVM CPU 由 S 的 2.528 / 2.577 核增加为 D 的 3.055 / 2.992 核，线
 
 独立新 profile `capacity-350k-v1` / `extended-350k-256` 将 retained 上限固定为 360,000、outbox800,000、全量 checkpoint512MiB、core-view256MiB，其余账户/producer/缓存限制与业务撮合规则保留。新源 `52fbf7fa46ed274891a2bbf0d9fba9d87456d1f5` 的完整 117 项 Java tests 通过；匹配 core、依赖、ClusterClient 和 NodeMain class 内容相对前一发行包逐项一致，仅容量 profile/负载选项类变化。这不是已经测得的容量。
 
-先以 W128、10,000/s、350,000 个计划到达执行 35 秒云端 pilot，并完成全部终态/完整快照核对，验证原600秒进程期限与2GiB heap可用。此前的本地测试只覆盖小夹具恢复与边界，不冒充350k全量测试。pilot完成后才登记 W128/W256/W128/W256 交替对照；双方统一 maxSessions256、节点SHARED、原128KiB接收、sync2、相同新 artifact 与准备 SHA。
+先以 W128、10,000/s、350,000 个计划到达执行 35 秒云端 pilot，核对完整 canonical MatchingEngine core view、逐条 reply、资产与 outbox 水位，验证原600秒进程期限与2GiB heap可用。这项检查不触发 Aeron full replicated checkpoint，也不独立证明完整 outbox 的 checkpoint/冷重启恢复；注册文件中的历史 phase 名 `full-checkpoint-pilot` 不能扩大其验证范围。512MiB 是显式 checkpoint 上限与静态预算，小夹具恢复测试也不冒充350k云端恢复。pilot完成后才登记 W128/W256/W128/W256 交替对照；双方统一 maxSessions256、节点SHARED、原128KiB接收、sync2、相同新 artifact 与准备 SHA。
 
 每 worker FIFO保持64意味着总FIFO为8,192/16,384；它是整个并发配置的比较，不将全部变化归给纯在途窗口。每轮350k原始CSV保留在本地，Git保存无损 `arrivals.csv.gz` 与原始/压缩 bytes/SHA 清单；`python3 scripts/archive-capacity-arrivals.py restore RUN_DIR` 可精确恢复再运行原分析器。旧轮次原CSV不改写。所有过载、无效或失败数据也按同口径保存。
+
+35秒 pilot 已完成：350,000 个计划到达全部最终接受，窗口内 goodput **9,998.086/s**，全量计划到达至确认 p99 **38.016ms**，drain **6.901ms**，未发送、unknown、业务拒绝和 server error 均为0。该点符合现有 `OBSERVED_STABLE_WINDOW` 判定，只证明这个有限窗口；不表示已找到上限或已达成长稳 SLA。准备 SHA 为 `2c6847a5eb5bbdf0674a74c63f92dfb274fdc626ddfbcd540866596979e46bc4`，相对旧 profile 已变化，不能把新旧点直接拼成同一配置曲线。正式四轮已登记为26,000/s、每轮350,000个到达，结果另列。
 
 ## 已完成的代码验证
 
