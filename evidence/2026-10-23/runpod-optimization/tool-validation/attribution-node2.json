@@ -1,0 +1,2556 @@
+{
+  "passed": true,
+  "timestamp": "2026-10-23T21:32:50.683127+00:00",
+  "node": 2,
+  "probeRoot": "/opt/vectormatch/probe/optimization-tools-b51226cc3902e77e457836e2ea2545b71fe7b1722caa7da9ee0630f118aa5dee",
+  "sourceSha256": {
+    "capacity-attribution.py": "5c9db9ebacf0381a579f6f6a6409ef7f191b7ececcd5f1ebabc328e8b84770a0",
+    "capacity-telemetry.py": "a4b12488387d9c01d2c3445e1aa8a4af6fd3c05714d1b4999daad4b5c1c0695c",
+    "tests/test_capacity_attribution.py": "789f59cfef328cb39c5c4d7e77a9225f80d3da98a417fb9299fe630622edce41",
+    "tests/test_capacity_telemetry.py": "f1683248b49a6b41d1429785bfd2f81d2377dda264259db22c2df3133d636bf3"
+  },
+  "tests": {
+    "stdout": "",
+    "stderr": "..............\n----------------------------------------------------------------------\nRan 14 tests in 0.060s\n\nOK\n",
+    "exitCode": 0
+  },
+  "smokeRows": [
+    {
+      "detailThreads": 16,
+      "durationSeconds": 3.0,
+      "hardware": {
+        "clockTicksPerSecond": 100,
+        "kernel": "6.8.0-147-generic",
+        "pageSizeBytes": 4096,
+        "sysctls": {
+          "kernel.sched_schedstats": {
+            "value": 0
+          },
+          "net.core.rmem_default": {
+            "errno": 2,
+            "error": "FileNotFoundError",
+            "value": null
+          },
+          "net.core.rmem_max": {
+            "errno": 2,
+            "error": "FileNotFoundError",
+            "value": null
+          },
+          "net.core.wmem_default": {
+            "errno": 2,
+            "error": "FileNotFoundError",
+            "value": null
+          },
+          "net.core.wmem_max": {
+            "errno": 2,
+            "error": "FileNotFoundError",
+            "value": null
+          },
+          "net.ipv4.udp_mem": {
+            "errno": 2,
+            "error": "FileNotFoundError",
+            "value": null
+          },
+          "net.ipv4.udp_rmem_min": {
+            "value": 4096
+          },
+          "net.ipv4.udp_wmem_min": {
+            "value": 4096
+          }
+        },
+        "system": "Linux"
+      },
+      "intervalSeconds": 1.0,
+      "maxFds": 4096,
+      "maxThreads": 1024,
+      "monotonicNs": 351655951343438,
+      "schemaVersion": 1,
+      "scope": "Only explicit version=1 PID/startTicks/commandSha256 records; reverified before and after each process sample. Missing delayed load identity is unavailable, never guessed. Thread CPU counters are cumulative USER_HZ ticks keyed by PID and TID startTicks; comm is the kernel thread name and may be truncated. schedstat runtime/runqueue wait are nanoseconds, timeslices is a count; zero schedstat or wchan=0 can mean disabled/restricted instrumentation, not proof of no waiting. UDP namespace tables are streamed but only socket inodes found in verified owned PID fd symlinks are serialized; no peer endpoints, uid, other-process rows, payload, environment or full command line. Queue fields are kernel-accounting bytes, not packets or exact payload bytes; socket drops are cumulative and may wrap. Gauges and ownership joins are asynchronous and can miss transient queues or closing sockets. Sysctl rmem/wmem defaults/max/min are bytes; udp_mem is pages. They do not establish a socket's effective SO_RCVBUF/SO_SNDBUF. No attach, ptrace, TCP inspection, packet capture or configuration changes. Observer collection wall/CPU costs are reported. Use the same observer in every compared run; finite observational samples alone do not prove causality.",
+      "type": "metadata",
+      "wallTimeUtc": "2026-10-23T21:32:47.668506+00:00"
+    },
+    {
+      "collectionElapsedNs": 7658909,
+      "collectionFinishedMonotonicNs": 351655959474149,
+      "collectorCpuElapsedNs": 7658900,
+      "monotonicNs": 351655951815380,
+      "processes": {
+        "node-2": {
+          "collectionElapsedNs": 7578629,
+          "commandSha256": "dd6a00cac9824ccae16334d0cb152c1a809ccf85eff7a58868c28dafe37a5b72",
+          "fdScan": {
+            "errors": [],
+            "limit": 4096,
+            "ownedSocketInodes": 7,
+            "readFailures": 0,
+            "scannedFds": 40,
+            "status": "ok",
+            "truncated": false
+          },
+          "fdScanAfter": {
+            "errors": [],
+            "limit": 4096,
+            "ownedSocketInodes": 7,
+            "readFailures": 0,
+            "scannedFds": 40,
+            "status": "ok",
+            "truncated": false
+          },
+          "pid": 65309,
+          "recordPath": "/opt/vectormatch/runtime/cloud-20261023-01/node-2/process.json",
+          "startTicks": 35021678,
+          "status": "verified",
+          "threads": {
+            "detailLimit": 16,
+            "detailSelection": "top CPU tick delta where available; initial threads by cumulative CPU",
+            "enumeratedThreads": 40,
+            "errors": [],
+            "limit": 1024,
+            "readFailures": 0,
+            "sampled": [
+              {
+                "comm": "java",
+                "deltaCpuTicks": null,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 3192550,
+                      "timeslices": 1
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655952449012,
+                "startTicks": 35021678,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65309,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "java",
+                "deltaCpuTicks": null,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 731400,
+                      "runtimeNs": 400792200,
+                      "timeslices": 464
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655952525322,
+                "startTicks": 35021678,
+                "state": "S",
+                "systemCpuTicks": 11,
+                "tid": 65310,
+                "userCpuTicks": 28
+              },
+              {
+                "comm": "GC Thread#0",
+                "deltaCpuTicks": null,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 2582600,
+                      "timeslices": 13
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655952595523,
+                "startTicks": 35021679,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65311,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "G1 Main Marker",
+                "deltaCpuTicks": null,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 218650,
+                      "timeslices": 3
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655952662203,
+                "startTicks": 35021679,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65312,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "G1 Conc#0",
+                "deltaCpuTicks": null,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 177020,
+                      "timeslices": 2
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655952728993,
+                "startTicks": 35021679,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65313,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "G1 Refine#0",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655952793984,
+                "startTicks": 35021680,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65314,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "G1 Service",
+                "deltaCpuTicks": null,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 7489490,
+                      "runtimeNs": 53361850,
+                      "timeslices": 1443
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655952860024,
+                "startTicks": 35021680,
+                "state": "S",
+                "systemCpuTicks": 3,
+                "tid": 65315,
+                "userCpuTicks": 1
+              },
+              {
+                "comm": "VM Periodic Tas",
+                "deltaCpuTicks": null,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 3081420,
+                      "runtimeNs": 711255820,
+                      "timeslices": 28908
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655952923674,
+                "startTicks": 35021680,
+                "state": "S",
+                "systemCpuTicks": 50,
+                "tid": 65316,
+                "userCpuTicks": 20
+              },
+              {
+                "comm": "VM Thread",
+                "deltaCpuTicks": null,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 125970,
+                      "runtimeNs": 50734740,
+                      "timeslices": 1474
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655952987084,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 3,
+                "tid": 65317,
+                "userCpuTicks": 1
+              },
+              {
+                "comm": "Reference Handl",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655953061875,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65318,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "Finalizer",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655953125295,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65319,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "Signal Dispatch",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655953187655,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65320,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "Service Thread",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655953249915,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65321,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "Monitor Deflati",
+                "deltaCpuTicks": null,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 3594550,
+                      "runtimeNs": 135487950,
+                      "timeslices": 5759
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655953312016,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 11,
+                "tid": 65322,
+                "userCpuTicks": 1
+              },
+              {
+                "comm": "C2 CompilerThre",
+                "deltaCpuTicks": null,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 332070,
+                      "runtimeNs": 1815312450,
+                      "timeslices": 1557
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655953373526,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 2,
+                "tid": 65323,
+                "userCpuTicks": 179
+              },
+              {
+                "comm": "C1 CompilerThre",
+                "deltaCpuTicks": null,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 191250,
+                      "runtimeNs": 433754040,
+                      "timeslices": 1659
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655953435776,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 3,
+                "tid": 65324,
+                "userCpuTicks": 39
+              },
+              {
+                "comm": "Notification Th",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655953497736,
+                "startTicks": 35021683,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65326,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "Common-Cleaner",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655953559977,
+                "startTicks": 35021683,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65327,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "/opt/vectormatc",
+                "deltaCpuTicks": null,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 191869860,
+                      "runtimeNs": 118564010830,
+                      "timeslices": 2223939
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655953623757,
+                "startTicks": 35021704,
+                "state": "S",
+                "systemCpuTicks": 9803,
+                "tid": 65328,
+                "userCpuTicks": 2053
+              },
+              {
+                "comm": "archive-conduct",
+                "deltaCpuTicks": null,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 86214130,
+                      "runtimeNs": 19316017440,
+                      "timeslices": 1410211
+                    }
+                  },
+                  "wchan": {
+                    "value": "__flush_workqueue"
+                  }
+                },
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655953694127,
+                "startTicks": 35021711,
+                "state": "D",
+                "systemCpuTicks": 1494,
+                "tid": 65333,
+                "userCpuTicks": 436
+              },
+              {
+                "comm": "consensus-modul",
+                "deltaCpuTicks": null,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 90330580,
+                      "runtimeNs": 20490998510,
+                      "timeslices": 1603887
+                    }
+                  },
+                  "wchan": {
+                    "value": "__schedule"
+                  }
+                },
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655953758127,
+                "startTicks": 35021720,
+                "state": "S",
+                "systemCpuTicks": 1610,
+                "tid": 65334,
+                "userCpuTicks": 438
+              },
+              {
+                "comm": "aeron-client",
+                "deltaCpuTicks": null,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 7967650,
+                      "runtimeNs": 2375104900,
+                      "timeslices": 89400
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655953820538,
+                "startTicks": 35021720,
+                "state": "S",
+                "systemCpuTicks": 154,
+                "tid": 65335,
+                "userCpuTicks": 82
+              },
+              {
+                "comm": "clustered-servi",
+                "deltaCpuTicks": null,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 60439650,
+                      "runtimeNs": 18454048860,
+                      "timeslices": 1466336
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655953883228,
+                "startTicks": 35021721,
+                "state": "S",
+                "systemCpuTicks": 1476,
+                "tid": 65336,
+                "userCpuTicks": 369
+              },
+              {
+                "comm": "GC Thread#1",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655953944988,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65344,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#2",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655954013758,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65345,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#3",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655954078219,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65346,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#4",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655954139509,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65347,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#5",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655954203339,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65348,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#6",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655954263459,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65349,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#7",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655954323260,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65350,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#8",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655954383750,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65351,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#9",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655954443950,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65352,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#10",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655954503990,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65353,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#11",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655954563710,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65354,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#12",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655954623921,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65355,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#13",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655954689951,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65356,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#14",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655954754931,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65357,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#15",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655954817841,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65358,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#16",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655954877932,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65359,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#17",
+                "deltaCpuTicks": null,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": null,
+                "observedMonotonicNs": 351655954937482,
+                "startTicks": 35021804,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65360,
+                "userCpuTicks": 0
+              }
+            ],
+            "sampledThreads": 40,
+            "status": "ok",
+            "truncated": false
+          },
+          "udp": {
+            "ipv4": {
+              "errors": [],
+              "ownershipLostDuringRead": 0,
+              "scanBytes": 2176,
+              "scannedRows": 16,
+              "sockets": [
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    17
+                  ],
+                  "inode": 106872850,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 19201,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                },
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    54
+                  ],
+                  "inode": 106803546,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 19202,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                },
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    19
+                  ],
+                  "inode": 106872851,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 19203,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                },
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    49
+                  ],
+                  "inode": 106803545,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 19204,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                },
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    42
+                  ],
+                  "inode": 106803544,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 46618,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                },
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    40
+                  ],
+                  "inode": 106803543,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 60054,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                }
+              ],
+              "status": "ok",
+              "truncated": false,
+              "unparsedRows": 0
+            },
+            "ipv6": {
+              "errors": [],
+              "ownershipLostDuringRead": 0,
+              "scanBytes": 334,
+              "scannedRows": 1,
+              "sockets": [],
+              "status": "ok",
+              "truncated": false,
+              "unparsedRows": 0
+            }
+          }
+        }
+      },
+      "scheduledElapsedSeconds": 0.0,
+      "sequence": 0,
+      "type": "sample",
+      "wallTimeUtc": "2026-10-23T21:32:47.668994+00:00"
+    },
+    {
+      "collectionElapsedNs": 16229132,
+      "collectionFinishedMonotonicNs": 351656967517796,
+      "collectorCpuElapsedNs": 16228220,
+      "monotonicNs": 351656951288914,
+      "processes": {
+        "node-2": {
+          "collectionElapsedNs": 16035782,
+          "commandSha256": "dd6a00cac9824ccae16334d0cb152c1a809ccf85eff7a58868c28dafe37a5b72",
+          "fdScan": {
+            "errors": [],
+            "limit": 4096,
+            "ownedSocketInodes": 7,
+            "readFailures": 0,
+            "scannedFds": 40,
+            "status": "ok",
+            "truncated": false
+          },
+          "fdScanAfter": {
+            "errors": [],
+            "limit": 4096,
+            "ownedSocketInodes": 7,
+            "readFailures": 0,
+            "scannedFds": 40,
+            "status": "ok",
+            "truncated": false
+          },
+          "pid": 65309,
+          "recordPath": "/opt/vectormatch/runtime/cloud-20261023-01/node-2/process.json",
+          "startTicks": 35021678,
+          "status": "verified",
+          "threads": {
+            "detailLimit": 16,
+            "detailSelection": "top CPU tick delta where available; initial threads by cumulative CPU",
+            "enumeratedThreads": 40,
+            "errors": [],
+            "limit": 1024,
+            "readFailures": 0,
+            "sampled": [
+              {
+                "comm": "java",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 3192550,
+                      "timeslices": 1
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 999976826,
+                "observedMonotonicNs": 351656952425838,
+                "startTicks": 35021678,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65309,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "java",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 731400,
+                      "runtimeNs": 400792200,
+                      "timeslices": 464
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 1000066627,
+                "observedMonotonicNs": 351656952591949,
+                "startTicks": 35021678,
+                "state": "S",
+                "systemCpuTicks": 11,
+                "tid": 65310,
+                "userCpuTicks": 28
+              },
+              {
+                "comm": "GC Thread#0",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 2582600,
+                      "timeslices": 13
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 1000150146,
+                "observedMonotonicNs": 351656952745669,
+                "startTicks": 35021679,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65311,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "G1 Main Marker",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 218650,
+                      "timeslices": 3
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 1000260517,
+                "observedMonotonicNs": 351656952922720,
+                "startTicks": 35021679,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65312,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "G1 Conc#0",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 177020,
+                      "timeslices": 2
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 1000363248,
+                "observedMonotonicNs": 351656953092241,
+                "startTicks": 35021679,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65313,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "G1 Refine#0",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 130980,
+                      "timeslices": 3
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 1000435297,
+                "observedMonotonicNs": 351656953229281,
+                "startTicks": 35021680,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65314,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "G1 Service",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 7489490,
+                      "runtimeNs": 53392600,
+                      "timeslices": 1444
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 1000504128,
+                "observedMonotonicNs": 351656953364152,
+                "startTicks": 35021680,
+                "state": "S",
+                "systemCpuTicks": 3,
+                "tid": 65315,
+                "userCpuTicks": 1
+              },
+              {
+                "comm": "VM Periodic Tas",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 3081420,
+                      "runtimeNs": 711937660,
+                      "timeslices": 28929
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 1000571568,
+                "observedMonotonicNs": 351656953495242,
+                "startTicks": 35021680,
+                "state": "S",
+                "systemCpuTicks": 50,
+                "tid": 65316,
+                "userCpuTicks": 20
+              },
+              {
+                "comm": "VM Thread",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 125970,
+                      "runtimeNs": 50767980,
+                      "timeslices": 1475
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 1000636449,
+                "observedMonotonicNs": 351656953623533,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 3,
+                "tid": 65317,
+                "userCpuTicks": 1
+              },
+              {
+                "comm": "Reference Handl",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 809800,
+                      "timeslices": 4
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 1000698008,
+                "observedMonotonicNs": 351656953759883,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65318,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "Finalizer",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 317880,
+                      "timeslices": 2
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 1000812699,
+                "observedMonotonicNs": 351656953937994,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65319,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "Signal Dispatch",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 116990,
+                      "timeslices": 2
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 1000928900,
+                "observedMonotonicNs": 351656954116555,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65320,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "Service Thread",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1001028970,
+                "observedMonotonicNs": 351656954278885,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65321,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "Monitor Deflati",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1001096910,
+                "observedMonotonicNs": 351656954408926,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 11,
+                "tid": 65322,
+                "userCpuTicks": 1
+              },
+              {
+                "comm": "C2 CompilerThre",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1001163560,
+                "observedMonotonicNs": 351656954537086,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 2,
+                "tid": 65323,
+                "userCpuTicks": 179
+              },
+              {
+                "comm": "C1 CompilerThre",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1001229501,
+                "observedMonotonicNs": 351656954665277,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 3,
+                "tid": 65324,
+                "userCpuTicks": 39
+              },
+              {
+                "comm": "Notification Th",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1001303201,
+                "observedMonotonicNs": 351656954800937,
+                "startTicks": 35021683,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65326,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "Common-Cleaner",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1001372921,
+                "observedMonotonicNs": 351656954932898,
+                "startTicks": 35021683,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65327,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "/opt/vectormatc",
+                "deltaCpuTicks": 8,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 192029610,
+                      "runtimeNs": 118654854570,
+                      "timeslices": 2225552
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 1001455651,
+                "observedMonotonicNs": 351656955079408,
+                "startTicks": 35021704,
+                "state": "R",
+                "systemCpuTicks": 9811,
+                "tid": 65328,
+                "userCpuTicks": 2053
+              },
+              {
+                "comm": "archive-conduct",
+                "deltaCpuTicks": 1,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 86298500,
+                      "runtimeNs": 19329122230,
+                      "timeslices": 1411182
+                    }
+                  },
+                  "wchan": {
+                    "value": "folio_wait_bit_common"
+                  }
+                },
+                "elapsedSincePreviousNs": 1001516602,
+                "observedMonotonicNs": 351656955210729,
+                "startTicks": 35021711,
+                "state": "D",
+                "systemCpuTicks": 1495,
+                "tid": 65333,
+                "userCpuTicks": 436
+              },
+              {
+                "comm": "consensus-modul",
+                "deltaCpuTicks": 1,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 90361930,
+                      "runtimeNs": 20505709110,
+                      "timeslices": 1604987
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 1001578342,
+                "observedMonotonicNs": 351656955336469,
+                "startTicks": 35021720,
+                "state": "S",
+                "systemCpuTicks": 1611,
+                "tid": 65334,
+                "userCpuTicks": 438
+              },
+              {
+                "comm": "aeron-client",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1001643132,
+                "observedMonotonicNs": 351656955463670,
+                "startTicks": 35021720,
+                "state": "S",
+                "systemCpuTicks": 154,
+                "tid": 65335,
+                "userCpuTicks": 82
+              },
+              {
+                "comm": "clustered-servi",
+                "deltaCpuTicks": 1,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 60458580,
+                      "runtimeNs": 18467066820,
+                      "timeslices": 1467355
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 1001707502,
+                "observedMonotonicNs": 351656955590730,
+                "startTicks": 35021721,
+                "state": "S",
+                "systemCpuTicks": 1477,
+                "tid": 65336,
+                "userCpuTicks": 369
+              },
+              {
+                "comm": "GC Thread#1",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1001780593,
+                "observedMonotonicNs": 351656955725581,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65344,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#2",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1001842463,
+                "observedMonotonicNs": 351656955856221,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65345,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#3",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1001903693,
+                "observedMonotonicNs": 351656955981912,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65346,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#4",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1001981873,
+                "observedMonotonicNs": 351656956121382,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65347,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#5",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1002040984,
+                "observedMonotonicNs": 351656956244323,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65348,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#6",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1002103004,
+                "observedMonotonicNs": 351656956366463,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65349,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#7",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1002165664,
+                "observedMonotonicNs": 351656956488924,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65350,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#8",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1002226374,
+                "observedMonotonicNs": 351656956610124,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65351,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#9",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1002299245,
+                "observedMonotonicNs": 351656956743195,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65352,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#10",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1002361185,
+                "observedMonotonicNs": 351656956865175,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65353,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#11",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1002423606,
+                "observedMonotonicNs": 351656956987316,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65354,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#12",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1002501605,
+                "observedMonotonicNs": 351656957125526,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65355,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#13",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1002580076,
+                "observedMonotonicNs": 351656957270027,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65356,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#14",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1002644146,
+                "observedMonotonicNs": 351656957399077,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65357,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#15",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1002704137,
+                "observedMonotonicNs": 351656957521978,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65358,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#16",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1002768136,
+                "observedMonotonicNs": 351656957646068,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65359,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#17",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 1002830177,
+                "observedMonotonicNs": 351656957767659,
+                "startTicks": 35021804,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65360,
+                "userCpuTicks": 0
+              }
+            ],
+            "sampledThreads": 40,
+            "status": "ok",
+            "truncated": false
+          },
+          "udp": {
+            "ipv4": {
+              "errors": [],
+              "ownershipLostDuringRead": 0,
+              "scanBytes": 2176,
+              "scannedRows": 16,
+              "sockets": [
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    17
+                  ],
+                  "inode": 106872850,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 19201,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                },
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    54
+                  ],
+                  "inode": 106803546,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 19202,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                },
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    19
+                  ],
+                  "inode": 106872851,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 19203,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                },
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    49
+                  ],
+                  "inode": 106803545,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 19204,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                },
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    42
+                  ],
+                  "inode": 106803544,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 46618,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                },
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    40
+                  ],
+                  "inode": 106803543,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 60054,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                }
+              ],
+              "status": "ok",
+              "truncated": false,
+              "unparsedRows": 0
+            },
+            "ipv6": {
+              "errors": [],
+              "ownershipLostDuringRead": 0,
+              "scanBytes": 334,
+              "scannedRows": 1,
+              "sockets": [],
+              "status": "ok",
+              "truncated": false,
+              "unparsedRows": 0
+            }
+          }
+        }
+      },
+      "scheduledElapsedSeconds": 1.0,
+      "sequence": 1,
+      "type": "sample",
+      "wallTimeUtc": "2026-10-23T21:32:48.668475+00:00"
+    },
+    {
+      "collectionElapsedNs": 15455180,
+      "collectionFinishedMonotonicNs": 351657966732179,
+      "collectorCpuElapsedNs": 15453560,
+      "monotonicNs": 351657951277199,
+      "processes": {
+        "node-2": {
+          "collectionElapsedNs": 15241589,
+          "commandSha256": "dd6a00cac9824ccae16334d0cb152c1a809ccf85eff7a58868c28dafe37a5b72",
+          "fdScan": {
+            "errors": [],
+            "limit": 4096,
+            "ownedSocketInodes": 7,
+            "readFailures": 0,
+            "scannedFds": 40,
+            "status": "ok",
+            "truncated": false
+          },
+          "fdScanAfter": {
+            "errors": [],
+            "limit": 4096,
+            "ownedSocketInodes": 7,
+            "readFailures": 0,
+            "scannedFds": 40,
+            "status": "ok",
+            "truncated": false
+          },
+          "pid": 65309,
+          "recordPath": "/opt/vectormatch/runtime/cloud-20261023-01/node-2/process.json",
+          "startTicks": 35021678,
+          "status": "verified",
+          "threads": {
+            "detailLimit": 16,
+            "detailSelection": "top CPU tick delta where available; initial threads by cumulative CPU",
+            "enumeratedThreads": 40,
+            "errors": [],
+            "limit": 1024,
+            "readFailures": 0,
+            "sampled": [
+              {
+                "comm": "java",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 3192550,
+                      "timeslices": 1
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 1000053626,
+                "observedMonotonicNs": 351657952479464,
+                "startTicks": 35021678,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65309,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "java",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 731400,
+                      "runtimeNs": 400792200,
+                      "timeslices": 464
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 1000043416,
+                "observedMonotonicNs": 351657952635365,
+                "startTicks": 35021678,
+                "state": "S",
+                "systemCpuTicks": 11,
+                "tid": 65310,
+                "userCpuTicks": 28
+              },
+              {
+                "comm": "GC Thread#0",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 2582600,
+                      "timeslices": 13
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 1000032776,
+                "observedMonotonicNs": 351657952778445,
+                "startTicks": 35021679,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65311,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "G1 Main Marker",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 218650,
+                      "timeslices": 3
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 999991146,
+                "observedMonotonicNs": 351657952913866,
+                "startTicks": 35021679,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65312,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "G1 Conc#0",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 177020,
+                      "timeslices": 2
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 999992655,
+                "observedMonotonicNs": 351657953084896,
+                "startTicks": 35021679,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65313,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "G1 Refine#0",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 130980,
+                      "timeslices": 3
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 999989206,
+                "observedMonotonicNs": 351657953218487,
+                "startTicks": 35021680,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65314,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "G1 Service",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 7489490,
+                      "runtimeNs": 53431060,
+                      "timeslices": 1445
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 999984935,
+                "observedMonotonicNs": 351657953349087,
+                "startTicks": 35021680,
+                "state": "S",
+                "systemCpuTicks": 3,
+                "tid": 65315,
+                "userCpuTicks": 1
+              },
+              {
+                "comm": "VM Periodic Tas",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 3081420,
+                      "runtimeNs": 712474850,
+                      "timeslices": 28948
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 999981426,
+                "observedMonotonicNs": 351657953476668,
+                "startTicks": 35021680,
+                "state": "S",
+                "systemCpuTicks": 50,
+                "tid": 65316,
+                "userCpuTicks": 20
+              },
+              {
+                "comm": "VM Thread",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 125970,
+                      "runtimeNs": 50799760,
+                      "timeslices": 1476
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 999984565,
+                "observedMonotonicNs": 351657953608098,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 3,
+                "tid": 65317,
+                "userCpuTicks": 1
+              },
+              {
+                "comm": "Reference Handl",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 809800,
+                      "timeslices": 4
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 999976856,
+                "observedMonotonicNs": 351657953736739,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65318,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "Finalizer",
+                "deltaCpuTicks": 0,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 0,
+                      "runtimeNs": 317880,
+                      "timeslices": 2
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 999924485,
+                "observedMonotonicNs": 351657953862479,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65319,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "Signal Dispatch",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999872655,
+                "observedMonotonicNs": 351657953989210,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65320,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "Service Thread",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999856296,
+                "observedMonotonicNs": 351657954135181,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65321,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "Monitor Deflati",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999854745,
+                "observedMonotonicNs": 351657954263671,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 11,
+                "tid": 65322,
+                "userCpuTicks": 1
+              },
+              {
+                "comm": "C2 CompilerThre",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999859066,
+                "observedMonotonicNs": 351657954396152,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 2,
+                "tid": 65323,
+                "userCpuTicks": 179
+              },
+              {
+                "comm": "C1 CompilerThre",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999860265,
+                "observedMonotonicNs": 351657954525542,
+                "startTicks": 35021681,
+                "state": "S",
+                "systemCpuTicks": 3,
+                "tid": 65324,
+                "userCpuTicks": 39
+              },
+              {
+                "comm": "Notification Th",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999851076,
+                "observedMonotonicNs": 351657954652013,
+                "startTicks": 35021683,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65326,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "Common-Cleaner",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999846725,
+                "observedMonotonicNs": 351657954779623,
+                "startTicks": 35021683,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65327,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "/opt/vectormatc",
+                "deltaCpuTicks": 9,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 192179650,
+                      "runtimeNs": 118741867710,
+                      "timeslices": 2227159
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 999828006,
+                "observedMonotonicNs": 351657954907414,
+                "startTicks": 35021704,
+                "state": "R",
+                "systemCpuTicks": 9819,
+                "tid": 65328,
+                "userCpuTicks": 2054
+              },
+              {
+                "comm": "archive-conduct",
+                "deltaCpuTicks": 2,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 86371950,
+                      "runtimeNs": 19341075830,
+                      "timeslices": 1412150
+                    }
+                  },
+                  "wchan": {
+                    "value": "folio_wait_bit_common"
+                  }
+                },
+                "elapsedSincePreviousNs": 999842845,
+                "observedMonotonicNs": 351657955053574,
+                "startTicks": 35021711,
+                "state": "S",
+                "systemCpuTicks": 1496,
+                "tid": 65333,
+                "userCpuTicks": 437
+              },
+              {
+                "comm": "consensus-modul",
+                "deltaCpuTicks": 2,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 90394370,
+                      "runtimeNs": 20519554140,
+                      "timeslices": 1606088
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 999851736,
+                "observedMonotonicNs": 351657955188205,
+                "startTicks": 35021720,
+                "state": "S",
+                "systemCpuTicks": 1612,
+                "tid": 65334,
+                "userCpuTicks": 439
+              },
+              {
+                "comm": "aeron-client",
+                "deltaCpuTicks": 1,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 7967650,
+                      "runtimeNs": 2378562790,
+                      "timeslices": 89524
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 999856385,
+                "observedMonotonicNs": 351657955320055,
+                "startTicks": 35021720,
+                "state": "S",
+                "systemCpuTicks": 155,
+                "tid": 65335,
+                "userCpuTicks": 82
+              },
+              {
+                "comm": "clustered-servi",
+                "deltaCpuTicks": 1,
+                "detailStatus": "identity-verified",
+                "details": {
+                  "schedstat": {
+                    "value": {
+                      "runqueueWaitNs": 60476930,
+                      "runtimeNs": 18478882430,
+                      "timeslices": 1468372
+                    }
+                  },
+                  "wchan": {
+                    "value": "futex_wait_queue"
+                  }
+                },
+                "elapsedSincePreviousNs": 999862296,
+                "observedMonotonicNs": 351657955453026,
+                "startTicks": 35021721,
+                "state": "S",
+                "systemCpuTicks": 1478,
+                "tid": 65336,
+                "userCpuTicks": 369
+              },
+              {
+                "comm": "GC Thread#1",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999855235,
+                "observedMonotonicNs": 351657955580816,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65344,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#2",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999851816,
+                "observedMonotonicNs": 351657955708037,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65345,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#3",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999861955,
+                "observedMonotonicNs": 351657955843867,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65346,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#4",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999864356,
+                "observedMonotonicNs": 351657955985738,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65347,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#5",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999886815,
+                "observedMonotonicNs": 351657956131138,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65348,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#6",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999889236,
+                "observedMonotonicNs": 351657956255699,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65349,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#7",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999890385,
+                "observedMonotonicNs": 351657956379309,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65350,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#8",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999892956,
+                "observedMonotonicNs": 351657956503080,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65351,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#9",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999884215,
+                "observedMonotonicNs": 351657956627410,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65352,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#10",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999886236,
+                "observedMonotonicNs": 351657956751411,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65353,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#11",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999888475,
+                "observedMonotonicNs": 351657956875791,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65354,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#12",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999888706,
+                "observedMonotonicNs": 351657957014232,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65355,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#13",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999876295,
+                "observedMonotonicNs": 351657957146322,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65356,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#14",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999875006,
+                "observedMonotonicNs": 351657957274083,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65357,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#15",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999877065,
+                "observedMonotonicNs": 351657957399043,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65358,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#16",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999877196,
+                "observedMonotonicNs": 351657957523264,
+                "startTicks": 35021803,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65359,
+                "userCpuTicks": 0
+              },
+              {
+                "comm": "GC Thread#17",
+                "deltaCpuTicks": 0,
+                "detailStatus": "not-selected",
+                "elapsedSincePreviousNs": 999879685,
+                "observedMonotonicNs": 351657957647344,
+                "startTicks": 35021804,
+                "state": "S",
+                "systemCpuTicks": 0,
+                "tid": 65360,
+                "userCpuTicks": 0
+              }
+            ],
+            "sampledThreads": 40,
+            "status": "ok",
+            "truncated": false
+          },
+          "udp": {
+            "ipv4": {
+              "errors": [],
+              "ownershipLostDuringRead": 0,
+              "scanBytes": 2176,
+              "scannedRows": 16,
+              "sockets": [
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    17
+                  ],
+                  "inode": 106872850,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 19201,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                },
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    54
+                  ],
+                  "inode": 106803546,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 19202,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                },
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    19
+                  ],
+                  "inode": 106872851,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 19203,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                },
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    49
+                  ],
+                  "inode": 106803545,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 19204,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                },
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    42
+                  ],
+                  "inode": 106803544,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 46618,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                },
+                {
+                  "drops": 0,
+                  "family": "ipv4",
+                  "fdNumbers": [
+                    40
+                  ],
+                  "inode": 106803543,
+                  "localAddress": "10.1.81.207",
+                  "localPort": 60054,
+                  "ownershipConfirmedAfterRead": true,
+                  "receiveQueueKernelBytes": 0,
+                  "transmitQueueKernelBytes": 0
+                }
+              ],
+              "status": "ok",
+              "truncated": false,
+              "unparsedRows": 0
+            },
+            "ipv6": {
+              "errors": [],
+              "ownershipLostDuringRead": 0,
+              "scanBytes": 334,
+              "scannedRows": 1,
+              "sockets": [],
+              "status": "ok",
+              "truncated": false,
+              "unparsedRows": 0
+            }
+          }
+        }
+      },
+      "scheduledElapsedSeconds": 2.0,
+      "sequence": 2,
+      "type": "sample",
+      "wallTimeUtc": "2026-10-23T21:32:49.668464+00:00"
+    },
+    {
+      "collectorCpuElapsedNs": 42155970,
+      "elapsedSeconds": 3.0001662879949436,
+      "monotonicNs": 351658951336705,
+      "reason": "duration",
+      "samples": 3,
+      "signal": null,
+      "type": "complete",
+      "wallTimeUtc": "2026-10-23T21:32:50.668488+00:00"
+    }
+  ],
+  "scope": "Actual Linux only original owned node, three seconds, no load or performance claim; read-only collector and metadata return."
+}

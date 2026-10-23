@@ -386,6 +386,10 @@ def analyze_trial(directory, criteria=None):
     conditional_p99 = derived["latency"]["conditionalAccepted"]["p99Millis"]
     target = criteria["latencyTargetP99Millis"]
     comparison = {key: configuration.get(key) for key in COMPARISON_KEYS}
+    # New client-resource cohorts declare these explicitly. Preserve historical
+    # fingerprints when the older harness did not record resource modes.
+    comparison.update({key: configuration[key] for key in
+                       ("clientDriverMode", "clientDriverCount", "clientAeronMode") if key in configuration})
     comparison.update(identity)
     fingerprint = hashlib.sha256(json.dumps(comparison, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     return {"id": trial.get("id", directory.name), "directory": str(directory), "sourceResult": source_name,

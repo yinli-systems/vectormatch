@@ -82,6 +82,23 @@ class CapacityAnalysisTest(unittest.TestCase):
         self.assertEqual(10, trial["derived"]["clientQueueFullNotSent"])
         self.assertEqual(0, trial["derived"]["businessRejected"])
 
+    def test_client_resource_modes_get_separate_fingerprints_and_legacy_is_preserved(self):
+        directory = self.fixture()
+        legacy = analysis.analyze_trial(directory)
+        path = directory / "configuration.json"
+        configuration = json.loads(path.read_text())
+        configuration.update(clientDriverMode="isolated", clientDriverCount=4,
+                             clientAeronMode="one-independent-Aeron-per-client")
+        path.write_text(json.dumps(configuration))
+        isolated = analysis.analyze_trial(directory)
+        configuration.update(clientDriverMode="shared", clientDriverCount=1)
+        path.write_text(json.dumps(configuration))
+        shared = analysis.analyze_trial(directory)
+        self.assertEqual(3, len({r["comparisonFingerprintSha256"] for r in (legacy, isolated, shared)}))
+        self.assertNotIn("clientDriverMode", legacy["comparisonConfiguration"])
+        self.assertEqual("shared", shared["comparisonConfiguration"]["clientDriverMode"])
+        self.assertEqual(1, shared["comparisonConfiguration"]["clientDriverCount"])
+
     def test_unknown_server_rejection_and_unsent_are_separate(self):
         directory = self.fixture(outcomes=["CONFIRMED_ACCEPTED"] * 96 + ["BUSINESS_REJECTED", "SERVER_ERROR", "UNKNOWN_UNRESOLVED", "WORKER_BLOCKED_UNKNOWN_NOT_SENT"])
         trial = analysis.analyze_trial(directory)

@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.HexFormat;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /** Single-thread-confined development client. Retries preserve the entire business command identity. */
@@ -25,6 +26,7 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
     private static final long CONNECT_TIMEOUT_NS = TimeUnit.SECONDS.toNanos(20);
     private static final long CONNECT_SEED_TIMEOUT_NS = TimeUnit.SECONDS.toNanos(2);
     private final MediaDriver driver;
+    private final boolean ownsDriver;
     private final AeronCluster client;
     private final IdleStrategy idle = new BackoffIdleStrategy();
     private final Map<Long, byte[]> responses = new LinkedHashMap<>();
@@ -51,7 +53,37 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
     public ClusterClient(Path driverDirectory, ClusterTopology topology, ClientEndpoint endpoint, NetworkTransport transport) {
         endpoint.validateFor(topology);
         endpoint.requireBindable();
-        driver = MediaDriver.launchEmbedded(new MediaDriver.Context()
+        ownsDriver = true;
+        driver = launchDriver(driverDirectory, transport);
+        try {
+            client = connect(topology, endpoint, transport);
+        } catch (RuntimeException | Error e) {
+            driver.close();
+            throw e;
+        }
+    }
+
+    /** Borrow only the MediaDriver. Each client still owns its independent Aeron connection and session. */
+    ClusterClient(MediaDriver borrowedDriver, ClusterTopology topology, ClientEndpoint endpoint, NetworkTransport transport) {
+        Objects.requireNonNull(borrowedDriver, "borrowedDriver");
+        validateSharedEndpoint(topology, endpoint);
+        if (borrowedDriver.context().mtuLength() != transport.mtuLength())
+            throw new IllegalArgumentException("Borrowed driver MTU differs from client transport");
+        driver = borrowedDriver;
+        ownsDriver = false;
+        // A failed connection closes its own incomplete Aeron context, never the borrowed driver.
+        client = connect(topology, endpoint, transport);
+    }
+
+    static void validateSharedEndpoint(ClusterTopology topology, ClientEndpoint endpoint) {
+        endpoint.validateFor(topology);
+        endpoint.requireBindable();
+        if (endpoint.port() != 0)
+            throw new IllegalArgumentException("Shared client MediaDriver requires independently resolved egress port 0");
+    }
+
+    static MediaDriver launchDriver(Path driverDirectory, NetworkTransport transport) {
+        return MediaDriver.launchEmbedded(new MediaDriver.Context()
                 .aeronDirectoryName(driverDirectory.toAbsolutePath().toString())
                 .threadingMode(ThreadingMode.SHARED)
                 .sharedIdleStrategy(new BackoffIdleStrategy())
@@ -61,13 +93,11 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
                 .termBufferSparseFile(true)
                 .dirDeleteOnStart(false) // Aeron checks for an active driver before recreating stale files.
                 .dirDeleteOnShutdown(true));
-        try {
-            client = connect(topology, endpoint, transport);
-        } catch (RuntimeException e) {
-            driver.close();
-            throw e;
-        }
     }
+
+    long clusterSessionId() { return client.clusterSessionId(); }
+    long aeronClientId() { return client.context().aeron().clientId(); }
+    String resolvedEgressChannel() { return client.egressSubscription().tryResolveChannelEndpointPort(); }
 
     private AeronCluster connect(ClusterTopology topology, ClientEndpoint endpoint, NetworkTransport transport) {
         long deadline = System.nanoTime() + CONNECT_TIMEOUT_NS;
@@ -237,6 +267,6 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
     }
 
     @Override public void close() {
-        try { client.close(); } finally { driver.close(); }
+        try { client.close(); } finally { if (ownsDriver) driver.close(); }
     }
 }

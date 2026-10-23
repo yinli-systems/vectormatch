@@ -1,5 +1,6 @@
 package io.vectormatch.cluster;
 
+import io.aeron.driver.MediaDriver;
 import io.vectormatch.core.MatchingEngine;
 import io.vectormatch.core.MatchingEngine.*;
 
@@ -94,7 +95,67 @@ public final class RemoteCapacityExperiment {
         ClusterClient.TransportCounters counters();
         @Override void close();
     }
-    @FunctionalInterface interface TransportFactory { Transport open(int worker) throws Exception; }
+    @FunctionalInterface interface TransportFactory {
+        Transport open(int worker) throws Exception;
+        default String driverMode() { return "test-transport"; }
+        default Integer driverCount() { return null; }
+    }
+
+    static final String CLIENT_DRIVER_PROPERTY = "vectormatch.capacity.client.driver";
+    enum ClientDriverMode {
+        ISOLATED("isolated"), SHARED("shared");
+        final String label;
+        ClientDriverMode(String label) { this.label = label; }
+        static ClientDriverMode parse(String value) {
+            if (value == null) return ISOLATED;
+            for (ClientDriverMode mode : values()) if (mode.label.equals(value)) return mode;
+            throw new IllegalArgumentException(CLIENT_DRIVER_PROPERTY + " must be isolated or shared");
+        }
+    }
+
+    /** Load-only owner. Setup/validation clients retain their original independent driver lifecycle. */
+    static final class LoadTransports implements TransportFactory, AutoCloseable {
+        private final Options options;
+        private final ClusterTopology topology;
+        private final ClientEndpoint endpoint;
+        private final NetworkTransport transport;
+        private final ClientDriverMode mode;
+        private final MediaDriver sharedDriver;
+        private final AtomicInteger connectedDrivers = new AtomicInteger(), activeClients = new AtomicInteger();
+        LoadTransports(Options options, ClusterTopology topology, ClientEndpoint endpoint,
+                       NetworkTransport transport, ClientDriverMode mode) {
+            this.options = options; this.topology = topology; this.endpoint = endpoint;
+            this.transport = transport; this.mode = mode;
+            endpoint.validateFor(topology); endpoint.requireBindable();
+            if (mode == ClientDriverMode.SHARED) {
+                ClusterClient.validateSharedEndpoint(topology, endpoint);
+                sharedDriver = ClusterClient.launchDriver(options.directory().resolve("load-shared-driver"), transport);
+            } else sharedDriver = null;
+        }
+        public Transport open(int worker) {
+            ClusterClient client = sharedDriver == null
+                    ? new ClusterClient(options.directory().resolve("load-driver-" + worker), topology, endpoint, transport)
+                    : new ClusterClient(sharedDriver, topology, endpoint, transport);
+            connectedDrivers.incrementAndGet(); activeClients.incrementAndGet();
+            Transport delegate = realTransport(client);
+            return new Transport() {
+                private boolean closed;
+                public CommandCodec.Reply execute(Command command, Duration timeout) { return delegate.execute(command, timeout); }
+                public int leader() { return delegate.leader(); }
+                public void idle() { delegate.idle(); }
+                public ClusterClient.TransportCounters counters() { return delegate.counters(); }
+                public void close() {
+                    if (!closed) { closed = true; try { delegate.close(); } finally { activeClients.decrementAndGet(); } }
+                }
+            };
+        }
+        public String driverMode() { return mode.label; }
+        public Integer driverCount() { return sharedDriver != null ? 1 : connectedDrivers.get(); }
+        public void close() {
+            if (activeClients.get() != 0) throw new IllegalStateException("Load clients must terminate before their shared driver owner closes");
+            if (sharedDriver != null) sharedDriver.close();
+        }
+    }
 
     static final class Sample {
         final int index, worker;
@@ -124,6 +185,8 @@ public final class RemoteCapacityExperiment {
         volatile long origin, windowEnd, drainDeadline, finished;
         volatile Throwable workerFailure;
         volatile String scheduledOriginUtc;
+        String clientDriverMode = "test-transport";
+        Integer clientDriverCount;
         LoadResult(Options options, Sample[] samples) { this.options = options; this.samples = samples; }
     }
 
@@ -137,6 +200,7 @@ public final class RemoteCapacityExperiment {
                 Integer.parseInt(args[6]), Integer.parseInt(args[7]), Integer.parseInt(args[8]),
                 args.length >= 10 ? Integer.parseInt(args[9]) : 20, args.length == 11 ? Profile.parse(args[10]) : Profile.BASELINE);
         validateOutboxProfile(options.profile(), System.getenv());
+        ClientDriverMode.parse(System.getProperty(CLIENT_DRIVER_PROPERTY)); // Reject invalid opt-ins before creating evidence or funding.
         ClusterTopology topology = ClusterTopology.fromEnvironment(options.portBase());
         require(topology.memberCount() == 3, "Three configured members required");
         Files.createDirectories(options.directory().getParent());
@@ -147,6 +211,10 @@ public final class RemoteCapacityExperiment {
     private static void run(Options options, ClusterTopology topology) throws Exception {
         Path directory = options.directory();
         Profile profile = options.profile();
+        ClientDriverMode clientDriverMode = ClientDriverMode.parse(System.getProperty(CLIENT_DRIVER_PROPERTY));
+        ClientEndpoint loadEndpoint = ClientEndpoint.fromEnvironment(topology);
+        NetworkTransport loadTransport = NetworkTransport.fromEnvironment();
+        if (clientDriverMode == ClientDriverMode.SHARED) ClusterClient.validateSharedEndpoint(topology, loadEndpoint);
         String producer = "capacity-fixed-v1"; // Isolated fresh trial state is required; deterministic preparation permits byte-for-byte baseline comparisons.
         Map<String, Object> configuration = fields("startedAt", Instant.now().toString(), "producerPrefix", producer,
                 "profile", profile.label, "profileMaximumArrivals", profile.maximumArrivals, "declaredOutboxCapacity", profile.outboxCapacity,
@@ -156,6 +224,8 @@ public final class RemoteCapacityExperiment {
                 "expectedResultCachePerProducer", profile.stateProfile().resultCachePerProducer(),
                 "fullCheckpointMaximumBytes", profile.snapshotMaxBytes(), "profileMaximumWorkers", profile.maximumWorkers, "sessionReapWaitSecondsPerPhase", profile.sessionReapWaitSeconds,
                 "clientConnectionConcurrencyLimit", profile.connectionConcurrency == 0 ? "unbounded" : profile.connectionConcurrency,
+                "clientDriverMode", clientDriverMode.label, "clientDriverCount", null,
+                "clientAeronMode", "one-independent-Aeron-per-client", "clientDriverCountScope", "load phase only; count recorded after every worker connects; setup/validation excluded",
                 "validationTimeoutSeconds", CHECK_TIMEOUT.toSeconds(), "setupTimeoutSeconds", SETUP_TIMEOUT.toSeconds(),
                 "ratePerSecond", options.rate(), "scheduledArrivals", options.arrivals(), "workers", options.workers(),
                 "maxServiceRequestsInFlight", options.workers(), "queueCapacityPerWorker", options.queueCapacity(),
@@ -212,7 +282,11 @@ public final class RemoteCapacityExperiment {
             long preparedCommandSeq = reference.lastCommandSeq(), preparedEventSeq = reference.lastEventSeq(), preparedMarketSeq = reference.lastMarketSeq();
             int preparedOrders = reference.retainedOrderCount();
             awaitSessionReap(directory, "after-setup", profile);
-            load = runLoad(options, samples, worker -> realTransport(new ClusterClient(directory.resolve("load-driver-" + worker), options.portBase())));
+            try (LoadTransports transports = new LoadTransports(options, topology, loadEndpoint, loadTransport, clientDriverMode)) {
+                load = runLoad(options, samples, transports);
+                configuration.put("clientDriverCount", load.clientDriverCount);
+                write(directory.resolve("configuration.json"), configuration);
+            }
             writeSamples(directory.resolve("arrivals.csv"), load);
             writeBacklog(directory.resolve("backlog.csv"), load);
             write(directory.resolve("load-result.json"), summarize(load));
@@ -312,6 +386,8 @@ public final class RemoteCapacityExperiment {
         AtomicReference<Throwable> startupFailure = new AtomicReference<>();
         Semaphore connectionSlots = options.profile().connectionConcurrency > 0 ? new Semaphore(options.profile().connectionConcurrency, true) : null;
         List<Thread> workers = new ArrayList<>();
+        Thread monitor = null;
+        try {
         for (int index = 0; index < options.workers(); index++) {
             final int worker = index;
             Thread thread = new Thread(() -> {
@@ -359,12 +435,14 @@ public final class RemoteCapacityExperiment {
             for (Thread worker : workers) worker.join(25_000);
             throw new IllegalStateException("Capacity worker startup failed", startupFailure.get());
         }
+        load.clientDriverMode = factory.driverMode();
+        load.clientDriverCount = factory.driverCount();
         load.origin = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(200);
         load.scheduledOriginUtc = Instant.now().plusNanos(load.origin - System.nanoTime()).toString();
         load.windowEnd = load.origin + offsetNanos(options.arrivals(), options.rate());
         load.drainDeadline = load.windowEnd + TimeUnit.MILLISECONDS.toNanos(options.drainTimeoutMs());
         // Publish deadline fields before workers may pull work; origin being future is not used for synchronization below.
-        Thread monitor = new Thread(() -> {
+        monitor = new Thread(() -> {
             long next = load.origin;
             while (!load.workersDone.get()) {
                 waitUntil(next);
@@ -391,6 +469,29 @@ public final class RemoteCapacityExperiment {
         require(workers.stream().noneMatch(Thread::isAlive), "Worker did not terminate after bounded drain");
         load.workerFailure = startupFailure.get();
         return load;
+        } finally {
+            // Exceptions/interruption must not close a borrowed driver under surviving worker clients.
+            boolean interrupted = Thread.interrupted();
+            if (workers.stream().anyMatch(Thread::isAlive)) {
+                startupFailure.compareAndSet(null, new IllegalStateException("Load controller stopped before workers terminated"));
+                load.schedulingDone.set(true);
+                load.drainDeadline = System.nanoTime();
+                workers.stream().filter(Thread::isAlive).forEach(Thread::interrupt);
+                long cleanupDeadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(25);
+                for (Thread worker : workers) while (worker.isAlive() && System.nanoTime() < cleanupDeadline) {
+                    try { worker.join(100); } catch (InterruptedException ignored) { interrupted = true; }
+                }
+            }
+            load.workersDone.set(true);
+            if (monitor != null) {
+                monitor.interrupt();
+                while (monitor.isAlive()) {
+                    try { monitor.join(100); } catch (InterruptedException ignored) { interrupted = true; }
+                }
+            }
+            if (interrupted) Thread.currentThread().interrupt();
+            require(workers.stream().noneMatch(Thread::isAlive), "Worker survived load cleanup; borrowed owner must not close active clients");
+        }
     }
 
     private static Transport openTransport(TransportFactory factory, int worker, Semaphore slots) throws Exception {
@@ -462,6 +563,8 @@ public final class RemoteCapacityExperiment {
         long maxConfirmation = Arrays.stream(samples).mapToLong(s -> s.confirmed).max().orElse(load.windowEnd);
         long elapsed = Math.max(load.windowEnd, maxConfirmation) - load.origin;
         return fields("test", "external-replicated-matching-fixed-arrival-capacity", "profile", load.options.profile().label,
+                "clientDriverMode", load.clientDriverMode, "clientDriverCount", load.clientDriverCount,
+                "clientAeronMode", "one-independent-Aeron-per-client",
                 "declaredOutboxCapacity", load.options.profile().outboxCapacity,
                 "expectedStateProfile", load.options.profile().stateProfile().id(), "fullCheckpointMaximumBytes", load.options.profile().snapshotMaxBytes(),
                 "scheduledArrivals", samples.length,

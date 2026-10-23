@@ -20,6 +20,36 @@ import static org.junit.jupiter.api.Assertions.*;
 class RemoteCapacityExperimentTest {
     @TempDir Path directory;
 
+    @Test void clientDriverModeIsStrictOptInAndTestTransportsDoNotInventDriverCounts() throws Exception {
+        assertEquals(RemoteCapacityExperiment.ClientDriverMode.ISOLATED, RemoteCapacityExperiment.ClientDriverMode.parse(null));
+        assertEquals(RemoteCapacityExperiment.ClientDriverMode.ISOLATED, RemoteCapacityExperiment.ClientDriverMode.parse("isolated"));
+        assertEquals(RemoteCapacityExperiment.ClientDriverMode.SHARED, RemoteCapacityExperiment.ClientDriverMode.parse("shared"));
+        for (String invalid : List.of("", "SHARED", " shared", "shared-aeron", "true"))
+            assertThrows(IllegalArgumentException.class, () -> RemoteCapacityExperiment.ClientDriverMode.parse(invalid));
+        var load = RemoteCapacityExperiment.runLoad(options(100, 1, 1, 1, 100, 100), samples(1, 1), worker -> new FakeTransport() {
+            public CommandCodec.Reply execute(Command command, Duration timeout) { return accepted(command, 1, false); }
+        });
+        assertEquals("test-transport", RemoteCapacityExperiment.summarize(load).get("clientDriverMode"));
+        assertNull(RemoteCapacityExperiment.summarize(load).get("clientDriverCount"));
+    }
+
+    @Test void actualFactoryDriverMetadataIsCapturedOnlyAfterEveryWorkerConnects() throws Exception {
+        AtomicInteger connected = new AtomicInteger();
+        var load = RemoteCapacityExperiment.runLoad(options(100, 2, 2, 1, 100, 100), samples(2, 2), new RemoteCapacityExperiment.TransportFactory() {
+            public RemoteCapacityExperiment.Transport open(int worker) {
+                connected.incrementAndGet();
+                return new FakeTransport() {
+                    public CommandCodec.Reply execute(Command command, Duration timeout) { return accepted(command, command.requestSeq(), false); }
+                };
+            }
+            public String driverMode() { return "isolated"; }
+            public Integer driverCount() { return connected.get(); }
+        });
+        assertEquals(2, connected.get());
+        assertEquals("isolated", RemoteCapacityExperiment.summarize(load).get("clientDriverMode"));
+        assertEquals(2, RemoteCapacityExperiment.summarize(load).get("clientDriverCount"));
+    }
+
     private RemoteCapacityExperiment.Options options(int rate, int arrivals, int workers, int queue, int timeout, int drain) {
         return new RemoteCapacityExperiment.Options(directory, 19000, rate, arrivals, workers, queue, timeout, drain, 0, 1000);
     }

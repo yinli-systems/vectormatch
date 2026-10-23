@@ -1,0 +1,68 @@
+{
+  "registeredAt": "2026-10-23T21:33:07.441065+00:00",
+  "scope": "Smoke then pre-registered A/B/A/B; compare complete same-new-load-revision cohorts. No capacity claim for short smoke. Immutable load identity and observer digest will be fixed before first trial. Adaptive extension only after completed results.",
+  "nodeRevision": "b6f6c5cd165110e330d409e2ff51ee4574a3720b",
+  "nodeBundleSha256": "0c17626c6aed8061a71915e4dd784887ed9221f7fb3ba56d7fbf1f96985c062d",
+  "preparedSnapshotSha256": "2247db9c15b0043a0b28172c5bfa2d9e4f20b5748f6a16424d881e296102655f",
+  "trials": [
+    {
+      "id": "o-smoke-shared-8000-w128",
+      "mode": "shared",
+      "rate": 8000,
+      "arrivals": 20000,
+      "workers": 128,
+      "phase": "shared-driver-smoke",
+      "repetition": 1
+    },
+    {
+      "id": "o-isolated-15000-w128-r1",
+      "mode": "isolated",
+      "rate": 15000,
+      "arrivals": 190000,
+      "workers": 128,
+      "phase": "driver-count-control",
+      "repetition": 1
+    },
+    {
+      "id": "o-shared-15000-w128-r1",
+      "mode": "shared",
+      "rate": 15000,
+      "arrivals": 190000,
+      "workers": 128,
+      "phase": "driver-count-control",
+      "repetition": 1
+    },
+    {
+      "id": "o-isolated-15000-w128-r2",
+      "mode": "isolated",
+      "rate": 15000,
+      "arrivals": 190000,
+      "workers": 128,
+      "phase": "driver-count-control",
+      "repetition": 2
+    },
+    {
+      "id": "o-shared-15000-w128-r2",
+      "mode": "shared",
+      "rate": 15000,
+      "arrivals": 190000,
+      "workers": 128,
+      "phase": "driver-count-control",
+      "repetition": 2
+    }
+  ],
+  "budgets": {
+    "asOfUtc": "2026-10-23T21:33:07.441095+00:00",
+    "estimatedAccruedUsd": 6.112653087091389,
+    "nextTrialReserveSeconds": 7200,
+    "projectedIncludingRecoveryReserveUsd": 11.23265308709139,
+    "budgetUsd": 20,
+    "scope": "Project three Pods only, launch-time/rate estimate, not reconciled bill"
+  },
+  "longTermTargets": {
+    "cumulativeUniqueAcceptedCommands": 100000000,
+    "uniqueAcceptedCommandsPerSecond": 100000000,
+    "simultaneousConnections": 100000000,
+    "status": "All targets unverified requirements; instantaneous targets not feasible to validate on current budget/resources. Do not conflate them."
+  }
+}

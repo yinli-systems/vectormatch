@@ -29,6 +29,64 @@ class ClusterClientBootstrapTest {
     private static final NetworkTransport TRANSPORT = new NetworkTransport(1248);
     @TempDir Path temporary;
 
+    @Test @Timeout(65)
+    void borrowedDriverSurvivesFailedAndClosedClientsWithIndependentSessionsAndAeron() throws Exception {
+        Path run = temporary.resolve("shared-client-regression");
+        Files.createDirectories(run);
+        ClusterTopology topology = ClusterTopology.local(availablePortBase());
+        List<Process> nodes = new ArrayList<>();
+        Path driverDirectory = run.resolve("shared-driver");
+        try {
+            for (int member = 0; member < topology.memberCount(); member++) nodes.add(startNode(run, topology, member));
+            awaitStarted(run, nodes);
+            try (MediaDriver shared = ClusterClient.launchDriver(driverDirectory, TRANSPORT)) {
+                assertThrows(IllegalArgumentException.class, () -> new ClusterClient(shared, topology,
+                        new ClientEndpoint("127.0.0.1", 32123), TRANSPORT));
+                assertThrows(IllegalArgumentException.class, () -> new ClusterClient(shared, topology,
+                        EGRESS, new NetworkTransport(1408)));
+                AtomicReference<Throwable> failed = new AtomicReference<>();
+                AtomicReference<Boolean> preservedInterrupt = new AtomicReference<>(false);
+                ClusterTopology unavailable = ClusterTopology.local(availablePortBase());
+                Thread connecting = new Thread(() -> {
+                    Thread.currentThread().interrupt();
+                    try (ClusterClient ignored = new ClusterClient(shared, unavailable, EGRESS, TRANSPORT)) {
+                        failed.set(new AssertionError("Unexpected connection to " + ignored.leaderMemberId()));
+                    } catch (Throwable error) {
+                        failed.set(error); preservedInterrupt.set(Thread.currentThread().isInterrupted());
+                    }
+                }, "borrowed-interrupted-bootstrap");
+                connecting.start(); connecting.join(5000);
+                assertFalse(connecting.isAlive());
+                assertNotNull(failed.get());
+                assertTrue(preservedInterrupt.get());
+                assertTrue(Files.exists(driverDirectory.resolve("cnc.dat")), "Failed borrower must not delete its owner driver");
+
+                MatchingEngine reference = ClusterCapacity.newEngine();
+                Deposit firstCommand = new Deposit(1, "shared-first", 1, Asset.QUOTE, 1234);
+                Deposit secondCommand = new Deposit(2, "shared-second", 1, Asset.QUOTE, 5678);
+                try (ClusterClient second = new ClusterClient(shared, topology, EGRESS, TRANSPORT)) {
+                    try (ClusterClient first = new ClusterClient(shared, topology, EGRESS, TRANSPORT)) {
+                        assertNotEquals(first.clusterSessionId(), second.clusterSessionId());
+                        assertNotEquals(first.aeronClientId(), second.aeronClientId(), "Factor B must retain one Aeron per client");
+                        assertNotEquals(first.resolvedEgressChannel(), second.resolvedEgressChannel(), "Port-zero borrowers need distinct actual response endpoints");
+                        assertEquals(reference.apply(firstCommand).result(), first.execute(firstCommand, REQUEST_TIMEOUT).result());
+                        assertEquals(reference.apply(secondCommand).result(), second.execute(secondCommand, REQUEST_TIMEOUT).result());
+                    }
+                    assertTrue(Files.exists(driverDirectory.resolve("cnc.dat")), "Closing one borrower must preserve the owner driver");
+                    CommandCodec.Reply replay = second.execute(firstCommand, REQUEST_TIMEOUT);
+                    assertTrue(replay.replayed());
+                    assertEquals(reference.lastCommandSeq(), replay.commandSeq());
+                    assertEquals(reference.stateHash(), second.state(REQUEST_TIMEOUT).stateHash());
+                }
+                assertTrue(Files.exists(driverDirectory.resolve("cnc.dat")), "All borrowers closed; only owner may delete driver");
+                try (ClusterClient later = new ClusterClient(shared, topology, EGRESS, TRANSPORT)) {
+                    assertEquals(reference.stateHash(), later.state(REQUEST_TIMEOUT).stateHash());
+                }
+            }
+            assertFalse(Files.exists(driverDirectory), "Owner must close and delete its driver last");
+        } finally { stop(nodes); }
+    }
+
     @Test @Timeout(90)
     void freshClientConnectsAfterLeaderDiesAndReplaysConfirmedIdentityBeforeNewWrite() throws Exception {
         Path run = Path.of("build", "bootstrap-regression", "run-" + System.currentTimeMillis()).toAbsolutePath();
