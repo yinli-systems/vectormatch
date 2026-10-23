@@ -109,3 +109,22 @@ python3 -m unittest discover -s deploy -p 'test_remote_service.py' -v
 ```
 
 These tests exercise process identity parsing, stale-PID and signal-race refusals, remote network defaults, and secret-free process arguments. They do not count as cloud UDP, quorum, or independent-host fault evidence.
+
+## Isolated fixed-leader capacity tests
+
+The recorded [capacity campaign](../docs/CAPACITY_RESULTS.md) uses separate trial directories and port base 23000. `VECTOR_APPOINTED_LEADER_ID=0` pins Aeron's **test-only** appointed leader; `VECTOR_MAX_CLUSTER_SESSIONS=128` permits the declared client concurrency. Leave these unset for normal application election and session defaults. Both settings enter the supervisor's non-secret configuration fingerprint.
+
+For the separate 190k-arrival fixture, select the same explicit settings on every member:
+
+```sh
+export VECTOR_STATE_DIR=/opt/vectormatch/runtime/FRESH-CAPACITY-TRIAL
+export VECTOR_PORT_BASE=23000
+export VECTOR_SYNC_LEVEL=2
+export VECTOR_MAX_HEAP=2g
+export VECTOR_APPOINTED_LEADER_ID=0
+export VECTOR_MAX_CLUSTER_SESSIONS=128
+export VECTOR_STATE_PROFILE=capacity-190k-v1
+export VECTOR_OUTBOX_CAPACITY=524288
+```
+
+The node's recorded arguments include its heap, state profile and outbox; startup logs include exact core limits, cache policy and checkpoint bound. The state profile also enters the configuration fingerprint. This test profile requires exact limits and rejects incompatible checkpoints; it does not upgrade the original application state. See [checkpoint capacity](../cluster/CAPACITY.md). Use the pinned immutable node/load artifacts and prepared-state hashes for comparisons; the larger fixture is a separate curve from the default profile.

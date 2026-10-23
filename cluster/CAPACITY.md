@@ -1,6 +1,6 @@
 # Cluster checkpoint capacity
 
-New Cluster state machines use these limits:
+New Cluster state machines use these limits by default:
 
 | State | Maximum |
 |---|---:|
@@ -23,3 +23,11 @@ Increasing an outbox/cache/core configuration beyond the budget is rejected at s
 Existing checkpoints that encode the older one-million-order core limit are rejected explicitly. The implementation does not silently rewrite their configuration or discard their data. Use a fresh development state directory or perform and verify an explicit migration. This change does not modify any already-running JVM; replaying older logs with changed capacity policies is also an upgrade operation requiring validation.
 
 `ClusterCapacityTest` inserts 100,000 accepted orders and verifies that order 100,001 is rejected with unchanged retained-order count and correct available balance. It also checks the default budget, unsafe legacy/outbox configurations, and preservation of limits in the canonical core snapshot.
+
+## Explicit capacity-test state
+
+The separate `capacity-190k-v1` profile exists to observe high arrival rates for at least ten seconds without exhausting retained orders. It requires exactly 200,000 retained orders, 10,000 accounts/producers, 100,000 global cached results, 1,024 results per producer and an outbox of 524,288. Its conservative full-checkpoint budget is **327,566,336 bytes**; only this explicitly selected profile uses a 512 MiB full-checkpoint transport bound. Default checkpoint calls and the client core-snapshot view remain bounded at 256 MiB.
+
+Select it with `VECTOR_STATE_PROFILE=capacity-190k-v1`, or the seventh `ClusterNodeMain` argument. All members must use the same immutable profile and fresh, separate state. A restored capacity checkpoint must match its exact limits, outbox and per-producer cache policy before replacing the current service state. Unknown profiles and mismatches fail before business execution. This is not a migration for the original application lineage.
+
+The [capacity campaign](../docs/CAPACITY_RESULTS.md) pins 2 GiB node heaps and a separate `extended-190k-128` load fixture. It retains earlier default-profile curves independently. Heap size is not total process RSS: each client driver also has file mappings, native memory and threads. Tests cover complete checkpoint restoration, retry identity, corruption, bound rejection and unchanged default behavior.
