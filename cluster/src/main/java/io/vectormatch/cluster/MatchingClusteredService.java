@@ -19,7 +19,8 @@ import java.util.List;
 /** Thin deterministic Cluster adapter; transport IDs never become business idempotency IDs. */
 public final class MatchingClusteredService implements ClusteredService {
     private static final int MAX_RESPONSE_OFFER_ATTEMPTS = 3;
-    private MatchingEngine engine = ClusterCapacity.newEngine();
+    private final ClusterCapacity.StateProfile stateProfile;
+    private MatchingEngine engine;
     private ReplicatedOutbox outbox;
     private Cluster cluster;
     private byte[] viewSnapshot;
@@ -27,22 +28,33 @@ public final class MatchingClusteredService implements ClusteredService {
 
     public MatchingClusteredService() { this(ReplicatedOutbox.DEFAULT_CAPACITY); }
     public MatchingClusteredService(int outboxCapacity) {
-        ClusterCapacity.validate(engine.limits(), outboxCapacity);
+        this(outboxCapacity, ClusterCapacity.StateProfile.DEFAULT);
+    }
+
+    MatchingClusteredService(int outboxCapacity, ClusterCapacity.StateProfile stateProfile) {
+        this.stateProfile = stateProfile;
+        engine = ClusterCapacity.newEngine(stateProfile);
+        ClusterCapacity.validate(stateProfile, engine, outboxCapacity);
         outbox = new ReplicatedOutbox(outboxCapacity);
     }
 
     @Override public void onStart(Cluster cluster, Image snapshotImage) {
         this.cluster = cluster;
         if (snapshotImage != null) {
-            ClusterStateSnapshot.Restored restored = ClusterStateSnapshot.decode(
-                    SnapshotTransport.read(snapshotImage, cluster.idleStrategy()));
-            ClusterCapacity.validate(restored.engine().limits(), restored.outbox().capacity());
-            engine = restored.engine();
-            outbox = restored.outbox();
+            restoreCheckpoint(SnapshotTransport.read(snapshotImage, cluster.idleStrategy(), stateProfile.snapshotMaxBytes()));
             System.out.println("VECTOR_SNAPSHOT_RESTORED hash=" + engine.stateHash()
                     + " commands=" + engine.lastCommandSeq() + " exported=" + outbox.exportedSeq()
                     + " pending=" + outbox.size());
         }
+    }
+
+    void restoreCheckpoint(byte[] checkpoint) {
+        ClusterStateSnapshot.Restored restored = ClusterStateSnapshot.decode(checkpoint, stateProfile.snapshotMaxBytes());
+        ClusterCapacity.validate(stateProfile, restored.engine(), restored.outbox().capacity());
+        engine = restored.engine();
+        outbox = restored.outbox();
+        viewSnapshot = null;
+        viewToken = "";
     }
 
     @Override public void onSessionMessage(ClientSession session, long timestamp, DirectBuffer buffer,
@@ -95,7 +107,8 @@ public final class MatchingClusteredService implements ClusteredService {
     }
 
     @Override public void onTakeSnapshot(ExclusivePublication publication) {
-        SnapshotTransport.write(publication, cluster.idleStrategy(), ClusterStateSnapshot.encode(engine, outbox));
+        SnapshotTransport.write(publication, cluster.idleStrategy(),
+                ClusterStateSnapshot.encode(engine, outbox, stateProfile.snapshotMaxBytes()), stateProfile.snapshotMaxBytes());
         System.out.println("VECTOR_SNAPSHOT_WRITTEN hash=" + engine.stateHash()
                 + " commands=" + engine.lastCommandSeq() + " exported=" + outbox.exportedSeq()
                 + " pending=" + outbox.size());
@@ -109,7 +122,12 @@ public final class MatchingClusteredService implements ClusteredService {
             error = "INVALID_SNAPSHOT_OFFSET_OR_TOKEN";
         } else if (offset == 0 && token.isEmpty()) {
             viewSnapshot = engine.snapshot();
-            viewToken = HexFormat.of().formatHex(ClusterStateSnapshot.digest(viewSnapshot));
+            if (viewSnapshot.length > SnapshotTransport.MAX_SNAPSHOT_BYTES) {
+                // The opt-in full checkpoint budget never expands the public core-view protocol.
+                viewSnapshot = null;
+                viewToken = "";
+                error = "CORE_SNAPSHOT_TOO_LARGE";
+            } else viewToken = HexFormat.of().formatHex(ClusterStateSnapshot.digest(viewSnapshot));
         } else if (viewSnapshot == null || !viewToken.equals(token)) {
             error = "SNAPSHOT_EXPIRED";
         }

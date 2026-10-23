@@ -16,6 +16,11 @@ final class ClusterStateSnapshot {
     private ClusterStateSnapshot() {}
 
     static byte[] encode(MatchingEngine engine, ReplicatedOutbox outbox) {
+        return encode(engine, outbox, SnapshotTransport.MAX_SNAPSHOT_BYTES);
+    }
+
+    static byte[] encode(MatchingEngine engine, ReplicatedOutbox outbox, int maxSnapshotBytes) {
+        SnapshotTransport.requireSupportedMaximum(maxSnapshotBytes);
         if (engine.lastEventSeq() != outbox.lastEventSeq()) throw new IllegalStateException("Core/outbox event sequence differs");
         try {
             byte[] core = engine.snapshot();
@@ -26,13 +31,18 @@ final class ClusterStateSnapshot {
             byte[] payload = bytes.toByteArray();
             bytes.write(digest(payload));
             byte[] snapshot = bytes.toByteArray();
-            if (snapshot.length > SnapshotTransport.MAX_SNAPSHOT_BYTES) throw new IllegalStateException("Cluster snapshot too large");
+            if (snapshot.length > maxSnapshotBytes) throw new IllegalStateException("Cluster snapshot too large");
             return snapshot;
         } catch (IOException impossible) { throw new UncheckedIOException(impossible); }
     }
 
     static Restored decode(byte[] snapshot) {
-        if (snapshot.length < 44 || snapshot.length > SnapshotTransport.MAX_SNAPSHOT_BYTES)
+        return decode(snapshot, SnapshotTransport.MAX_SNAPSHOT_BYTES);
+    }
+
+    static Restored decode(byte[] snapshot, int maxSnapshotBytes) {
+        SnapshotTransport.requireSupportedMaximum(maxSnapshotBytes);
+        if (snapshot.length < 44 || snapshot.length > maxSnapshotBytes)
             throw new IllegalArgumentException("Invalid cluster snapshot length");
         byte[] payload = Arrays.copyOf(snapshot, snapshot.length - 32);
         if (!MessageDigest.isEqual(digest(payload), Arrays.copyOfRange(snapshot, payload.length, snapshot.length)))

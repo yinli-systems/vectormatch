@@ -36,6 +36,12 @@ def main(root):
             assert configuration["declaredOutboxCapacity"] == fixed["outboxCapacity"]
         if "capacityProfile" in fixed:
             assert configuration["profile"] == fixed["capacityProfile"]
+        if fixed.get("stateProfile"):
+            assert configuration["expectedStateProfile"] == fixed["stateProfile"]
+            assert configuration["fullCheckpointMaximumBytes"] == fixed["checkpointMaxBytes"]
+            assert configuration["expectedCoreLimits"] == {
+                "maxAccounts": 10000, "maxProducers": 10000,
+                "maxRetainedOrders": fixed["maxRetainedOrders"], "maxCachedResults": 100000}
         for name in ("requestTimeoutMs", "drainTimeoutMs", "schedulerLatenessLimitMs", "portBase"):
             assert configuration[name] == fixed[name], name
         hosts = ",".join(configuration["memberHosts"])
@@ -49,8 +55,19 @@ def main(root):
             assert "-Daeron.cluster.max.sessions=128" in args
             assert args[args.index("-cp") + 1] == release + "/dist/cluster/lib/*"
             index = args.index("io.vectormatch.cluster.ClusterNodeMain")
-            assert args[index + 1:] == [str(node), trial["state"], str(fixed["portBase"]),
-                                        str(fixed["syncLevel"]), str(fixed["outboxCapacity"]), hosts]
+            node_arguments = [str(node), trial["state"], str(fixed["portBase"]),
+                              str(fixed["syncLevel"]), str(fixed["outboxCapacity"]), hosts]
+            if fixed.get("stateProfile"):
+                node_arguments.append(fixed["stateProfile"])
+            assert args[index + 1:] == node_arguments
+            if fixed.get("stateProfile"):
+                startup = (directory / f"node{node}" / "process.log").read_text()
+                assert "profile=" + fixed["stateProfile"] in startup, "Missing state profile startup evidence"
+                assert "outbox=" + str(fixed["outboxCapacity"]) in startup, "Outbox startup evidence differs"
+                assert "checkpointMaxBytes=" + str(fixed["checkpointMaxBytes"]) in startup
+                assert "maxRetainedOrders=" + str(fixed["maxRetainedOrders"]) in startup
+                assert "resultCachePerProducer=" + str(fixed["resultCachePerProducer"]) in startup
+                hashes[f"node{node}/process.log"] = hashlib.sha256(startup.encode()).hexdigest()
             hashes[str(path.relative_to(directory))] = hashlib.sha256(path.read_bytes()).hexdigest()
         snapshot = directory / "prepared-snapshot.bin"
         assert hashlib.sha256(snapshot.read_bytes()).hexdigest() == configuration["preparedSnapshotSha256"]

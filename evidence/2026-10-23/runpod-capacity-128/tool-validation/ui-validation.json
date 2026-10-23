@@ -1,0 +1,303 @@
+{
+  "schemaVersion": 1,
+  "verifiedAtUtc": "2026-10-23T20:02:36.201653+00:00",
+  "scope": "Independent repeat of UI export, SSR, typecheck and isolated production build. Only this validation JSON is added to repository; export fixtures and build outputs are in a private temporary directory. No cloud deployment or real browser interaction is claimed.",
+  "sourceFileSha256": {
+    "web/src/CapacityCurve.tsx": "ebf1e7f07a1ef1844f3a14978f52003722412627a9820a100c29d61b741e1aa0",
+    "web/src/CapacityCurve.css": "84c5e4f72cfe6a5a1e4e00ce26ef83e91f3264899c6b19dff864f389ffaac19c",
+    "web/src/Evidence.tsx": "c2b2d4c66449320c2ad857e4b9ba3cd711f7c3b9a9d3659483ff31f6cb32710e",
+    "scripts/export-capacity-ui.py": "18674ed6b98fa8c770313a7992e6ed399147eac98c69cbaf64aaf5300db6a1f3"
+  },
+  "sourceFilesUnchangedDuringValidation": true,
+  "actualCampaignPointCounts": {
+    "baseline": 11,
+    "extended": 11,
+    "clients-128": 4
+  },
+  "allActualPointsRetained": 26,
+  "temporaryDirectory": "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70",
+  "isolatedBuildArtifactsSha256": {
+    "index.html": "745f3f3a580c674ac33074dc8c3f51ecc4cb63dca16efa2e3215acbedb640fbe",
+    "favicon.svg": "075d7c0e7d4d891f897f7999b9fa8c8971f7161d3d83f486bb21190243a7b768",
+    "assets/index-Cyw-L1bG.js.map": "57e770c94210c9ee62810b7e3a2ffc9a8d1ca1f61ea08b8928afa641ecbb69b0",
+    "assets/index-Cyw-L1bG.js": "24cc10560812ba9fba3510f249b1b10c4a8ebc11847b96bbf14436351ce4f7fb",
+    "assets/index-DrvF4Agj.css": "353861a1ad95b3528a706d533a4ae3f1465758f2ff912fbd33e4ca87b5eb4248"
+  },
+  "checks": [
+    {
+      "name": "export-actual-baseline",
+      "argv": [
+        "python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/scripts/export-capacity-ui.py",
+        "/Users/kevin/Documents/ChatGPT/App 2/evidence/2026-10-23/runpod-capacity/analysis/summary.json",
+        "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/baseline.json",
+        "--index",
+        "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/index.json",
+        "--cohort-id",
+        "baseline",
+        "--title",
+        "Baseline \u00b7 30k commands"
+      ],
+      "cwd": "/Users/kevin/Documents/ChatGPT/App 2",
+      "startedAtUtc": "2026-10-23T20:02:33.232226+00:00",
+      "elapsedSeconds": 0.09311062499999999,
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "passed": true,
+      "stdout": "EXPORTED_CAPACITY_POINTS 11 COHORT baseline\n",
+      "stderr": ""
+    },
+    {
+      "name": "export-actual-extended",
+      "argv": [
+        "python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/scripts/export-capacity-ui.py",
+        "/Users/kevin/Documents/ChatGPT/App 2/evidence/2026-10-23/runpod-capacity-extended/analysis/summary.json",
+        "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/extended.json",
+        "--index",
+        "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/index.json",
+        "--cohort-id",
+        "extended",
+        "--title",
+        "Extended \u00b7 90k commands"
+      ],
+      "cwd": "/Users/kevin/Documents/ChatGPT/App 2",
+      "startedAtUtc": "2026-10-23T20:02:33.328954+00:00",
+      "elapsedSeconds": 0.039872458,
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "passed": true,
+      "stdout": "EXPORTED_CAPACITY_POINTS 11 COHORT extended\n",
+      "stderr": ""
+    },
+    {
+      "name": "export-actual-clients-128",
+      "argv": [
+        "python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/scripts/export-capacity-ui.py",
+        "/Users/kevin/Documents/ChatGPT/App 2/evidence/2026-10-23/runpod-capacity-128/analysis/summary.json",
+        "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/clients-128.json",
+        "--index",
+        "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/index.json",
+        "--cohort-id",
+        "clients-128",
+        "--title",
+        "Controlled 64 / 128 clients"
+      ],
+      "cwd": "/Users/kevin/Documents/ChatGPT/App 2",
+      "startedAtUtc": "2026-10-23T20:02:33.370117+00:00",
+      "elapsedSeconds": 0.04248133300000001,
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "passed": true,
+      "stdout": "EXPORTED_CAPACITY_POINTS 4 COHORT clients-128\n",
+      "stderr": ""
+    },
+    {
+      "name": "replace-existing-cohort",
+      "argv": [
+        "python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/scripts/export-capacity-ui.py",
+        "/Users/kevin/Documents/ChatGPT/App 2/evidence/2026-10-23/runpod-capacity-extended/analysis/summary.json",
+        "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/extended.json",
+        "--index",
+        "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/index.json",
+        "--cohort-id",
+        "extended",
+        "--title",
+        "Extended \u00b7 90k commands"
+      ],
+      "cwd": "/Users/kevin/Documents/ChatGPT/App 2",
+      "startedAtUtc": "2026-10-23T20:02:33.412701+00:00",
+      "elapsedSeconds": 0.051180167,
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "passed": true,
+      "stdout": "EXPORTED_CAPACITY_POINTS 11 COHORT extended\n",
+      "stderr": ""
+    },
+    {
+      "name": "legacy-export-compatible",
+      "argv": [
+        "python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/scripts/export-capacity-ui.py",
+        "/Users/kevin/Documents/ChatGPT/App 2/evidence/2026-10-23/runpod-capacity/analysis/summary.json",
+        "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/legacy.json",
+        "--index",
+        "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/index.json"
+      ],
+      "cwd": "/Users/kevin/Documents/ChatGPT/App 2",
+      "startedAtUtc": "2026-10-23T20:02:33.464042+00:00",
+      "elapsedSeconds": 0.049257916999999984,
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "passed": true,
+      "stdout": "EXPORTED_CAPACITY_POINTS 11 COHORT legacy\n",
+      "stderr": ""
+    },
+    {
+      "name": "short-window-export-guard",
+      "argv": [
+        "python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/scripts/export-capacity-ui.py",
+        "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/short-summary.json",
+        "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/short.json"
+      ],
+      "cwd": "/Users/kevin/Documents/ChatGPT/App 2",
+      "startedAtUtc": "2026-10-23T20:02:33.514900+00:00",
+      "elapsedSeconds": 0.057095167,
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "passed": true,
+      "stdout": "EXPORTED_CAPACITY_POINTS 4 COHORT legacy\n",
+      "stderr": ""
+    },
+    {
+      "name": "reject-mixed-fingerprints-including-invalid",
+      "argv": [
+        "python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/scripts/export-capacity-ui.py",
+        "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/mixed-summary.json",
+        "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/mixed.json"
+      ],
+      "cwd": "/Users/kevin/Documents/ChatGPT/App 2",
+      "startedAtUtc": "2026-10-23T20:02:33.572911+00:00",
+      "elapsedSeconds": 0.030140082999999984,
+      "exitCode": 1,
+      "expectedExitCode": 1,
+      "passed": true,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"/Users/kevin/Documents/ChatGPT/App 2/scripts/export-capacity-ui.py\", line 88, in <module>\n    main()\n  File \"/Users/kevin/Documents/ChatGPT/App 2/scripts/export-capacity-ui.py\", line 76, in main\n    capacity = make_capacity(summary, args.cohort_id, args.title, args.scope, args.report_path)\n  File \"/Users/kevin/Documents/ChatGPT/App 2/scripts/export-capacity-ui.py\", line 14, in make_capacity\n    raise ValueError(\"Choose one fixed configuration campaign for one UI curve, including invalid trials\")\nValueError: Choose one fixed configuration campaign for one UI curve, including invalid trials\n"
+    },
+    {
+      "name": "validate-exported-actual-schema",
+      "argv": [
+        "python3",
+        "-B",
+        "-c",
+        "import json,sys\nfrom pathlib import Path\nroot=Path(sys.argv[1]);index=json.loads((root/'index.json').read_text());expected=json.loads(sys.argv[2]);short_id=sys.argv[3]\nassert [c['id'] for c in index['capacityCohorts']]==['baseline','extended','clients-128']\nassert {c['id']:len(c['points']) for c in index['capacityCohorts']}==expected\nassert index['runs']==[{'id':'historical-run-preserved'}]\nassert len(index['capacityCohorts'])==3 and index['capacity']['points']==json.loads((root/'legacy.json').read_text())['points']\nshort=json.loads((root/'short.json').read_text());point=next(p for p in short['points'] if p['id']==short_id);assert point['stable'] is False and point['windowSeconds']==9.9\nfor cohort in index['capacityCohorts']:\n for point in cohort['points']:\n  for key in ['clientNotSent','queueDrops','rejected','serverErrors','unknown','unresolved','allOfferedAcceptedP99Millis','drainSeconds']:assert key in point\nassert not (root/'mixed.json').exists()\nprint(json.dumps({'status':'PASS','cohortPointCounts':expected,'retainedPoints':sum(expected.values()),'checks':['upsert-replaces-without-duplicate','historical-runs-preserved','legacy-export-preserves-cohorts','short-window-stable-false-by-id','mixed-fingerprints-refused-before-output','loss-unknown-drain-fields-present']}))\n",
+        "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70",
+        "{\"baseline\": 11, \"extended\": 11, \"clients-128\": 4}",
+        "z-control-8000-w128"
+      ],
+      "cwd": "/Users/kevin/Documents/ChatGPT/App 2",
+      "startedAtUtc": "2026-10-23T20:02:33.603089+00:00",
+      "elapsedSeconds": 0.024257333999999964,
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "passed": true,
+      "stdout": "{\"status\": \"PASS\", \"cohortPointCounts\": {\"baseline\": 11, \"extended\": 11, \"clients-128\": 4}, \"retainedPoints\": 26, \"checks\": [\"upsert-replaces-without-duplicate\", \"historical-runs-preserved\", \"legacy-export-preserves-cohorts\", \"short-window-stable-false-by-id\", \"mixed-fingerprints-refused-before-output\", \"loss-unknown-drain-fields-present\"]}\n",
+      "stderr": ""
+    },
+    {
+      "name": "react-static-render-actual-cohorts",
+      "argv": [
+        "/Users/kevin/Documents/ChatGPT/App 2/.tools/node/bin/node",
+        "--input-type=module",
+        "-e",
+        "import fs from 'node:fs';import path from 'node:path';import {createRequire} from 'node:module';import {build} from './web/node_modules/esbuild/lib/main.js';\nconst require=createRequire(path.resolve('web/package.json'));const result=await build({stdin:{contents:'export { default as CapacityCurve, normalizeCapacity, normalizeCapacityCohorts } from \"./web/src/CapacityCurve.tsx\";',resolveDir:process.cwd(),loader:'tsx'},bundle:true,write:false,platform:'node',format:'cjs',packages:'external',jsx:'automatic',loader:{'.css':'empty'},define:{'import.meta.env':'{}'}});\nconst module={exports:{}};new Function('require','module','exports',result.outputFiles[0].text)(require,module,module.exports);const {CapacityCurve,normalizeCapacity,normalizeCapacityCohorts}=module.exports;const React=require('react');const {renderToStaticMarkup}=require('react-dom/server');const index=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));const cohorts=normalizeCapacityCohorts(index.capacityCohorts);const expected=Number(process.argv[2]);\nif(cohorts.length!==3||cohorts.reduce((s,c)=>s+c.points.length,0)!==expected)throw Error('Actual cohort points were lost');const html=renderToStaticMarkup(React.createElement(CapacityCurve,{evidence:normalizeCapacity(index.capacity),cohorts}));if(!html.includes('FIXED CONFIGURATION GROUP')||!html.includes('128 clients')||!html.includes('#c0a5df')||!html.includes('Client not sent')||!html.includes('All-offered accepted p99'))throw Error('Cohort/128/loss evidence missing');\nfor(const cohort of cohorts){const rendered=renderToStaticMarkup(React.createElement(CapacityCurve,{evidence:cohort}));for(const point of cohort.points)if(!rendered.includes(point.id))throw Error(`Missing ${point.id}`);}\nconst short=normalizeCapacity({title:'Short',points:[{id:'under-ten',rate:9000,workers:128,goodput:9000,p99Millis:1,valid:true,stable:true,windowSeconds:9.9}]});const shortHtml=renderToStaticMarkup(React.createElement(CapacityCurve,{evidence:short}));if(!shortHtml.includes('capacity-verdict insufficient')||shortHtml.includes('capacity-verdict stable')||!shortHtml.includes('Short window'))throw Error('Short point was incorrectly stable');\nconst old=normalizeCapacity({title:'Legacy',points:[{id:'old',rate:100,goodput:99,p99Millis:2,workers:1,valid:true,stable:true,windowSeconds:10}]});if(!renderToStaticMarkup(React.createElement(CapacityCurve,{evidence:old})).includes('Stable window'))throw Error('Legacy rendering failed');console.log(JSON.stringify({status:'PASS',cohorts:cohorts.length,retainedPoints:expected,checks:['cohort-selector-rendered','all-point-ids-retained','128-color-and-legend','loss-and-all-offered-p99-labels','short-window-insufficient','legacy-rendering'],scope:'SSR/static checks; no browser interaction claimed'}));\n",
+        "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/index.json",
+        "26"
+      ],
+      "cwd": "/Users/kevin/Documents/ChatGPT/App 2",
+      "startedAtUtc": "2026-10-23T20:02:33.627388+00:00",
+      "elapsedSeconds": 0.33818337499999995,
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "passed": true,
+      "stdout": "{\"status\":\"PASS\",\"cohorts\":3,\"retainedPoints\":26,\"checks\":[\"cohort-selector-rendered\",\"all-point-ids-retained\",\"128-color-and-legend\",\"loss-and-all-offered-p99-labels\",\"short-window-insufficient\",\"legacy-rendering\"],\"scope\":\"SSR/static checks; no browser interaction claimed\"}\n",
+      "stderr": ""
+    },
+    {
+      "name": "typescript-no-emit",
+      "argv": [
+        "/Users/kevin/Documents/ChatGPT/App 2/.tools/node/bin/node",
+        "/Users/kevin/Documents/ChatGPT/App 2/web/node_modules/typescript/bin/tsc",
+        "--project",
+        "/Users/kevin/Documents/ChatGPT/App 2/web/tsconfig.json",
+        "--noEmit",
+        "--incremental",
+        "false"
+      ],
+      "cwd": "/Users/kevin/Documents/ChatGPT/App 2",
+      "startedAtUtc": "2026-10-23T20:02:33.965623+00:00",
+      "elapsedSeconds": 1.037533167,
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "passed": true,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "isolated-production-vite-build",
+      "argv": [
+        "/Users/kevin/Documents/ChatGPT/App 2/.tools/node/bin/node",
+        "/Users/kevin/Documents/ChatGPT/App 2/web/node_modules/vite/bin/vite.js",
+        "build",
+        "--configLoader",
+        "runner",
+        "--outDir",
+        "/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/dist",
+        "--emptyOutDir"
+      ],
+      "cwd": "/Users/kevin/Documents/ChatGPT/App 2/web",
+      "startedAtUtc": "2026-10-23T20:02:35.003220+00:00",
+      "elapsedSeconds": 0.871807625,
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "passed": true,
+      "stdout": "vite v6.4.5 building for production...\ntransforming...\n\u2713 33 modules transformed.\nrendering chunks...\ncomputing gzip size...\n../../../../../../var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/dist/index.html                   0.68 kB \u2502 gzip:  0.40 kB\n../../../../../../var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/dist/assets/index-DrvF4Agj.css   53.25 kB \u2502 gzip: 11.98 kB\n../../../../../../var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/vectormatch-ui-validation-5jj9ux70/dist/assets/index-Cyw-L1bG.js   288.13 kB \u2502 gzip: 88.21 kB \u2502 map: 1,242.56 kB\n\u2713 built in 693ms\n",
+      "stderr": ""
+    },
+    {
+      "name": "frontend-format-check",
+      "argv": [
+        "/Users/kevin/Documents/ChatGPT/App 2/.tools/node/bin/node",
+        "/Users/kevin/Documents/ChatGPT/App 2/web/node_modules/prettier/bin/prettier.cjs",
+        "--check",
+        "web/src/CapacityCurve.tsx",
+        "web/src/CapacityCurve.css",
+        "web/src/Evidence.tsx"
+      ],
+      "cwd": "/Users/kevin/Documents/ChatGPT/App 2",
+      "startedAtUtc": "2026-10-23T20:02:35.875124+00:00",
+      "elapsedSeconds": 0.20927262499999966,
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "passed": true,
+      "stdout": "Checking formatting...\nAll matched files use Prettier code style!\n",
+      "stderr": ""
+    },
+    {
+      "name": "plot-classification-marker-branch-review",
+      "argv": [
+        "python3",
+        "-B",
+        "-c",
+        "import importlib.util,json,sys,tempfile,types\nfrom pathlib import Path\nfrom unittest.mock import patch\nspec=importlib.util.spec_from_file_location('analyzer','scripts/analyze-capacity.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)\nclass Axis:\n def __init__(self):self.markers=[]\n def plot(self,*args,**kwargs):return [types.SimpleNamespace(get_color=lambda:'#123456')]\n def scatter(self,*args,**kwargs):self.markers.append(kwargs['marker'])\n def set(self,**kwargs):pass\n def grid(self,**kwargs):pass\n def legend(self,**kwargs):pass\n def set_yscale(self,*args):pass\n def set_ylabel(self,*args):pass\nclass Axes:\n def __init__(self):self.flat=[Axis() for _ in range(4)]\n def __getitem__(self,key):return self.flat[key[0]*2+key[1]]\naxes=Axes();fig=types.SimpleNamespace(suptitle=lambda *a,**k:None,savefig=lambda *a,**k:None)\nmatplotlib=types.ModuleType('matplotlib');matplotlib.use=lambda *a:None;pyplot=types.ModuleType('matplotlib.pyplot');pyplot.subplots=lambda *a,**k:(fig,axes);pyplot.close=lambda *a:None;matplotlib.pyplot=pyplot\ntrials=[]\nfor i,(valid,classification,stable) in enumerate([(True,'OBSERVED_STABLE_WINDOW',True),(True,'INSUFFICIENT_WINDOW_OBSERVATIONS',False),(True,'OBSERVED_OVERLOAD_OR_UNDERSIZED_CLIENT',False),(False,'INSUFFICIENT_WINDOW_OBSERVATIONS',False)]):\n trials.append({'phase':'fixture','workers':64,'queueCapacityPerWorker':64,'comparisonFingerprintSha256':'a'*64,'targetArrivalRatePerSecond':100+i,'derived':{'arrivalWindowGoodputPerSecond':100,'latency':{'conditionalAccepted':{'p99Millis':1}},'clientNotSent':0},'scheduledArrivals':100,'backlog':{'secondHalfFittedGrowthCommands':0},'measurementValid':valid,'classification':classification,'observedStableWindow':stable})\nwith patch.dict(sys.modules,{'matplotlib':matplotlib,'matplotlib.pyplot':pyplot}):\n with tempfile.TemporaryDirectory() as d:result=m.plot_trials(trials,Path(d))\nassert all(axis.markers==['D','^','x'] for axis in axes.flat)\nprint(json.dumps({'status':'PASS','axes':4,'overlayMarkersPerAxis':axes.flat[0].markers,'priority':'invalid red X before insufficient diamond before nonstable triangle','scope':'Stubbed plotting API branch validation; does not generate or visually validate a real Matplotlib artifact'}))\n"
+      ],
+      "cwd": "/Users/kevin/Documents/ChatGPT/App 2",
+      "startedAtUtc": "2026-10-23T20:02:36.084449+00:00",
+      "elapsedSeconds": 0.11513224999999983,
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "passed": true,
+      "stdout": "{\"status\": \"PASS\", \"axes\": 4, \"overlayMarkersPerAxis\": [\"D\", \"^\", \"x\"], \"priority\": \"invalid red X before insufficient diamond before nonstable triangle\", \"scope\": \"Stubbed plotting API branch validation; does not generate or visually validate a real Matplotlib artifact\"}\n",
+      "stderr": ""
+    }
+  ],
+  "plotClassificationReview": {
+    "source": "scripts/analyze-capacity.py",
+    "sourceSha256": "48cafc0ca23d68d2d9d20c87655370c1acc5c261cc174e611ecf2bffe63ffbea",
+    "conclusion": "Current priority accurately distinguishes invalid measurement (red X), valid INSUFFICIENT_WINDOW_OBSERVATIONS (hollow diamond), and other valid nonstable observations (hollow triangle). All four panels use the same classification branches. Existing circles under overlays do not change classification. Missing metric values receive no invented point.",
+    "limitations": "Read-only source and stubbed branch review; no independent visual QA of scientific figure in this check."
+  },
+  "passed": true
+}

@@ -97,7 +97,7 @@ public final class ClusterNodeMain {
                 .archiveContext(localArchive.clone())
                 .clusterDir(clusterDir)
                 .snapshotChannel(transport.withRecordingMtu(ClusteredServiceContainer.Configuration.snapshotChannel()))
-                .clusteredService(new MatchingClusteredService(outboxCapacity))
+                .clusteredService(new MatchingClusteredService(outboxCapacity, configuration.stateProfile()))
                 .errorHandler(errors);
 
         try (ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
@@ -106,17 +106,20 @@ public final class ClusterNodeMain {
                      consensus.terminationHook(barrier::signalAll));
              ClusteredServiceContainer ignoredService = ClusteredServiceContainer.launch(
                      service.terminationHook(barrier::signalAll))) {
-            System.out.printf("VECTOR_CLUSTER_STARTED node=%d pid=%d sync=%d state=%s members=%s mtu=%d%n",
-                    node, ProcessHandle.current().pid(), sync, base, topology.members(), transport.mtuLength());
+            System.out.printf("VECTOR_CLUSTER_STARTED node=%d pid=%d sync=%d state=%s members=%s mtu=%d profile=%s limits=%s outbox=%d checkpointMaxBytes=%d resultCachePerProducer=%d%n",
+                    node, ProcessHandle.current().pid(), sync, base, topology.members(), transport.mtuLength(),
+                    configuration.stateProfile().id(), configuration.stateProfile().limits(), outboxCapacity,
+                    configuration.stateProfile().snapshotMaxBytes(), configuration.stateProfile().resultCachePerProducer());
             barrier.await();
         }
     }
 
-    record Configuration(int node, Path base, int sync, int outboxCapacity, ClusterTopology topology, NetworkTransport transport) {}
+    record Configuration(int node, Path base, int sync, int outboxCapacity, ClusterTopology topology,
+                         NetworkTransport transport, ClusterCapacity.StateProfile stateProfile) {}
 
     static Configuration configuration(String[] args, Map<String, String> environment) {
-        if (args.length < 2 || args.length > 6) {
-            throw new IllegalArgumentException("Usage: ClusterNodeMain <node> <state-dir> [port-base] [sync:0|2] [outbox-capacity] [hosts-csv]");
+        if (args.length < 2 || args.length > 7) {
+            throw new IllegalArgumentException("Usage: ClusterNodeMain <node> <state-dir> [port-base] [sync:0|2] [outbox-capacity] [hosts-csv] [state-profile]");
         }
         int node = Integer.parseInt(args[0]);
         int ports = Integer.parseInt(args.length > 2 ? args[2] : environment.getOrDefault("VECTOR_PORT_BASE", "19000"));
@@ -125,9 +128,11 @@ public final class ClusterNodeMain {
         ClusterTopology topology = ClusterTopology.parse(ports, args.length > 5 ? args[5] : environment.get(ClusterTopology.HOSTS_ENV));
         topology.host(node); // Validate membership before creating any directories.
         if (sync != 0 && sync != 2) throw new IllegalArgumentException("sync must be 0 or 2");
-        ClusterCapacity.validate(ClusterCapacity.newEngine().limits(), capacity);
+        ClusterCapacity.StateProfile profile = ClusterCapacity.stateProfile(args.length > 6 ? args[6]
+                : environment.get("VECTOR_STATE_PROFILE"));
+        ClusterCapacity.validate(profile, profile.limits(), capacity);
         if (capacity < 1 || capacity > 1_000_000) throw new IllegalArgumentException("Invalid outbox capacity");
         Path base = Path.of(args[1]).toAbsolutePath().normalize().resolve("node-" + node);
-        return new Configuration(node, base, sync, capacity, topology, NetworkTransport.fromEnvironment(environment));
+        return new Configuration(node, base, sync, capacity, topology, NetworkTransport.fromEnvironment(environment), profile);
     }
 }

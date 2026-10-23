@@ -66,4 +66,22 @@ class ClusterTopologyTest {
         assertEquals("10.20.0.1", topology.host(0));
         assertThrows(UnsupportedOperationException.class, () -> topology.hosts().add("10.0.0.3"));
     }
+
+    @Test void explicitCapacityProfileIsBoundedAndCliOverridesEnvironment() {
+        String[] args = {"0", "build/unused-capacity-profile", "23000", "2", "524288", "127.0.0.1"};
+        var capacity = ClusterNodeMain.configuration(args, Map.of("VECTOR_STATE_PROFILE", "capacity-190k-v1"));
+        assertEquals(ClusterCapacity.StateProfile.CAPACITY_190K_V1, capacity.stateProfile());
+        assertEquals(200_000, capacity.stateProfile().limits().maxRetainedOrders());
+        assertEquals(512 * 1024 * 1024, capacity.stateProfile().snapshotMaxBytes());
+        assertThrows(IllegalArgumentException.class, () -> ClusterNodeMain.configuration(args, Map.of()));
+        assertThrows(IllegalArgumentException.class,
+                () -> ClusterNodeMain.configuration(args, Map.of("VECTOR_STATE_PROFILE", "capacity-unknown")));
+        assertThrows(IllegalArgumentException.class, () -> ClusterNodeMain.configuration(
+                new String[] {"0", "build/unused-capacity-profile", "23000", "2", "262144", "127.0.0.1"},
+                Map.of("VECTOR_STATE_PROFILE", "capacity-190k-v1")));
+        var normal = ClusterNodeMain.configuration(
+                new String[] {"0", "build/unused-capacity-profile", "23000", "2", "65536", "127.0.0.1", "default"},
+                Map.of("VECTOR_STATE_PROFILE", "capacity-190k-v1"));
+        assertEquals(ClusterCapacity.StateProfile.DEFAULT, normal.stateProfile());
+    }
 }

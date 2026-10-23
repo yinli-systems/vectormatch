@@ -89,6 +89,26 @@ class RemoteServiceTest(unittest.TestCase):
             self.assertEqual(environment["VM_PG_PASSWORD"], "secret-value")
             self.assertEqual(args[-1], "init")
 
+    def test_capacity_state_profile_is_explicit_bounded_node_configuration(self):
+        settings = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4",
+                    "VECTOR_STATE_PROFILE": "capacity-190k-v1", "VECTOR_OUTBOX_CAPACITY": "524288",
+                    "VECTOR_MAX_HEAP": "2g"}
+        with patch.dict(os.environ, settings, clear=True), \
+                patch.object(remote, "distribution", return_value=Path("/bundle/dist/cluster")), \
+                patch.object(remote, "java", return_value="/jdk/bin/java"):
+            args, environment = remote.command("node", 0, Path("/state/node-0"), "start")
+            self.assertEqual(args[-7:], ["0", "/state", "19000", "2", "524288",
+                                          settings["VECTOR_CLUSTER_HOSTS"], "capacity-190k-v1"])
+            self.assertIn("-Xmx2g", args)
+            self.assertNotEqual(remote.configuration_fingerprint("node", environment),
+                                remote.configuration_fingerprint("node", {**environment, "VECTOR_STATE_PROFILE": "default"}))
+            os.environ["VECTOR_OUTBOX_CAPACITY"] = "262144"
+            with self.assertRaisesRegex(ValueError, "requires outbox"):
+                remote.command("node", 0, Path("/state/node-0"), "start")
+            os.environ["VECTOR_STATE_PROFILE"] = "unknown-profile"
+            with self.assertRaisesRegex(ValueError, "VECTOR_STATE_PROFILE"):
+                remote.command("node", 0, Path("/state/node-0"), "start")
+
     def test_appointed_leader_is_explicit_test_only_node_configuration(self):
         settings = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4"}
         with patch.dict(os.environ, settings, clear=True), \

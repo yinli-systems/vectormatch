@@ -25,7 +25,8 @@ public final class RemoteCapacityExperiment {
     enum Profile {
         BASELINE("baseline-30k", MAX_ARRIVALS, 60_000, 300_000_000, 65_536),
         EXTENDED_90K("extended-90k", 90_000, 180_000, 900_000_000, 262_144),
-        EXTENDED_90K_128("extended-90k-128", 90_000, 180_000, 900_000_000, 262_144, 128, 12, 8);
+        EXTENDED_90K_128("extended-90k-128", 90_000, 180_000, 900_000_000, 262_144, 128, 12, 8),
+        EXTENDED_190K_128("extended-190k-128", 190_000, 380_000, 1_900_000_000L, 524_288, 128, 12, 8);
         final String label;
         final int maximumArrivals, outboxCapacity, maximumWorkers, sessionReapWaitSeconds, connectionConcurrency;
         final long makerQuantity, buyerFunding;
@@ -37,6 +38,22 @@ public final class RemoteCapacityExperiment {
             this.label = label; this.maximumArrivals = maximumArrivals; this.makerQuantity = makerQuantity;
             this.buyerFunding = buyerFunding; this.outboxCapacity = outboxCapacity; this.maximumWorkers = maximumWorkers;
             this.sessionReapWaitSeconds = sessionReapWaitSeconds; this.connectionConcurrency = connectionConcurrency;
+        }
+        ClusterCapacity.StateProfile stateProfile() {
+            return this == EXTENDED_190K_128 ? ClusterCapacity.StateProfile.CAPACITY_190K_V1 : ClusterCapacity.StateProfile.DEFAULT;
+        }
+        Limits expectedLimits() { return stateProfile().limits(); }
+        int snapshotMaxBytes() { return stateProfile().snapshotMaxBytes(); }
+        void validateLimits(Limits limits) {
+            if (this == EXTENDED_190K_128) {
+                require(limits.equals(expectedLimits()), "190k fixture requires exact configured core limits");
+                ClusterCapacity.validate(stateProfile(), limits, outboxCapacity);
+            } else ClusterCapacity.validate(limits, outboxCapacity);
+        }
+        void validateInitialEngine(MatchingEngine engine) {
+            if (this == EXTENDED_190K_128) require(engine.resultCachePerProducer() == stateProfile().resultCachePerProducer(),
+                    "190k fixture requires the configured per-producer result cache before setup");
+            validateLimits(engine.limits());
         }
         static Profile parse(String value) {
             for (Profile profile : values()) if (profile.label.equals(value)) return profile;
@@ -133,7 +150,11 @@ public final class RemoteCapacityExperiment {
         String producer = "capacity-fixed-v1"; // Isolated fresh trial state is required; deterministic preparation permits byte-for-byte baseline comparisons.
         Map<String, Object> configuration = fields("startedAt", Instant.now().toString(), "producerPrefix", producer,
                 "profile", profile.label, "profileMaximumArrivals", profile.maximumArrivals, "declaredOutboxCapacity", profile.outboxCapacity,
-                "profileMaximumWorkers", profile.maximumWorkers, "sessionReapWaitSecondsPerPhase", profile.sessionReapWaitSeconds,
+                "expectedStateProfile", profile.stateProfile().id(), "expectedCoreLimits", fields("maxAccounts", profile.expectedLimits().maxAccounts(),
+                        "maxProducers", profile.expectedLimits().maxProducers(), "maxRetainedOrders", profile.expectedLimits().maxRetainedOrders(),
+                        "maxCachedResults", profile.expectedLimits().maxCachedResults()),
+                "expectedResultCachePerProducer", profile.stateProfile().resultCachePerProducer(),
+                "fullCheckpointMaximumBytes", profile.snapshotMaxBytes(), "profileMaximumWorkers", profile.maximumWorkers, "sessionReapWaitSecondsPerPhase", profile.sessionReapWaitSeconds,
                 "clientConnectionConcurrencyLimit", profile.connectionConcurrency == 0 ? "unbounded" : profile.connectionConcurrency,
                 "validationTimeoutSeconds", CHECK_TIMEOUT.toSeconds(), "setupTimeoutSeconds", SETUP_TIMEOUT.toSeconds(),
                 "ratePerSecond", options.rate(), "scheduledArrivals", options.arrivals(), "workers", options.workers(),
@@ -161,7 +182,8 @@ public final class RemoteCapacityExperiment {
                 Files.write(directory.resolve("initial-snapshot.bin"), initial);
                 reference = MatchingEngine.restore(initial);
                 reference.checkInvariants();
-                ClusterCapacity.validate(reference.limits(), profile.outboxCapacity);
+                profile.validateInitialEngine(reference);
+                configuration.put("initialResultCachePerProducer", reference.resultCachePerProducer());
                 require(reference.lastCommandSeq() == 0, "Trial requires fresh independent cluster state; never reset a live application lineage");
                 require(reference.book(1).bids().isEmpty() && reference.book(1).asks().isEmpty(), "Trial requires an empty book and no other business writers");
                 require(reference.retainedOrderCount() + options.arrivals() + WARMUP + 1 < reference.limits().maxRetainedOrders(), "Insufficient retained-order headroom");
@@ -440,7 +462,9 @@ public final class RemoteCapacityExperiment {
         long maxConfirmation = Arrays.stream(samples).mapToLong(s -> s.confirmed).max().orElse(load.windowEnd);
         long elapsed = Math.max(load.windowEnd, maxConfirmation) - load.origin;
         return fields("test", "external-replicated-matching-fixed-arrival-capacity", "profile", load.options.profile().label,
-                "declaredOutboxCapacity", load.options.profile().outboxCapacity, "scheduledArrivals", samples.length,
+                "declaredOutboxCapacity", load.options.profile().outboxCapacity,
+                "expectedStateProfile", load.options.profile().stateProfile().id(), "fullCheckpointMaximumBytes", load.options.profile().snapshotMaxBytes(),
+                "scheduledArrivals", samples.length,
                 "scheduledOriginUtcApproximate", load.scheduledOriginUtc, "targetArrivalRatePerSecond", load.options.rate(), "workers", load.options.workers(), "queueCapacityPerWorker", load.options.queueCapacity(),
                 "arrivalWindowSeconds", (load.windowEnd - load.origin) / 1e9, "completionWindowSeconds", elapsed / 1e9,
                 "enqueuedCommands", load.admitted.get(), "startedCommands", load.started.get(), "confirmedAcceptedCommands", accepted,

@@ -16,11 +16,17 @@ final class SnapshotTransport {
     private static final int VERSION = 1;
     static final int HEADER_LENGTH = 24;
     static final int MAX_SNAPSHOT_BYTES = 256 * 1024 * 1024;
+    static final int CAPACITY_MAX_SNAPSHOT_BYTES = 512 * 1024 * 1024;
 
     private SnapshotTransport() {}
 
     static void write(ExclusivePublication publication, IdleStrategy idle, byte[] snapshot) {
-        if (snapshot.length > MAX_SNAPSHOT_BYTES) throw new IllegalStateException("Snapshot exceeds configured limit");
+        write(publication, idle, snapshot, MAX_SNAPSHOT_BYTES);
+    }
+
+    static void write(ExclusivePublication publication, IdleStrategy idle, byte[] snapshot, int maxSnapshotBytes) {
+        requireSupportedMaximum(maxSnapshotBytes);
+        if (snapshot.length > maxSnapshotBytes) throw new IllegalStateException("Snapshot exceeds configured limit");
         int chunkCapacity = publication.maxPayloadLength() - HEADER_LENGTH;
         if (chunkCapacity <= 0) throw new IllegalStateException("Publication payload too small");
         UnsafeBuffer buffer = new UnsafeBuffer(new byte[publication.maxPayloadLength()]);
@@ -43,13 +49,24 @@ final class SnapshotTransport {
     }
 
     static byte[] read(Image image, IdleStrategy idle) {
-        Decoder decoder = new Decoder();
+        return read(image, idle, MAX_SNAPSHOT_BYTES);
+    }
+
+    static byte[] read(Image image, IdleStrategy idle, int maxSnapshotBytes) {
+        Decoder decoder = new Decoder(maxSnapshotBytes);
         while (!image.isEndOfStream()) {
             int count = image.poll((buffer, offset, length, header) -> decoder.accept(buffer, offset, length), 10);
             if (count == 0 && image.isClosed()) throw new IllegalStateException("Snapshot image closed before end");
             idle.idle(count);
         }
         return decoder.complete();
+    }
+
+    static int requireSupportedMaximum(int maximum) {
+        if (maximum != MAX_SNAPSHOT_BYTES && maximum != CAPACITY_MAX_SNAPSHOT_BYTES) {
+            throw new IllegalArgumentException("Checkpoint maximum must be an explicit 256 MiB or 512 MiB profile limit");
+        }
+        return maximum;
     }
 
     static void encodeChunk(UnsafeBuffer buffer, byte[] snapshot, int offset, int count, int checksum) {
@@ -69,9 +86,15 @@ final class SnapshotTransport {
     }
 
     static final class Decoder {
+        private final int maxSnapshotBytes;
         private byte[] snapshot;
         private int nextOffset;
         private int checksum;
+
+        Decoder() { this(MAX_SNAPSHOT_BYTES); }
+        Decoder(int maxSnapshotBytes) {
+            this.maxSnapshotBytes = requireSupportedMaximum(maxSnapshotBytes);
+        }
 
         void accept(DirectBuffer buffer, int offset, int length) {
             if (length < HEADER_LENGTH || buffer.getInt(offset, ByteOrder.LITTLE_ENDIAN) != MAGIC
@@ -82,7 +105,7 @@ final class SnapshotTransport {
             int start = buffer.getInt(offset + 12, ByteOrder.LITTLE_ENDIAN);
             int count = buffer.getInt(offset + 16, ByteOrder.LITTLE_ENDIAN);
             int crc = buffer.getInt(offset + 20, ByteOrder.LITTLE_ENDIAN);
-            if (total < 0 || total > MAX_SNAPSHOT_BYTES || start < 0 || count < 0 || count != length - HEADER_LENGTH
+            if (total < 0 || total > maxSnapshotBytes || start < 0 || count < 0 || count != length - HEADER_LENGTH
                     || start > total || count > total - start || (count == 0 && total != 0)) {
                 throw new IllegalStateException("Invalid snapshot chunk bounds");
             }

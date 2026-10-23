@@ -35,7 +35,7 @@ IDENTITY_POLL_SECONDS = 0.01
 NETWORK_CONFIGURATION = ("VECTOR_CLUSTER_HOSTS", "VECTOR_AERON_MTU_LENGTH")
 CLIENT_CONFIGURATION = NETWORK_CONFIGURATION + ("VECTOR_CLIENT_EGRESS_HOST", "VECTOR_CLIENT_EGRESS_PORT")
 CONFIGURATION_KEYS = {
-    "node": NETWORK_CONFIGURATION + ("VECTOR_APPOINTED_LEADER_ID", "VECTOR_MAX_CLUSTER_SESSIONS"),
+    "node": NETWORK_CONFIGURATION + ("VECTOR_APPOINTED_LEADER_ID", "VECTOR_MAX_CLUSTER_SESSIONS", "VECTOR_STATE_PROFILE"),
     "gateway": CLIENT_CONFIGURATION + ("VM_CLUSTER_ID",),
     "projector": CLIENT_CONFIGURATION + ("VM_CLUSTER_ID", "VM_CLUSTER_PORT_BASE", "VM_PROJECTOR_DRIVER",
                                          "VM_PROJECTOR_BATCH_SIZE", "VM_PROJECTOR_TIMEOUT_MS", "VM_PROJECTOR_POLL_MS"),
@@ -181,6 +181,13 @@ def command(role: str, node: int | None, state: Path, action: str) -> tuple[list
         args += [str(node), str(state.parent), str(port), str(sync),
                  str(positive_int("VECTOR_OUTBOX_CAPACITY", 65536, 1, 1000000)),
                  environment["VECTOR_CLUSTER_HOSTS"]]
+        profile = environment.get("VECTOR_STATE_PROFILE", "")
+        if profile:
+            if profile not in ("default", "capacity-190k-v1"):
+                raise ValueError("VECTOR_STATE_PROFILE must be default or capacity-190k-v1")
+            if profile == "capacity-190k-v1" and args[-2] != "524288":
+                raise ValueError("capacity-190k-v1 requires outbox capacity 524288")
+            args.append(profile)
     if role == "projector":
         if not environment.get("VM_PG_URL") or not environment.get("VM_CLUSTER_ID"):
             raise ValueError("Set VM_PG_URL and stable VM_CLUSTER_ID; credentials belong in environment")

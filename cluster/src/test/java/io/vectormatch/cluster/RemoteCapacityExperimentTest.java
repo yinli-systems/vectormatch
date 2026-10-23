@@ -237,6 +237,57 @@ class RemoteCapacityExperimentTest {
         assertNull(load.workerFailure);
     }
 
+    @Test void explicit190kProfileRequiresLargerStateWithoutChangingOlderProfiles() {
+        var profile = RemoteCapacityExperiment.Profile.EXTENDED_190K_128;
+        assertEquals(profile, RemoteCapacityExperiment.Profile.parse("extended-190k-128"));
+        assertEquals(190_000, profile.maximumArrivals);
+        assertEquals(380_000, profile.makerQuantity);
+        assertEquals(1_900_000_000L, profile.buyerFunding);
+        assertEquals(524_288, profile.outboxCapacity);
+        assertEquals(128, profile.maximumWorkers);
+        assertEquals(12, profile.sessionReapWaitSeconds);
+        assertEquals(8, profile.connectionConcurrency);
+        assertEquals(new Limits(10_000, 10_000, 200_000, 100_000), profile.expectedLimits());
+        assertEquals(512 * 1024 * 1024, profile.snapshotMaxBytes());
+        assertEquals(ClusterCapacity.StateProfile.CAPACITY_190K_V1, profile.stateProfile());
+        assertDoesNotThrow(() -> new RemoteCapacityExperiment.Options(directory, 19000, 16000, 190_000, 128, 64, 2000, 30_000, 0, 20, profile));
+        assertThrows(IllegalArgumentException.class, () -> new RemoteCapacityExperiment.Options(directory, 19000, 16000, 190_001, 128, 64, 2000, 30_000, 0, 20, profile));
+        assertThrows(IllegalArgumentException.class, () -> new RemoteCapacityExperiment.Options(directory, 19000, 16000, 190_000, 129, 64, 2000, 30_000, 0, 20, profile));
+        assertThrows(IllegalArgumentException.class, () -> new RemoteCapacityExperiment.Options(directory, 19000, 16000, 190_000, 128, 64, 2000, 30_000, 0, 20, RemoteCapacityExperiment.Profile.EXTENDED_90K_128));
+        assertThrows(IllegalArgumentException.class, () -> RemoteCapacityExperiment.validateOutboxProfile(profile, Map.of()));
+        assertThrows(IllegalArgumentException.class, () -> RemoteCapacityExperiment.validateOutboxProfile(profile, Map.of("VECTOR_OUTBOX_CAPACITY", "262144")));
+        assertDoesNotThrow(() -> RemoteCapacityExperiment.validateOutboxProfile(profile, Map.of("VECTOR_OUTBOX_CAPACITY", "524288")));
+        assertThrows(IllegalStateException.class, () -> profile.validateLimits(ClusterCapacity.newEngine().limits()));
+        assertDoesNotThrow(() -> profile.validateLimits(ClusterCapacity.newEngine(profile.stateProfile()).limits()));
+        assertEquals(327_566_336L, ClusterCapacity.snapshotBudget(profile.expectedLimits(), profile.outboxCapacity));
+        for (var older : List.of(RemoteCapacityExperiment.Profile.BASELINE, RemoteCapacityExperiment.Profile.EXTENDED_90K, RemoteCapacityExperiment.Profile.EXTENDED_90K_128)) {
+            assertEquals(100_000, older.expectedLimits().maxRetainedOrders());
+            assertEquals(256 * 1024 * 1024, older.snapshotMaxBytes());
+            assertEquals(ClusterCapacity.StateProfile.DEFAULT, older.stateProfile());
+        }
+    }
+
+    @Test void new190kProfileRejectsWrongPerProducerCacheBeforeAnySetupMutation() {
+        var profile = RemoteCapacityExperiment.Profile.EXTENDED_190K_128;
+        MatchingEngine wrong = MatchingEngine.restore(new MatchingEngine(512, profile.expectedLimits()).snapshot());
+        byte[] before = wrong.snapshot();
+        assertEquals(512, wrong.resultCachePerProducer());
+        assertEquals(1024, profile.stateProfile().resultCachePerProducer());
+        assertThrows(IllegalStateException.class, () -> profile.validateInitialEngine(wrong));
+        assertEquals(0, wrong.lastCommandSeq());
+        assertEquals(0, wrong.lastEventSeq());
+        assertTrue(wrong.accounts().isEmpty());
+        assertArrayEquals(before, wrong.snapshot());
+        assertDoesNotThrow(() -> profile.validateInitialEngine(ClusterCapacity.newEngine(profile.stateProfile())));
+        MatchingEngine legacyCache = new MatchingEngine(512, RemoteCapacityExperiment.Profile.EXTENDED_90K.expectedLimits());
+        assertDoesNotThrow(() -> RemoteCapacityExperiment.Profile.EXTENDED_90K.validateInitialEngine(legacyCache),
+                "The new cache requirement must not silently tighten the older fixture contract");
+    }
+
+    @Test void oneHundredNinetyThousandTradesAcross128ProducersRestoreWithinTwoGiBHeap() throws Exception {
+        runProfileProbe(128, "EXTENDED_190K_128_2G_PASS", "2g", "extended-190k-128");
+    }
+
     @Test void ninetyThousandTradesAndUnackedOutboxRestoreWithinOneGiBHeap() throws Exception {
         runProfileProbe(64, "EXTENDED_90K_1G_PASS");
     }
@@ -246,15 +297,21 @@ class RemoteCapacityExperimentTest {
     }
 
     private void runProfileProbe(int workers, String expectedMarker) throws Exception {
+        runProfileProbe(workers, expectedMarker, "1g", workers == 128 ? "extended-90k-128" : "extended-90k");
+    }
+
+    private void runProfileProbe(int workers, String expectedMarker, String heap, String profileName) throws Exception {
         String classpath = String.join(File.pathSeparator,
                 Path.of(RemoteCapacityExperimentTest.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString(),
                 Path.of(RemoteCapacityExperiment.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString(),
-                Path.of(MatchingEngine.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString());
-        Path log = directory.resolve("extended-profile-" + workers + "-1g-probe.log");
+                Path.of(MatchingEngine.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString(),
+                Path.of(io.aeron.Aeron.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString(),
+                Path.of(org.agrona.DirectBuffer.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString());
+        Path log = directory.resolve(profileName + "-" + workers + "-" + heap + "-probe.log");
         Process child = new ProcessBuilder(Path.of(System.getProperty("java.home"), "bin", "java").toString(),
-                "-Xmx1g", "-cp", classpath, ExtendedProfileProbe.class.getName(), Integer.toString(workers)).redirectErrorStream(true).redirectOutput(log.toFile()).start();
+                "-Xmx" + heap, "-cp", classpath, ExtendedProfileProbe.class.getName(), Integer.toString(workers), profileName).redirectErrorStream(true).redirectOutput(log.toFile()).start();
         try {
-            assertTrue(child.waitFor(120, TimeUnit.SECONDS), "1 GiB profile probe exceeded 120 seconds");
+            assertTrue(child.waitFor(120, TimeUnit.SECONDS), heap + " profile probe exceeded 120 seconds");
             String output = Files.readString(log, StandardCharsets.UTF_8);
             assertEquals(0, child.exitValue(), output);
             assertTrue(output.contains(expectedMarker), output);
@@ -278,10 +335,12 @@ class RemoteCapacityExperimentTest {
             long started = System.nanoTime();
             int workers = arguments.length == 0 ? 64 : Integer.parseInt(arguments[0]);
             require(workers == 64 || workers == 128, "Probe supports the explicit 64/128 comparison only");
-            var profile = workers == 128 ? RemoteCapacityExperiment.Profile.EXTENDED_90K_128 : RemoteCapacityExperiment.Profile.EXTENDED_90K;
-            MatchingEngine engine = ClusterCapacity.newEngine();
+            var profile = arguments.length > 1 ? RemoteCapacityExperiment.Profile.parse(arguments[1])
+                    : workers == 128 ? RemoteCapacityExperiment.Profile.EXTENDED_90K_128 : RemoteCapacityExperiment.Profile.EXTENDED_90K;
+            int arrivals = profile.maximumArrivals;
+            MatchingEngine engine = ClusterCapacity.newEngine(profile.stateProfile());
             ReplicatedOutbox outbox = new ReplicatedOutbox(profile.outboxCapacity);
-            ClusterCapacity.validate(engine.limits(), outbox.capacity());
+            profile.validateInitialEngine(engine);
             for (Command command : RemoteCapacityExperiment.preparationCommands(profile, "capacity-fixed-v1")) apply(engine, outbox, command);
             require(engine.lastCommandSeq() == 167 && engine.lastEventSeq() == 267 && outbox.size() == 267, "Prepared state counters differ");
             String preparedHash = HexFormat.of().formatHex(ClusterStateSnapshot.digest(engine.snapshot()));
@@ -296,39 +355,42 @@ class RemoteCapacityExperimentTest {
                 last = sample.command;
             }
             engine.checkInvariants();
-            require(engine.lastCommandSeq() == 90_167 && engine.lastEventSeq() == 180_267 && engine.lastMarketSeq() == 180_201, "Final sequence counters differ");
-            require(engine.retainedOrderCount() == 90_101 && engine.retainedOrderCount() < engine.limits().maxRetainedOrders(), "Retained order count/budget differs");
+            require(engine.lastCommandSeq() == arrivals + 167L && engine.lastEventSeq() == arrivals * 2L + 267 && engine.lastMarketSeq() == arrivals * 2L + 201, "Final sequence counters differ");
+            require(engine.retainedOrderCount() == arrivals + 101 && engine.retainedOrderCount() < engine.limits().maxRetainedOrders(), "Retained order count/budget differs");
             int expectedCachedResults = 167;
-            for (int worker = 0; worker < workers; worker++) expectedCachedResults += Math.min(1024, 90_000 / workers + (worker < 90_000 % workers ? 1 : 0));
+            for (int worker = 0; worker < workers; worker++) expectedCachedResults += Math.min(1024, arrivals / workers + (worker < arrivals % workers ? 1 : 0));
+            expectedCachedResults = Math.min(expectedCachedResults, engine.limits().maxCachedResults());
             require(engine.cachedResultCount() == expectedCachedResults && engine.producerCount() == 67 + workers, "Producer/cache counts differ");
-            require(outbox.size() == 180_267 && outbox.capacity() == 262_144 && outbox.exportedSeq() == 0, "Unacknowledged outbox differs");
-            require(engine.order(1).orElseThrow().remainingQuantity() == 89_900, "Maker residual differs");
-            require(engine.account(1_000_001).base().available() == 0 && engine.account(1_000_001).base().reserved() == 89_900
-                    && engine.account(1_000_001).quote().available() == 901_000_000 && engine.account(1_000_001).quote().reserved() == 0, "Seller asset conservation differs");
+            require(outbox.size() == arrivals * 2 + 267 && outbox.capacity() == profile.outboxCapacity && outbox.exportedSeq() == 0, "Unacknowledged outbox differs");
+            require(engine.order(1).orElseThrow().remainingQuantity() == profile.makerQuantity - 100L - arrivals, "Maker residual differs");
+            require(engine.account(1_000_001).base().available() == 0 && engine.account(1_000_001).base().reserved() == profile.makerQuantity - 100L - arrivals
+                    && engine.account(1_000_001).quote().available() == (arrivals + 100L) * 10_000 && engine.account(1_000_001).quote().reserved() == 0, "Seller asset conservation differs");
             for (int worker = 0; worker < 64; worker++) {
                 AccountView buyer = engine.account(1_000_100 + worker);
                 require(buyer.base().available() == bought[worker] && buyer.base().reserved() == 0
                         && buyer.quote().available() == profile.buyerFunding - bought[worker] * 10_000L && buyer.quote().reserved() == 0, "Buyer asset conservation differs");
             }
             String expectedHash = engine.stateHash();
-            byte[] bytes = ClusterStateSnapshot.encode(engine, outbox);
-            require(bytes.length < SnapshotTransport.MAX_SNAPSHOT_BYTES, "Actual serialized checkpoint exceeds transport limit");
-            var restored = ClusterStateSnapshot.decode(bytes);
+            byte[] bytes = ClusterStateSnapshot.encode(engine, outbox, profile.snapshotMaxBytes());
+            require(bytes.length < profile.snapshotMaxBytes(), "Actual serialized checkpoint exceeds transport limit");
+            var restored = ClusterStateSnapshot.decode(bytes, profile.snapshotMaxBytes());
+            require(restored.engine().limits().equals(profile.expectedLimits()), "Restored core limits differ from explicit profile");
             restored.engine().checkInvariants();
             require(restored.engine().stateHash().equals(expectedHash), "Restored core hash differs");
             require(Arrays.equals(engine.snapshot(), restored.engine().snapshot()), "Restored canonical core bytes differ");
-            require(restored.outbox().capacity() == 262_144 && restored.outbox().size() == 180_267
+            require(restored.outbox().capacity() == profile.outboxCapacity && restored.outbox().size() == arrivals * 2 + 267
                     && restored.outbox().lastEventSeq() == restored.engine().lastEventSeq() && restored.outbox().exportedSeq() == 0, "Restored outbox metadata differs");
             var first = restored.outbox().fetch(1, 16).events();
-            var tail = restored.outbox().fetch(180_252, 16).events();
+            long finalEvent = arrivals * 2L + 267;
+            var tail = restored.outbox().fetch(finalEvent - 15, 16).events();
             require(first.size() == 16 && first.getFirst().eventSeq() == 1 && first.getLast().eventSeq() == 16, "Restored first outbox batch differs");
-            require(tail.size() == 16 && tail.getFirst().eventSeq() == 180_252 && tail.getLast().eventSeq() == 180_267, "Restored final outbox batch differs");
+            require(tail.size() == 16 && tail.getFirst().eventSeq() == finalEvent - 15 && tail.getLast().eventSeq() == finalEvent, "Restored final outbox batch differs");
             require(last != null, "Last measured command missing");
             Execution duplicate = restored.engine().apply(last);
             require(duplicate.replayed() && duplicate.events().isEmpty() && restored.engine().stateHash().equals(expectedHash), "Restored identical retry duplicated business state");
-            require(restored.outbox().acknowledge(180_267) == 180_267 && restored.outbox().size() == 0, "Restored pending events could not be acknowledged contiguously");
-            System.out.println((workers == 128 ? "EXTENDED_90K_128_1G_PASS" : "EXTENDED_90K_1G_PASS") + " workers=" + workers + " cachedResults=" + engine.cachedResultCount() + " producers=" + engine.producerCount() + " maxHeapBytes=" + Runtime.getRuntime().maxMemory()
-                    + " measuredCommands=90000 measuredTrades=90000 retainedOrders=" + engine.retainedOrderCount()
+            require(restored.outbox().acknowledge(finalEvent) == finalEvent && restored.outbox().size() == 0, "Restored pending events could not be acknowledged contiguously");
+            System.out.println((profile == RemoteCapacityExperiment.Profile.EXTENDED_190K_128 ? "EXTENDED_190K_128_2G_PASS" : workers == 128 ? "EXTENDED_90K_128_1G_PASS" : "EXTENDED_90K_1G_PASS") + " workers=" + workers + " cachedResults=" + engine.cachedResultCount() + " producers=" + engine.producerCount() + " maxHeapBytes=" + Runtime.getRuntime().maxMemory()
+                    + " measuredCommands=" + arrivals + " measuredTrades=" + arrivals + " retainedOrders=" + engine.retainedOrderCount()
                     + " pendingEvents=" + outbox.size() + " snapshotBytes=" + bytes.length
                     + " checkpointBudgetBytes=" + ClusterCapacity.snapshotBudget(engine.limits(), profile.outboxCapacity)
                     + " preparedSnapshotSha256=" + preparedHash + " stateHash=" + expectedHash
