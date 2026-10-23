@@ -5,6 +5,7 @@ import io.aeron.archive.ArchiveThreadingMode;
 import io.aeron.archive.client.AeronArchive;
 import io.aeron.cluster.ClusteredMediaDriver;
 import io.aeron.cluster.ConsensusModule;
+import io.aeron.cluster.client.AeronCluster;
 import io.aeron.cluster.service.ClusteredServiceContainer;
 import io.aeron.driver.MediaDriver;
 import io.aeron.driver.MinMulticastFlowControlSupplier;
@@ -17,23 +18,22 @@ import org.agrona.concurrent.ShutdownSignalBarrier;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
-/** A single member of the three-process, loopback-only development cluster. */
+/** A member of a statically configured directly-routed IPv4 cluster, local by default. */
 public final class ClusterNodeMain {
     private ClusterNodeMain() {}
 
     @SuppressWarnings("try")
     public static void main(String[] args) throws Exception {
-        if (args.length < 2 || args.length > 5) {
-            throw new IllegalArgumentException("Usage: ClusterNodeMain <node:0..2> <state-dir> [port-base] [sync:0|2] [outbox-capacity]");
-        }
-        int node = Integer.parseInt(args[0]);
-        Path base = Path.of(args[1]).toAbsolutePath().normalize().resolve("node-" + node);
-        int ports = args.length > 2 ? Integer.parseInt(args[2]) : LocalTopology.DEFAULT_PORT_BASE;
-        int sync = args.length > 3 ? Integer.parseInt(args[3]) : 0;
-        int outboxCapacity = args.length > 4 ? Integer.parseInt(args[4]) : ReplicatedOutbox.DEFAULT_CAPACITY;
-        LocalTopology.port(ports, node, 1);
-        if (sync != 0 && sync != 2) throw new IllegalArgumentException("sync must be 0 or 2");
+        Configuration configuration = configuration(args, System.getenv());
+        int node = configuration.node();
+        Path base = configuration.base();
+        int sync = configuration.sync();
+        int outboxCapacity = configuration.outboxCapacity();
+        ClusterTopology topology = configuration.topology();
+        NetworkTransport transport = configuration.transport();
+        topology.requireLocalMember(node);
         Files.createDirectories(base);
         String driverDir = base.resolve("driver").toString();
         File clusterDir = base.resolve("cluster").toFile();
@@ -51,24 +51,28 @@ public final class ClusterNodeMain {
                 .termBufferSparseFile(true)
                 .socketSndbufLength(128 * 1024)
                 .socketRcvbufLength(128 * 1024)
+                .mtuLength(transport.mtuLength())
                 .multicastFlowControlSupplier(new MinMulticastFlowControlSupplier())
                 .errorHandler(errors);
 
         Archive.Context archive = new Archive.Context()
                 .aeronDirectoryName(driverDir)
                 .archiveDir(base.resolve("archive").toFile())
-                .controlChannel(LocalTopology.udp(ports, node, 1))
+                .controlChannel(transport.withMtu(topology.udp(node, ClusterTopology.ARCHIVE)))
+                .controlMtuLength(transport.mtuLength())
                 .localControlChannel("aeron:ipc?term-length=64k")
                 .recordingEventsEnabled(false)
                 .threadingMode(ArchiveThreadingMode.SHARED)
                 .fileSyncLevel(sync)
                 .catalogFileSyncLevel(sync)
-                .replicationChannel("aeron:udp?endpoint=127.0.0.1:0")
+                .replicationChannel(transport.withMtu(topology.responseChannel(node)))
                 .archiveClientContext(new AeronArchive.Context()
-                        .controlResponseChannel("aeron:udp?endpoint=127.0.0.1:0"));
+                        .controlMtuLength(transport.mtuLength())
+                        .controlResponseChannel(transport.withMtu(topology.responseChannel(node))));
 
         AeronArchive.Context localArchive = new AeronArchive.Context()
                 .lock(NoOpLock.INSTANCE)
+                .controlMtuLength(transport.mtuLength())
                 .aeronDirectoryName(driverDir)
                 .controlRequestChannel(archive.localControlChannel())
                 .controlResponseChannel(archive.localControlChannel());
@@ -76,11 +80,15 @@ public final class ClusterNodeMain {
         ConsensusModule.Context consensus = new ConsensusModule.Context()
                 .aeronDirectoryName(driverDir)
                 .clusterMemberId(node)
-                .clusterMembers(LocalTopology.members(ports))
+                .clusterMembers(topology.members())
                 .clusterDir(clusterDir)
                 .fileSyncLevel(sync)
-                .ingressChannel("aeron:udp?term-length=64k")
-                .replicationChannel("aeron:udp?endpoint=127.0.0.1:0")
+                .ingressChannel(transport.withMtu(topology.udp(node, ClusterTopology.INGRESS)))
+                .egressChannel(transport.withMtu(AeronCluster.Configuration.egressChannel()))
+                .consensusChannel(transport.withMtu(ConsensusModule.Configuration.consensusChannel()))
+                .logChannel(transport.withMtu(ConsensusModule.Configuration.logChannel()))
+                .snapshotChannel(transport.withRecordingMtu(ConsensusModule.Configuration.snapshotChannel()))
+                .replicationChannel(transport.withMtu(topology.responseChannel(node)))
                 .archiveContext(localArchive.clone())
                 .errorHandler(errors);
 
@@ -88,6 +96,7 @@ public final class ClusterNodeMain {
                 .aeronDirectoryName(driverDir)
                 .archiveContext(localArchive.clone())
                 .clusterDir(clusterDir)
+                .snapshotChannel(transport.withRecordingMtu(ClusteredServiceContainer.Configuration.snapshotChannel()))
                 .clusteredService(new MatchingClusteredService(outboxCapacity))
                 .errorHandler(errors);
 
@@ -97,9 +106,28 @@ public final class ClusterNodeMain {
                      consensus.terminationHook(barrier::signalAll));
              ClusteredServiceContainer ignoredService = ClusteredServiceContainer.launch(
                      service.terminationHook(barrier::signalAll))) {
-            System.out.printf("VECTOR_CLUSTER_STARTED node=%d pid=%d sync=%d state=%s%n",
-                    node, ProcessHandle.current().pid(), sync, base);
+            System.out.printf("VECTOR_CLUSTER_STARTED node=%d pid=%d sync=%d state=%s members=%s mtu=%d%n",
+                    node, ProcessHandle.current().pid(), sync, base, topology.members(), transport.mtuLength());
             barrier.await();
         }
+    }
+
+    record Configuration(int node, Path base, int sync, int outboxCapacity, ClusterTopology topology, NetworkTransport transport) {}
+
+    static Configuration configuration(String[] args, Map<String, String> environment) {
+        if (args.length < 2 || args.length > 6) {
+            throw new IllegalArgumentException("Usage: ClusterNodeMain <node> <state-dir> [port-base] [sync:0|2] [outbox-capacity] [hosts-csv]");
+        }
+        int node = Integer.parseInt(args[0]);
+        int ports = Integer.parseInt(args.length > 2 ? args[2] : environment.getOrDefault("VECTOR_PORT_BASE", "19000"));
+        int sync = Integer.parseInt(args.length > 3 ? args[3] : environment.getOrDefault("VECTOR_SYNC_LEVEL", "0"));
+        int capacity = Integer.parseInt(args.length > 4 ? args[4] : environment.getOrDefault("VECTOR_OUTBOX_CAPACITY", "65536"));
+        ClusterTopology topology = ClusterTopology.parse(ports, args.length > 5 ? args[5] : environment.get(ClusterTopology.HOSTS_ENV));
+        topology.host(node); // Validate membership before creating any directories.
+        if (sync != 0 && sync != 2) throw new IllegalArgumentException("sync must be 0 or 2");
+        ClusterCapacity.validate(ClusterCapacity.newEngine().limits(), capacity);
+        if (capacity < 1 || capacity > 1_000_000) throw new IllegalArgumentException("Invalid outbox capacity");
+        Path base = Path.of(args[1]).toAbsolutePath().normalize().resolve("node-" + node);
+        return new Configuration(node, base, sync, capacity, topology, NetworkTransport.fromEnvironment(environment));
     }
 }

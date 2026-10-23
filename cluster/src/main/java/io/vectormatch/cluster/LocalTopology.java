@@ -16,27 +16,14 @@ public final class LocalTopology {
     }
 
     public static String udp(int base, int node, int offset) {
-        return "aeron:udp?endpoint=" + HOST + ':' + port(base, node, offset) + "|term-length=64k";
+        return ClusterTopology.local(base).udp(node, offset);
     }
 
     public static String members(int base) {
-        StringBuilder result = new StringBuilder();
-        for (int node = 0; node < NODE_COUNT; node++) {
-            if (node > 0) result.append('|');
-            result.append(node);
-            for (int offset : new int[] {2, 3, 4, 5, 1}) {
-                result.append(',').append(HOST).append(':').append(port(base, node, offset));
-            }
-        }
-        return result.toString();
+        return ClusterTopology.local(base).members();
     }
 
     public static String ingressEndpoints(int base) {
-        StringBuilder result = new StringBuilder();
-        for (int node = 0; node < NODE_COUNT; node++) {
-            if (node > 0) result.append(',');
-            result.append(node).append('=').append(HOST).append(':').append(port(base, node, 2));
-        }
-        return result.toString();
+        return ClusterTopology.local(base).ingressEndpoints();
     }
 }

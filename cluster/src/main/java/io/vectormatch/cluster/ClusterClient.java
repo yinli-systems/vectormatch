@@ -37,12 +37,23 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
     }
 
     public ClusterClient(Path driverDirectory, int portBase) {
+        this(driverDirectory, ClusterTopology.fromEnvironment(portBase));
+    }
+
+    private ClusterClient(Path driverDirectory, ClusterTopology topology) {
+        this(driverDirectory, topology, ClientEndpoint.fromEnvironment(topology), NetworkTransport.fromEnvironment());
+    }
+
+    public ClusterClient(Path driverDirectory, ClusterTopology topology, ClientEndpoint endpoint, NetworkTransport transport) {
+        endpoint.validateFor(topology);
+        endpoint.requireBindable();
         driver = MediaDriver.launchEmbedded(new MediaDriver.Context()
                 .aeronDirectoryName(driverDirectory.toAbsolutePath().toString())
                 .threadingMode(ThreadingMode.SHARED)
                 .sharedIdleStrategy(new BackoffIdleStrategy())
                 .socketSndbufLength(128 * 1024)
                 .socketRcvbufLength(128 * 1024)
+                .mtuLength(transport.mtuLength())
                 .termBufferSparseFile(true)
                 .dirDeleteOnStart(false) // Aeron checks for an active driver before recreating stale files.
                 .dirDeleteOnShutdown(true));
@@ -51,9 +62,9 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
                     .aeronDirectoryName(driver.aeronDirectoryName())
                     .egressListener(this)
                     .messageTimeoutNs(TimeUnit.SECONDS.toNanos(20))
-                    .egressChannel("aeron:udp?endpoint=127.0.0.1:0|term-length=64k")
-                    .ingressChannel("aeron:udp?term-length=64k")
-                    .ingressEndpoints(LocalTopology.ingressEndpoints(portBase)));
+                    .egressChannel(transport.withMtu(endpoint.channel()))
+                    .ingressChannel(transport.withMtu("aeron:udp?term-length=64k"))
+                    .ingressEndpoints(topology.ingressEndpoints()));
         } catch (RuntimeException e) {
             driver.close();
             throw e;
