@@ -32,6 +32,8 @@ class RemoteCapacityExperimentTest {
         assertEquals("test-transport", RemoteCapacityExperiment.summarize(load).get("clientDriverMode"));
         assertNull(RemoteCapacityExperiment.summarize(load).get("clientDriverCount"));
         assertNull(RemoteCapacityExperiment.summarize(load).get("clientNakUnicastDelayNs"));
+        assertNull(RemoteCapacityExperiment.summarize(load).get("clientSessionCount"));
+        assertEquals("direct", RemoteCapacityExperiment.summarize(load).get("clientTransportMode"));
     }
 
     @Test void actualFactoryDriverMetadataIsCapturedOnlyAfterEveryWorkerConnects() throws Exception {
@@ -45,6 +47,7 @@ class RemoteCapacityExperimentTest {
             }
             public String driverMode() { return "isolated"; }
             public Integer driverCount() { return connected.get(); }
+            public Integer sessionCount() { return connected.get(); }
             public Long driverNakUnicastDelayNs() {
                 assertEquals(2, connected.get(), "Effective driver metadata must be captured after all workers connect");
                 return 100_000L;
@@ -56,6 +59,8 @@ class RemoteCapacityExperimentTest {
         assertEquals(2, RemoteCapacityExperiment.summarize(load).get("clientDriverCount"));
         assertEquals(100_000L, RemoteCapacityExperiment.summarize(load).get("clientNakUnicastDelayNs"));
         assertEquals(100L, RemoteCapacityExperiment.summarize(load).get("clientNakUnicastRetryDelayRatio"));
+        assertEquals(2, RemoteCapacityExperiment.summarize(load).get("clientSessionCount"));
+        assertEquals("one-independent-Aeron-per-client", RemoteCapacityExperiment.summarize(load).get("clientAeronMode"));
     }
 
     private RemoteCapacityExperiment.Options options(int rate, int arrivals, int workers, int queue, int timeout, int drain) {
@@ -75,6 +80,71 @@ class RemoteCapacityExperimentTest {
         public void idle() {}
         public ClusterClient.TransportCounters counters() { return new ClusterClient.TransportCounters(0, 0, 0, 0); }
         public void close() {}
+    }
+
+    @Test void multiplexedTransportIsStrictOptInWithSame128LogicalWorkersAndSharedDriver() {
+        var direct = RemoteCapacityExperiment.ClientTransportMode.DIRECT;
+        var multiplexed = RemoteCapacityExperiment.ClientTransportMode.MULTIPLEXED;
+        assertEquals(direct, RemoteCapacityExperiment.ClientTransportMode.parse(null));
+        assertEquals(direct, RemoteCapacityExperiment.ClientTransportMode.parse("direct"));
+        assertEquals(multiplexed, RemoteCapacityExperiment.ClientTransportMode.parse("multiplexed"));
+        for (String invalid : List.of("", "DIRECT", "multiplexed ", "shared", "async", "true"))
+            assertThrows(IllegalArgumentException.class, () -> RemoteCapacityExperiment.ClientTransportMode.parse(invalid));
+        assertDoesNotThrow(() -> multiplexed.validate(RemoteCapacityExperiment.ClientDriverMode.SHARED, 128));
+        for (int workers : List.of(1, 64, 127, 129, 256))
+            assertThrows(IllegalArgumentException.class, () -> multiplexed.validate(RemoteCapacityExperiment.ClientDriverMode.SHARED, workers));
+        assertThrows(IllegalArgumentException.class, () -> multiplexed.validate(RemoteCapacityExperiment.ClientDriverMode.ISOLATED, 128));
+        assertDoesNotThrow(() -> direct.validate(RemoteCapacityExperiment.ClientDriverMode.ISOLATED, 64));
+        assertDoesNotThrow(() -> direct.validate(RemoteCapacityExperiment.ClientDriverMode.SHARED, 256));
+    }
+
+    @Test void onePhysicalSessionMetadataIsCapturedOnlyAfterAll128LogicalWorkersAreReady() throws Exception {
+        AtomicInteger opened = new AtomicInteger();
+        var options = new RemoteCapacityExperiment.Options(directory, 19000, 10000, 128, 128, 64,
+                100, 1000, 0, 1000, RemoteCapacityExperiment.Profile.EXTENDED_350K_256);
+        var load = RemoteCapacityExperiment.runLoad(options, samples(128, 128), new RemoteCapacityExperiment.TransportFactory() {
+            public RemoteCapacityExperiment.Transport open(int worker) {
+                opened.incrementAndGet();
+                return new FakeTransport() {
+                    public CommandCodec.Reply execute(Command command, Duration timeout) { return accepted(command, command.requestSeq(), false); }
+                };
+            }
+            public String driverMode() { return "shared"; }
+            public Integer driverCount() { return 1; }
+            public String transportMode() { return "multiplexed"; }
+            public String aeronMode() { return "one-session-one-network-owner"; }
+            public Integer sessionCount() {
+                assertEquals(128, opened.get(), "Physical-session metadata must be captured after every logical worker is ready");
+                return 1;
+            }
+        });
+        Map<String, Object> result = RemoteCapacityExperiment.summarize(load);
+        assertEquals(128, result.get("workers"));
+        assertEquals("multiplexed", result.get("clientTransportMode"));
+        assertEquals("one-session-one-network-owner", result.get("clientAeronMode"));
+        assertEquals(1, result.get("clientDriverCount"));
+        assertEquals(1, result.get("clientSessionCount"));
+        assertEquals(128, load.completed.get());
+    }
+
+    @Test void fatalOwnerErrorPersistsAllArrivalEvidenceAndRethrowsTheOriginalError() throws Exception {
+        var options = options(100, 2, 1, 2, 100, 1000);
+        var samples = samples(2, 1);
+        var load = RemoteCapacityExperiment.runLoad(options, samples, worker -> new FakeTransport() {
+            public CommandCodec.Reply execute(Command command, Duration timeout) { return accepted(command, command.requestSeq(), false); }
+        });
+        AssertionError fatal = new AssertionError("network-owner close failed");
+        AssertionError thrown = assertThrows(AssertionError.class,
+                () -> RemoteCapacityExperiment.preserveFailureAndRethrow(directory, options, samples, load, fatal));
+        assertSame(fatal, thrown, "Fatal errors must not be converted to recoverable per-request unknown exceptions");
+        assertEquals(3, Files.readAllLines(directory.resolve("arrivals.csv")).size(), "Every original arrival and the complete header must be retained");
+        String evidence = Files.readString(directory.resolve("failure.json"));
+        assertTrue(evidence.contains("java.lang.AssertionError"));
+        assertTrue(evidence.contains("network-owner close failed"));
+        assertTrue(evidence.contains("\"arrivalsRetained\":2"));
+        assertTrue(evidence.contains("\"loadSummary\":{\"test\":"));
+        assertTrue(Files.exists(directory.resolve("backlog.csv")));
+        assertFalse(Files.exists(directory.resolve("result.json")), "A fatal failure must not create a passed business result");
     }
 
     @Test void executedCommandWithoutReplyPreventsMisleadingConfirmedOnlyReplay() {

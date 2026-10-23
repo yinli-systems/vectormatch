@@ -440,6 +440,100 @@ class CapacityConfigTest(unittest.TestCase):
             self.assertEqual(before, (directory / "trial.json").read_bytes())
             self.assertFalse((directory / "configuration-verification.json").exists())
 
+    def test_client_transport_fixed_fields_are_optional_complete_and_typed(self):
+        fixed = {"syncLevel": 2}
+        self.assertIsNone(config.transport_settings(fixed))
+        self.assertEqual({"syncLevel": 2}, fixed)
+        for mode, sessions in (("direct", 128), ("multiplexed", 1)):
+            declared = {"clientTransportMode": mode, "clientSessionCount": sessions}
+            self.assertEqual(declared, config.transport_settings(declared))
+        for invalid in ({"clientTransportMode": "direct"}, {"clientSessionCount": 128},
+                        {"clientTransportMode": "shared", "clientSessionCount": 128},
+                        {"clientTransportMode": "multiplexed", "clientSessionCount": 128},
+                        {"clientTransportMode": "direct", "clientSessionCount": True},
+                        {"clientTransportMode": "direct", "clientSessionCount": 128.0}):
+            with self.subTest(invalid=invalid), self.assertRaises(AssertionError):
+                config.transport_settings(invalid)
+
+    def test_unflagged_direct_transport_metadata_preserves_old_argv_and_comparison_identity(self):
+        self.trial["loadGeneratorJvmArguments"] = [DRIVER_FLAG + "shared"]
+        legacy = self.runtime("shared")
+        new = {**legacy, "clientTransportMode": "direct", "clientSessionCount": 128}
+        old_flags = config.load_generator_jvm_arguments(self.trial, legacy)
+        new_flags = config.load_generator_jvm_arguments(self.trial, new)
+        self.assertEqual(old_flags, new_flags)
+        self.assertEqual(config.command_sha256(config.load_generator_arguments(self.trial, self.release, old_flags)),
+                         config.command_sha256(config.load_generator_arguments(self.trial, self.release, new_flags)))
+        for changes in ({"clientTransportMode": "multiplexed"}, {"clientSessionCount": 1},
+                        {"clientSessionCount": True}, {"clientSessionCount": "128"}):
+            with self.subTest(changes=changes), self.assertRaises(AssertionError):
+                config.load_generator_jvm_arguments(self.trial, {**new, **changes})
+        for missing in ("clientTransportMode", "clientSessionCount"):
+            partial = new.copy()
+            del partial[missing]
+            with self.subTest(missing=missing), self.assertRaisesRegex(AssertionError, "Incomplete client transport"):
+                config.load_generator_jvm_arguments(self.trial, partial)
+
+    def test_explicit_direct_and_multiplexed_flags_match_physical_runtime_and_full_digest(self):
+        digests = set()
+        for mode, sessions, aeron in (("direct", 128, "one-independent-Aeron-per-client"),
+                                      ("multiplexed", 1, "one-session-one-network-owner")):
+            fixed = {"clientTransportMode": mode, "clientSessionCount": sessions, **self.nak_fixed(1000)}
+            self.trial["loadGeneratorJvmArguments"] = [DRIVER_FLAG + "shared",
+                "-Dvectormatch.capacity.client.transport=" + mode, "-Daeron.nak.unicast.delay=1000"]
+            runtime = self.runtime("shared", clientTransportMode=mode, clientSessionCount=sessions,
+                clientAeronMode=aeron, clientNakUnicastDelayNs=1000, clientNakUnicastRetryDelayRatio=100)
+            flags = config.load_generator_jvm_arguments(self.trial, runtime, fixed)
+            self.assertEqual(self.trial["loadGeneratorJvmArguments"], flags)
+            digests.add(config.command_sha256(config.load_generator_arguments(self.trial, self.release, flags)))
+            for changes in ({"clientSessionCount": 2}, {"clientTransportMode": "other"},
+                            {"clientAeronMode": "one-shared-Aeron-per-physical-session"}):
+                with self.subTest(mode=mode, changes=changes), self.assertRaises(AssertionError):
+                    config.load_generator_jvm_arguments(self.trial, {**runtime, **changes}, fixed)
+        self.assertEqual(2, len(digests))
+        wrong_workers = {**self.trial, "workers": 256}
+        with self.assertRaisesRegex(AssertionError, "128 logical workers"):
+            config.load_generator_jvm_arguments(wrong_workers, runtime, fixed)
+        isolated = {**self.trial, "loadGeneratorJvmArguments": [DRIVER_FLAG + "isolated",
+            "-Dvectormatch.capacity.client.transport=multiplexed", "-Daeron.nak.unicast.delay=1000"]}
+        with self.assertRaises(AssertionError):
+            config.load_generator_jvm_arguments(isolated, {**runtime, "clientDriverMode": "isolated", "clientDriverCount": 128}, fixed)
+
+    def test_transport_flags_reject_duplicates_conflicts_missing_fixed_or_runtime(self):
+        fixed = {"clientTransportMode": "multiplexed", "clientSessionCount": 1}
+        flag = "-Dvectormatch.capacity.client.transport=multiplexed"
+        runtime = self.runtime("shared", clientTransportMode="multiplexed", clientSessionCount=1,
+                               clientAeronMode="one-session-one-network-owner")
+        for invalid in ([flag, flag], [flag, "-Dvectormatch.capacity.client.transport=direct"],
+                        ["-Dvectormatch.capacity.client.transport=shared"], [], [flag + " "],
+                        ["-Dvectormatch.capacity.client.transport"], ["-Dother=" + flag]):
+            trial = {**self.trial, "loadGeneratorJvmArguments": [DRIVER_FLAG + "shared", *invalid]}
+            with self.subTest(invalid=invalid), self.assertRaises(AssertionError):
+                config.load_generator_jvm_arguments(trial, runtime, fixed)
+        valid = {**self.trial, "loadGeneratorJvmArguments": [DRIVER_FLAG + "shared", flag]}
+        with self.assertRaisesRegex(AssertionError, "Undeclared client transport"):
+            config.load_generator_jvm_arguments(valid, runtime)
+        with self.assertRaisesRegex(AssertionError, "Incomplete client transport"):
+            config.load_generator_jvm_arguments(valid, self.runtime("shared"), fixed)
+
+    def test_transport_settings_enter_real_comparison_identity_without_mutating_legacy_fixed(self):
+        spec = importlib.util.spec_from_file_location("transport_comparison", ROOT / "scripts/analyze-capacity.py")
+        analyzer = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(analyzer)
+        trial = {"release": self.release, "deploymentRevision": "a" * 40,
+                 "deploymentBundleSha256": "b" * 64, "preparedSnapshotSha256": "c" * 64,
+                 "fixedNodeConfiguration": {"syncLevel": 2}}
+        original, issues = analyzer.comparison_identity({}, trial)
+        self.assertEqual([], issues)
+        fingerprints = {json.dumps(original, sort_keys=True)}
+        for mode, sessions in (("direct", 128), ("multiplexed", 1)):
+            fixed = {**trial["fixedNodeConfiguration"], "clientTransportMode": mode, "clientSessionCount": sessions}
+            identity, issues = analyzer.comparison_identity({}, {**trial, "fixedNodeConfiguration": fixed})
+            self.assertEqual([], issues)
+            fingerprints.add(json.dumps(identity, sort_keys=True))
+        self.assertEqual(3, len(fingerprints))
+        self.assertEqual({"syncLevel": 2}, trial["fixedNodeConfiguration"])
+
     def test_optional_nak_values_enter_real_comparison_identity_and_command_hashes(self):
         spec = importlib.util.spec_from_file_location("nak_comparison", ROOT / "scripts/analyze-capacity.py")
         analyzer = importlib.util.module_from_spec(spec)

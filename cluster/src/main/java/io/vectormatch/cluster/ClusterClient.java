@@ -30,6 +30,9 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
     private final AeronCluster client;
     private final IdleStrategy idle = new BackoffIdleStrategy();
     private final Map<Long, byte[]> responses = new LinkedHashMap<>();
+    private final Map<Long, byte[]> asynchronousRequests = new LinkedHashMap<>();
+    private Thread asynchronousOwner;
+    private int maximumAsynchronousPending;
     private long nextCorrelation;
     private long acceptedOffers;
     private long acceptedResends;
@@ -139,10 +142,70 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
         throw failure;
     }
 
-    public int leaderMemberId() { return client.leaderMemberId(); }
+    public int leaderMemberId() { checkAsynchronousOwner(); return client.leaderMemberId(); }
+
+    /** Opt-in load-only API. All calls, including closure, stay on the enabling owner thread. */
+    void enableAsynchronousOwner(int maximumPending) {
+        if (maximumPending < 1 || maximumPending > 256 || maximumAsynchronousPending != 0 || !responses.isEmpty())
+            throw new IllegalArgumentException("Async pending bound must be1..256 and enabled on a fresh client once");
+        asynchronousOwner = Thread.currentThread();
+        maximumAsynchronousPending = maximumPending;
+    }
+
+    private void checkAsynchronousOwner() {
+        if (maximumAsynchronousPending != 0 && Thread.currentThread() != asynchronousOwner)
+            throw new IllegalStateException("Aeron async API accessed outside its network owner thread");
+    }
+
+    private void requireAsynchronousOwner() {
+        checkAsynchronousOwner();
+        if (maximumAsynchronousPending == 0) throw new IllegalStateException("Async owner API is not enabled");
+    }
+
+    long asynchronousRegister(Command command) {
+        requireAsynchronousOwner();
+        if (asynchronousRequests.size() >= maximumAsynchronousPending)
+            throw new IllegalStateException("Bounded async pending capacity reached; active identities are never evicted");
+        long correlation = ++nextCorrelation;
+        asynchronousRequests.put(correlation, CommandCodec.request(correlation, Objects.requireNonNull(command)));
+        return correlation;
+    }
+
+    long asynchronousOffer(long correlation) {
+        requireAsynchronousOwner();
+        byte[] bytes = asynchronousRequests.get(correlation);
+        if (bytes == null) throw new IllegalStateException("Unregistered async correlation");
+        return client.offer(new UnsafeBuffer(bytes), 0, bytes.length);
+    }
+
+    int asynchronousPoll() {
+        requireAsynchronousOwner();
+        return client.pollEgress() + keepAliveIfDue(System.nanoTime());
+    }
+
+    CommandCodec.Reply asynchronousTake(long correlation) {
+        requireAsynchronousOwner();
+        byte[] response = responses.remove(correlation);
+        if (response == null) return null;
+        asynchronousRequests.remove(correlation);
+        return CommandCodec.decodeReply(response);
+    }
+
+    void asynchronousCancel(long correlation) {
+        requireAsynchronousOwner();
+        asynchronousRequests.remove(correlation);
+        responses.remove(correlation);
+    }
+
+    int asynchronousPendingCount() { requireAsynchronousOwner(); return asynchronousRequests.size(); }
+    int asynchronousResponseCount() { requireAsynchronousOwner(); return responses.size(); }
+
+    long driverNakUnicastDelayNs() { checkAsynchronousOwner(); return driver.context().nakUnicastDelayNs(); }
+    long driverNakUnicastRetryDelayRatio() { checkAsynchronousOwner(); return driver.context().nakUnicastRetryDelayRatio(); }
 
     /** Call from the same owning thread during idle periods; never concurrently with execute/fetch/ack. */
     public int pollKeepAlive() {
+        checkAsynchronousOwner();
         int work = client.pollEgress();
         return work + keepAliveIfDue(System.nanoTime());
     }
@@ -221,6 +284,8 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
     }
 
     private byte[] exchange(long correlation, byte[] encoded, Duration timeout) {
+        if (maximumAsynchronousPending != 0)
+            throw new IllegalStateException("Synchronous exchange is unavailable on an enabled async owner");
         UnsafeBuffer buffer = new UnsafeBuffer(encoded);
         long deadline = System.nanoTime() + timeout.toNanos();
         long resendAt = Long.MIN_VALUE;
@@ -262,11 +327,19 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
         if (length > CommandCodec.MAX_REPLY_BYTES) throw new IllegalStateException("Oversized Cluster reply");
         byte[] bytes = new byte[length];
         buffer.getBytes(offset, bytes);
-        responses.put(CommandCodec.correlation(bytes), bytes);
-        while (responses.size() > 64) responses.remove(responses.keySet().iterator().next());
+        long correlation = CommandCodec.correlation(bytes);
+        if (maximumAsynchronousPending != 0) {
+            requireAsynchronousOwner();
+            // Unknown/retired late replies cannot evict any live response, including the65th..256th.
+            if (asynchronousRequests.containsKey(correlation)) responses.putIfAbsent(correlation, bytes);
+        } else {
+            responses.put(correlation, bytes);
+            while (responses.size() > 64) responses.remove(responses.keySet().iterator().next());
+        }
     }
 
     @Override public void close() {
+        checkAsynchronousOwner();
         try { client.close(); } finally { if (ownsDriver) driver.close(); }
     }
 }

@@ -106,11 +106,33 @@ public final class RemoteCapacityExperiment {
         Transport open(int worker) throws Exception;
         default String driverMode() { return "test-transport"; }
         default Integer driverCount() { return null; }
+        default String transportMode() { return "direct"; }
+        default String aeronMode() { return "one-independent-Aeron-per-client"; }
+        default Integer sessionCount() { return null; }
         default Long driverNakUnicastDelayNs() { return null; }
         default Long driverNakUnicastRetryDelayRatio() { return null; }
     }
+    interface CloseableTransportFactory extends TransportFactory, AutoCloseable {
+        @Override void close();
+    }
 
     static final String CLIENT_DRIVER_PROPERTY = "vectormatch.capacity.client.driver";
+    static final String CLIENT_TRANSPORT_PROPERTY = "vectormatch.capacity.client.transport";
+    enum ClientTransportMode {
+        DIRECT("direct", "one-independent-Aeron-per-client"),
+        MULTIPLEXED("multiplexed", "one-session-one-network-owner");
+        final String label, aeronMode;
+        ClientTransportMode(String label, String aeronMode) { this.label = label; this.aeronMode = aeronMode; }
+        static ClientTransportMode parse(String value) {
+            if (value == null) return DIRECT;
+            for (ClientTransportMode mode : values()) if (mode.label.equals(value)) return mode;
+            throw new IllegalArgumentException(CLIENT_TRANSPORT_PROPERTY + " must be direct or multiplexed");
+        }
+        void validate(ClientDriverMode driver, int workers) {
+            if (this == MULTIPLEXED && (driver != ClientDriverMode.SHARED || workers != 128))
+                throw new IllegalArgumentException("multiplexed client transport requires shared driver and exactly 128 logical workers");
+        }
+    }
     enum ClientDriverMode {
         ISOLATED("isolated"), SHARED("shared");
         final String label;
@@ -123,7 +145,7 @@ public final class RemoteCapacityExperiment {
     }
 
     /** Load-only owner. Setup/validation clients retain their original independent driver lifecycle. */
-    static final class LoadTransports implements TransportFactory, AutoCloseable {
+    static final class LoadTransports implements CloseableTransportFactory {
         private final Options options;
         private final ClusterTopology topology;
         private final ClientEndpoint endpoint;
@@ -160,6 +182,7 @@ public final class RemoteCapacityExperiment {
         }
         public String driverMode() { return mode.label; }
         public Integer driverCount() { return sharedDriver != null ? 1 : connectedDrivers.get(); }
+        public Integer sessionCount() { return connectedDrivers.get(); }
         public Long driverNakUnicastDelayNs() {
             return sharedDriver == null ? null : sharedDriver.context().nakUnicastDelayNs();
         }
@@ -200,8 +223,8 @@ public final class RemoteCapacityExperiment {
         volatile long origin, windowEnd, drainDeadline, finished;
         volatile Throwable workerFailure;
         volatile String scheduledOriginUtc;
-        String clientDriverMode = "test-transport";
-        Integer clientDriverCount;
+        String clientDriverMode = "test-transport", clientTransportMode = "direct", clientAeronMode = "one-independent-Aeron-per-client";
+        Integer clientDriverCount, clientSessionCount;
         Long clientNakUnicastDelayNs, clientNakUnicastRetryDelayRatio;
         LoadResult(Options options, Sample[] samples) { this.options = options; this.samples = samples; }
     }
@@ -216,7 +239,8 @@ public final class RemoteCapacityExperiment {
                 Integer.parseInt(args[6]), Integer.parseInt(args[7]), Integer.parseInt(args[8]),
                 args.length >= 10 ? Integer.parseInt(args[9]) : 20, args.length == 11 ? Profile.parse(args[10]) : Profile.BASELINE);
         validateOutboxProfile(options.profile(), System.getenv());
-        ClientDriverMode.parse(System.getProperty(CLIENT_DRIVER_PROPERTY)); // Reject invalid opt-ins before creating evidence or funding.
+        ClientDriverMode driverMode = ClientDriverMode.parse(System.getProperty(CLIENT_DRIVER_PROPERTY));
+        ClientTransportMode.parse(System.getProperty(CLIENT_TRANSPORT_PROPERTY)).validate(driverMode, options.workers()); // Reject invalid opt-ins before evidence/funding.
         ClusterTopology topology = ClusterTopology.fromEnvironment(options.portBase());
         require(topology.memberCount() == 3, "Three configured members required");
         Files.createDirectories(options.directory().getParent());
@@ -228,6 +252,8 @@ public final class RemoteCapacityExperiment {
         Path directory = options.directory();
         Profile profile = options.profile();
         ClientDriverMode clientDriverMode = ClientDriverMode.parse(System.getProperty(CLIENT_DRIVER_PROPERTY));
+        ClientTransportMode clientTransportMode = ClientTransportMode.parse(System.getProperty(CLIENT_TRANSPORT_PROPERTY));
+        clientTransportMode.validate(clientDriverMode, options.workers());
         ClientEndpoint loadEndpoint = ClientEndpoint.fromEnvironment(topology);
         NetworkTransport loadTransport = NetworkTransport.fromEnvironment();
         if (clientDriverMode == ClientDriverMode.SHARED) ClusterClient.validateSharedEndpoint(topology, loadEndpoint);
@@ -241,7 +267,8 @@ public final class RemoteCapacityExperiment {
                 "fullCheckpointMaximumBytes", profile.snapshotMaxBytes(), "profileMaximumWorkers", profile.maximumWorkers, "sessionReapWaitSecondsPerPhase", profile.sessionReapWaitSeconds,
                 "clientConnectionConcurrencyLimit", profile.connectionConcurrency == 0 ? "unbounded" : profile.connectionConcurrency,
                 "clientDriverMode", clientDriverMode.label, "clientDriverCount", null,
-                "clientAeronMode", "one-independent-Aeron-per-client", "clientDriverCountScope", "load phase only; count recorded after every worker connects; setup/validation excluded",
+                "clientTransportMode", clientTransportMode.label, "clientSessionCount", null,
+                "clientAeronMode", clientTransportMode.aeronMode, "clientDriverCountScope", "load phase only; count recorded after every worker connects; setup/validation excluded",
                 "validationTimeoutSeconds", CHECK_TIMEOUT.toSeconds(), "setupTimeoutSeconds", SETUP_TIMEOUT.toSeconds(),
                 "ratePerSecond", options.rate(), "scheduledArrivals", options.arrivals(), "workers", options.workers(),
                 "maxServiceRequestsInFlight", options.workers(), "queueCapacityPerWorker", options.queueCapacity(),
@@ -298,9 +325,12 @@ public final class RemoteCapacityExperiment {
             long preparedCommandSeq = reference.lastCommandSeq(), preparedEventSeq = reference.lastEventSeq(), preparedMarketSeq = reference.lastMarketSeq();
             int preparedOrders = reference.retainedOrderCount();
             awaitSessionReap(directory, "after-setup", profile);
-            try (LoadTransports transports = new LoadTransports(options, topology, loadEndpoint, loadTransport, clientDriverMode)) {
+            try (CloseableTransportFactory transports = loadTransports(options, topology, loadEndpoint, loadTransport, clientDriverMode, clientTransportMode)) {
                 load = runLoad(options, samples, transports);
                 configuration.put("clientDriverCount", load.clientDriverCount);
+                configuration.put("clientTransportMode", load.clientTransportMode);
+                configuration.put("clientAeronMode", load.clientAeronMode);
+                configuration.put("clientSessionCount", load.clientSessionCount);
                 if (load.clientNakUnicastDelayNs != null && load.clientNakUnicastRetryDelayRatio != null) {
                     configuration.put("clientNakUnicastDelayNs", load.clientNakUnicastDelayNs);
                     configuration.put("clientNakUnicastRetryDelayRatio", load.clientNakUnicastRetryDelayRatio);
@@ -388,15 +418,36 @@ public final class RemoteCapacityExperiment {
             write(directory.resolve("result.json"), result);
             System.out.println("VECTOR_REMOTE_CAPACITY_RESULT " + json(result));
             require(valid, "Correctness or fixed-leader validation failed; inspect result.json");
-        } catch (Exception failure) {
-            if (load == null) load = new LoadResult(options, samples);
-            writeSamples(directory.resolve("arrivals.csv"), load);
-            writeBacklog(directory.resolve("backlog.csv"), load);
+        } catch (Throwable failure) {
+            preserveFailureAndRethrow(directory, options, samples, load, failure);
+        }
+    }
+
+    /** Fatal transport-owner errors also retain every arrival; they must never become request timeouts. */
+    static void preserveFailureAndRethrow(Path directory, Options options, Sample[] samples,
+            LoadResult load, Throwable failure) throws Exception {
+        LoadResult recorded = load == null ? new LoadResult(options, samples) : load;
+        try {
+            writeSamples(directory.resolve("arrivals.csv"), recorded);
+            writeBacklog(directory.resolve("backlog.csv"), recorded);
             write(directory.resolve("failure.json"), fields("passed", false, "timestamp", Instant.now().toString(),
                     "errorType", failure.getClass().getName(), "error", String.valueOf(failure.getMessage()),
-                    "arrivalsRetained", samples.length, "loadSummary", load.origin == 0 ? null : summarize(load), "instruction", "Do not infer rejection from exception. Resolve UNKNOWN_UNRESOLVED by identical saved command identity; inspect arrivals.csv and configuration.json."));
-            throw failure;
+                    "arrivalsRetained", samples.length, "loadSummary", recorded.origin == 0 ? null : summarize(recorded),
+                    "instruction", "Do not infer rejection from exception. Resolve UNKNOWN_UNRESOLVED by identical saved command identity; inspect arrivals.csv and configuration.json."));
+        } catch (Throwable evidenceFailure) {
+            if (evidenceFailure != failure) failure.addSuppressed(evidenceFailure);
         }
+        if (failure instanceof Error error) throw error;
+        if (failure instanceof Exception exception) throw exception;
+        throw new IllegalStateException("Unexpected throwable; original failure retained", failure);
+    }
+
+    static CloseableTransportFactory loadTransports(Options options, ClusterTopology topology,
+            ClientEndpoint endpoint, NetworkTransport network, ClientDriverMode driver, ClientTransportMode mode) {
+        mode.validate(driver, options.workers());
+        return mode == ClientTransportMode.MULTIPLEXED
+                ? new MultiplexedLoadTransports(options, topology, endpoint, network)
+                : new LoadTransports(options, topology, endpoint, network, driver);
     }
 
     static LoadResult runLoad(Options options, Sample[] samples, TransportFactory factory) throws Exception {
@@ -458,6 +509,9 @@ public final class RemoteCapacityExperiment {
         }
         load.clientDriverMode = factory.driverMode();
         load.clientDriverCount = factory.driverCount();
+        load.clientTransportMode = factory.transportMode();
+        load.clientAeronMode = factory.aeronMode();
+        load.clientSessionCount = factory.sessionCount();
         // Capture the concluded shared driver's actual values after all connections are ready.
         // Other factories remain explicitly unavailable rather than assuming library defaults.
         load.clientNakUnicastDelayNs = factory.driverNakUnicastDelayNs();
@@ -599,7 +653,8 @@ public final class RemoteCapacityExperiment {
                 "clientDriverMode", load.clientDriverMode, "clientDriverCount", load.clientDriverCount,
                 "clientNakUnicastDelayNs", load.clientNakUnicastDelayNs,
                 "clientNakUnicastRetryDelayRatio", load.clientNakUnicastRetryDelayRatio,
-                "clientAeronMode", "one-independent-Aeron-per-client",
+                "clientTransportMode", load.clientTransportMode, "clientSessionCount", load.clientSessionCount,
+                "clientAeronMode", load.clientAeronMode,
                 "declaredOutboxCapacity", load.options.profile().outboxCapacity,
                 "expectedStateProfile", load.options.profile().stateProfile().id(), "fullCheckpointMaximumBytes", load.options.profile().snapshotMaxBytes(),
                 "scheduledArrivals", samples.length,

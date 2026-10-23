@@ -15,6 +15,7 @@ def write(path, value):
 
 NAK_FIXED_FIELDS = {"nakUnicastDelayNs", "clientNakUnicastDelayNs", "nakUnicastRetryDelayRatio"}
 NAK_CLIENT_FIELDS = {"clientNakUnicastDelayNs", "clientNakUnicastRetryDelayRatio"}
+TRANSPORT_FIELDS = {"clientTransportMode", "clientSessionCount"}
 UNKNOWN_GUARD = ("Confirmed-only replay skipped: {count} UNKNOWN_UNRESOLVED identities may already have executed; canonical validation is incomplete. "
                  "Preserve the original identities for same-key recovery; no core business mismatch is established.")
 
@@ -52,6 +53,18 @@ def nak_settings(fixed):
     return {name: fixed[name] for name in NAK_FIXED_FIELDS}
 
 
+def transport_settings(fixed):
+    declared = TRANSPORT_FIELDS.intersection(fixed)
+    if not declared:
+        return None
+    assert declared == TRANSPORT_FIELDS, "Incomplete explicit client transport configuration"
+    assert fixed["clientTransportMode"] in ("direct", "multiplexed"), "Invalid explicit client transport mode"
+    count = fixed["clientSessionCount"]
+    assert type(count) is int and 1 <= count <= 256, "Invalid explicit client session count"
+    assert fixed["clientTransportMode"] != "multiplexed" or count == 1, "Multiplexed transport requires one physical session"
+    return {name: fixed[name] for name in TRANSPORT_FIELDS}
+
+
 def verify_nak_jvm_arguments(arguments, fixed, client=False):
     settings = nak_settings(fixed)
     actual = [arg for arg in arguments if isinstance(arg, str) and "aeron.nak" in arg]
@@ -82,12 +95,31 @@ def load_generator_jvm_arguments(trial, configuration, fixed=None):
     extra = trial.get("loadGeneratorJvmArguments", [])
     permitted = ("-Dvectormatch.capacity.client.driver=isolated",
                  "-Dvectormatch.capacity.client.driver=shared")
+    permitted_transport = ("-Dvectormatch.capacity.client.transport=direct",
+                           "-Dvectormatch.capacity.client.transport=multiplexed")
     assert isinstance(extra, list), "Load-generator JVM arguments must be a list"
     settings = nak_settings(fixed or {})
+    transport = transport_settings(fixed or {})
     nak_flag = "-Daeron.nak.unicast.delay=" + str(settings["clientNakUnicastDelayNs"]) if settings else None
-    assert all(isinstance(value, str) and (value in permitted or value == nak_flag) for value in extra), "Disallowed load-generator JVM argument"
+    assert all(isinstance(value, str) and (value in permitted or value in permitted_transport or value == nak_flag) for value in extra), "Disallowed load-generator JVM argument"
     driver_flags = [value for value in extra if value in permitted]
-    assert len(driver_flags) <= 1 and len(extra) == len(set(extra)), "Disallowed duplicate load-generator JVM argument"
+    transport_flags = [value for value in extra if value in permitted_transport]
+    assert len(driver_flags) <= 1 and len(transport_flags) <= 1 and len(extra) == len(set(extra)), "Disallowed duplicate/conflicting load-generator JVM argument"
+    transport_runtime = TRANSPORT_FIELDS.intersection(configuration)
+    if transport is None:
+        assert not transport_flags, "Undeclared client transport JVM opt-in"
+        if transport_runtime:
+            assert transport_runtime == TRANSPORT_FIELDS, "Incomplete client transport mode/session runtime declaration"
+            assert configuration["clientTransportMode"] == "direct", "Undeclared nondefault client transport"
+            assert type(configuration["clientSessionCount"]) is int and configuration["clientSessionCount"] == trial["workers"], "Client physical session count differs"
+        actual_transport = "direct"
+    else:
+        assert transport_flags == ["-Dvectormatch.capacity.client.transport=" + transport["clientTransportMode"]], "Client transport JVM flag differs or is missing"
+        assert transport_runtime == TRANSPORT_FIELDS, "Incomplete client transport mode/session runtime declaration"
+        actual_transport = transport["clientTransportMode"]
+        assert configuration["clientTransportMode"] == actual_transport, "Client transport effective runtime differs"
+        expected_sessions = trial["workers"] if actual_transport == "direct" else 1
+        assert type(configuration["clientSessionCount"]) is int and configuration["clientSessionCount"] == transport["clientSessionCount"] == expected_sessions, "Client physical session count differs"
     verify_nak_jvm_arguments(extra, fixed or {}, client=True)
     nak_runtime = NAK_CLIENT_FIELDS.intersection(configuration)
     if settings is None:
@@ -111,7 +143,10 @@ def load_generator_jvm_arguments(trial, configuration, fixed=None):
     assert mode == expected_mode, "Declared client driver mode differs from actual JVM argument"
     count = configuration["clientDriverCount"]
     assert type(count) is int and count == (1 if mode == "shared" else trial["workers"]), "Client driver count differs"
-    assert configuration["clientAeronMode"] == "one-independent-Aeron-per-client", "Client Aeron ownership mode differs"
+    expected_aeron = "one-independent-Aeron-per-client" if actual_transport == "direct" else "one-session-one-network-owner"
+    assert configuration["clientAeronMode"] == expected_aeron, "Client Aeron ownership mode differs"
+    if actual_transport == "multiplexed":
+        assert trial["workers"] == 128 and mode == "shared" and driver_flags == [permitted[1]], "Multiplexed transport requires shared driver and 128 logical workers"
     return list(extra)
 
 
@@ -213,6 +248,7 @@ def main(root, include_failed_unknown=False):
              "aeronVersion": "1.53.3", **campaign["fixed"]}
     maximum_cluster_sessions(fixed)  # Validate without adding/changing historical fingerprint fields.
     nak_settings(fixed)  # Optional values enter the existing fixed-configuration fingerprint unchanged.
+    transport_settings(fixed)  # Historical absence leaves the fixed fingerprint unchanged.
     receive_buffer = socket_receive_buffer_argument(fixed)
     if receive_buffer is not None:
         if "socketReceiveBufferBytes" in campaign["fixed"]:
