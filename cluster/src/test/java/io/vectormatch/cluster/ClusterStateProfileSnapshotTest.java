@@ -16,6 +16,54 @@ import static org.junit.jupiter.api.Assertions.*;
 class ClusterStateProfileSnapshotTest {
     private static final ClusterCapacity.StateProfile CAPACITY = ClusterCapacity.StateProfile.CAPACITY_190K_V1;
 
+    @Test void explicit350kCheckpointRestoresRealEventsCursorAndRetryButRejectsDifferentProfiles() {
+        var profile = ClusterCapacity.StateProfile.CAPACITY_350K_V1;
+        MatchingEngine engine = ClusterCapacity.newEngine(profile);
+        ReplicatedOutbox outbox = new ReplicatedOutbox(800_000);
+        List<Command> commands = List.of(
+                new Deposit(1, "seller", 1, Asset.BASE, 10),
+                new Deposit(2, "buyer", 1, Asset.QUOTE, 1000),
+                new Place(1, "seller", 2, "maker", Side.SELL, 100, 5, TimeInForce.GTC),
+                new Place(2, "buyer", 2, "taker", Side.BUY, 100, 2, TimeInForce.IOC));
+        for (Command command : commands) outbox.append(engine.apply(command).events());
+        outbox.acknowledge(2);
+        byte[] checkpoint = ClusterStateSnapshot.encode(engine, outbox, profile.snapshotMaxBytes());
+        var restored = ClusterStateSnapshot.decode(checkpoint, profile.snapshotMaxBytes());
+        assertArrayEquals(engine.snapshot(), restored.engine().snapshot());
+        assertEquals(profile.limits(), restored.engine().limits());
+        assertEquals(1024, restored.engine().resultCachePerProducer());
+        assertEquals(800_000, restored.outbox().capacity());
+        assertEquals(2, restored.outbox().exportedSeq());
+        assertEquals(3, restored.outbox().size());
+        assertEquals(5, restored.outbox().lastEventSeq());
+        assertDoesNotThrow(() -> ClusterCapacity.validate(profile, restored.engine(), restored.outbox().capacity()));
+        restored.engine().checkInvariants();
+
+        MatchingClusteredService service = new MatchingClusteredService(800_000, profile);
+        service.restoreCheckpoint(checkpoint);
+        CommandCodec.Reply duplicate = invoke(service, CommandCodec.request(1, commands.getLast()));
+        assertTrue(duplicate.replayed());
+        assertEquals(5, duplicate.eventSeq());
+        assertEquals(engine.stateHash(), invoke(service, CommandCodec.request(2, null)).stateHash());
+        for (byte[] invalid : List.of(
+                ClusterStateSnapshot.encode(ClusterCapacity.newEngine(CAPACITY), new ReplicatedOutbox(524_288), profile.snapshotMaxBytes()),
+                ClusterStateSnapshot.encode(new MatchingEngine(1024, new Limits(10_000, 10_000, 359_999, 100_000)),
+                        new ReplicatedOutbox(800_000), profile.snapshotMaxBytes()),
+                ClusterStateSnapshot.encode(ClusterCapacity.newEngine(profile), new ReplicatedOutbox(524_288), profile.snapshotMaxBytes()),
+                ClusterStateSnapshot.encode(new MatchingEngine(1, profile.limits()), new ReplicatedOutbox(800_000), profile.snapshotMaxBytes()))) {
+            assertThrows(IllegalArgumentException.class, () -> service.restoreCheckpoint(invalid));
+            assertEquals(engine.stateHash(), invoke(service, CommandCodec.request(2, null)).stateHash(),
+                    "Invalid restore must not replace the current valid state");
+        }
+        assertThrows(IllegalArgumentException.class, () -> new MatchingClusteredService().restoreCheckpoint(checkpoint));
+        assertThrows(IllegalArgumentException.class,
+                () -> new MatchingClusteredService(524_288, CAPACITY).restoreCheckpoint(checkpoint));
+        CapturingSession session = new CapturingSession();
+        byte[] request = CommandCodec.snapshot(3, SnapshotTransport.MAX_SNAPSHOT_BYTES + 1, "");
+        service.onSessionMessage(session, 0, new UnsafeBuffer(request), 0, request.length, null);
+        assertEquals("INVALID_SNAPSHOT_OFFSET_OR_TOKEN", CommandCodec.decodeSnapshotChunk(session.response).error());
+    }
+
     @Test void explicitFullCheckpointPreservesCapacityLimitsCoreOutboxCursorAndRetryIdentity() {
         MatchingEngine engine = ClusterCapacity.newEngine(CAPACITY);
         ReplicatedOutbox outbox = new ReplicatedOutbox(524_288);

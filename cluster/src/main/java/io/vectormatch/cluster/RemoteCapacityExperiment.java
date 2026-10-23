@@ -27,7 +27,8 @@ public final class RemoteCapacityExperiment {
         BASELINE("baseline-30k", MAX_ARRIVALS, 60_000, 300_000_000, 65_536),
         EXTENDED_90K("extended-90k", 90_000, 180_000, 900_000_000, 262_144),
         EXTENDED_90K_128("extended-90k-128", 90_000, 180_000, 900_000_000, 262_144, 128, 12, 8),
-        EXTENDED_190K_128("extended-190k-128", 190_000, 380_000, 1_900_000_000L, 524_288, 128, 12, 8);
+        EXTENDED_190K_128("extended-190k-128", 190_000, 380_000, 1_900_000_000L, 524_288, 128, 12, 8),
+        EXTENDED_350K_256("extended-350k-256", 350_000, 380_000, 1_900_000_000L, 800_000, 256, 12, 8);
         final String label;
         final int maximumArrivals, outboxCapacity, maximumWorkers, sessionReapWaitSeconds, connectionConcurrency;
         final long makerQuantity, buyerFunding;
@@ -41,19 +42,24 @@ public final class RemoteCapacityExperiment {
             this.sessionReapWaitSeconds = sessionReapWaitSeconds; this.connectionConcurrency = connectionConcurrency;
         }
         ClusterCapacity.StateProfile stateProfile() {
-            return this == EXTENDED_190K_128 ? ClusterCapacity.StateProfile.CAPACITY_190K_V1 : ClusterCapacity.StateProfile.DEFAULT;
+            return switch (this) {
+                case EXTENDED_190K_128 -> ClusterCapacity.StateProfile.CAPACITY_190K_V1;
+                case EXTENDED_350K_256 -> ClusterCapacity.StateProfile.CAPACITY_350K_V1;
+                default -> ClusterCapacity.StateProfile.DEFAULT;
+            };
         }
         Limits expectedLimits() { return stateProfile().limits(); }
         int snapshotMaxBytes() { return stateProfile().snapshotMaxBytes(); }
         void validateLimits(Limits limits) {
-            if (this == EXTENDED_190K_128) {
-                require(limits.equals(expectedLimits()), "190k fixture requires exact configured core limits");
+            if (stateProfile() != ClusterCapacity.StateProfile.DEFAULT) {
+                require(limits.equals(expectedLimits()), label + " fixture requires exact configured core limits");
                 ClusterCapacity.validate(stateProfile(), limits, outboxCapacity);
             } else ClusterCapacity.validate(limits, outboxCapacity);
         }
         void validateInitialEngine(MatchingEngine engine) {
-            if (this == EXTENDED_190K_128) require(engine.resultCachePerProducer() == stateProfile().resultCachePerProducer(),
-                    "190k fixture requires the configured per-producer result cache before setup");
+            if (stateProfile() != ClusterCapacity.StateProfile.DEFAULT)
+                require(engine.resultCachePerProducer() == stateProfile().resultCachePerProducer(),
+                        label + " fixture requires the configured per-producer result cache before setup");
             validateLimits(engine.limits());
         }
         static Profile parse(String value) {
@@ -80,6 +86,7 @@ public final class RemoteCapacityExperiment {
             Objects.requireNonNull(profile, "profile");
             if (rate < 1 || rate > 1_000_000 || arrivals < 1 || arrivals > profile.maximumArrivals
                     || workers < 1 || workers > profile.maximumWorkers || queueCapacity < 1 || queueCapacity > profile.maximumArrivals
+                    || (profile == Profile.EXTENDED_350K_256 && workers != 128 && workers != 256)
                     || requestTimeoutMs < 10 || requestTimeoutMs > 30_000 || drainTimeoutMs < requestTimeoutMs
                     || drainTimeoutMs > 120_000 || expectedLeader < 0 || expectedLeader > 2
                     || schedulerLatenessLimitMs < 1 || schedulerLatenessLimitMs > 1000

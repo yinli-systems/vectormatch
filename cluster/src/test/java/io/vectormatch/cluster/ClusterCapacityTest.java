@@ -7,6 +7,35 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ClusterCapacityTest {
+    @Test void explicit350kProfileFitsBothTransportBudgetsWithoutExpandingOlderProfiles() {
+        var profile = ClusterCapacity.stateProfile("capacity-350k-v1");
+        assertSame(ClusterCapacity.StateProfile.CAPACITY_350K_V1, profile);
+        assertEquals("capacity-350k-v1", profile.id());
+        assertEquals(new Limits(10_000, 10_000, 360_000, 100_000), profile.limits());
+        assertEquals(1024, profile.resultCachePerProducer());
+        assertEquals(512 * 1024 * 1024, profile.snapshotMaxBytes());
+        assertEquals(254_788_608L, ClusterCapacity.snapshotBudget(profile.limits(), 0));
+        assertTrue(ClusterCapacity.snapshotBudget(profile.limits(), 0) < SnapshotTransport.MAX_SNAPSHOT_BYTES,
+                "The core-view transport remains capped at 256 MiB");
+        assertEquals(459_588_608L, ClusterCapacity.snapshotBudget(profile.limits(), 800_000));
+        assertTrue(ClusterCapacity.snapshotBudget(profile.limits(), 800_000) < profile.snapshotMaxBytes());
+        assertDoesNotThrow(() -> ClusterCapacity.validate(profile, ClusterCapacity.newEngine(profile), 800_000));
+        assertThrows(IllegalArgumentException.class, () -> ClusterCapacity.validate(profile, profile.limits(), 524_288));
+        assertThrows(IllegalArgumentException.class, () -> ClusterCapacity.validate(profile,
+                new Limits(10_000, 10_000, 359_999, 100_000), 800_000));
+        assertThrows(IllegalArgumentException.class, () -> ClusterCapacity.validate(profile,
+                new MatchingEngine(1, profile.limits()), 800_000));
+        assertThrows(IllegalArgumentException.class, () -> ClusterCapacity.validate(profile.limits(), 800_000));
+        assertThrows(IllegalArgumentException.class, () -> ClusterCapacity.validate(
+                ClusterCapacity.StateProfile.CAPACITY_190K_V1, profile.limits(), 800_000));
+        for (String unknown : new String[]{"capacity-350k", "CAPACITY_350K_V1", " capacity-350k-v1", "capacity-350k-v1 "})
+            assertThrows(IllegalArgumentException.class, () -> ClusterCapacity.stateProfile(unknown));
+        assertEquals(100_000, ClusterCapacity.StateProfile.DEFAULT.limits().maxRetainedOrders());
+        assertEquals(256 * 1024 * 1024, ClusterCapacity.StateProfile.DEFAULT.snapshotMaxBytes());
+        assertEquals(200_000, ClusterCapacity.StateProfile.CAPACITY_190K_V1.limits().maxRetainedOrders());
+        assertEquals(524_288, ClusterCapacity.StateProfile.CAPACITY_190K_V1.exactOutboxCapacity());
+    }
+
     @Test void explicitProfilesAreWhitelistedAndDoNotRaiseTheDefaultBudget() {
         assertSame(ClusterCapacity.StateProfile.DEFAULT, ClusterCapacity.stateProfile(null));
         assertSame(ClusterCapacity.StateProfile.DEFAULT, ClusterCapacity.stateProfile(""));

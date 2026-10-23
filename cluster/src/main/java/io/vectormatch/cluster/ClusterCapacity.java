@@ -7,11 +7,14 @@ import java.util.Objects;
 final class ClusterCapacity {
     static final int MAX_RETAINED_ORDERS = 100_000;
     static final int CAPACITY_OUTBOX_CAPACITY = 524_288;
+    static final int CAPACITY_350K_OUTBOX_CAPACITY = 800_000;
 
     enum StateProfile {
         DEFAULT("default", new MatchingEngine.Limits(10_000, 10_000, MAX_RETAINED_ORDERS, 100_000),
                 SnapshotTransport.MAX_SNAPSHOT_BYTES),
         CAPACITY_190K_V1("capacity-190k-v1", new MatchingEngine.Limits(10_000, 10_000, 200_000, 100_000),
+                SnapshotTransport.CAPACITY_MAX_SNAPSHOT_BYTES),
+        CAPACITY_350K_V1("capacity-350k-v1", new MatchingEngine.Limits(10_000, 10_000, 360_000, 100_000),
                 SnapshotTransport.CAPACITY_MAX_SNAPSHOT_BYTES);
 
         private final String id;
@@ -28,6 +31,13 @@ final class ClusterCapacity {
         MatchingEngine.Limits limits() { return limits; }
         int snapshotMaxBytes() { return snapshotMaxBytes; }
         int resultCachePerProducer() { return 1024; }
+        int exactOutboxCapacity() {
+            return switch (this) {
+                case DEFAULT -> 0; // Safe smaller legacy outboxes remain supported by the default profile.
+                case CAPACITY_190K_V1 -> CAPACITY_OUTBOX_CAPACITY;
+                case CAPACITY_350K_V1 -> CAPACITY_350K_OUTBOX_CAPACITY;
+            };
+        }
     }
 
     private ClusterCapacity() {}
@@ -36,6 +46,7 @@ final class ClusterCapacity {
         return switch (name == null ? "" : name) {
             case "", "default" -> StateProfile.DEFAULT;
             case "capacity-190k-v1" -> StateProfile.CAPACITY_190K_V1;
+            case "capacity-350k-v1" -> StateProfile.CAPACITY_350K_V1;
             default -> throw new IllegalArgumentException("Unknown cluster state profile: " + name);
         };
     }
@@ -63,18 +74,19 @@ final class ClusterCapacity {
     static void validate(StateProfile profile, MatchingEngine engine, int outboxCapacity) {
         Objects.requireNonNull(engine, "engine");
         validate(profile, engine.limits(), outboxCapacity);
-        if (profile == StateProfile.CAPACITY_190K_V1
+        if (profile != StateProfile.DEFAULT
                 && engine.resultCachePerProducer() != profile.resultCachePerProducer()) {
-            throw new IllegalArgumentException("Test-only capacity-190k-v1 requires result cache per producer 1024");
+            throw new IllegalArgumentException("Test-only " + profile.id() + " requires result cache per producer 1024");
         }
     }
 
     static void validate(StateProfile profile, MatchingEngine.Limits limits, int outboxCapacity) {
         Objects.requireNonNull(profile, "profile");
         Objects.requireNonNull(limits, "limits");
-        if (profile == StateProfile.CAPACITY_190K_V1
-                && (!profile.limits().equals(limits) || outboxCapacity != CAPACITY_OUTBOX_CAPACITY)) {
-            throw new IllegalArgumentException("Test-only capacity-190k-v1 requires exact profile limits and outbox 524288");
+        if (profile != StateProfile.DEFAULT
+                && (!profile.limits().equals(limits) || outboxCapacity != profile.exactOutboxCapacity())) {
+            throw new IllegalArgumentException("Test-only " + profile.id() + " requires exact profile limits and outbox "
+                    + profile.exactOutboxCapacity());
         }
         if (limits.maxRetainedOrders() > profile.limits().maxRetainedOrders()
                 || snapshotBudget(limits, outboxCapacity) > profile.snapshotMaxBytes()) {

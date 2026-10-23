@@ -314,6 +314,102 @@ class RemoteCapacityExperimentTest {
                 "The new cache requirement must not silently tighten the older fixture contract");
     }
 
+    @Test void explicit350kProfileAllowsOnlyTheRegistered128And256WorkerComparison() {
+        var profile = RemoteCapacityExperiment.Profile.EXTENDED_350K_256;
+        var previous = RemoteCapacityExperiment.Profile.EXTENDED_190K_128;
+        assertEquals(profile, RemoteCapacityExperiment.Profile.parse("extended-350k-256"));
+        assertEquals(350_000, profile.maximumArrivals);
+        assertEquals(256, profile.maximumWorkers);
+        assertEquals(previous.makerQuantity, profile.makerQuantity);
+        assertEquals(previous.buyerFunding, profile.buyerFunding);
+        assertEquals(previous.sessionReapWaitSeconds, profile.sessionReapWaitSeconds);
+        assertEquals(previous.connectionConcurrency, profile.connectionConcurrency);
+        assertEquals(800_000, profile.outboxCapacity);
+        assertEquals(ClusterCapacity.StateProfile.CAPACITY_350K_V1, profile.stateProfile());
+        assertEquals(new Limits(10_000, 10_000, 360_000, 100_000), profile.expectedLimits());
+        assertEquals(512 * 1024 * 1024, profile.snapshotMaxBytes());
+        for (int workers : new int[]{128, 256})
+            assertDoesNotThrow(() -> new RemoteCapacityExperiment.Options(directory, 19000, 35000, 350_000,
+                    workers, 64, 2000, 30_000, 0, 20, profile));
+        for (int workers : new int[]{0, 1, 64, 127, 129, 255, 257})
+            assertThrows(IllegalArgumentException.class, () -> new RemoteCapacityExperiment.Options(directory, 19000,
+                    35000, 350_000, workers, 64, 2000, 30_000, 0, 20, profile));
+        assertThrows(IllegalArgumentException.class, () -> new RemoteCapacityExperiment.Options(directory, 19000,
+                35000, 350_001, 256, 64, 2000, 30_000, 0, 20, profile));
+        assertThrows(IllegalArgumentException.class, () -> new RemoteCapacityExperiment.Options(directory, 19000,
+                35000, 350_000, 128, 64, 2000, 30_000, 0, 20, previous));
+        assertThrows(IllegalArgumentException.class, () -> RemoteCapacityExperiment.validateOutboxProfile(profile, Map.of()));
+        assertThrows(IllegalArgumentException.class, () -> RemoteCapacityExperiment.validateOutboxProfile(profile,
+                Map.of("VECTOR_OUTBOX_CAPACITY", "524288")));
+        assertDoesNotThrow(() -> RemoteCapacityExperiment.validateOutboxProfile(profile, Map.of("VECTOR_OUTBOX_CAPACITY", "800000")));
+        assertEquals(190_000, previous.maximumArrivals);
+        assertEquals(128, previous.maximumWorkers);
+        assertEquals(200_000, previous.expectedLimits().maxRetainedOrders());
+    }
+
+    @Test void new350kProfileRejectsWrongCacheOrLimitsBeforeAnySetupMutation() {
+        var profile = RemoteCapacityExperiment.Profile.EXTENDED_350K_256;
+        for (MatchingEngine wrong : List.of(new MatchingEngine(512, profile.expectedLimits()),
+                ClusterCapacity.newEngine(ClusterCapacity.StateProfile.CAPACITY_190K_V1))) {
+            byte[] before = wrong.snapshot();
+            assertThrows(IllegalStateException.class, () -> profile.validateInitialEngine(wrong));
+            assertArrayEquals(before, wrong.snapshot());
+            assertEquals(0, wrong.lastCommandSeq());
+            assertEquals(0, wrong.lastEventSeq());
+            assertTrue(wrong.accounts().isEmpty());
+        }
+        assertDoesNotThrow(() -> profile.validateInitialEngine(ClusterCapacity.newEngine(profile.stateProfile())));
+    }
+
+    @Test void new350kProfileUsesOneInitialStateAndRestoresFourProducersPerBuyer() {
+        var profile = RemoteCapacityExperiment.Profile.EXTENDED_350K_256;
+        byte[] prepared = null;
+        for (int workers : new int[]{128, 256}) {
+            MatchingEngine engine = ClusterCapacity.newEngine(profile.stateProfile());
+            ReplicatedOutbox outbox = new ReplicatedOutbox(profile.outboxCapacity);
+            profile.validateInitialEngine(engine);
+            for (Command command : RemoteCapacityExperiment.preparationCommands(profile, "capacity-fixed-v1"))
+                outbox.append(engine.apply(command).events());
+            if (prepared == null) prepared = engine.snapshot();
+            else assertArrayEquals(prepared, engine.snapshot(), "Worker count must not alter the initial canonical state");
+            assertEquals(167, engine.lastCommandSeq());
+            Set<String> producers = new HashSet<>();
+            Command last = null;
+            for (int index = 0; index < 512; index++) {
+                var sample = new RemoteCapacityExperiment.Sample(index, workers, "capacity-fixed-v1");
+                producers.add(sample.command.producerId());
+                Execution execution = engine.apply(sample.command);
+                assertTrue(execution.result().accepted());
+                assertEquals(1, execution.result().tradeCount());
+                assertEquals(2, execution.events().size());
+                outbox.append(execution.events());
+                last = sample.command;
+            }
+            assertEquals(workers, producers.size());
+            assertEquals(67 + workers, engine.producerCount());
+            assertEquals(613, engine.retainedOrderCount());
+            assertEquals(679, engine.lastCommandSeq());
+            assertEquals(1291, engine.lastEventSeq());
+            for (int buyer = 0; buyer < 64; buyer++) {
+                AccountView account = engine.account(1_000_100 + buyer);
+                assertEquals(8, account.base().available());
+                assertEquals(1_899_920_000L, account.quote().available());
+            }
+            assertEquals(379_388, engine.order(1).orElseThrow().remainingQuantity());
+            engine.checkInvariants();
+            outbox.acknowledge(2);
+            var restored = ClusterStateSnapshot.decode(
+                    ClusterStateSnapshot.encode(engine, outbox, profile.snapshotMaxBytes()), profile.snapshotMaxBytes());
+            assertArrayEquals(engine.snapshot(), restored.engine().snapshot());
+            assertEquals(800_000, restored.outbox().capacity());
+            assertEquals(1289, restored.outbox().size());
+            assertEquals(2, restored.outbox().exportedSeq());
+            assertTrue(restored.engine().apply(last).replayed());
+            assertArrayEquals(engine.snapshot(), restored.engine().snapshot());
+            restored.engine().checkInvariants();
+        }
+    }
+
     @Test void oneHundredNinetyThousandTradesAcross128ProducersRestoreWithinTwoGiBHeap() throws Exception {
         runProfileProbe(128, "EXTENDED_190K_128_2G_PASS", "2g", "extended-190k-128");
     }

@@ -190,10 +190,11 @@ def command(role: str, node: int | None, state: Path, action: str) -> tuple[list
                  environment["VECTOR_CLUSTER_HOSTS"]]
         profile = environment.get("VECTOR_STATE_PROFILE", "")
         if profile:
-            if profile not in ("default", "capacity-190k-v1"):
-                raise ValueError("VECTOR_STATE_PROFILE must be default or capacity-190k-v1")
-            if profile == "capacity-190k-v1" and args[-2] != "524288":
-                raise ValueError("capacity-190k-v1 requires outbox capacity 524288")
+            if profile not in ("default", "capacity-190k-v1", "capacity-350k-v1"):
+                raise ValueError("VECTOR_STATE_PROFILE must be default, capacity-190k-v1 or capacity-350k-v1")
+            exact_outbox = {"capacity-190k-v1": "524288", "capacity-350k-v1": "800000"}.get(profile)
+            if exact_outbox is not None and args[-2] != exact_outbox:
+                raise ValueError(profile + " requires outbox capacity " + exact_outbox)
             args.append(profile)
         threading = environment.get(DRIVER_THREADING_ENV)
         if DRIVER_THREADING_ENV in environment and threading not in ("SHARED", "DEDICATED"):

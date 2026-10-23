@@ -77,6 +77,19 @@ def driver_threading_argument(fixed):
     return value
 
 
+def maximum_cluster_sessions(fixed):
+    value = fixed.get("maxClusterSessions", 128)
+    assert type(value) is int and value in (128, 256), "Invalid fixed max cluster sessions"
+    return value
+
+
+def verify_maximum_cluster_sessions(arguments, fixed):
+    expected = "-Daeron.cluster.max.sessions=" + str(maximum_cluster_sessions(fixed))
+    actual = [value for value in arguments if value == "-Daeron.cluster.max.sessions"
+              or value.startswith("-Daeron.cluster.max.sessions=")]
+    assert actual == [expected], "Node max cluster sessions JVM argument differs or is repeated"
+
+
 def node_arguments(trial, fixed, node, hosts):
     arguments = [str(node), trial["state"], str(fixed["portBase"]),
                  str(fixed["syncLevel"]), str(fixed["outboxCapacity"]), hosts]
@@ -122,6 +135,7 @@ def main(root):
              "idleStrategy": "BackoffIdleStrategy defaults",
              "socketSendBufferBytes": 131072, "socketReceiveBufferBytes": 131072,
              "aeronVersion": "1.53.3", **campaign["fixed"]}
+    maximum_cluster_sessions(fixed)  # Validate without adding/changing historical fingerprint fields.
     receive_buffer = socket_receive_buffer_argument(fixed)
     if receive_buffer is not None:
         if "socketReceiveBufferBytes" in campaign["fixed"]:
@@ -167,7 +181,7 @@ def main(root):
             args = record["arguments"]
             assert "-Xmx" + fixed["nodeHeap"] in args
             assert "-Daeron.cluster.appointed.leader.id=0" in args
-            assert "-Daeron.cluster.max.sessions=128" in args
+            verify_maximum_cluster_sessions(args, fixed)
             assert args[args.index("-cp") + 1] == release + "/dist/cluster/lib/*"
             index = args.index("io.vectormatch.cluster.ClusterNodeMain")
             assert args[index + 1:] == node_arguments(trial, fixed, node, hosts)

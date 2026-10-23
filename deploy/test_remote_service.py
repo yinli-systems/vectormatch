@@ -234,6 +234,37 @@ class RemoteServiceTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "VECTOR_STATE_PROFILE"):
                 remote.command("node", 0, Path("/state/node-0"), "start")
 
+    def test_350k_profile_requires_exact_outbox_and_explicit_256_sessions(self):
+        settings = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4",
+                    "VECTOR_STATE_PROFILE": "capacity-350k-v1", "VECTOR_OUTBOX_CAPACITY": "800000",
+                    "VECTOR_MAX_CLUSTER_SESSIONS": "256", "VECTOR_MAX_HEAP": "2g"}
+        with patch.dict(os.environ, settings, clear=True), \
+                patch.object(remote, "distribution", return_value=Path("/bundle/dist/cluster")), \
+                patch.object(remote, "java", return_value="/jdk/bin/java"):
+            args, environment = remote.command("node", 0, Path("/state/node-0"), "start")
+            self.assertEqual(args[-7:], ["0", "/state", "19000", "2", "800000",
+                                        settings["VECTOR_CLUSTER_HOSTS"], "capacity-350k-v1"])
+            self.assertEqual(["-Daeron.cluster.max.sessions=256"],
+                             [arg for arg in args if arg.startswith("-Daeron.cluster.max.sessions=")])
+            fingerprint = remote.configuration_fingerprint("node", environment)
+            for name, changed in (("VECTOR_MAX_CLUSTER_SESSIONS", "128"),
+                                  ("VECTOR_STATE_PROFILE", "capacity-190k-v1")):
+                self.assertNotEqual(fingerprint,
+                                    remote.configuration_fingerprint("node", {**environment, name: changed}))
+            os.environ["VECTOR_SOCKET_RECEIVE_BUFFER_BYTES"] = "1048576"
+            os.environ["VECTOR_DRIVER_THREADING_MODE"] = "DEDICATED"
+            args, _ = remote.command("node", 0, Path("/state/node-0"), "start")
+            self.assertEqual(["capacity-350k-v1", "1048576", "DEDICATED"], args[-3:])
+            for capacity in ("524288", "799999", "800001"):
+                os.environ["VECTOR_OUTBOX_CAPACITY"] = capacity
+                with self.subTest(capacity=capacity), self.assertRaisesRegex(ValueError, "requires outbox capacity 800000"):
+                    remote.command("node", 0, Path("/state/node-0"), "start")
+            os.environ["VECTOR_OUTBOX_CAPACITY"] = "800000"
+            for profile in ("capacity-350k", "CAPACITY_350K_V1", "capacity-350k-v1 "):
+                os.environ["VECTOR_STATE_PROFILE"] = profile
+                with self.subTest(profile=profile), self.assertRaisesRegex(ValueError, "VECTOR_STATE_PROFILE"):
+                    remote.command("node", 0, Path("/state/node-0"), "start")
+
     def test_appointed_leader_is_explicit_test_only_node_configuration(self):
         settings = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4"}
         with patch.dict(os.environ, settings, clear=True), \

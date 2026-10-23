@@ -136,7 +136,47 @@ class CapacityConfigTest(unittest.TestCase):
                     arguments = json.loads((directory / f"node{node}" / "process.json").read_text())["arguments"]
                     offset = arguments.index("io.vectormatch.cluster.ClusterNodeMain") + 1
                     self.assertEqual(arguments[offset:], config.node_arguments(trial, fixed, node, hosts))
+                    config.verify_maximum_cluster_sessions(arguments, fixed)
                     config.verify_requested_receive_buffer_startup(fixed, "legacy startup without receive buffer field")
+
+    def test_maximum_cluster_sessions_default_is_historical_and_explicit_values_are_strict(self):
+        fixed = {}
+        self.assertEqual(128, config.maximum_cluster_sessions(fixed))
+        self.assertEqual({}, fixed, "Historical absence must not add a new fingerprint field")
+        for sessions in (128, 256):
+            self.assertEqual(sessions, config.maximum_cluster_sessions({"maxClusterSessions": sessions}))
+        for sessions in (None, True, False, 128.0, "128", 0, 64, 129, 255, 257):
+            with self.subTest(sessions=sessions), self.assertRaisesRegex(AssertionError, "Invalid fixed"):
+                config.maximum_cluster_sessions({"maxClusterSessions": sessions})
+
+    def test_node_sessions_require_one_exact_jvm_property_without_overrides(self):
+        for fixed in ({}, {"maxClusterSessions": 128}, {"maxClusterSessions": 256}):
+            sessions = config.maximum_cluster_sessions(fixed)
+            flag = "-Daeron.cluster.max.sessions=" + str(sessions)
+            arguments = ["/jdk/bin/java", "-Xmx2g", flag, "-cp", "/lib/*", "Main"]
+            config.verify_maximum_cluster_sessions(arguments, fixed)
+            for invalid in ([], [flag, flag], [flag, "-Daeron.cluster.max.sessions=64"],
+                            ["-Daeron.cluster.max.sessions=64"], [flag, "-Daeron.cluster.max.sessions"],
+                            [flag + " "], ["-Daeron.cluster.max.sessions"]):
+                with self.subTest(fixed=fixed, invalid=invalid), self.assertRaisesRegex(AssertionError, "differs or is repeated"):
+                    config.verify_maximum_cluster_sessions(["java", *invalid, "Main"], fixed)
+
+    def test_350k_sessions_and_state_profile_have_distinct_exact_argument_digests(self):
+        fixed = {"portBase": 23000, "syncLevel": 2, "outboxCapacity": 800000,
+                 "stateProfile": "capacity-350k-v1", "maxClusterSessions": 256,
+                 "socketReceiveBufferArgumentBytes": 1048576, "driverThreadingArgument": "DEDICATED"}
+        trial = {"state": "/state/trial"}
+        suffix = ["0", "/state/trial", "23000", "2", "800000", "127.0.0.1",
+                  "capacity-350k-v1", "1048576", "DEDICATED"]
+        self.assertEqual(suffix, config.node_arguments(trial, fixed, 0, "127.0.0.1"))
+        arguments = ["java", "-Daeron.cluster.max.sessions=256", "Main", *suffix]
+        config.verify_maximum_cluster_sessions(arguments, fixed)
+        self.assertEqual(hashlib.sha256(b"\0".join(arg.encode() for arg in arguments) + b"\0").hexdigest(),
+                         config.command_sha256(arguments))
+        previous = ["java", "-Daeron.cluster.max.sessions=128", "Main", *suffix]
+        self.assertNotEqual(config.command_sha256(arguments), config.command_sha256(previous))
+        with self.assertRaises(AssertionError):
+            config.verify_maximum_cluster_sessions(previous, fixed)
 
     def test_new_receive_buffer_keeps_profile_in_seventh_position(self):
         fixed = {"portBase": 23000, "syncLevel": 2, "outboxCapacity": 65536,
