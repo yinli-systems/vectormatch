@@ -32,6 +32,10 @@ def main(root):
         assert configuration["aeronMtuLength"] == fixed["aeronMtuLength"]
         assert configuration["expectedLeader"] == fixed["leader"]
         assert configuration["queueCapacityPerWorker"] == fixed["queuePerWorker"]
+        if "declaredOutboxCapacity" in configuration:
+            assert configuration["declaredOutboxCapacity"] == fixed["outboxCapacity"]
+        if "capacityProfile" in fixed:
+            assert configuration["profile"] == fixed["capacityProfile"]
         for name in ("requestTimeoutMs", "drainTimeoutMs", "schedulerLatenessLimitMs", "portBase"):
             assert configuration[name] == fixed[name], name
         hosts = ",".join(configuration["memberHosts"])
