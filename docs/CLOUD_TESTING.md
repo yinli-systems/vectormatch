@@ -2,6 +2,8 @@
 
 The initial approved cloud testing budget is **USD 20 total**. No instances have been purchased by this project. Record the actual hourly quote, storage charges, start/stop times and exported evidence. Run a short campaign, then terminate unused resources after preserving evidence; stopped persistent disks can still incur charges. A benchmark process stopping does not stop a provider's billing.
 
+The selected next campaign is now a real multi-host UDP lab: **3 × Hetzner CCX23 + 1 × CCX13**, with private networking and a spread placement group. The [exact rental and SSH handoff guide](HETZNER_LAB.md) supersedes the initial single-machine suggestion below. Its 12-hour estimate is USD 6.8724 before tax; 24 hours is USD 13.7448. Current account quota and stock must be confirmed in the provider console before purchase.
+
 ## First machine
 
 Target Linux x86-64 or ARM64, 8–16 effective vCPU, 16–32 GiB available RAM, and roughly 100 GB of SSD. Prefer 16 vCPU / 32 GiB when the quote fits the budget. SSH, Python 3, outbound dependency downloads and loopback UDP must work. GPU performance has no role in these workloads. CPU isolation, storage sync latency and throttling matter more than the advertised host core count.
