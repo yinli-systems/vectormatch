@@ -19,7 +19,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /** Persistent read-only CnC mapping; never registers an Aeron client or controls a driver. */
 public final class CapacityCounters {
@@ -36,11 +38,24 @@ public final class CapacityCounters {
         int duration = positive(args[2], "durationSeconds", 86_400);
         int interval = args.length == 4 ? positive(args[3], "intervalMillis", 60_000) : 1000;
         if (output.getParent() != null) Files.createDirectories(output.getParent());
+        AtomicBoolean stopping = new AtomicBoolean();
+        CountDownLatch finished = new CountDownLatch(1);
+        Thread shutdown = new Thread(() -> {
+            stopping.set(true);
+            try { finished.await(3, TimeUnit.SECONDS); }
+            catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); }
+        }, "capacity-counters-shutdown");
+        Runtime.getRuntime().addShutdownHook(shutdown);
         // CREATE_NEW preserves prior evidence even when startup or sampling fails.
         try (BufferedWriter writer = Files.newBufferedWriter(output, StandardCharsets.UTF_8,
                 StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
             Path cnc = directory.resolve(CncFileDescriptor.CNC_FILE);
-            try (CncFileReader reader = awaitReader(directory, cnc)) {
+            try (CncFileReader reader = awaitReader(directory, cnc, stopping)) {
+                if (reader == null) {
+                    line(writer, "{\"kind\":\"complete\",\"timestamp\":" + quote(Instant.now().toString())
+                            + ",\"samples\":0,\"terminationReason\":\"SHUTDOWN_BEFORE_CNC_READY\"}");
+                    return;
+                }
                 Object fileKey = Files.readAttributes(cnc, BasicFileAttributes.class).fileKey();
                 line(writer, "{\"kind\":\"metadata\",\"schemaVersion\":1,\"startedAt\":" + quote(Instant.now().toString())
                         + ",\"driverDirectory\":" + quote(directory.toString()) + ",\"driverPidFromCnc\":" + reader.driverPid()
@@ -53,32 +68,34 @@ public final class CapacityCounters {
                 long intervalNs = TimeUnit.MILLISECONDS.toNanos(interval);
                 long nextSample = started;
                 long samples = 0;
-                while (System.nanoTime() - started < durationNs) {
+                while (!stopping.get() && System.nanoTime() - started < durationNs) {
                     requireSameFile(cnc, fileKey);
-                    long sampled = System.nanoTime();
-                    List<String> counters = counters(reader.countersReader());
-                    line(writer, "{\"kind\":\"sample\",\"sample\":" + samples++
-                            + ",\"timestamp\":" + quote(Instant.now().toString())
-                            + ",\"elapsedNanos\":" + (sampled - started)
-                            + ",\"samplingNanos\":" + (System.nanoTime() - sampled)
-                            + ",\"driverHeartbeatMs\":" + reader.driverHeartbeatMs()
-                            + ",\"driverHeartbeatAgeMs\":" + reader.driverHeartbeatAgeMs()
-                            + ",\"counters\":[" + String.join(",", counters) + "]}");
+                    sample(writer, reader, samples++, started);
                     long now = System.nanoTime();
                     // Do not manufacture catch-up samples if the observer was descheduled.
                     nextSample += intervalNs;
                     if (nextSample <= now) nextSample = now + intervalNs;
                     long remaining = Math.min(nextSample - now, durationNs - (now - started));
-                    if (remaining > 0) TimeUnit.NANOSECONDS.sleep(remaining);
+                    waitForSample(now + Math.max(0, remaining), stopping);
+                }
+                if (stopping.get()) {
+                    // Capture the stop boundary, so a post-measurement TERM does not end at an earlier periodic sample.
+                    requireSameFile(cnc, fileKey);
+                    sample(writer, reader, samples++, started);
                 }
                 line(writer, "{\"kind\":\"complete\",\"timestamp\":" + quote(Instant.now().toString())
-                        + ",\"samples\":" + samples + ",\"elapsedNanos\":" + (System.nanoTime() - started) + "}");
+                        + ",\"samples\":" + samples + ",\"elapsedNanos\":" + (System.nanoTime() - started)
+                        + ",\"terminationReason\":" + quote(stopping.get() ? "SHUTDOWN_REQUESTED" : "DURATION_ELAPSED") + "}");
             } catch (Exception failure) {
                 line(writer, "{\"kind\":\"failure\",\"timestamp\":" + quote(Instant.now().toString())
                         + ",\"errorType\":" + quote(failure.getClass().getName())
                         + ",\"error\":" + quote(String.valueOf(failure.getMessage())) + "}");
                 throw failure;
             }
+        } finally {
+            finished.countDown();
+            try { Runtime.getRuntime().removeShutdownHook(shutdown); }
+            catch (IllegalStateException shuttingDown) { /* The hook is already waiting for this completion. */ }
         }
     }
 
@@ -88,13 +105,34 @@ public final class CapacityCounters {
         return value;
     }
 
-    private static CncFileReader awaitReader(Path directory, Path cnc) throws Exception {
+    private static CncFileReader awaitReader(Path directory, Path cnc, AtomicBoolean stopping) throws Exception {
         long deadline = System.nanoTime() + CNC_WAIT_NS;
-        while (System.nanoTime() - deadline < 0) {
+        while (!stopping.get() && System.nanoTime() - deadline < 0) {
             if (ready(cnc)) return mapReader(directory);
             Thread.sleep(25);
         }
+        if (stopping.get()) return null;
         throw new IllegalStateException("CnC file was not initialized within 30 seconds: " + cnc);
+    }
+
+    private static void waitForSample(long deadline, AtomicBoolean stopping) throws InterruptedException {
+        while (!stopping.get()) {
+            long remaining = deadline - System.nanoTime();
+            if (remaining <= 0) return;
+            TimeUnit.NANOSECONDS.sleep(Math.min(remaining, TimeUnit.MILLISECONDS.toNanos(100)));
+        }
+    }
+
+    private static void sample(BufferedWriter writer, CncFileReader reader, long index, long started) throws IOException {
+        long sampled = System.nanoTime();
+        List<String> counters = counters(reader.countersReader());
+        line(writer, "{\"kind\":\"sample\",\"sample\":" + index
+                + ",\"timestamp\":" + quote(Instant.now().toString())
+                + ",\"elapsedNanos\":" + (sampled - started)
+                + ",\"samplingNanos\":" + (System.nanoTime() - sampled)
+                + ",\"driverHeartbeatMs\":" + reader.driverHeartbeatMs()
+                + ",\"driverHeartbeatAgeMs\":" + reader.driverHeartbeatAgeMs()
+                + ",\"counters\":[" + String.join(",", counters) + "]}");
     }
 
     private static boolean ready(Path cnc) throws IOException {
