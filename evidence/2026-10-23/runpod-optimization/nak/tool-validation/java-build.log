@@ -1,0 +1,56 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :bench:processResources NO-SOURCE
+> Task :server:processResources NO-SOURCE
+> Task :cluster:processResources NO-SOURCE
+> Task :bench:processTestResources NO-SOURCE
+> Task :cluster:processTestResources NO-SOURCE
+> Task :server:processTestResources NO-SOURCE
+> Task :projector:processResources
+> Task :projector:processTestResources NO-SOURCE
+> Task :core:compileJava FROM-CACHE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar
+> Task :core:compileTestJava FROM-CACHE
+> Task :bench:compileJava FROM-CACHE
+> Task :core:processTestResources NO-SOURCE
+> Task :bench:classes UP-TO-DATE
+> Task :core:testClasses UP-TO-DATE
+> Task :bench:compileTestJava FROM-CACHE
+> Task :bench:testClasses UP-TO-DATE
+> Task :core:test FROM-CACHE
+> Task :bench:test FROM-CACHE
+> Task :cluster:compileJava
+> Task :cluster:classes
+> Task :cluster:jar
+> Task :projector:compileJava
+> Task :projector:classes
+> Task :projector:jar
+> Task :projector:compileTestJava
+> Task :projector:testClasses
+> Task :cluster:compileTestJava
+> Task :cluster:testClasses
+
+> Task :server:compileJava
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/optimization-20261024/nak/build-ab6fc73731642d0d17a242a930a2cb60aba11e16/server/src/main/java/io/vectormatch/server/WorkbenchServer.java:32: warning: [deprecation] NioEventLoopGroup in io.netty.channel.nio has been deprecated
+    private final EventLoopGroup acceptor = new NioEventLoopGroup(1);
+                                                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/optimization-20261024/nak/build-ab6fc73731642d0d17a242a930a2cb60aba11e16/server/src/main/java/io/vectormatch/server/WorkbenchServer.java:33: warning: [deprecation] NioEventLoopGroup in io.netty.channel.nio has been deprecated
+    private final EventLoopGroup workers = new NioEventLoopGroup(2);
+                                               ^
+2 warnings
+
+> Task :server:classes
+> Task :server:compileTestJava
+> Task :server:testClasses
+> Task :projector:test
+> Task :server:test
+> Task :cluster:test
+> Task :cluster:startScripts
+> Task :cluster:installDist
+
+[Incubating] Problems report is available at: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/optimization-20261024/nak/build-ab6fc73731642d0d17a242a930a2cb60aba11e16/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 1m 16s
+21 actionable tasks: 15 executed, 6 from cache

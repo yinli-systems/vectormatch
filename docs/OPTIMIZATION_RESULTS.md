@@ -99,6 +99,8 @@ node0 JVM CPU 由 S 的 2.528 / 2.577 核增加为 D 的 3.055 / 2.992 核，线
 
 独立[全量缓存审计](../evidence/2026-10-23/runpod-optimization/window350k/tool-validation/unknown-audit.json)核对了原350k行与完整终态core：全部3,307个已知回复的业务结果逐字段等于终态缓存；256个unresolved中252个已缓存为accepted，另外4个只是在该snapshot中缺席，不能据此推断未执行。原校验器先重放confirmed-only集合，再检查allKnown；漏掉已执行但未确认的命令会使后续订单号/commandSeq错位，产生误导的business mismatch。修复将完整结果集合检查移到重放之前，保持unresolved失败与原始CSV，不将离线缓存发现回填成客户端确认。独立同身份恢复及其结果另存。
 
+用户明确批准后，独立[同身份恢复](../evidence/2026-10-23/runpod-optimization/window350k/unknown-recovery/README.md)已完成：live pre-core先与冻结快照完全一致，再核对256个原业务身份。252个返回缓存结果，另外4个以同key完成恢复，实际增加4个命令与8条事件；最终canonical core、资产和新增事件payload全部通过，未ACK，outbox pending7385→7393。原容量轮次仍为INVALID，原CSV和unknown计数未改。helper执行9.507秒不含编排，不能当作容量或故障恢复SLA。
+
 严格窗口[传输归因](../evidence/2026-10-23/runpod-optimization/window350k/analysis/failed-window-attribution-summary.json)显示W256 node0自有UDP drop增量233,810、负载端498,367；node0 NAK sent增量1,722,367。负载端drop集中在共享ingress publication的source/control socket，node0也包含ingress与consensus发送通道control socket；三节点固定LOG端口该窗口drops为0。256个session在窗口开始存在，未见session-cap拒绝；driver线程接近1核，线程/FD采样未触上限。下一受控因素为node与load同时显式设置unicast NAK delay：1,000ns对100,000ns，retry ratio保持100，分别对应100μs/10ms重复请求间隔。是否改善修复流量和容量必须另测；这些关联不能证明唯一原因，也不把NAK次数等同业务丢单。
 
 ## 已完成的代码验证
