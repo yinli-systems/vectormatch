@@ -1,5 +1,13 @@
 # Runpod 三节点 UDP 实验记录
 
+## 最新容量曲线与恢复验收
+
+本次 open-loop 容量压测已保留 **38 轮、4 个独立配置组**，其中新的 2 GiB / 128 客户端长窗组完成 10 轮：**13,000/s 两轮稳定，14,000/s 结果混合，15,000/s 两轮非稳定**。结论覆盖有限队列、同步客户端和三节点复制撮合路径；负载与 member 2 共址。完整 p99、积压、准入损失、拒绝和 unknown 见[容量报告](CAPACITY_RESULTS.md)、[长窗原始记录](../evidence/2026-10-23/runpod-capacity-long/)及[跨阶段复测汇总](../evidence/2026-10-23/runpod-capacity-long/analysis/repeats.json)，不将它包装成撮合核心或无限持续写入上限。
+
+测试后已在原 Pod 重新制作并校验[原应用离线备份清单](../evidence/2026-10-23/runpod-capacity-restoration/backup-manifest.json)，恢复原 Java release 和原始业务状态。[HTTP](../evidence/2026-10-23/runpod-capacity-restoration/restored-readiness.json)、[SQL 账本](../evidence/2026-10-23/runpod-capacity-restoration/postgres-ledger.json)、[WebSocket](../evidence/2026-10-23/runpod-capacity-restoration/websocket.json)验收均通过；SQL cursor **6,214**、trades **1,551**、观察 lag **0**，合成流保持暂停。这是在相同 Pod 原文件系统上恢复服务，并非从备份副本恢复演练；新增原生归档保留在原 Pod，没有外传原生内容；自动审批因授权边界拒绝了新增原生状态导出。此前本地备份保持，仓库保存合成证据与校验元数据。
+
+截至 **2026-10-23T21:21:11.138967+00:00**，本项目累计费用估算 **$5.804 / $20**，按启动时间和报价估算，尚未与供应商账单结算。没有新增 Pod；现有三台按用户要求保留，约 $1.56/小时继续计费，原定 04:24 Dubai 提醒保持。下文较早的单在途结果、SQL 观察和费用估算均保留其历史时点。
+
 2026-10-23，本项目在 Runpod `EU-RO-1` 实际创建了三个开启 Global Networking 的 GPU Pod。私网 UDP 全互连、初始撮合、修复后两轮 leader SIGKILL 和重复全 JVM 冷重启均已通过对应检查；冷重启后又完成一轮 900 个测量命令和 300 笔成交。六组原始 client/server 报告、三台身份/网络/cgroup 预检及文件 SHA-256 汇总见 [runpod-network/summary.json](../evidence/2026-10-23/runpod-network/summary.json)。[故障时间线](../evidence/2026-10-23/runpod-cluster/fault-timeline.json)完整保留初次失败、补丁和复测。随后恢复 outbox 到 PostgreSQL、HTTP 业务 smoke、三帧 WebSocket 状态及 SQL 账本连续性也分别取得通过证据。离线备份已完成；用户选择三台再保留运行 6 小时，服务已恢复，Pod 计费继续。
 
 ## 实际资源与预算

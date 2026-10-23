@@ -25,9 +25,13 @@
 
 15k 首次 190,000 条命令均接受，窗口内确认 14,650.4211/s，但排空 **516.951 ms > 126.667 ms**。复测 284 条请求在客户端队列满时未发送，排空 596.226 ms、后半程拟合积压增长 2,062.712 条也超过本轮 1,900 条的容忍量。两轮均为非稳定，且没有业务拒绝或 unknown；首次全量接受和两次最终状态正确仍不能替代排队/排空要求。存在未发送请求的复测只能报告已接受回复的条件 p99，不能为全量请求填写一个有限 p99。
 
-[全精度 CSV](../evidence/2026-10-23/runpod-capacity-long/analysis/capacity.csv) · [全部校验和判定](../evidence/2026-10-23/runpod-capacity-long/analysis/summary.json) · [SVG 曲线](../evidence/2026-10-23/runpod-capacity-long/analysis/capacity.svg)
+[全精度 CSV](../evidence/2026-10-23/runpod-capacity-long/analysis/capacity.csv) · [全部校验和判定](../evidence/2026-10-23/runpod-capacity-long/analysis/summary.json) · [跨 phase 重复汇总](../evidence/2026-10-23/runpod-capacity-long/analysis/repeats.json) · [SVG 曲线](../evidence/2026-10-23/runpod-capacity-long/analysis/capacity.svg)
 
 ![190k 固定配置容量曲线](../evidence/2026-10-23/runpod-capacity-long/analysis/capacity.png)
+
+![190k 长窗 backlog 观测](../evidence/2026-10-23/runpod-capacity-long/analysis/backlog.png)
+
+跨 phase 汇总按完整配置 fingerprint、worker/队列数、目标到达率、计划数量和窗口时长严格匹配，保留每一轮后再判断重复结果：13k 为 `REPEATEDLY_STABLE_WINDOW`，14k 为 `MIXED`，15k 为 `REPEATEDLY_NONSTABLE_WINDOW`。p99 范围表示逐轮 p99 的范围，没有把它误称为合并样本的 p99。该汇总脚本另有 [9 项测试通过记录](../evidence/2026-10-23/runpod-capacity-long/tool-validation/repeat-summary-tests.json)。
 
 14k 复测在云端已完成后，本地导出遇到磁盘空间不足。清理可重建副本后，只重新导出同一轮数据，未重发业务负载；独立云/本地归档哈希一致，处理记录见 [export-recovery.json](../evidence/2026-10-23/runpod-capacity-long/tool-validation/export-recovery.json)。这次导出故障没有被当作新一轮试验，也没有删去其原始记录。
 
@@ -126,12 +130,30 @@ retained orders 包含已经成交、取消或过期的终态订单，当前不�
 
 ```sh
 python3 -B scripts/analyze-capacity.py \
-  --runs-dir evidence/2026-10-23/runpod-capacity-extended/runs \
+  --runs-dir evidence/2026-10-23/runpod-capacity-long/runs \
   --output-dir /tmp/vectormatch-capacity-recomputed \
-  --campaign evidence/2026-10-23/runpod-capacity-extended/campaign.json \
+  --campaign evidence/2026-10-23/runpod-capacity-long/campaign.json \
   --plot
+
+python3 -B scripts/summarize-capacity-repeats.py \
+  evidence/2026-10-23/runpod-capacity-long/analysis/summary.json \
+  /tmp/vectormatch-capacity-repeats.json
+
+python3 -B -m unittest discover -s scripts/tests -p test_capacity_repeats.py
 ```
 
 ## 现场与预算收尾
 
-本轮复用已有三台 Pod，没有新增机器；预算仍按项目总额 **20 美元**约束，合计报价保守按 **$1.56/小时**估算。该估算不等于供应商结算金额，也不包含账户内无关工作负载。原应用恢复校验和最终费用估算以现场收尾记录为准，在记录完成前不声明恢复已经通过。
+容量负载结束后，原应用已在原三台 Pod 上以 `e1db2e755a834234efb60b7a1ed291b31ce33c16` 版本重新启动，沿用保留的原状态、正常 leader 选举、原 port 19000、outbox 65,536 和 session 默认值。**2026-10-24 01:09:21 迪拜时间（2026-10-23 21:09:21 UTC）的收尾校验通过**：
+
+- [Readiness](../evidence/2026-10-23/runpod-capacity-restoration/restored-readiness.json) 为 `UP / CLUSTER_REPLICATED`，mirror 为 `SYNCHRONIZED`；启动记录 `recoveredCommands=4541`，当前 mirror commandSeq 4609、eventSeq 6214，自动业务流 `flowEnabled=false`。
+- [PostgreSQL 核对](../evidence/2026-10-23/runpod-capacity-restoration/postgres-ledger.json) 的 6,214 条事件和 marketSeq 6,194 连续，存储 1,551 笔成交，cursor 与计数一致；最后观察的投影 lag 为 0。它核对连续性与账目计数，没有独立证明每个 payload 与源完全相等。
+- [WebSocket 核对](../evidence/2026-10-23/runpod-capacity-restoration/websocket.json) 收到连续 3 个完整状态帧。这个收尾检查覆盖恢复后的连接与全状态快照，不是逐事件行情投递或扇出容量测试。
+
+这是在原 Pod 和原文件上恢复服务运行，**没有重启 Pod，也没有把备份灌回做恢复测试**。本轮另做了原停止状态及 PG 的同 Pod 离线归档，可读性、大小和 SHA 已记录于 [backup-manifest](../evidence/2026-10-23/runpod-capacity-restoration/backup-manifest.json)。新的原生归档内容未传回本地或仓库，只保存元数据；此前已授权的本地备份保持。该副本仍与临时盘共用故障域，不能作为独立灾备证明。
+
+自动审批拒绝了再次导出原生应用/PG 状态，理由是其内容可能超出本次合成测试证据的明确授权范围。本轮采用上述同 Pod 离线副本和元数据记录完成替代处理，没有导出新的原生内容。
+
+本轮复用已有三台 Pod，没有新增机器；项目总预算仍为 **20 美元**。按 [最终预算记录](../evidence/2026-10-23/runpod-capacity-restoration/final-budget.json)，截至 **2026-10-23T21:21:11.138967+00:00**，项目累计估算 **$5.8040，约 $5.80**；合计报价保守按 **$1.56/小时**计算。该值是记录时点的 launch-time/rate 估算，未与供应商账单结算，不包含账户内无关工作负载。三台 Pod 按用户要求保留运行，原定 04:24 Dubai 提醒保持，费用继续累计；这个数值不代表自动停机或账单硬上限。
+
+[真实浏览器验收](../evidence/2026-10-23/runpod-capacity-restoration/ui-verification.json)核对了四个独立配置组的 11 / 11 / 6 / 10 个点、17 张历史与代表性卡片、16k 失稳详情和刷新后的点选保持；[页面截图](../evidence/2026-10-23/runpod-capacity-restoration/ui-capacity.png)与完整 AX 观察一并保存。最终服务仍 UP、flow 暂停、SQL 观察 lag 0，见 [最终 HTTP 状态](../evidence/2026-10-23/runpod-capacity-restoration/final-http-state.json)。
