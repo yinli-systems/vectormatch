@@ -28,6 +28,8 @@ MAINS = {"node": "io.vectormatch.cluster.ClusterNodeMain",
          "gateway": "io.vectormatch.server.WorkbenchServer",
          "projector": "io.vectormatch.projector.ProjectorMain"}
 CONFIGURATION_VERSION = 1
+IDENTITY_TIMEOUT_SECONDS = 2.0
+IDENTITY_POLL_SECONDS = 0.01
 # Only explicitly non-secret settings may enter this digest. Never include the full
 # environment, JDBC URLs, passwords, tokens or other low-entropy credentials.
 NETWORK_CONFIGURATION = ("VECTOR_CLUSTER_HOSTS", "VECTOR_AERON_MTU_LENGTH")
@@ -179,6 +181,45 @@ def command(role: str, node: int | None, state: Path, action: str) -> tuple[list
     return args, environment
 
 
+def await_process_identity(child: subprocess.Popen, expected_command: str, log_path: Path) -> dict:
+    """Allow a bounded /proc exec transition, preserving exact PID/start/argv ownership.
+
+    Popen owns this unreaped child throughout the wait. Missing/old command lines
+    are retried only while poll confirms the child is alive; a real exit fails fast.
+    A changed start time fails closed rather than accepting a later process.
+    """
+    deadline = time.monotonic() + IDENTITY_TIMEOUT_SECONDS
+    observed_start = None
+    last_observation = "not-sampled"
+    while True:
+        exit_code = child.poll()
+        if exit_code is not None:
+            raise RuntimeError(f"Process exited with code {exit_code} before identity was established; inspect {log_path}")
+        if time.monotonic() >= deadline:
+            raise RuntimeError(f"Process identity was not established within {IDENTITY_TIMEOUT_SECONDS:g}s "
+                               f"({last_observation}); inspect {log_path}")
+        current = proc_identity(child.pid)
+        if current is None:
+            last_observation = "missing-proc-identity"
+        else:
+            start_ticks = current.get("startTicks")
+            if type(start_ticks) is not int or start_ticks <= 0:
+                raise RuntimeError(f"Invalid process start time during identity check; inspect {log_path}")
+            if observed_start is not None and start_ticks != observed_start:
+                raise RuntimeError(f"Process start time changed during identity check; inspect {log_path}")
+            observed_start = start_ticks
+            if current.get("commandSha256") == expected_command:
+                exit_code = child.poll()
+                if exit_code is not None:
+                    raise RuntimeError(f"Process exited with code {exit_code} before identity was established; inspect {log_path}")
+                if time.monotonic() < deadline:
+                    return current
+            last_observation = "command-mismatch"
+        remaining = deadline - time.monotonic()
+        if remaining > 0:
+            time.sleep(min(IDENTITY_POLL_SECONDS, remaining))
+
+
 def start(role: str, node: int | None, state: Path, record_path: Path):
     status, existing = record_state(record_path)
     if status == "identity-mismatch":
@@ -200,9 +241,7 @@ def start(role: str, node: int | None, state: Path, record_path: Path):
         child = subprocess.Popen(args, cwd=ROOT, env=environment, stdin=subprocess.DEVNULL,
                                  stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
     try:
-        current = proc_identity(child.pid)
-        if current is None or current["commandSha256"] != expected:
-            raise RuntimeError(f"Process identity was not established; inspect {log_path}")
+        current = await_process_identity(child, expected, log_path)
         record = {"version": 1, "pid": child.pid, **current, "role": role,
                   "configurationVersion": CONFIGURATION_VERSION, "configurationSha256": configuration,
                   "createdAt": datetime.now(timezone.utc).isoformat(),
@@ -210,8 +249,9 @@ def start(role: str, node: int | None, state: Path, record_path: Path):
         write_json(record_path, record)
     except BaseException:
         # Popen still owns this exact newly created process; no PID-file inference.
-        child.terminate()
-        child.wait(timeout=10)
+        if child.poll() is None:
+            child.terminate()
+            child.wait(timeout=10)
         raise
     time.sleep(0.3)
     if child.poll() is not None:

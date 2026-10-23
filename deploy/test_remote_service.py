@@ -6,7 +6,7 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 SPEC = importlib.util.spec_from_file_location("remote_service", Path(__file__).with_name("remote_service.py"))
 remote = importlib.util.module_from_spec(SPEC)
@@ -166,6 +166,118 @@ class RemoteServiceTest(unittest.TestCase):
             send.assert_called_once_with(999, remote.signal.SIGTERM)
             command.assert_not_called()
             fingerprint.assert_not_called()
+
+    def test_start_waits_for_missing_then_pre_exec_command_then_exact_identity(self):
+        args, environment = ["/jdk/bin/java", "Main"], {"VECTOR_AERON_MTU_LENGTH": "1248"}
+        expected = {"startTicks": 100, "commandSha256": self.command_hash(args)}
+        child = Mock(pid=42, returncode=None)
+        child.poll.return_value = None
+        clock = [0.0]
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(remote, "command", return_value=(args, environment)), \
+                patch.object(remote, "record_state", return_value=("stopped", None)), \
+                patch.object(remote.subprocess, "Popen", return_value=child), \
+                patch.object(remote, "proc_identity", side_effect=[None,
+                    {"startTicks": 100, "commandSha256": "pre-exec-command"}, expected]) as identity, \
+                patch.object(remote.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(remote.time, "sleep", side_effect=lambda seconds: clock.__setitem__(0, clock[0] + seconds)):
+            state = Path(temporary)
+            record_path = state / "process.json"
+            remote.start("node", 0, state, record_path)
+            record = json.loads(record_path.read_text())
+            self.assertEqual(record["pid"], 42)
+            self.assertEqual(record["startTicks"], expected["startTicks"])
+            self.assertEqual(record["commandSha256"], expected["commandSha256"])
+            self.assertEqual(identity.call_count, 3)
+            child.terminate.assert_not_called()
+            self.assertLessEqual(clock[0], 2.3)
+
+    def test_start_identity_timeout_preserves_previous_record_and_stops_only_its_child(self):
+        args, environment = ["/jdk/bin/java", "Main"], {"VECTOR_AERON_MTU_LENGTH": "1248"}
+        child = Mock(pid=42, returncode=None)
+        child.poll.return_value = None
+        child.wait.return_value = 0
+        clock = [0.0]
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(remote, "command", return_value=(args, environment)), \
+                patch.object(remote, "record_state", return_value=("stopped", None)), \
+                patch.object(remote.subprocess, "Popen", return_value=child), \
+                patch.object(remote, "proc_identity", return_value={"startTicks": 100, "commandSha256": "wrong-command"}), \
+                patch.object(remote, "write_json") as write, \
+                patch.object(remote.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(remote.time, "sleep", side_effect=lambda seconds: clock.__setitem__(0, clock[0] + seconds)):
+            state = Path(temporary)
+            record_path = state / "process.json"
+            record_path.write_text("preserve previous stopped record\n")
+            with self.assertRaisesRegex(RuntimeError, "identity was not established"):
+                remote.start("node", 0, state, record_path)
+            self.assertEqual(record_path.read_text(), "preserve previous stopped record\n")
+            write.assert_not_called()
+            child.terminate.assert_called_once_with()
+            child.wait.assert_called_once_with(timeout=10)
+            self.assertAlmostEqual(clock[0], 2.0)
+
+    def test_start_child_exit_during_identity_wait_fails_fast_without_a_pid_record(self):
+        args, environment = ["/jdk/bin/java", "Main"], {"VECTOR_AERON_MTU_LENGTH": "1248"}
+        child = Mock(pid=42, returncode=7)
+        child.poll.side_effect = [None, 7, 7]
+        clock = [0.0]
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(remote, "command", return_value=(args, environment)), \
+                patch.object(remote, "record_state", return_value=("stopped", None)), \
+                patch.object(remote.subprocess, "Popen", return_value=child), \
+                patch.object(remote, "proc_identity", return_value=None) as identity, \
+                patch.object(remote, "write_json") as write, \
+                patch.object(remote.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(remote.time, "sleep", side_effect=lambda seconds: clock.__setitem__(0, clock[0] + seconds)):
+            state = Path(temporary)
+            with self.assertRaisesRegex(RuntimeError, "exited with code 7"):
+                remote.start("node", 0, state, state / "process.json")
+            self.assertFalse((state / "process.json").exists())
+            self.assertEqual(identity.call_count, 1)
+            write.assert_not_called()
+            child.terminate.assert_not_called()
+            child.wait.assert_not_called()
+            self.assertLess(clock[0], 0.02)
+
+    def test_start_refuses_changed_start_ticks_even_if_command_later_matches(self):
+        args, environment = ["/jdk/bin/java", "Main"], {"VECTOR_AERON_MTU_LENGTH": "1248"}
+        child = Mock(pid=42, returncode=None)
+        child.poll.return_value = None
+        clock = [0.0]
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(remote, "command", return_value=(args, environment)), \
+                patch.object(remote, "record_state", return_value=("stopped", None)), \
+                patch.object(remote.subprocess, "Popen", return_value=child), \
+                patch.object(remote, "proc_identity", side_effect=[
+                    {"startTicks": 100, "commandSha256": "pre-exec-command"},
+                    {"startTicks": 101, "commandSha256": self.command_hash(args)}]), \
+                patch.object(remote, "write_json") as write, \
+                patch.object(remote.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(remote.time, "sleep", side_effect=lambda seconds: clock.__setitem__(0, clock[0] + seconds)):
+            state = Path(temporary)
+            with self.assertRaisesRegex(RuntimeError, "start time changed"):
+                remote.start("node", 0, state, state / "process.json")
+            write.assert_not_called()
+            self.assertFalse((state / "process.json").exists())
+
+    def test_start_child_exit_after_matching_sample_does_not_write_record(self):
+        args, environment = ["/jdk/bin/java", "Main"], {"VECTOR_AERON_MTU_LENGTH": "1248"}
+        child = Mock(pid=42, returncode=3)
+        child.poll.side_effect = [None, 3, 3]
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(remote, "command", return_value=(args, environment)), \
+                patch.object(remote, "record_state", return_value=("stopped", None)), \
+                patch.object(remote.subprocess, "Popen", return_value=child), \
+                patch.object(remote, "proc_identity", return_value={"startTicks": 100, "commandSha256": self.command_hash(args)}), \
+                patch.object(remote, "write_json") as write:
+            state = Path(temporary)
+            with self.assertRaisesRegex(RuntimeError, "exited with code 3"):
+                remote.start("node", 0, state, state / "process.json")
+            self.assertFalse((state / "process.json").exists())
+            write.assert_not_called()
+            child.terminate.assert_not_called()
+            child.wait.assert_not_called()
 
 
 if __name__ == "__main__":
