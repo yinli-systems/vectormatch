@@ -35,7 +35,7 @@ IDENTITY_POLL_SECONDS = 0.01
 NETWORK_CONFIGURATION = ("VECTOR_CLUSTER_HOSTS", "VECTOR_AERON_MTU_LENGTH")
 CLIENT_CONFIGURATION = NETWORK_CONFIGURATION + ("VECTOR_CLIENT_EGRESS_HOST", "VECTOR_CLIENT_EGRESS_PORT")
 CONFIGURATION_KEYS = {
-    "node": NETWORK_CONFIGURATION,
+    "node": NETWORK_CONFIGURATION + ("VECTOR_APPOINTED_LEADER_ID", "VECTOR_MAX_CLUSTER_SESSIONS"),
     "gateway": CLIENT_CONFIGURATION + ("VM_CLUSTER_ID",),
     "projector": CLIENT_CONFIGURATION + ("VM_CLUSTER_ID", "VM_CLUSTER_PORT_BASE", "VM_PROJECTOR_DRIVER",
                                          "VM_PROJECTOR_BATCH_SIZE", "VM_PROJECTOR_TIMEOUT_MS", "VM_PROJECTOR_POLL_MS"),
@@ -158,6 +158,15 @@ def command(role: str, node: int | None, state: Path, action: str) -> tuple[list
     if not re.fullmatch(r"[1-9][0-9]*[mMgG]", heap):
         raise ValueError("VECTOR_MAX_HEAP must be a positive Java heap size such as 512m or 1g")
     args = [java(), *OPENS, f"-Xmx{heap}", f"-Dvm.process.identity={state}"]
+    # Aeron's appointed leader is a test-only profile. Leave normal HA deployments unset.
+    appointed = environment.get("VECTOR_APPOINTED_LEADER_ID", "")
+    if role == "node" and appointed:
+        if appointed not in ("0", "1", "2"):
+            raise ValueError("VECTOR_APPOINTED_LEADER_ID must be 0, 1 or 2, or unset for normal election")
+        args += [f"-Daeron.cluster.appointed.leader.id={appointed}"]
+    if role == "node" and environment.get("VECTOR_MAX_CLUSTER_SESSIONS"):
+        maximum_sessions = positive_int("VECTOR_MAX_CLUSTER_SESSIONS", 10, 1, 256)
+        args += [f"-Daeron.cluster.max.sessions={maximum_sessions}"]
     port = positive_int("VECTOR_PORT_BASE", 19000, 1024, 65000)
     if role == "gateway":
         args += ["-Dvm.backend=cluster", f"-Dvm.runtime={state / 'workbench'}",

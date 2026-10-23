@@ -89,6 +89,33 @@ class RemoteServiceTest(unittest.TestCase):
             self.assertEqual(environment["VM_PG_PASSWORD"], "secret-value")
             self.assertEqual(args[-1], "init")
 
+    def test_appointed_leader_is_explicit_test_only_node_configuration(self):
+        settings = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4"}
+        with patch.dict(os.environ, settings, clear=True), \
+                patch.object(remote, "distribution", return_value=Path("/bundle/dist/cluster")), \
+                patch.object(remote, "java", return_value="/jdk/bin/java"):
+            normal, original = remote.command("node", 0, Path("/state/node-0"), "start")
+            self.assertFalse(any("appointed.leader" in arg for arg in normal))
+            os.environ["VECTOR_APPOINTED_LEADER_ID"] = "0"
+            pinned, configured = remote.command("node", 0, Path("/state/node-0"), "start")
+            self.assertIn("-Daeron.cluster.appointed.leader.id=0", pinned)
+            self.assertNotEqual(remote.configuration_fingerprint("node", original),
+                                remote.configuration_fingerprint("node", configured))
+            os.environ["VECTOR_MAX_CLUSTER_SESSIONS"] = "128"
+            more_sessions, expanded = remote.command("node", 0, Path("/state/node-0"), "start")
+            self.assertIn("-Daeron.cluster.max.sessions=128", more_sessions)
+            self.assertNotEqual(remote.configuration_fingerprint("node", configured),
+                                remote.configuration_fingerprint("node", expanded))
+            for invalid_sessions in ("0", "257", "not-an-int"):
+                os.environ["VECTOR_MAX_CLUSTER_SESSIONS"] = invalid_sessions
+                with self.assertRaises(ValueError):
+                    remote.command("node", 0, Path("/state/node-0"), "start")
+            os.environ.pop("VECTOR_MAX_CLUSTER_SESSIONS")
+            for invalid in ("-1", "3", "0 -Xmx8g", "invalid"):
+                os.environ["VECTOR_APPOINTED_LEADER_ID"] = invalid
+                with self.assertRaisesRegex(ValueError, "APPOINTED_LEADER"):
+                    remote.command("node", 0, Path("/state/node-0"), "start")
+
     def test_changed_mtu_repeated_start_refuses_the_existing_process(self):
         configuration = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4",
                          "VECTOR_AERON_MTU_LENGTH": "1248"}

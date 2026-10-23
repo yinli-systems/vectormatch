@@ -1,0 +1,476 @@
+package io.vectormatch.cluster;
+
+import io.vectormatch.core.MatchingEngine;
+import io.vectormatch.core.MatchingEngine.*;
+
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import java.util.concurrent.locks.LockSupport;
+
+/** Bounded fixed-arrival workload against prestarted members; never controls a member process. */
+public final class RemoteCapacityExperiment {
+    static final int MAX_ARRIVALS = 30_000;
+    private static final int WARMUP = 100, SEEDED_BUYERS = 64;
+    private static final long SEEDED_MAKER_QUANTITY = 60_000, BUYER_FUNDING = MAX_ARRIVALS * 10_000L;
+    private static final long PRICE = 10_000, SELLER = 1_000_001, WARM_BUYER = 1_000_002, FIRST_BUYER = 1_000_100;
+    private static final Duration CHECK_TIMEOUT = Duration.ofSeconds(180);
+
+    record Options(Path directory, int portBase, int rate, int arrivals, int workers, int queueCapacity,
+                   int requestTimeoutMs, int drainTimeoutMs, int expectedLeader, int schedulerLatenessLimitMs) {
+        Options {
+            if (rate < 1 || rate > 1_000_000 || arrivals < 1 || arrivals > MAX_ARRIVALS
+                    || workers < 1 || workers > 64 || queueCapacity < 1 || queueCapacity > MAX_ARRIVALS
+                    || requestTimeoutMs < 10 || requestTimeoutMs > 30_000 || drainTimeoutMs < requestTimeoutMs
+                    || drainTimeoutMs > 120_000 || expectedLeader < 0 || expectedLeader > 2
+                    || schedulerLatenessLimitMs < 1 || schedulerLatenessLimitMs > 1000
+                    || offsetNanos(arrivals, rate) > TimeUnit.MINUTES.toNanos(5))
+                throw new IllegalArgumentException("Invalid bounds: rate 1..1000000, arrivals 1..30000, workers 1..64, queue 1..30000, timeout 10..30000ms, drain timeout..120000ms, leader 0..2; arrival window <=300s");
+        }
+    }
+
+    interface Transport extends AutoCloseable {
+        CommandCodec.Reply execute(Command command, Duration timeout);
+        int leader();
+        void idle();
+        ClusterClient.TransportCounters counters();
+        @Override void close();
+    }
+    @FunctionalInterface interface TransportFactory { Transport open(int worker) throws Exception; }
+
+    static final class Sample {
+        final int index, worker;
+        final Place command;
+        volatile String outcome = "NOT_SCHEDULED";
+        volatile long planned, enqueued, started, initialEnd, confirmed, ended, firstUnknown;
+        volatile int attempts, initialLeader = -1, finalLeader = -1;
+        volatile CommandCodec.Reply reply;
+        volatile String error = "";
+        Sample(int index, int workers, String producer) {
+            this.index = index; worker = index % workers;
+            command = new Place(FIRST_BUYER + worker, producer + "-w" + worker, index / workers + 1L,
+                    "ioc-" + producer + '-' + index, Side.BUY, PRICE, 1, TimeInForce.IOC);
+        }
+        boolean hasReply() { return reply != null; }
+    }
+
+    static final class LoadResult {
+        final Options options;
+        final Sample[] samples;
+        final List<Map<String, Object>> backlog = Collections.synchronizedList(new ArrayList<>());
+        final List<Map<String, Object>> workerCounters = Collections.synchronizedList(new ArrayList<>());
+        final AtomicInteger due = new AtomicInteger(), admitted = new AtomicInteger(), started = new AtomicInteger(),
+                completed = new AtomicInteger(), inFlight = new AtomicInteger(), dropped = new AtomicInteger(),
+                initialUnknown = new AtomicInteger(), unresolved = new AtomicInteger();
+        final AtomicBoolean leaderChanged = new AtomicBoolean(), schedulingDone = new AtomicBoolean(), workersDone = new AtomicBoolean();
+        volatile long origin, windowEnd, drainDeadline, finished;
+        volatile Throwable workerFailure;
+        volatile String scheduledOriginUtc;
+        LoadResult(Options options, Sample[] samples) { this.options = options; this.samples = samples; }
+    }
+
+    private RemoteCapacityExperiment() {}
+
+    public static void main(String[] args) throws Exception {
+        if (args.length < 9 || args.length > 10) throw new IllegalArgumentException(
+                "Usage: RemoteCapacityExperiment EVIDENCE_DIR portBase targetRate arrivals workers queuePerWorker requestTimeoutMs drainTimeoutMs expectedLeaderId [schedulerLatenessLimitMs=20]");
+        Options options = new Options(Path.of(args[0]).toAbsolutePath().normalize(), Integer.parseInt(args[1]),
+                Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]), Integer.parseInt(args[5]),
+                Integer.parseInt(args[6]), Integer.parseInt(args[7]), Integer.parseInt(args[8]),
+                args.length == 10 ? Integer.parseInt(args[9]) : 20);
+        ClusterTopology topology = ClusterTopology.fromEnvironment(options.portBase());
+        require(topology.memberCount() == 3, "Three configured members required");
+        Files.createDirectories(options.directory().getParent());
+        Files.createDirectory(options.directory()); // Never overwrite evidence, even failed evidence.
+        run(options, topology);
+    }
+
+    private static void run(Options options, ClusterTopology topology) throws Exception {
+        Path directory = options.directory();
+        String producer = "capacity-fixed-v1"; // Isolated fresh trial state is required; deterministic preparation permits byte-for-byte baseline comparisons.
+        Map<String, Object> configuration = fields("startedAt", Instant.now().toString(), "producerPrefix", producer,
+                "ratePerSecond", options.rate(), "scheduledArrivals", options.arrivals(), "workers", options.workers(),
+                "maxServiceRequestsInFlight", options.workers(), "queueCapacityPerWorker", options.queueCapacity(),
+                "requestTimeoutMs", options.requestTimeoutMs(), "drainTimeoutMs", options.drainTimeoutMs(),
+                "schedulerLatenessLimitMs", options.schedulerLatenessLimitMs(), "expectedLeader", options.expectedLeader(),
+                "portBase", options.portBase(), "memberHosts", topology.hosts(), "aeronMtuLength", NetworkTransport.fromEnvironment().mtuLength(),
+                "clientEgressHost", System.getenv().getOrDefault("VECTOR_CLIENT_EGRESS_HOST", "loopback-default"),
+                "loadGeneratorUsesMemberAddress", topology.hosts().contains(System.getenv().getOrDefault("VECTOR_CLIENT_EGRESS_HOST", "")),
+                "javaVersion", System.getProperty("java.version"), "processors", Runtime.getRuntime().availableProcessors(),
+                "warmupCommands", WARMUP, "seededBuyerAccounts", SEEDED_BUYERS, "seededMakerQuantity", SEEDED_MAKER_QUANTITY,
+                "seededQuotePerBuyer", BUYER_FUNDING, "priceTicks", PRICE, "quantityLotsPerMeasuredCommand", 1, "workload", "independent one-lot IOC buys, one pre-funded GTC maker, one trade per accepted command",
+                "loadModel", "absolute fixed-arrival scheduler; bounded round-robin per-worker FIFO; one synchronous in-flight per worker",
+                "timeouts", "A timeout is unknown. Worker retries the identical identity before advancing; original and resolved completion times remain distinct.");
+        write(directory.resolve("configuration.json"), configuration);
+        Sample[] samples = new Sample[options.arrivals()];
+        for (int i = 0; i < samples.length; i++) samples[i] = new Sample(i, options.workers(), producer);
+        LoadResult load = null;
+        try {
+            MatchingEngine reference;
+            long makerId, preparedPending, preparedExported;
+            try (ClusterClient control = new ClusterClient(directory.resolve("setup-driver"), options.portBase())) {
+                require(control.leaderMemberId() == options.expectedLeader(), "Leader differs before setup");
+                byte[] initial = control.readSnapshot(CHECK_TIMEOUT);
+                Files.write(directory.resolve("initial-snapshot.bin"), initial);
+                reference = MatchingEngine.restore(initial);
+                reference.checkInvariants();
+                require(reference.lastCommandSeq() == 0, "Trial requires fresh independent cluster state; never reset a live application lineage");
+                require(reference.book(1).bids().isEmpty() && reference.book(1).asks().isEmpty(), "Trial requires an empty book and no other business writers");
+                require(reference.retainedOrderCount() + options.arrivals() + WARMUP + 1 < reference.limits().maxRetainedOrders(), "Insufficient retained-order headroom");
+                require(reference.accounts().stream().noneMatch(a -> a.accountId() == SELLER || a.accountId() == WARM_BUYER
+                        || a.accountId() >= FIRST_BUYER && a.accountId() < FIRST_BUYER + SEEDED_BUYERS), "Dedicated capacity accounts already exist; provision isolated trial state");
+                EventBatch outbox = control.fetchEvents(reference.lastEventSeq() + 1, 1, CHECK_TIMEOUT);
+                long eventBudget = SEEDED_BUYERS + 3L + 2L * (options.arrivals() + WARMUP);
+                require(outbox.lastEventSeq() - outbox.exportedSeq() + eventBudget < ReplicatedOutbox.DEFAULT_CAPACITY,
+                        "Trial could hit outbox state capacity; do not interpret state bounds as throughput");
+                seed(control, reference, new Deposit(SELLER, producer + "-seed", 1, Asset.BASE, SEEDED_MAKER_QUANTITY));
+                seed(control, reference, new Deposit(WARM_BUYER, producer + "-seed", 1, Asset.QUOTE, WARMUP * PRICE));
+                for (int worker = 0; worker < SEEDED_BUYERS; worker++) seed(control, reference,
+                        new Deposit(FIRST_BUYER + worker, producer + "-seed", 1, Asset.QUOTE, BUYER_FUNDING));
+                makerId = seed(control, reference, new Place(SELLER, producer + "-seed", 2, "maker-" + producer,
+                        Side.SELL, PRICE, SEEDED_MAKER_QUANTITY, TimeInForce.GTC)).result().orderId();
+                for (int i = 0; i < WARMUP; i++) seed(control, reference, new Place(WARM_BUYER, producer + "-warm", i + 1L,
+                        "warm-" + producer + '-' + i, Side.BUY, PRICE, 1, TimeInForce.IOC));
+                require(Arrays.equals(reference.snapshot(), control.readSnapshot(CHECK_TIMEOUT)), "Setup canonical state differs");
+                Files.write(directory.resolve("prepared-snapshot.bin"), reference.snapshot());
+                EventBatch preparedOutbox = control.fetchEvents(reference.lastEventSeq() + 1, 1, CHECK_TIMEOUT);
+                preparedPending = preparedOutbox.lastEventSeq() - preparedOutbox.exportedSeq();
+                preparedExported = preparedOutbox.exportedSeq();
+                require(preparedExported == outbox.exportedSeq(), "External outbox acknowledger is running; isolate the trial");
+                configuration.put("preparedOutboxPending", preparedPending);
+                configuration.put("preparedSnapshotSha256", HexFormat.of().formatHex(ClusterStateSnapshot.digest(reference.snapshot())));
+                write(directory.resolve("configuration.json"), configuration);
+                require(control.leaderMemberId() == options.expectedLeader(), "Leader changed during setup");
+            }
+            long preparedCommandSeq = reference.lastCommandSeq(), preparedEventSeq = reference.lastEventSeq(), preparedMarketSeq = reference.lastMarketSeq();
+            int preparedOrders = reference.retainedOrderCount();
+            load = runLoad(options, samples, worker -> realTransport(new ClusterClient(directory.resolve("load-driver-" + worker), options.portBase())));
+            writeSamples(directory.resolve("arrivals.csv"), load);
+            writeBacklog(directory.resolve("backlog.csv"), load);
+            write(directory.resolve("load-result.json"), summarize(load));
+            if (load.workerFailure != null) throw new IllegalStateException("A capacity worker failed; inspect every arrival outcome", load.workerFailure);
+            Map<String, Object> result = summarize(load);
+            boolean canonical = false;
+            try (ClusterClient control = new ClusterClient(directory.resolve("validation-driver"), options.portBase())) {
+                if (control.leaderMemberId() != options.expectedLeader()) load.leaderChanged.set(true);
+                byte[] finalBytes = control.readSnapshot(CHECK_TIMEOUT);
+                Files.write(directory.resolve("final-snapshot.bin"), finalBytes);
+                MatchingEngine actual = MatchingEngine.restore(finalBytes);
+                actual.checkInvariants();
+                List<Sample> confirmed = Arrays.stream(samples).filter(Sample::hasReply).filter(s -> s.reply.error().isEmpty()).sorted(
+                        Comparator.comparingLong(s -> s.reply.result().commandSeq())).toList();
+                boolean allKnown = Arrays.stream(samples).noneMatch(s -> s.outcome.equals("UNKNOWN_UNRESOLVED"));
+                Set<Long> commandSequences = new HashSet<>();
+                for (Sample sample : confirmed) {
+                    require(sample.reply.result() != null, "Missing business result");
+                    require(commandSequences.add(sample.reply.result().commandSeq()), "Distinct identities returned the same command sequence");
+                    Execution expected = reference.apply(sample.command);
+                    require(expected.result().equals(sample.reply.result()), "Per-reply business result differs at arrival " + sample.index);
+                    if (!sample.reply.replayed()) require(sample.reply.commandSeq() == reference.lastCommandSeq()
+                            && sample.reply.eventSeq() == reference.lastEventSeq() && sample.reply.marketSeq() == reference.lastMarketSeq(),
+                            "Fresh reply sequence differs at arrival " + sample.index);
+                }
+                if (allKnown) {
+                    require(actual.lastCommandSeq() - preparedCommandSeq == confirmed.size(), "Final command delta differs from all known executed commands; stop other writers");
+                    reference.checkInvariants();
+                    require(Arrays.equals(reference.snapshot(), finalBytes), "Final canonical state differs from replay of all confirmed commands");
+                    require(reference.stateHash().equals(control.state(CHECK_TIMEOUT).stateHash()), "Final state hash differs");
+                    long accepted = confirmed.stream().filter(s -> s.reply.result().accepted()).count();
+                    require(actual.lastEventSeq() - preparedEventSeq == accepted * 2 && actual.lastMarketSeq() - preparedMarketSeq == accepted * 2, "Public/private event deltas differ");
+                    require(actual.retainedOrderCount() == preparedOrders + accepted, "Retained order delta differs");
+                    EventBatch finalOutbox = control.fetchEvents(actual.lastEventSeq() + 1, 1, CHECK_TIMEOUT);
+                    require(finalOutbox.exportedSeq() == preparedExported
+                            && finalOutbox.lastEventSeq() - finalOutbox.exportedSeq() == preparedPending + accepted * 2, "Outbox continuity/pending differs; an external acknowledger may be running");
+                    result.put("finalOutboxPending", finalOutbox.lastEventSeq() - finalOutbox.exportedSeq());
+                    result.put("outboxPendingVerified", true);
+                    require(actual.order(makerId).orElseThrow().remainingQuantity() == SEEDED_MAKER_QUANTITY - WARMUP - accepted, "Maker quantity differs");
+                    require(actual.account(SELLER).quote().available() == accepted * PRICE + WARMUP * PRICE
+                            && actual.account(SELLER).base().reserved() == SEEDED_MAKER_QUANTITY - WARMUP - accepted
+                            && actual.account(SELLER).base().available() == 0 && actual.account(SELLER).quote().reserved() == 0, "Seller conservation differs");
+                    for (int worker = 0; worker < SEEDED_BUYERS; worker++) {
+                        final int selectedWorker = worker;
+                        long trades = confirmed.stream().filter(s -> s.worker == selectedWorker && s.reply.result().accepted()).count();
+                        AccountView account = actual.account(FIRST_BUYER + worker);
+                        require(account.base().available() == trades && account.base().reserved() == 0
+                                && account.quote().available() == BUYER_FUNDING - trades * PRICE && account.quote().reserved() == 0, "Buyer asset conservation differs");
+                    }
+                    Files.write(directory.resolve("expected-snapshot.bin"), reference.snapshot());
+                    canonical = true;
+                }
+                result.putAll(fields("canonicalSnapshotBytesVerified", canonical, "stateHashVerified", canonical,
+                        "invariantsVerified", true, "assetConservationVerified", canonical,
+                        "perReplyDeterministicResultVerified", true, "referenceImplementation", "same MatchingEngine class, replayed in actual command sequence order; not an independent algorithm",
+                        "preparedCommandSeq", preparedCommandSeq, "preparedEventSeq", preparedEventSeq,
+                        "finalCommandSeq", actual.lastCommandSeq(), "finalEventSeq", actual.lastEventSeq(), "finalMarketSeq", actual.lastMarketSeq(),
+                        "finalRetainedOrders", actual.retainedOrderCount(), "finalCachedResults", actual.cachedResultCount(), "finalProducers", actual.producerCount(), "stateHash", actual.stateHash(),
+                        "leaderChanged", load.leaderChanged.get(), "fixedLeaderVerified", !load.leaderChanged.get()));
+            }
+            boolean valid = canonical && !load.leaderChanged.get();
+            result.put("passed", valid);
+            result.put("measurementValid", valid && Boolean.FALSE.equals(result.get("generatorTimingInvalid")));
+            result.put("completedAt", Instant.now().toString());
+            write(directory.resolve("result.json"), result);
+            System.out.println("VECTOR_REMOTE_CAPACITY_RESULT " + json(result));
+            require(valid, "Correctness or fixed-leader validation failed; inspect result.json");
+        } catch (Exception failure) {
+            if (load == null) load = new LoadResult(options, samples);
+            writeSamples(directory.resolve("arrivals.csv"), load);
+            writeBacklog(directory.resolve("backlog.csv"), load);
+            write(directory.resolve("failure.json"), fields("passed", false, "timestamp", Instant.now().toString(),
+                    "errorType", failure.getClass().getName(), "error", String.valueOf(failure.getMessage()),
+                    "arrivalsRetained", samples.length, "loadSummary", load.origin == 0 ? null : summarize(load), "instruction", "Do not infer rejection from exception. Resolve UNKNOWN_UNRESOLVED by identical saved command identity; inspect arrivals.csv and configuration.json."));
+            throw failure;
+        }
+    }
+
+    static LoadResult runLoad(Options options, Sample[] samples, TransportFactory factory) throws Exception {
+        LoadResult load = new LoadResult(options, samples);
+        List<ArrayBlockingQueue<Sample>> queues = new ArrayList<>();
+        for (int i = 0; i < options.workers(); i++) queues.add(new ArrayBlockingQueue<>(options.queueCapacity()));
+        CountDownLatch ready = new CountDownLatch(options.workers());
+        AtomicReference<Throwable> startupFailure = new AtomicReference<>();
+        List<Thread> workers = new ArrayList<>();
+        for (int index = 0; index < options.workers(); index++) {
+            final int worker = index;
+            Thread thread = new Thread(() -> {
+                boolean announced = false;
+                try (Transport transport = factory.open(worker)) {
+                    if (transport.leader() != options.expectedLeader()) load.leaderChanged.set(true);
+                    ClusterClient.TransportCounters before = transport.counters();
+                    ready.countDown(); announced = true;
+                    while (load.origin == 0 && startupFailure.get() == null) { transport.idle(); LockSupport.parkNanos(100_000); }
+                    if (startupFailure.get() != null) return;
+                    ArrayBlockingQueue<Sample> queue = queues.get(worker);
+                    while (!load.schedulingDone.get() || !queue.isEmpty()) {
+                        Sample sample = queue.poll();
+                        if (sample == null) { transport.idle(); LockSupport.parkNanos(100_000); continue; }
+                        if (System.nanoTime() >= load.drainDeadline) { sample.outcome = "DRAIN_NOT_SENT"; sample.ended = System.nanoTime(); load.dropped.incrementAndGet(); continue; }
+                        sample.started = System.nanoTime(); sample.initialLeader = transport.leader();
+                        load.started.incrementAndGet(); load.inFlight.incrementAndGet();
+                        if (sample.initialLeader != options.expectedLeader()) load.leaderChanged.set(true);
+                        executeResolving(sample, transport, load);
+                        sample.finalLeader = transport.leader();
+                        if (sample.finalLeader != options.expectedLeader()) load.leaderChanged.set(true);
+                        load.inFlight.decrementAndGet();
+                        if (sample.hasReply()) load.completed.incrementAndGet();
+                        else { load.unresolved.incrementAndGet();
+                            // Higher sequence could evict/reorder this unresolved identity; never issue it.
+                            while (!load.schedulingDone.get() || !queue.isEmpty()) {
+                                Sample pending = queue.poll();
+                                if (pending != null) { pending.outcome = "WORKER_BLOCKED_UNKNOWN_NOT_SENT"; pending.ended = System.nanoTime(); load.dropped.incrementAndGet(); }
+                                else LockSupport.parkNanos(100_000);
+                            }
+                            break;
+                        }
+                    }
+                    ClusterClient.TransportCounters after = transport.counters();
+                    load.workerCounters.add(fields("worker", worker, "acceptedOffers", after.acceptedOffers() - before.acceptedOffers(),
+                            "acceptedResends", after.acceptedResends() - before.acceptedResends(), "unacceptedOffers", after.unacceptedOffers() - before.unacceptedOffers(),
+                            "unknownRequestTimeouts", after.requestTimeouts() - before.requestTimeouts()));
+                } catch (Throwable failure) { startupFailure.compareAndSet(null, failure); if (!announced) ready.countDown(); }
+            }, "capacity-worker-" + worker);
+            workers.add(thread); thread.start();
+        }
+        if (!ready.await(60, TimeUnit.SECONDS) || startupFailure.get() != null) {
+            startupFailure.compareAndSet(null, new IllegalStateException("Client startup deadline exceeded"));
+            load.schedulingDone.set(true);
+            for (Thread worker : workers) worker.join(25_000);
+            throw new IllegalStateException("Capacity worker startup failed", startupFailure.get());
+        }
+        load.origin = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(200);
+        load.scheduledOriginUtc = Instant.now().plusNanos(load.origin - System.nanoTime()).toString();
+        load.windowEnd = load.origin + offsetNanos(options.arrivals(), options.rate());
+        load.drainDeadline = load.windowEnd + TimeUnit.MILLISECONDS.toNanos(options.drainTimeoutMs());
+        // Publish deadline fields before workers may pull work; origin being future is not used for synchronization below.
+        Thread monitor = new Thread(() -> {
+            long next = load.origin;
+            while (!load.workersDone.get()) {
+                waitUntil(next);
+                recordBacklog(load, queues);
+                next += TimeUnit.SECONDS.toNanos(1);
+            }
+        }, "capacity-backlog-sampler");
+        monitor.start();
+        for (Sample sample : samples) {
+            sample.planned = load.origin + offsetNanos(sample.index, options.rate());
+            waitUntil(sample.planned);
+            load.due.incrementAndGet();
+            sample.enqueued = System.nanoTime();
+            sample.outcome = "QUEUED";
+            if (queues.get(sample.worker).offer(sample)) { load.admitted.incrementAndGet(); }
+            else { sample.outcome = "CLIENT_QUEUE_FULL_NOT_SENT"; sample.ended = System.nanoTime(); load.dropped.incrementAndGet(); }
+        }
+        load.schedulingDone.set(true);
+        for (Thread worker : workers) worker.join(Math.max(1, TimeUnit.NANOSECONDS.toMillis(load.drainDeadline - System.nanoTime())) + 10_000);
+        load.finished = System.nanoTime();
+        load.workersDone.set(true);
+        monitor.interrupt(); monitor.join(2000);
+        recordBacklog(load, queues);
+        require(workers.stream().noneMatch(Thread::isAlive), "Worker did not terminate after bounded drain");
+        load.workerFailure = startupFailure.get();
+        return load;
+    }
+
+    private static void executeResolving(Sample sample, Transport transport, LoadResult load) {
+        while (System.nanoTime() < load.drainDeadline) {
+            sample.attempts++;
+            long remaining = load.drainDeadline - System.nanoTime();
+            if (remaining <= 0) break;
+            try {
+                CommandCodec.Reply reply = transport.execute(sample.command,
+                        Duration.ofNanos(Math.min(remaining, TimeUnit.MILLISECONDS.toNanos(load.options.requestTimeoutMs()))));
+                long end = System.nanoTime();
+                if (sample.initialEnd == 0) sample.initialEnd = end;
+                sample.confirmed = end; sample.ended = end; sample.reply = reply;
+                sample.outcome = !reply.error().isEmpty() ? "SERVER_ERROR" : reply.result() == null ? "INVALID_REPLY"
+                        : reply.result().accepted() ? "CONFIRMED_ACCEPTED" : "BUSINESS_REJECTED";
+                return;
+            } catch (RuntimeException failure) {
+                long end = System.nanoTime();
+                if (sample.initialEnd == 0) { sample.initialEnd = end; sample.firstUnknown = end; load.initialUnknown.incrementAndGet(); }
+                sample.error = failure.getClass().getSimpleName() + ": " + String.valueOf(failure.getMessage());
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(10));
+            }
+        }
+        sample.outcome = "UNKNOWN_UNRESOLVED"; sample.ended = System.nanoTime();
+    }
+
+    private static void recordBacklog(LoadResult load, List<ArrayBlockingQueue<Sample>> queues) {
+        List<Integer> depths = queues.stream().map(ArrayBlockingQueue::size).toList();
+        load.backlog.add(fields("offsetNs", System.nanoTime() - load.origin, "scheduledDue", load.due.get(),
+                "enqueued", load.admitted.get(), "started", load.started.get(), "replyConfirmed", load.completed.get(),
+                "clientNotSent", load.dropped.get(), "inFlight", load.inFlight.get(), "queueDepth", depths.stream().mapToInt(Integer::intValue).sum(),
+                "workerQueueDepths", depths, "unknownAtInitialDeadline", load.initialUnknown.get(), "unresolvedFinalSoFar", load.unresolved.get()));
+    }
+
+    static Map<String, Object> summarize(LoadResult load) {
+        Sample[] samples = load.samples;
+        long accepted = Arrays.stream(samples).filter(s -> s.reply != null && s.reply.error().isEmpty() && s.reply.result() != null && s.reply.result().accepted()).count();
+        long rejected = Arrays.stream(samples).filter(s -> s.outcome.equals("BUSINESS_REJECTED")).count();
+        long serverErrors = Arrays.stream(samples).filter(s -> s.outcome.equals("SERVER_ERROR") || s.outcome.equals("INVALID_REPLY")).count();
+        long confirmedInWindow = Arrays.stream(samples).filter(s -> s.reply != null && s.reply.error().isEmpty()
+                && s.reply.result() != null && s.reply.result().accepted() && s.confirmed <= load.windowEnd).count();
+        long lateScheduler = Arrays.stream(samples).filter(s -> s.enqueued - s.planned > TimeUnit.MILLISECONDS.toNanos(load.options.schedulerLatenessLimitMs())).count();
+        long maxConfirmation = Arrays.stream(samples).mapToLong(s -> s.confirmed).max().orElse(load.windowEnd);
+        long elapsed = Math.max(load.windowEnd, maxConfirmation) - load.origin;
+        return fields("test", "external-replicated-matching-fixed-arrival-capacity", "scheduledArrivals", samples.length,
+                "scheduledOriginUtcApproximate", load.scheduledOriginUtc, "targetArrivalRatePerSecond", load.options.rate(), "workers", load.options.workers(), "queueCapacityPerWorker", load.options.queueCapacity(),
+                "arrivalWindowSeconds", (load.windowEnd - load.origin) / 1e9, "completionWindowSeconds", elapsed / 1e9,
+                "enqueuedCommands", load.admitted.get(), "startedCommands", load.started.get(), "confirmedAcceptedCommands", accepted,
+                "businessRejectedCommands", rejected, "serverErrors", serverErrors, "clientNotSentCommands", load.dropped.get(),
+                "clientQueueFullNotSent", Arrays.stream(samples).filter(s -> s.outcome.equals("CLIENT_QUEUE_FULL_NOT_SENT")).count(),
+                "drainNotSent", Arrays.stream(samples).filter(s -> s.outcome.equals("DRAIN_NOT_SENT")).count(),
+                "workerBlockedUnknownNotSent", Arrays.stream(samples).filter(s -> s.outcome.equals("WORKER_BLOCKED_UNKNOWN_NOT_SENT")).count(),
+                "unknownAtInitialDeadline", load.initialUnknown.get(), "resolvedAfterInitialUnknown", Arrays.stream(samples).filter(s -> s.firstUnknown != 0 && s.hasReply()).count(),
+                "unresolvedFinal", load.unresolved.get(), "latencySamplesOmittedAsNotConfirmed", Arrays.stream(samples).filter(s -> !s.hasReply()).count(), "confirmedWithinArrivalWindow", confirmedInWindow,
+                "confirmedWithinArrivalWindowPerSecond", confirmedInWindow * 1e9 / (load.windowEnd - load.origin),
+                "confirmedIncludingDrainPerSecond", accepted * 1e9 / Math.max(1, elapsed),
+                "drainSeconds", Math.max(0, maxConfirmation - load.windowEnd) / 1e9,
+                "schedulerLatenessAboveLimitCount", lateScheduler, "generatorTimingInvalid", lateScheduler > 0,
+                "executeStartAfterPlannedDeadlineCount", Arrays.stream(samples).filter(s -> s.started != 0 && s.started - s.planned > TimeUnit.MILLISECONDS.toNanos(load.options.schedulerLatenessLimitMs())).count(),
+                "executeStartDeadlineLimitMs", load.options.schedulerLatenessLimitMs(),
+                "latencyScope", "Conditional on returned response; accepted-only distribution is separate. All offered accepted-command p99 is null if any arrival is dropped, rejected, errored or unresolved.",
+                "acceptedScheduledToConfirmedMicroseconds", distribution(Arrays.stream(samples).filter(s -> s.reply != null && s.reply.error().isEmpty() && s.reply.result() != null && s.reply.result().accepted()).mapToLong(s -> s.confirmed - s.planned).toArray()),
+                "allOfferedAcceptedP99Microseconds", accepted == samples.length ? distribution(Arrays.stream(samples).mapToLong(s -> s.confirmed - s.planned).toArray()).get("p99") : null,
+                "scheduledToConfirmedMicroseconds", distribution(Arrays.stream(samples).filter(Sample::hasReply).mapToLong(s -> s.confirmed - s.planned).toArray()),
+                "executeInitialAttemptMicroseconds", distribution(Arrays.stream(samples).filter(s -> s.started != 0 && s.initialEnd != 0).mapToLong(s -> s.initialEnd - s.started).toArray()),
+                "executeThroughResolutionMicroseconds", distribution(Arrays.stream(samples).filter(Sample::hasReply).mapToLong(s -> s.confirmed - s.started).toArray()),
+                "queueDelayMicroseconds", distribution(Arrays.stream(samples).filter(s -> s.started != 0).mapToLong(s -> s.started - s.enqueued).toArray()),
+                "schedulerLatenessMicroseconds", distribution(Arrays.stream(samples).mapToLong(s -> s.enqueued - s.planned).toArray()),
+                "transportCountersByWorker", load.workerCounters.stream().sorted(Comparator.comparingInt(m -> ((Number) m.get("worker")).intValue())).toList(),
+                "percentileMethod", "nearest rank; all returned replies retained including responses after timeout/drain; not-sent and unresolved are counted separately, not given invented latency",
+                "limitations", List.of("Fixed finite window and bounded queues; queue-full is client admission loss, not server rejection",
+                        "Each worker has one in-flight synchronous client; this measures this deployed client+cluster path, not an unconstrained engine limit",
+                        "No synchronized-clock one-way latency and no production capacity SLA", "Execute-start is an API timestamp, not first wire offer; scheduler delay and FIFO delay are included in end-to-end latency",
+                        "Backlog counters are observational non-atomic snapshots, not exact queue conservation at an instant", "Pause gateway/projector writers and use isolated trial state; shared-member load generation must be disclosed"));
+    }
+
+    static long offsetNanos(int index, int rate) { return Math.multiplyExact((long) index, 1_000_000_000L) / rate; }
+    static Map<String, Object> distribution(long[] values) {
+        if (values.length == 0) return fields("count", 0, "min", null, "p50", null, "p95", null, "p99", null, "p999", null, "max", null);
+        Arrays.sort(values);
+        return fields("count", values.length, "min", values[0] / 1000.0, "p50", percentile(values, .50) / 1000.0,
+                "p95", percentile(values, .95) / 1000.0, "p99", percentile(values, .99) / 1000.0, "p999", percentile(values, .999) / 1000.0, "max", values[values.length - 1] / 1000.0);
+    }
+    private static long percentile(long[] sorted, double fraction) { return sorted[Math.max(0, (int) Math.ceil(sorted.length * fraction) - 1)]; }
+    private static void waitUntil(long deadline) {
+        while (!Thread.currentThread().isInterrupted()) {
+            long remaining = deadline - System.nanoTime();
+            if (remaining <= 0) return;
+            if (remaining > 50_000) LockSupport.parkNanos(Math.min(remaining - 20_000, 500_000));
+            else Thread.onSpinWait();
+        }
+    }
+    private static Transport realTransport(ClusterClient client) {
+        return new Transport() {
+            public CommandCodec.Reply execute(Command command, Duration timeout) { return client.execute(command, timeout); }
+            public int leader() { return client.leaderMemberId(); }
+            public void idle() { client.pollKeepAlive(); }
+            public ClusterClient.TransportCounters counters() { return client.transportCounters(); }
+            public void close() { client.close(); }
+        };
+    }
+    private static CommandCodec.Reply seed(ClusterClient client, MatchingEngine reference, Command command) {
+        Execution expected = reference.apply(command);
+        CommandCodec.Reply actual = client.execute(command, CHECK_TIMEOUT);
+        require(actual.error().isEmpty() && expected.result().accepted() && expected.result().equals(actual.result()), "Setup/warmup command differs");
+        return actual;
+    }
+    private static void writeSamples(Path path, LoadResult load) throws IOException {
+        try (BufferedWriter out = Files.newBufferedWriter(path)) {
+            out.write("index,worker,account_id,producer_id,request_seq,client_order_id,planned_offset_ns,enqueued_offset_ns,execute_started_offset_ns,initial_attempt_end_offset_ns,confirmed_offset_ns,ended_offset_ns,scheduler_lateness_ns,queue_delay_ns,initial_execute_rtt_ns,execute_through_resolution_ns,scheduled_to_confirmed_ns,missed_dispatch_deadline,outcome,attempts,unknown_at_initial_deadline,initial_leader,final_leader,result_code,result_reason,order_id,trade_count,replayed,result_command_seq,reply_command_seq,event_seq,market_seq,error\n");
+            for (Sample s : load.samples) {
+                Result r = s.reply == null ? null : s.reply.result();
+                List<Object> row = Arrays.asList(s.index, s.worker, s.command.accountId(), s.command.producerId(), s.command.requestSeq(), s.command.clientOrderId(),
+                        relative(s.planned, load.origin), relative(s.enqueued, load.origin), relative(s.started, load.origin), relative(s.initialEnd, load.origin),
+                        relative(s.confirmed, load.origin), relative(s.ended, load.origin), s.enqueued == 0 ? "" : s.enqueued - s.planned,
+                        s.started == 0 ? "" : s.started - s.enqueued, s.initialEnd == 0 ? "" : s.initialEnd - s.started,
+                        s.confirmed == 0 ? "" : s.confirmed - s.started, s.confirmed == 0 ? "" : s.confirmed - s.planned,
+                        s.started == 0 ? "" : s.started - s.planned > TimeUnit.MILLISECONDS.toNanos(load.options.schedulerLatenessLimitMs()),
+                        s.outcome, s.attempts, s.firstUnknown != 0, s.initialLeader, s.finalLeader,
+                        r == null ? "" : r.code(), r == null ? "" : r.reason(), r == null ? "" : r.orderId(), r == null ? "" : r.tradeCount(),
+                        s.reply == null ? "" : s.reply.replayed(), r == null ? "" : r.commandSeq(), s.reply == null ? "" : s.reply.commandSeq(),
+                        s.reply == null ? "" : s.reply.eventSeq(), s.reply == null ? "" : s.reply.marketSeq(), s.error.isEmpty() && s.reply != null ? s.reply.error() : s.error);
+                out.write(row.stream().map(RemoteCapacityExperiment::csv).reduce((a, b) -> a + ',' + b).orElse("")); out.newLine();
+            }
+        }
+    }
+    private static void writeBacklog(Path path, LoadResult load) throws IOException {
+        try (BufferedWriter out = Files.newBufferedWriter(path)) {
+            out.write("offset_ns,scheduled_due,enqueued,started,reply_confirmed,client_not_sent,in_flight,queue_depth,worker_queue_depths,unknown_at_initial_deadline,unresolved_final_so_far\n");
+            synchronized (load.backlog) {
+                for (Map<String, Object> row : load.backlog) {
+                    out.write(row.values().stream().map(RemoteCapacityExperiment::csv).reduce((a, b) -> a + ',' + b).orElse("")); out.newLine();
+                }
+            }
+        }
+    }
+    private static Object relative(long value, long origin) { return value == 0 ? "" : value - origin; }
+    private static String csv(Object value) { String text = String.valueOf(value); return text.indexOf(',') >= 0 || text.indexOf('"') >= 0 || text.indexOf('\n') >= 0 || text.indexOf('\r') >= 0 ? '"' + text.replace("\"", "\"\"") + '"' : text; }
+    private static void require(boolean condition, String message) { if (!condition) throw new IllegalStateException(message); }
+    private static Map<String, Object> fields(Object... pairs) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        for (int i = 0; i < pairs.length; i += 2) result.put((String) pairs[i], pairs[i + 1]);
+        return result;
+    }
+    private static void write(Path path, Object value) throws IOException { Files.writeString(path, json(value) + '\n'); }
+    private static String json(Object value) {
+        if (value == null) return "null";
+        if (value instanceof Number || value instanceof Boolean) return value.toString();
+        if (value instanceof Map<?, ?> map) return "{" + map.entrySet().stream().map(e -> json(String.valueOf(e.getKey())) + ':' + json(e.getValue())).reduce((a, b) -> a + ',' + b).orElse("") + "}";
+        if (value instanceof Collection<?> list) return "[" + list.stream().map(RemoteCapacityExperiment::json).reduce((a, b) -> a + ',' + b).orElse("") + "]";
+        StringBuilder out = new StringBuilder("\"");
+        for (char c : value.toString().toCharArray()) {
+            if (c == '"' || c == '\\') out.append('\\').append(c);
+            else if (c < 32) out.append(String.format(Locale.ROOT, "\\u%04x", (int) c));
+            else out.append(c);
+        }
+        return out.append('"').toString();
+    }
+}
