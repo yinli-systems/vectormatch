@@ -55,6 +55,21 @@ def main(root):
         snapshot = directory / "prepared-snapshot.bin"
         assert hashlib.sha256(snapshot.read_bytes()).hexdigest() == configuration["preparedSnapshotSha256"]
         hashes[snapshot.name] = hashlib.sha256(snapshot.read_bytes()).hexdigest()
+        load_release = trial.get("loadGeneratorRelease", release)
+        load_arguments = ["/opt/vectormatch/tools/jdk/bin/java",
+                          "--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED",
+                          "--add-opens=java.base/java.util.zip=ALL-UNNAMED", "-Xmx2g", "-cp",
+                          load_release + "/dist/cluster/lib/*",
+                          "io.vectormatch.cluster.RemoteCapacityExperiment",
+                          "/opt/vectormatch/evidence/capacity-" + trial["id"], "23000",
+                          str(trial["rate"]), str(trial["arrivals"]), str(trial["workers"]),
+                          "64", "2000", "30000", "0", "20"]
+        if trial.get("profile", "").startswith("extended-"):
+            load_arguments.append(trial["profile"])
+        load_record = json.loads((directory / "load-process.json").read_text())
+        command_digest = hashlib.sha256(b"".join(value.encode() + b"\0" for value in load_arguments)).hexdigest()
+        assert load_record["commandSha256"] == command_digest, "Load-generator arguments differ"
+        hashes["load-process.json"] = hashlib.sha256((directory / "load-process.json").read_bytes()).hexdigest()
         trial.update({"deploymentRevision": deployment["revision"],
                       "deploymentBundleSha256": deployment["bundleSha256"],
                       "fixedNodeConfiguration": fixed})
@@ -62,6 +77,7 @@ def main(root):
         write(directory / "configuration-verification.json", {
             "passed": True, "verifiedAtUtc": datetime.now(timezone.utc).isoformat(),
             "recordedArgumentsVerified": True, "preparedSnapshotDigestVerified": True,
+            "loadGeneratorArgumentsVerified": True,
             "rawSha256": hashes,
             "scope": "Recorded supervisor arguments and deployment-transfer hash receipts; not a hardware, kernel fsync or independent provider durability attestation. Idle/socket settings are pinned source constants."})
         checked.append({"id": directory.name, "preparedSnapshotSha256": configuration["preparedSnapshotSha256"]})

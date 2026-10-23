@@ -39,7 +39,7 @@ The [registered protocol](../../../docs/CAPACITY_CAMPAIGN.md), [campaign manifes
 | Source/deployment revision | `9fd6f92f5d462bc383006896c7291359094e8645` |
 | Deployment archive SHA-256 | `c78954abad1576b829189f2102c627d0af8bfa7567221d544b838af4bd31edbe` |
 | Prepared core snapshot SHA-256, identical in all 11 trials | `294d3cc2ff167b78b7045553e744ff5377a0bac636d7cd4ac90f6bd599d6ccbf` |
-| Comparison fingerprint | `f71833e8816298744f68200415d5608eb58a6dbf2912a0364081940480be1958` |
+| Comparison fingerprint | `b7e119bdc472aeb453235a0ffcb29ab47434027295d58bf78090fe55714ee867` |
 
 All members used Aeron 1.53.3, Java 21.0.13, private UDP, Aeron MTU 1248 over interface MTU 1300, port base 23000, sync level 2, 1 GiB maximum node heap, SHARED media-driver/archive threading, default BackoffIdleStrategy, 131,072-byte send/receive socket buffers, outbox capacity 65,536, and a 128-session limit. Leader 0 was appointed using Aeron's test-only setting; every trial's official pre/post members output and sampled CnC role/term evidence passed with leadership term 0.
 
