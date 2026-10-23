@@ -1,6 +1,6 @@
 # 受控优化与瓶颈归因
 
-本轮首先检验负载端资源布局：在同一三节点撮合集群上，将 **128 个客户端 MediaDriver 改为一个共享 MediaDriver**，保留 128 个独立 Aeron 客户端、session、worker 与单请求在途窗口。预先登记的 A/B/A/B 已完成：客户端资源节省可重复，但四轮 15k/s 均未达到稳定标准；当前没有提高稳定吞吐上限的证据。下一组只改变节点接收缓冲，尚未形成测量结论。完整历史容量结果见 [CAPACITY_RESULTS.md](CAPACITY_RESULTS.md)，本轮方案见 [OPTIMIZATION_CAMPAIGN.md](OPTIMIZATION_CAMPAIGN.md)。
+本轮首先检验负载端资源布局：在同一三节点撮合集群上，将 **128 个客户端 MediaDriver 改为一个共享 MediaDriver**，保留 128 个独立 Aeron 客户端、session、worker 与单请求在途窗口。预先登记的 A/B/A/B 已完成：客户端资源节省可重复，但四轮 15k/s 均未达到稳定标准；当前没有提高稳定吞吐上限的证据。节点接收缓冲的交替对照也已完成：目标 socket 丢包改善，但稳定吞吐和 p99 改善未成立。正在进行节点线程调度对照。完整历史容量结果见 [CAPACITY_RESULTS.md](CAPACITY_RESULTS.md)，本轮方案见 [OPTIMIZATION_CAMPAIGN.md](OPTIMIZATION_CAMPAIGN.md)。
 
 ## 为什么先检查负载端
 
@@ -47,7 +47,18 @@ A/B 分别保留 [isolated 登记](../evidence/2026-10-23/runpod-optimization/is
 
 四轮 node0 的一个 driver 一致性命名线程仍为约 0.957–0.965 核，node1 日志 socket 在严格匹配窗口内 drop 增量为 116–186。每秒采样不能捕捉全部瞬时队列峰值；丢包计数也不等于业务丢单。当前证据支持继续检验节点网络处理与复制接收路径，不能断言唯一瓶颈已经确定。
 
-网络对照已另行 [登记](../evidence/2026-10-23/runpod-optimization/network/plan.json)：同一新节点 artifact、相同 shared 客户端，按 128 KiB → 1 MiB → 128 KiB → 1 MiB 的接收请求运行 15k/s。新版本仅 ClusterNodeMain 类内容相对前一构建变化，业务 core/dependencies 不变；两个缓冲组均用该新版本。每轮负载窗外通过 verified PID/startTicks/FD/inode 和已知本机端口过滤的 ss，核验内核实际 rb/tb，避免把请求值当成生效值。send buffer、sync2、leader、heap、MTU、idle、状态 profile、队列与独立身份保持一致。此组仍在测量，尚不报告改善。
+网络对照已另行 [登记](../evidence/2026-10-23/runpod-optimization/network/plan.json)：同一新节点 artifact、相同 shared 客户端，按 128 KiB → 1 MiB → 128 KiB → 1 MiB 的接收请求运行 15k/s。新版本仅 ClusterNodeMain 类内容相对前一构建变化，业务 core/dependencies 不变；两个缓冲组均用该新版本。每轮负载窗外通过 verified PID/startTicks/FD/inode 和已知本机端口过滤的 ss，核验内核实际 rb/tb，避免把请求值当成生效值。send buffer、sync2、leader、heap、MTU、idle、状态 profile、队列与独立身份保持一致。四轮均已完成且非稳定，结果如下。
+
+| 顺序 | 节点接收请求 | 窗口 goodput /s | 已接受条件 p99 ms | 未发送 | 排空 ms | node1 日志 socket 窗口 drops |
+|---|---|---:|---:|---:|---:|---:|
+| A1 | 128 KiB | 14,215.816 | 623.427 | 1,739 | 493.570 | 218 |
+| B1 | 1 MiB | 14,348.605 | 631.623 | 1,074 | 465.073 | 0 |
+| A2 | 128 KiB | 14,602.974 | 408.282 | 0 | 454.672 | 205 |
+| B2 | 1 MiB | 13,928.921 | 619.682 | 5,790 | 592.137 | 0 |
+
+[逐行与 socket 审计](../evidence/2026-10-23/runpod-optimization/network/README.md) 复核 760,000 个计划到达为 751,397 个最终接受和 8,603 个明确未发送。初次/最终 unknown、业务拒绝和 server error 均为零。A2 全量接受 p99 可定义，其余三轮只报告已接受条件 p99。128 KiB 自身重复的吞吐与 p99 变化较大；两对结果不能证明 1 MiB 导致性能回退，也不能将目标 socket 丢包归零说成整个网络无丢包。各轮 leader 热线程仍约 0.96 核，其他 NAK 信号和 follower Archive 写入路径等待仍存在。
+
+基于这组结果，后续线程对照固定回原 131,072 字节请求，避免叠加未证实有益的缓冲设置。该选择是下一实验基线；原 e1db 应用的运行配置没有在本轮被升级。
 
 已完成的 [shared smoke](../evidence/2026-10-23/runpod-optimization/shared/runs/o-smoke-shared-8000-w128/) 计划 20,000 条命令，在 2.5 秒窗口内确认 19,947 条，对应窗口 goodput **7,978.8/s**；最终 20,000 条全部接受，计划到达至确认 p99 **17.223594 ms**，零未发送、业务拒绝、server error 和初次/最终 unknown。终态与 leader0/term0 校验通过，但正式分类为 `INSUFFICIENT_WINDOW_OBSERVATIONS`，只列为功能验证。
 
@@ -57,9 +68,17 @@ A/B 分别保留 [isolated 登记](../evidence/2026-10-23/runpod-optimization/is
 
 需要同时比较初次 API RTT、FIFO 等待、活跃槽位、排空、CPU/RSS/线程、Aeron 修复和记录/提交/服务位置。新增相同的只读观察器按 PID/startTicks/命令摘要验证进程，采集其线程及所拥有 UDP inode 的队列/丢包；不抓包、不读环境、不做 JVM attach。namespace UDP 重叠计数不相加，`wchan=0`、缺失 sysctl 或零 schedstat 不解释为没有等待，采样队列字节不等于有效 payload 或实际 SO_RCVBUF。具体限制保留于 [观察器部署与范围](../evidence/2026-10-23/runpod-optimization/attribution-deployment.json)。
 
+## 正在进行的线程调度对照
+
+[预登记计划](../evidence/2026-10-23/runpod-optimization/threading/plan.json) 固定新节点源 `33e6ab32d9a736eaacd8e4060af8036c614b6fe2` / bundle `c043d263521343572fdfbef7fcc1feeb3ef6769a016a550a76d6070019c5c5ea`，按节点 SHARED → DEDICATED → SHARED → DEDICATED 运行 15k/s、190k 到达、W128。客户端仍是一个 shared driver 加 128 个独立 Aeron/session/worker，节点两组使用同一 artifact，原 128 KiB 缓冲前后独立核验。Archive 仍为 SHARED，所有 sync2 设置保留。
+
+Aeron 的默认角色等待参数与原显式 Agrona 默认存在差别，直接改 threadingMode 会混入等待策略变化。这里在同一新 artifact 中，为 shared/sender/receiver/conductor/native-resource 各自建立独立、参数相同的 Backoff(10 spins,5 yields,1000ns min park,1000000ns max park)，并在启动日志记录。DEDICATED 是四个 driver runners，相比共享 composite 多三个，不代表撮合逻辑并行化。CPU、节流、丢包、排空和原正确性规则继续记录。目前结果未齐，尚不宣称收益。
+
 ## 已完成的代码验证
 
 新负载版本从已提交源码 `git archive` 建立隔离 checkout，运行全部 Java tests 与 `:cluster:installDist`，记录 **109 tests、0 failures、0 errors、0 skipped**，见 [Java 验证](../evidence/2026-10-23/runpod-optimization/tool-validation/java-tests.json)。测试覆盖共享 driver 下独立 session/Aeron、关闭一个客户端后其他客户端继续工作、连接失败不关闭借用 driver、错误模式/固定端口拒绝、运行元数据及固定到达调度等路径；这些检查不替代云端容量测量。
+
+独立网络与线程节点包分别完成 110 / 112 项 Java tests，均无失败或跳过；构建日志、XML、类内容比对与三台 launcher 校验保存在各自 tool-validation / deployment receipts。这些验证仍不替代云端容量测量。
 
 归因观察器在三台 Linux Pod 各完成 14 项测试与有界采样 smoke：[node0](../evidence/2026-10-23/runpod-optimization/tool-validation/attribution-node0.json)、[node1](../evidence/2026-10-23/runpod-optimization/tool-validation/attribution-node1.json)、[node2](../evidence/2026-10-23/runpod-optimization/tool-validation/attribution-node2.json)。配置验证器另用四组历史真实 command SHA 回归，拒绝 mode/count 错配、部分运行声明、非法 JVM 属性，并验证显式默认属性同样进入 NUL 分隔的完整参数摘要。
 
