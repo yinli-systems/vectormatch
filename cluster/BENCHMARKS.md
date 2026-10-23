@@ -22,7 +22,7 @@ For every command, the harness checks the exact result and all command/event/mar
 
 `samples.csv` retains every measured RTT, command type, trade count, and returned replay flag. Node logs retain launch and Cluster diagnostics. The task fails on an unresolved timeout, rejection, state discrepancy, invariant failure, unexpected trade count, or inconsistent snapshot. A failed task is not a successful benchmark result.
 
-The small sample size and short duration make this a functional performance baseline. It is unsuitable for estimating extreme tails, saturation capacity, sustained production throughput, or behavior under independently scheduled arrivals. It intentionally does not subtract pauses or hide resend delay. An open-loop multi-client benchmark, repeated steady-state runs, independent hosts, load curves, and production idle-strategy/CPU/storage tuning remain separate work.
+The small sample size and short duration make this a functional performance baseline. It is unsuitable for estimating extreme tails, saturation capacity, sustained production throughput, or behavior under independently scheduled arrivals. It intentionally does not subtract pauses or hide resend delay. The later remote open-loop campaign below records separate evidence; these historical smoke measurements have not been relabelled.
 
 The initial development implementation uses shared driver/archive threads, backoff idle strategies, small terms, a low-volume single-inflight client, and safe file synchronization. Preserve these settings when reproducing its baseline; compare alternative settings as separately disclosed experiments.
 
@@ -45,3 +45,30 @@ The top-level `comparison.json` reports the observed concurrency throughput rati
 The additive `POSITION` operation and `ClusterClient.position(Duration)` were introduced **after** the archived runs `replicated-benchmark/run-1792771468145` and `replicated-concurrency/run-1792772681750`. Those saved results were not rerun or relabelled after this extension. `position()` returns only command/event/market counters with an empty state hash; it does not serialize or hash the core. Full `state()` behavior remains unchanged. An idle mirror can poll these counters and download a snapshot only when they change. The original measured benchmark traffic did not include the new position operation.
 
 Startup directory handling was subsequently hardened to `dirDeleteOnStart(false)` for both clients and nodes. [Aeron 1.53.3 checks the existing driver's heartbeat before deleting/recreating its directory](https://github.com/aeron-io/aeron/blob/1.53.3/aeron-driver/src/main/java/io/aeron/driver/MediaDriver.java#L479). An active driver causes `ActiveDriverException`; a confirmed stale directory is recreated. Graceful shutdown marks the heartbeat inactive; after a hard crash, liveness detection can require the configured driver timeout. This uses Aeron's existing mechanism and does not claim an atomic lock for simultaneous first-ever startup. The change postdates the archived timings and those results have not been relabelled or rerun.
+
+## Remote open-loop capacity campaign
+
+The [protocol](../docs/CAPACITY_CAMPAIGN.md) and [results](../docs/CAPACITY_RESULTS.md) retain fixed-configuration cohorts, all scheduled arrivals, client admission losses and unknown outcomes. Each trial uses fresh state and a fixed leader. Node and load-generator revisions, release hashes, actual launch arguments and the prepared-state hash are recorded separately.
+
+Build `:cluster:installDist` from the pinned revision and launch the three members as described in [REMOTE.md](../deploy/REMOTE.md#isolated-fixed-leader-capacity-tests). On the load host, export the same `VECTOR_CLUSTER_HOSTS` and `VECTOR_AERON_MTU_LENGTH`, and set `VECTOR_CLIENT_EGRESS_HOST` to that host's reachable private address. The long-window cohort requires the explicit `capacity-190k-v1` node profile, outbox 524288, 2 GiB node heaps, session limit 128 and appointed leader 0 on all members. Then use a new evidence directory:
+
+```sh
+java --add-opens=java.base/jdk.internal.misc=ALL-UNNAMED \
+  --add-opens=java.base/java.util.zip=ALL-UNNAMED -Xmx2g \
+  -cp '/opt/vectormatch/releases/PINNED_REVISION/dist/cluster/lib/*' \
+  io.vectormatch.cluster.RemoteCapacityExperiment \
+  /opt/vectormatch/evidence/UNIQUE_TRIAL 23000 13000 190000 128 64 2000 30000 0 20 extended-190k-128
+```
+
+The arguments after the evidence directory are port base, target arrivals/s, arrival count, workers, queue capacity per worker, request timeout ms, maximum drain ms, expected leader ID, scheduler lateness limit ms and load fixture. This example offers 190,000 commands over 14.615 seconds; it is not a long-duration soak test. Keep client egress port allocation ephemeral when starting many drivers. Setup, session cleanup and final reference replay occur outside the measurement window.
+
+The Java harness writes arrivals/backlog CSV, canonical snapshots, configuration and result JSON. The campaign additionally collects official pre/post membership, read-only CnC counters, 1 Hz process/cgroup/network telemetry and process identity receipts. Export all of them before analysis; a Java result alone is insufficient for the independent fixed-leader/configuration checks. Recompute an archived cohort without cloud access:
+
+```sh
+python3 -B scripts/verify-capacity-config.py evidence/2026-10-23/runpod-capacity-long
+python3 -B scripts/analyze-capacity.py \
+  --runs-dir evidence/2026-10-23/runpod-capacity-long/runs \
+  --output-dir /tmp/vectormatch-capacity-recomputed --plot
+```
+
+`--plot` uses Matplotlib if already installed. Stable-window classification requires at least ten seconds and the declared loss, backlog, drain, scheduler and correctness checks; it has no invented p99 SLA. Terminal orders remain retained, so these fresh-state finite windows do not establish indefinite write capacity. Keep older node/heap/seed cohorts separate.

@@ -10,6 +10,7 @@ The Cluster supports directly routed, bindable IPv4 addresses. Local development
 | `VECTOR_PORT_BASE` | Node CLI when positional port is omitted | `19000`. Existing applications pass the port base to `ClusterClient(Path, int)` explicitly. |
 | `VECTOR_SYNC_LEVEL` | Node CLI when positional sync is omitted | `0` for the direct Java entry point; specify `2` explicitly for durable experiments. Deployment scripts may provide a stricter default. |
 | `VECTOR_OUTBOX_CAPACITY` | Node CLI when positional capacity is omitted | `65536`, subject to the serialized-state budget. |
+| `VECTOR_STATE_PROFILE` | Every node | `default`; explicit `capacity-190k-v1` selects the separate capacity-test limits described in [CAPACITY.md](CAPACITY.md). |
 | `VECTOR_CLIENT_EGRESS_HOST` | Client processes | `127.0.0.1` only for a local topology. **Required** for remote membership. Must be assigned to the client host and reachable by all members. |
 | `VECTOR_CLIENT_EGRESS_PORT` | Client processes | `0` allocates an ephemeral UDP receive port. A fixed value must be 1024–65535 and not collide with a member endpoint on that address. |
 | `VECTOR_AERON_MTU_LENGTH` | Every node and client | `1408`; allowed 64–65504, aligned to 32 bytes. Use **1248** for an IPv4 private link with MTU 1300. |
@@ -41,10 +42,10 @@ Snapshot publications are recorded over IPC but also receive the network-safe MT
 ## Node CLI
 
 ```text
-ClusterNodeMain <member-id> <state-parent> [port-base] [sync:0|2] [outbox-capacity] [hosts-csv]
+ClusterNodeMain <member-id> <state-parent> [port-base] [sync:0|2] [outbox-capacity] [hosts-csv] [state-profile]
 ```
 
-Positional arguments override the corresponding environment variables. `hosts-csv` overrides `VECTOR_CLUSTER_HOSTS`; the sixth argument is optional, preserving the earlier five-argument launcher contract. Member IDs must exist in the configured membership. The persistent node directory is `<state-parent>/node-<member-id>`.
+Positional arguments override the corresponding environment variables. The optional sixth and seventh arguments override `VECTOR_CLUSTER_HOSTS` and `VECTOR_STATE_PROFILE`; earlier launcher contracts remain supported. Member IDs must exist in the configured membership. The persistent node directory is `<state-parent>/node-<member-id>`.
 
 After `./gradlew :cluster:installDist`, launch this on member 0, substituting its actual private addresses:
 
