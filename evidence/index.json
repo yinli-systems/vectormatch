@@ -1,0 +1,154 @@
+{
+  "runs": [
+    {
+      "id": "core-20k",
+      "label": "Deterministic core \u00b7 20k offered/s",
+      "scope": "In-process scheduled-to-complete latency",
+      "model": "FIXED_ARRIVAL; shallow book; 3-second smoke",
+      "commands": 60000,
+      "trades": 15000,
+      "throughput": 20000.331,
+      "p50Millis": 0.001,
+      "p99Millis": 0.203,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "durability": "Memory only",
+      "limitations": [
+        "No network, persistence or replication.",
+        "Developer Mac; concurrent builds; short initial observation, not a stable capacity claim."
+      ],
+      "artifactPath": "evidence/2026-10-23/core-20k/summary.json",
+      "timestamp": "2026-10-23T15:54:35.427141Z"
+    },
+    {
+      "id": "http-lifecycle",
+      "label": "HTTP \u00b7 forced-journal order lifecycle",
+      "scope": "Place: scheduled arrival through HTTP response; throughput counts place + dependent cancel",
+      "model": "FIXED_ARRIVAL places; dependent cancellations",
+      "commands": 500,
+      "trades": 0,
+      "throughput": 98.31484022274864,
+      "p50Millis": 79.487,
+      "p99Millis": 234.367,
+      "unknown": 0,
+      "correctnessPassed": null,
+      "durability": "Local force(true) journal; no replicated quorum",
+      "limitations": [
+        "250 placements and 250 dependent cancellations; zero trades.",
+        "50 new orders/s offered; throughput is both accepted command types.",
+        "Counting invariant passed; semantic lifecycle also covered by separate API tests.",
+        "Loopback client/server share one host; not representative matching capacity."
+      ],
+      "artifactPath": "evidence/2026-10-23/http-lifecycle/summary.json",
+      "timestamp": "2026-10-23T16:06:54.440Z"
+    },
+    {
+      "id": "replicated-single-baseline",
+      "label": "Replicated matching \u00b7 initial single client",
+      "scope": "Client execute RTT; elapsed throughput also includes reference validation",
+      "model": "CLOSED_LOOP_SINGLE_INFLIGHT",
+      "commands": 1002,
+      "trades": 334,
+      "throughput": 45.776,
+      "p50Millis": 18.222916,
+      "p99Millis": 55.511167,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "durability": "3 JVMs; Archive/catalog/consensus sync level 2",
+      "limitations": [
+        "Three processes and load generator on one developer Mac.",
+        "Single request in flight; short baseline, not a capacity or open-loop result.",
+        "Initial protocol/limits revision; retained as historical evidence."
+      ],
+      "artifactPath": "evidence/2026-10-23/replicated-single-baseline/result.json",
+      "timestamp": "2026-10-23T16:04:28.145000+00:00"
+    },
+    {
+      "id": "process-failover",
+      "label": "Leader kill \u00b7 snapshot & cold restart",
+      "scope": "Recovery experiment; kill to next confirmed command: 11341.887 ms",
+      "model": "SIGKILL leader; catch-up; snapshot; restart all 3 processes",
+      "commands": 57,
+      "trades": null,
+      "throughput": null,
+      "p50Millis": null,
+      "p99Millis": null,
+      "unknown": null,
+      "correctnessPassed": true,
+      "durability": "Sync level 2; replicated core + pending outbox",
+      "limitations": [
+        "Three processes share one host, filesystem and power supply.",
+        "Default failure-detection timeout contributes to observed recovery; not a tuned failover SLA.",
+        "Verified: leader replacement, stable retries, full outbox, pending events across cold restart and canonical core hash.",
+        "Current conservative 100,000 retained-order cluster capacity."
+      ],
+      "artifactPath": "evidence/2026-10-23/process-failover-current/result.json",
+      "timestamp": "2026-10-23T16:26:36.357000+00:00"
+    },
+    {
+      "id": "replicated-1-client",
+      "label": "Replicated matching \u00b7 1 client",
+      "scope": "Client execute RTT; validation after timed workload",
+      "model": "CLOSED_LOOP_ONE_INFLIGHT_PER_CLIENT; 1 in flight maximum",
+      "commands": 1008,
+      "trades": 336,
+      "throughput": 52.732,
+      "p50Millis": 16.777583,
+      "p99Millis": 32.954333,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "durability": "3 JVMs; Archive/catalog/consensus sync level 2",
+      "limitations": [
+        "Three cluster processes and load generator on the same developer Mac.",
+        "One trial each, order: 1 client then 4; 1008 commands each; not an open-loop capacity claim.",
+        "Throughput improved with concurrency; p99 also increased.",
+        "Archive write-time counters collected; force-call count was not instrumented."
+      ],
+      "artifactPath": "evidence/2026-10-23/replicated-concurrency/clients-1/result.json",
+      "timestamp": "2026-10-23T16:24:41.750000+00:00"
+    },
+    {
+      "id": "replicated-4-client",
+      "label": "Replicated matching \u00b7 4 clients",
+      "scope": "Client execute RTT; validation after timed workload",
+      "model": "CLOSED_LOOP_ONE_INFLIGHT_PER_CLIENT; 4 in flight maximum",
+      "commands": 1008,
+      "trades": 336,
+      "throughput": 118.395,
+      "p50Millis": 20.53825,
+      "p99Millis": 233.312625,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "durability": "3 JVMs; Archive/catalog/consensus sync level 2",
+      "limitations": [
+        "Three cluster processes and load generator on the same developer Mac.",
+        "One trial each, order: 1 client then 4; 1008 commands each; not an open-loop capacity claim.",
+        "Throughput improved with concurrency; p99 also increased.",
+        "Archive write-time counters collected; force-call count was not instrumented."
+      ],
+      "artifactPath": "evidence/2026-10-23/replicated-concurrency/clients-4/result.json",
+      "timestamp": "2026-10-23T16:24:41.750000+00:00"
+    },
+    {
+      "id": "replicated-workbench",
+      "label": "End to end \u00b7 quorum through PostgreSQL",
+      "scope": "HTTP -> Aeron quorum -> gateway mirror -> asynchronous PostgreSQL cursor observation",
+      "model": "Functional place / retry / conflict / cancel / snapshot verification",
+      "commands": 2,
+      "trades": 0,
+      "throughput": null,
+      "p50Millis": null,
+      "p99Millis": null,
+      "unknown": null,
+      "correctnessPassed": true,
+      "durability": "Replicated core + PostgreSQL synchronous_commit=on",
+      "limitations": [
+        "Functional smoke, not a latency or capacity benchmark.",
+        "Three cluster processes, gateway and PostgreSQL share one host.",
+        "PostgreSQL cursor is a cached observation, not an atomic source/database snapshot."
+      ],
+      "artifactPath": "evidence/2026-10-23/reviewed-workbench/summary.json",
+      "timestamp": "2026-10-23T16:40:06.163560+00:00"
+    }
+  ]
+}

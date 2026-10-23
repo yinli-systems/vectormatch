@@ -1,8 +1,8 @@
-plugins { application }
+plugins { application; `java-library` }
 dependencies {
-    implementation(project(":core"))
-    implementation("io.aeron:aeron-all:1.53.3")
-    implementation("org.agrona:agrona:2.6.1")
+    api(project(":core"))
+    api("io.aeron:aeron-all:1.53.3")
+    api("org.agrona:agrona:2.6.1")
 }
 application {
     mainClass.set("io.vectormatch.cluster.ClusterNodeMain")
@@ -18,6 +18,22 @@ tasks.register<JavaExec>("failoverSmoke") {
 }
 
 tasks.withType<Test>().configureEach {
+    jvmArgs(application.applicationDefaultJvmArgs)
+}
+
+tasks.register<JavaExec>("replicatedBenchmark") {
+    group = "verification"
+    description = "Measures a short single-inflight closed-loop workload against three real local sync-level-2 processes."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("io.vectormatch.cluster.ReplicatedBenchmarkSmoke")
+    jvmArgs(application.applicationDefaultJvmArgs)
+}
+
+tasks.register<JavaExec>("replicatedConcurrencyComparison") {
+    group = "verification"
+    description = "Runs fair paired 1-client and 4-client sync-level-2 closed-loop replication experiments."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("io.vectormatch.cluster.ReplicatedConcurrencyComparison")
     jvmArgs(application.applicationDefaultJvmArgs)
 }
 

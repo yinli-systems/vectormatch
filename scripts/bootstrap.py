@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Download portable official toolchains and verify published SHA-256 digests."""
 import hashlib
-import json
 import os
 import pathlib
 import platform
@@ -25,21 +24,20 @@ def checked(url, checksum, target):
         raise RuntimeError("SHA-256 mismatch: " + target.name)
     print("verified", target.name, actual, flush=True)
 
-def json_url(url):
-    path = TOOLS / "metadata.json"
-    fetch(url, path)
-    return json.loads(path.read_text())
-
 machine = platform.machine()
 system = platform.system()
+if system not in ("Darwin", "Linux") or machine not in ("arm64", "aarch64", "x86_64", "AMD64"):
+    raise RuntimeError("Supported portable toolchains: macOS/Linux on ARM64/x86-64")
 arch = "aarch64" if machine in ("arm64", "aarch64") else "x64"
 adoptium_os = "mac" if system == "Darwin" else "linux"
 
 if not (TOOLS / "jdk").exists():
-    assets = json_url("https://api.adoptium.net/v3/assets/latest/21/hotspot?architecture=" + arch + "&image_type=jdk&os=" + adoptium_os + "&vendor=eclipse")
-    package = assets[0]["binary"]["package"]
+    name = "OpenJDK21U-jdk_" + arch + "_" + adoptium_os + "_hotspot_21.0.13_9.tar.gz"
+    base = "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/"
+    checksum_file = TOOLS / "jdk-sha256.txt"
+    fetch(base + name + ".sha256.txt", checksum_file)
     archive = TOOLS / "jdk.tar.gz"
-    checked(package["link"], package["checksum"], archive)
+    checked(base + name, checksum_file.read_text().split()[0], archive)
     extract = TOOLS / "jdk-extract"
     extract.mkdir(exist_ok=True)
     with tarfile.open(archive) as tf:
@@ -50,7 +48,7 @@ if not (TOOLS / "jdk").exists():
 if not (TOOLS / "node").exists():
     node_os = "darwin" if system == "Darwin" else "linux"
     node_arch = "arm64" if arch == "aarch64" else "x64"
-    base = "https://nodejs.org/dist/latest-v24.x/"
+    base = "https://nodejs.org/dist/v24.22.1/"
     sums = TOOLS / "node-sha256.txt"
     fetch(base + "SHASUMS256.txt", sums)
     suffix = "-" + node_os + "-" + node_arch + ".tar.gz"

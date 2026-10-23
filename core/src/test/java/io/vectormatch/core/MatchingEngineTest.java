@@ -201,4 +201,23 @@ class MatchingEngineTest {
         assertTrue(restored.execute(unusual).replayed());
         assertEquals(engine.stateHash(), restored.stateHash());
     }
+
+    @Test void eventCapacityPreviewCountsTradesExpiryAndPreservesRetryAvailability() {
+        MatchingEngine engine = new MatchingEngine(1);
+        Deposit deposit = new Deposit(1, "fund", 1, Asset.QUOTE, 1000);
+        assertEquals(1, engine.maximumEventsFor(deposit));
+        engine.execute(deposit);
+        assertEquals(0, engine.maximumEventsFor(deposit));
+        assertEquals(0, engine.maximumEventsFor(new Deposit(1, "fund", 1, Asset.QUOTE, 900)));
+        fund(engine, 2, Asset.BASE, 10); fund(engine, 3, Asset.BASE, 10);
+        engine.execute(place(2, 1, Side.SELL, 90, 2, TimeInForce.GTC));
+        engine.execute(place(3, 1, Side.SELL, 95, 2, TimeInForce.GTC));
+        Place sweep = place(1, 1, Side.BUY, 100, 6, TimeInForce.IOC);
+        String hash = engine.stateHash();
+        assertEquals(4, engine.maximumEventsFor(sweep)); // accepted, 2 trades, residual expiry
+        assertEquals(hash, engine.stateHash());
+        assertEquals(4, engine.execute(sweep).events().size());
+        assertEquals(0, engine.maximumEventsFor(sweep));
+        assertEquals(0, engine.maximumEventsFor(place(1, 2, Side.BUY, 100, 100, TimeInForce.GTC)));
+    }
 }

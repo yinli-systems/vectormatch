@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Evidence, { ProjectionStatus } from "./Evidence";
 import {
   asObject,
   fetchState,
@@ -440,7 +441,7 @@ function App() {
   const levelsCount = (state?.bids.length || 0) + (state?.asks.length || 0);
   const fresh = !!state && clock - state.receivedAt < 8000;
   const connected = fresh && !error;
-  const engineWritable = connected && state?.health.status !== "STORAGE_FAILED";
+  const engineWritable = connected && state?.health.status === "UP";
   const measurements = useMemo(() => commands.map((s) => s.millis), [commands]);
   const p50 = quantile(measurements, 0.5);
   const p99 = quantile(measurements, 0.99);
@@ -469,10 +470,13 @@ function App() {
     metric(h, "uptimeMillis", "uptimeMs") ??
     metric(m, "uptimeMillis", "uptimeMs");
   const rawMode = textField(h, "mode", "deploymentMode");
+  const replicated = rawMode === "CLUSTER_REPLICATED";
   const mode =
     rawMode === "LOCAL_JOURNALED"
       ? "Local journal · single node"
-      : rawMode || "Not reported";
+      : replicated
+        ? "Replicated core · 3 processes"
+        : rawMode || "Not reported";
   const verified = verification ?? state?.verification ?? {};
   const replay =
     verified.consistent === true
@@ -709,6 +713,7 @@ function App() {
           <a href="#diagnostics">
             System <span className="nav-dot" />
           </a>
+          <a href="#evidence">Evidence</a>
           <button onClick={() => setShowApi(true)}>
             API <Icon name="external" size={12} />
           </button>
@@ -723,12 +728,16 @@ function App() {
             className="status-pill"
             onClick={() => setShowDetails(!showDetails)}
           >
-            <span className={`status-dot ${connected ? "online" : ""}`} />
-            {connected
-              ? "Engine connected"
-              : state
-                ? "Connection interrupted"
-                : "Connecting to engine"}
+            <span className={`status-dot ${engineWritable ? "online" : ""}`} />
+            {connected && !engineWritable
+              ? replicated
+                ? "Gateway recovery required"
+                : "Journal writer stopped"
+              : connected
+                ? "Engine connected"
+                : state
+                  ? "Connection interrupted"
+                  : "Connecting to engine"}
             <Icon name="chevron" size={12} />
           </button>
           <div className="avatar" title="Local simulation workspace">
@@ -798,6 +807,17 @@ function App() {
           <button onClick={() => void refresh()}>
             Reconnect <Icon name="arrow" size={13} />
           </button>
+        </div>
+      )}
+      {connected && !engineWritable && (
+        <div className="connection-warning" role="alert">
+          <Icon name="info" size={15} />
+          <span>
+            {textField(h, "recoveryAction") ||
+              (replicated
+                ? "Order submission is stopped. Restore the cluster, restart the gateway to synchronize authoritative state, then retry the exact original producer/request key."
+                : "Journal storage failed. The writer has stopped and order submission is disabled. Restart the engine after checking storage to recover the journal.")}
+          </span>
         </div>
       )}
 
@@ -1415,8 +1435,10 @@ function App() {
             <div>
               <strong>Make the market move.</strong>
               <span>
-                Real orders from simulation accounts. Journaled by the same
-                engine.
+                Real orders from simulation accounts.{" "}
+                {replicated
+                  ? "Committed through the replicated core."
+                  : "Journaled by the same engine."}
               </span>
             </div>
           </div>
@@ -1465,8 +1487,12 @@ function App() {
                 className={controlPending === "replay" ? "spinning" : ""}
               />
               {controlPending === "replay"
-                ? "Verifying journal…"
-                : "Verify replay"}
+                ? replicated
+                  ? "Reading replica…"
+                  : "Verifying journal…"
+                : replicated
+                  ? "Verify replica"
+                  : "Verify replay"}
             </button>
             <span
               className={
@@ -1481,7 +1507,9 @@ function App() {
                 ? `${compact(metric(verified, "replayedCommands"))} commands · hash match`
                 : verified.consistent === false
                   ? "State hash mismatch"
-                  : "Compare live state to journal replay"}
+                  : replicated
+                    ? "Compare gateway mirror to authoritative snapshot"
+                    : "Compare live state to journal replay"}
             </span>
           </div>
           {controlError && (
@@ -1594,7 +1622,7 @@ function App() {
                 <div>
                   <span>
                     <Icon name="bolt" />
-                    Journal + core p99
+                    {replicated ? "Core commit RTT p99" : "Journal + core p99"}
                   </span>
                   <strong>
                     {engineP99 === undefined ? "—" : engineP99.toFixed(1)}
@@ -1604,17 +1632,22 @@ function App() {
               </div>
               <div className="diagnostic-note">
                 <Icon name="info" size={12} />
-                Service time excludes network and writer queue. No load-test
-                claim.
+                {replicated
+                  ? "Gateway-to-core commit and mirror update; excludes browser and gateway queue. No load-test claim."
+                  : "Service time excludes network and writer queue. No load-test claim."}
               </div>
             </section>
             <section className="panel runtime-panel">
               <div className="panel-toolbar">
                 <h3>Runtime status</h3>
                 <span
-                  className={`runtime-label ${connected ? "positive" : "muted"}`}
+                  className={`runtime-label ${engineWritable ? "positive" : connected ? "negative" : "muted"}`}
                 >
-                  {connected ? "OPERATIONAL" : "AWAITING ENGINE"}
+                  {engineWritable
+                    ? "OPERATIONAL"
+                    : connected
+                      ? "WRITER STOPPED"
+                      : "AWAITING ENGINE"}
                 </span>
               </div>
               <div className="runtime-item">
@@ -1656,6 +1689,8 @@ function App() {
             </section>
           </div>
         </section>
+        <ProjectionStatus projection={state?.projection || {}} />
+        <Evidence />
       </main>
 
       <footer className="footer">

@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.vectormatch.bench.HttpLoadGeneratorTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-23T16:08:49.483Z" hostname="Mac" time="2.589">
+  <properties/>
+  <testcase name="saturationPreservesArrivalAccountingAndCancelsOnlyRealAcceptedOrders()" classname="io.vectormatch.bench.HttpLoadGeneratorTest" time="1.578"/>
+  <testcase name="unknownOutcomeRetiresLaneAndStillSavesReportWhenFinalStateIsUnavailable()" classname="io.vectormatch.bench.HttpLoadGeneratorTest" time="1.01"/>
+  <system-out><![CDATA[{
+  "scope" : "HTTP_LOOPBACK_LOCAL_JOURNALED_WORKBENCH",
+  "includesNetwork" : true,
+  "includesLocalJournalForce" : true,
+  "includesReplicatedQuorum" : false,
+  "runId" : "http-da562d1e-c2a",
+  "startedAt" : "2026-10-23T16:08:49.866Z",
+  "url" : "http://127.0.0.1:50341",
+  "java" : "21.0.13",
+  "os" : "Mac OS X",
+  "arch" : "aarch64",
+  "workload" : "account 1 BUY GTC price=1 quantity=1; cancel accepted residual after its order response",
+  "rateScope" : "fixed-arrival NEW ORDER placements per second; dependent cancellations are not an open-loop arrival stream",
+  "targetOrderRate" : 50,
+  "durationSeconds" : 1,
+  "sendWindowSeconds" : 0.981210458,
+  "completionWindowSeconds" : 1.072231541,
+  "acceptedCommandsPerSecond" : 13.056881340147033,
+  "maxInFlightPairs" : 1,
+  "maximumHttpRequestsPerPair" : 2,
+  "plannedOrders" : 50,
+  "ordersSent" : 7,
+  "scheduledNotSentOrders" : 43,
+  "dependentCancelsSent" : 7,
+  "httpRequestsSent" : 14,
+  "httpResponses" : 14,
+  "businessAcceptedOrders" : 7,
+  "businessAcceptedCancels" : 7,
+  "actualTradeCountFromOrderResults" : 0,
+  "outcomes" : {
+    "BUSINESS_ACCEPTED" : 14,
+    "BUSINESS_REJECTED" : 0,
+    "HTTP_REJECTED" : 0,
+    "UNKNOWN" : 0
+  },
+  "httpStatusCounts" : {
+    "200" : 14
+  },
+  "replayedResponses" : 0,
+  "unresolvedRequests" : 0,
+  "automaticRetries" : 0,
+  "unknownHandling" : "lane retired; original producerId/requestSeq/payload retained in unresolved.json; reconcile or retry that exact identity",
+  "syntheticFlowPaused" : true,
+  "latency" : {
+    "place-scheduled" : {
+      "maxMicros" : 170495,
+      "p999Micros" : 170495,
+      "p99Micros" : 170495,
+      "p95Micros" : 170495,
+      "p50Micros" : 133503,
+      "samples" : 7
+    },
+    "place-sent" : {
+      "maxMicros" : 166783,
+      "p999Micros" : 166783,
+      "p99Micros" : 166783,
+      "p95Micros" : 166783,
+      "p50Micros" : 130751,
+      "samples" : 7
+    },
+    "place-dispatch" : {
+      "maxMicros" : 10111,
+      "p999Micros" : 10111,
+      "p99Micros" : 10111,
+      "p95Micros" : 10111,
+      "p50Micros" : 3707,
+      "samples" : 7
+    },
+    "place-accepted-scheduled" : {
+      "maxMicros" : 170495,
+      "p999Micros" : 170495,
+      "p99Micros" : 170495,
+      "p95Micros" : 170495,
+      "p50Micros" : 133503,
+      "samples" : 7
+    },
+    "place-accepted-sent" : {
+      "maxMicros" : 166783,
+      "p999Micros" : 166783,
+      "p99Micros" : 166783,
+      "p95Micros" : 166783,
+      "p50Micros" : 130751,
+      "samples" : 7
+    },
+    "cancel-scheduled" : {
+      "maxMicros" : 7711,
+      "p999Micros" : 7711,
+      "p99Micros" : 7711,
+      "p95Micros" : 7711,
+      "p50Micros" : 5131,
+      "samples" : 7
+    },
+    "cancel-sent" : {
+      "maxMicros" : 6859,
+      "p999Micros" : 6859,
+      "p99Micros" : 6859,
+      "p95Micros" : 6859,
+      "p50Micros" : 4803,
+      "samples" : 7
+    },
+    "cancel-dispatch" : {
+      "maxMicros" : 852,
+      "p999Micros" : 852,
+      "p99Micros" : 852,
+      "p95Micros" : 852,
+      "p50Micros" : 522,
+      "samples" : 7
+    },
+    "cancel-accepted-scheduled" : {
+      "maxMicros" : 7711,
+      "p999Micros" : 7711,
+      "p99Micros" : 7711,
+      "p95Micros" : 7711,
+      "p50Micros" : 5131,
+      "samples" : 7
+    },
+    "cancel-accepted-sent" : {
+      "maxMicros" : 6859,
+      "p999Micros" : 6859,
+      "p99Micros" : 6859,
+      "p95Micros" : 6859,
+      "p50Micros" : 4803,
+      "samples" : 7
+    }
+  },
+  "latencyScopes" : "scheduled/sent/dispatch include all sent attempts, including rejections and unknowns; accepted-* include only BUSINESS_ACCEPTED responses",
+  "initialJournalBytes" : 0,
+  "finalJournalBytes" : 0,
+  "countingInvariantPassed" : true
+}
+{
+  "scope" : "HTTP_LOOPBACK_LOCAL_JOURNALED_WORKBENCH",
+  "includesNetwork" : true,
+  "includesLocalJournalForce" : true,
+  "includesReplicatedQuorum" : false,
+  "runId" : "http-fde71767-ee0",
+  "startedAt" : "2026-10-23T16:08:51.070Z",
+  "url" : "http://127.0.0.1:50348",
+  "java" : "21.0.13",
+  "os" : "Mac OS X",
+  "arch" : "aarch64",
+  "workload" : "account 1 BUY GTC price=1 quantity=1; cancel accepted residual after its order response",
+  "rateScope" : "fixed-arrival NEW ORDER placements per second; dependent cancellations are not an open-loop arrival stream",
+  "targetOrderRate" : 20,
+  "durationSeconds" : 1,
+  "sendWindowSeconds" : 0.955056292,
+  "completionWindowSeconds" : 0.002715959,
+  "acceptedCommandsPerSecond" : 0.0,
+  "maxInFlightPairs" : 1,
+  "maximumHttpRequestsPerPair" : 2,
+  "plannedOrders" : 20,
+  "ordersSent" : 1,
+  "scheduledNotSentOrders" : 19,
+  "dependentCancelsSent" : 0,
+  "httpRequestsSent" : 1,
+  "httpResponses" : 1,
+  "businessAcceptedOrders" : 0,
+  "businessAcceptedCancels" : 0,
+  "actualTradeCountFromOrderResults" : 0,
+  "outcomes" : {
+    "BUSINESS_ACCEPTED" : 0,
+    "BUSINESS_REJECTED" : 0,
+    "HTTP_REJECTED" : 0,
+    "UNKNOWN" : 1
+  },
+  "httpStatusCounts" : {
+    "503" : 1
+  },
+  "replayedResponses" : 0,
+  "unresolvedRequests" : 1,
+  "automaticRetries" : 0,
+  "unknownHandling" : "lane retired; original producerId/requestSeq/payload retained in unresolved.json; reconcile or retry that exact identity",
+  "syntheticFlowPaused" : true,
+  "latency" : {
+    "place-scheduled" : {
+      "maxMicros" : 2715,
+      "p999Micros" : 2715,
+      "p99Micros" : 2715,
+      "p95Micros" : 2715,
+      "p50Micros" : 2715,
+      "samples" : 1
+    },
+    "place-sent" : {
+      "maxMicros" : 2521,
+      "p999Micros" : 2521,
+      "p99Micros" : 2521,
+      "p95Micros" : 2521,
+      "p50Micros" : 2521,
+      "samples" : 1
+    },
+    "place-dispatch" : {
+      "maxMicros" : 195,
+      "p999Micros" : 195,
+      "p99Micros" : 195,
+      "p95Micros" : 195,
+      "p50Micros" : 195,
+      "samples" : 1
+    },
+    "place-accepted-scheduled" : {
+      "maxMicros" : 0,
+      "p999Micros" : 0,
+      "p99Micros" : 0,
+      "p95Micros" : 0,
+      "p50Micros" : 0,
+      "samples" : 0
+    },
+    "place-accepted-sent" : {
+      "maxMicros" : 0,
+      "p999Micros" : 0,
+      "p99Micros" : 0,
+      "p95Micros" : 0,
+      "p50Micros" : 0,
+      "samples" : 0
+    },
+    "cancel-scheduled" : {
+      "maxMicros" : 0,
+      "p999Micros" : 0,
+      "p99Micros" : 0,
+      "p95Micros" : 0,
+      "p50Micros" : 0,
+      "samples" : 0
+    },
+    "cancel-sent" : {
+      "maxMicros" : 0,
+      "p999Micros" : 0,
+      "p99Micros" : 0,
+      "p95Micros" : 0,
+      "p50Micros" : 0,
+      "samples" : 0
+    },
+    "cancel-dispatch" : {
+      "maxMicros" : 0,
+      "p999Micros" : 0,
+      "p99Micros" : 0,
+      "p95Micros" : 0,
+      "p50Micros" : 0,
+      "samples" : 0
+    },
+    "cancel-accepted-scheduled" : {
+      "maxMicros" : 0,
+      "p999Micros" : 0,
+      "p99Micros" : 0,
+      "p95Micros" : 0,
+      "p50Micros" : 0,
+      "samples" : 0
+    },
+    "cancel-accepted-sent" : {
+      "maxMicros" : 0,
+      "p999Micros" : 0,
+      "p99Micros" : 0,
+      "p95Micros" : 0,
+      "p50Micros" : 0,
+      "samples" : 0
+    }
+  },
+  "latencyScopes" : "scheduled/sent/dispatch include all sent attempts, including rejections and unknowns; accepted-* include only BUSINESS_ACCEPTED responses",
+  "initialJournalBytes" : 0,
+  "finalJournalBytes" : 0,
+  "finalStateFetchError" : "java.io.IOException: /api/state returned HTTP 503",
+  "countingInvariantPassed" : true
+}
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

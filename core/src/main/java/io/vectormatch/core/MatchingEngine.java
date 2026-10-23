@@ -139,6 +139,46 @@ public final class MatchingEngine {
 
     public Execution apply(Command command) { return execute(command); }
 
+    /**
+     * Exact event count for the current state, without mutation. Intended for a
+     * replicated outbox capacity check on the same writer immediately before
+     * execute; no intervening command may change this state. Replays, conflicts,
+     * stale requests and business rejections produce zero events.
+     */
+    public int maximumEventsFor(Command command) {
+        if (command == null || command.accountId() <= 0 || !validId(command.producerId()) || command.requestSeq() <= 0)
+            return 0;
+        Producer producer = producers.get(new ProducerKey(command.accountId(), command.producerId()));
+        if ((producer != null && command.requestSeq() <= producer.highWater)
+                || (producer == null && producers.size() == limits.maxProducers) || commandSeq == Long.MAX_VALUE)
+            return 0;
+        if (command instanceof Deposit deposit) {
+            if (deposit.asset == null || deposit.amount <= 0) return 0;
+            long total = deposit.asset == Asset.BASE ? totalBase : totalQuote;
+            return deposit.amount <= Long.MAX_VALUE - total
+                    && (accounts.containsKey(deposit.accountId) || accounts.size() < limits.maxAccounts) ? 1 : 0;
+        }
+        if (command instanceof Cancel cancel) {
+            Order order = orders.get(cancel.orderId);
+            return order != null && order.accountId == cancel.accountId && isActive(order.status) ? 1 : 0;
+        }
+        Place place = (Place) command;
+        if (placementRejection(place) != null) return 0;
+        int count = 1;
+        long remaining = place.quantityLots;
+        NavigableMap<Long, LinkedHashMap<Long, Order>> opposite = place.side == Side.BUY ? asks : bids;
+        for (Map.Entry<Long, LinkedHashMap<Long, Order>> entry : opposite.entrySet()) {
+            if (place.side == Side.BUY ? entry.getKey() > place.priceTicks : entry.getKey() < place.priceTicks) break;
+            for (Order maker : entry.getValue().values()) {
+                if (maker.accountId == place.accountId) return count + 1; // incoming residual expiry
+                remaining -= Math.min(remaining, maker.remaining);
+                count++;
+                if (remaining == 0) return count;
+            }
+        }
+        return place.timeInForce == TimeInForce.IOC ? count + 1 : count;
+    }
+
     /** Retries return the original result, but never re-emit business events. */
     public Execution execute(Command command) {
         if (command == null || command.accountId() <= 0 || !validId(command.producerId()) || command.requestSeq() <= 0)
@@ -198,19 +238,10 @@ public final class MatchingEngine {
     }
 
     private Result place(Place command, List<Event> events) {
-        if (!validId(command.clientOrderId) || command.side == null || command.timeInForce == null
-                || command.priceTicks <= 0 || command.quantityLots <= 0)
-            return rejected("invalid limit order");
-        if (command.priceTicks > Long.MAX_VALUE / command.quantityLots) return rejected("order notional overflow");
-        if (nextOrderId == Long.MAX_VALUE) return rejected("order sequence exhausted");
-        if (orders.size() == limits.maxRetainedOrders) return rejected("retained order capacity reached");
-        if (clientIds.containsKey(new ClientOrderKey(command.accountId, command.clientOrderId)))
-            return rejected("client order id already used");
+        String rejection = placementRejection(command);
+        if (rejection != null) return rejected(rejection);
         Account account = accounts.get(command.accountId);
-        if (account == null) return rejected("unknown account");
         long reserve = command.side == Side.BUY ? command.priceTicks * command.quantityLots : command.quantityLots;
-        long available = command.side == Side.BUY ? account.quoteAvailable : account.baseAvailable;
-        if (available < reserve) return rejected("insufficient available balance");
         if (command.side == Side.BUY) { account.quoteAvailable -= reserve; account.quoteReserved += reserve; }
         else { account.baseAvailable -= reserve; account.baseReserved += reserve; }
         Order incoming = new Order(nextOrderId++, command.accountId, command.clientOrderId, command.side,
@@ -253,6 +284,22 @@ public final class MatchingEngine {
             bookFor(incoming.side).computeIfAbsent(incoming.price, ignored -> new LinkedHashMap<>()).put(incoming.id, incoming);
         }
         return new Result(ResultCode.ACCEPTED, "accepted", commandSeq, incoming.id, incoming.remaining, tradeCount);
+    }
+
+    private String placementRejection(Place command) {
+        if (!validId(command.clientOrderId) || command.side == null || command.timeInForce == null
+                || command.priceTicks <= 0 || command.quantityLots <= 0)
+            return "invalid limit order";
+        if (command.priceTicks > Long.MAX_VALUE / command.quantityLots) return "order notional overflow";
+        if (nextOrderId == Long.MAX_VALUE) return "order sequence exhausted";
+        if (orders.size() == limits.maxRetainedOrders) return "retained order capacity reached";
+        if (clientIds.containsKey(new ClientOrderKey(command.accountId, command.clientOrderId)))
+            return "client order id already used";
+        Account account = accounts.get(command.accountId);
+        if (account == null) return "unknown account";
+        long reserve = command.side == Side.BUY ? command.priceTicks * command.quantityLots : command.quantityLots;
+        long available = command.side == Side.BUY ? account.quoteAvailable : account.baseAvailable;
+        return available < reserve ? "insufficient available balance" : null;
     }
 
     private boolean crosses(Order order, long oppositePrice) {

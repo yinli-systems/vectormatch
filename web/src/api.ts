@@ -43,6 +43,7 @@ export interface State {
   metrics: Record<string, unknown>;
   health: Record<string, unknown>;
   verification: Record<string, unknown>;
+  projection: Record<string, unknown>;
   sequence?: number;
   receivedAt: number;
 }
@@ -210,6 +211,7 @@ export function normalizeState(value: unknown): State {
     }),
     metrics: asObject(d.metrics),
     health: asObject(d.health),
+    projection: asObject(d.projection),
     verification: asObject(
       d.replayVerification ?? d.verification ?? d.lastVerification,
     ),

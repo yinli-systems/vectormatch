@@ -10,7 +10,15 @@ The first run was 60,000 commands at 20,000/s for three seconds on a developer M
 
 ## Local console
 
-Server latency is cumulative service time for local journal `force(true)` and engine execution. It excludes network and writer queue. Browser RTT is measured independently and includes browser, HTTP/network and server processing. Neither is a load-test result.
+Server latency is cumulative service time for local journal `force(true)` and engine execution, or gateway-to-quorum commit plus mirror update in replicated mode. It excludes browser latency and gateway writer queue. Browser RTT is measured independently and includes browser, HTTP/network and server processing. Neither live telemetry series is a load-test result.
+
+## Other executable experiments
+
+- [HTTP arrival-rate generator](../bench/HTTP_LOAD.md): fixed arrivals for new orders, with dependent cancellations and explicit unsent/unknown accounting. It currently accepts only the local journaled backend and loopback URLs. Its lifecycle workload can have zero trades.
+- [Replicated experiments](../cluster/BENCHMARKS.md): real three-process Aeron, sync level 2, single-client baseline and paired one/four-client closed-loop comparison. The paired comparison validates after timing, preserves per-command traces and reports the observed tail-latency regression alongside throughput improvement.
+- `scripts/verify-replicated-workbench.py`: functional HTTP, idempotency/conflict/cancel, authoritative snapshot/mirror check and durable PostgreSQL cursor observation. It is not a load test.
+
+`evidence/index.json` supplies recorded results to the console. Missing metrics are null, not invented zeros. Raw JSON, traces, histogram logs and limitations live beside the evidence index. Different measurement scopes must not be compared as if they measured the same path.
 
 ## Required release campaign
 

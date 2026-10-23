@@ -34,7 +34,11 @@ class MatchingEngineProperties {
                         1 + (choice / 37) % 50, choice % 5 == 0 ? TimeInForce.IOC : TimeInForce.GTC);
             }
             Result expected = reference.execute(command);
+            String beforePreview = engine.stateHash();
+            int predictedEventCount = engine.maximumEventsFor(command);
+            assertEquals(beforePreview, engine.stateHash(), "outbox capacity preview must not mutate state");
             Execution actual = engine.execute(command);
+            assertEquals(predictedEventCount, actual.events().size());
             assertEquals(expected.code(), actual.result().code());
             assertEquals(expected.orderId(), actual.result().orderId());
             assertEquals(expected.remainingQuantity(), actual.result().remainingQuantity());
