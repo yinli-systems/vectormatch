@@ -1,6 +1,6 @@
 # 受控优化与瓶颈归因
 
-本轮首先检验负载端资源布局：在同一三节点撮合集群上，将 **128 个客户端 MediaDriver 改为一个共享 MediaDriver**，保留 128 个独立 Aeron 客户端、session、worker 与单请求在途窗口。预先登记的 A/B/A/B 已完成：客户端资源节省可重复，但四轮 15k/s 均未达到稳定标准；当前没有提高稳定吞吐上限的证据。节点接收缓冲的交替对照也已完成：目标 socket 丢包改善，但稳定吞吐和 p99 改善未成立。节点线程调度对照也已完成，两轮 DEDICATED 的吞吐和 p99 均未优于 SHARED。下一步为独立并发配置对照。完整历史容量结果见 [CAPACITY_RESULTS.md](CAPACITY_RESULTS.md)，本轮方案见 [OPTIMIZATION_CAMPAIGN.md](OPTIMIZATION_CAMPAIGN.md)。
+本轮首先检验负载端资源布局：在同一三节点撮合集群上，将 **128 个客户端 MediaDriver 改为一个共享 MediaDriver**，保留 128 个独立 Aeron 客户端、session、worker 与单请求在途窗口。预先登记的 A/B/A/B 已完成：客户端资源节省可重复，但四轮 15k/s 均未达到稳定标准；当前没有提高稳定吞吐上限的证据。节点接收缓冲的交替对照也已完成：目标 socket 丢包改善，但稳定吞吐和 p99 改善未成立。节点线程调度对照也已完成，两轮 DEDICATED 的吞吐和 p99 均未优于 SHARED。350k并发配置对照在第二轮W256失稳时停止，原始unknown与失败保留，正在独立恢复与定位。完整历史容量结果见 [CAPACITY_RESULTS.md](CAPACITY_RESULTS.md)，本轮方案见 [OPTIMIZATION_CAMPAIGN.md](OPTIMIZATION_CAMPAIGN.md)。
 
 ## 为什么先检查负载端
 
@@ -94,6 +94,12 @@ node0 JVM CPU 由 S 的 2.528 / 2.577 核增加为 D 的 3.055 / 2.992 核，线
 每 worker FIFO保持64意味着总FIFO为8,192/16,384；它是整个并发配置的比较，不将全部变化归给纯在途窗口。每轮350k原始CSV保留在本地，Git保存无损 `arrivals.csv.gz` 与原始/压缩 bytes/SHA 清单；`python3 scripts/archive-capacity-arrivals.py restore RUN_DIR` 可精确恢复再运行原分析器。旧轮次原CSV不改写。所有过载、无效或失败数据也按同口径保存。
 
 35秒 pilot 已完成：350,000 个计划到达全部最终接受，窗口内 goodput **9,998.086/s**，全量计划到达至确认 p99 **38.016ms**，drain **6.901ms**，未发送、unknown、业务拒绝和 server error 均为0。该点符合现有 `OBSERVED_STABLE_WINDOW` 判定，只证明这个有限窗口；不表示已找到上限或已达成长稳 SLA。准备 SHA 为 `2c6847a5eb5bbdf0674a74c63f92dfb274fdc626ddfbcd540866596979e46bc4`，相对旧 profile 已变化，不能把新旧点直接拼成同一配置曲线。正式四轮已登记为26,000/s、每轮350,000个到达，结果另列。
+
+第一轮W128完成验证但过载：窗口goodput14,942.200/s，已接受条件p99643.155ms，140,563条未发送，初次与最终unknown均为0。同步槽位平均占用99.9625%，FIFO等待p99634.229ms，初次API执行p9914.207ms。第二轮W256出现563个初次unknown，307个在原轮次内恢复，256个最终unresolved；只返回3,307个已接受回复，346,437条明确未发送。该轮验证失败、分类INVALID，后两轮未提交，不能给出四轮并发收益结论。
+
+独立[全量缓存审计](../evidence/2026-10-23/runpod-optimization/window350k/tool-validation/unknown-audit.json)核对了原350k行与完整终态core：全部3,307个已知回复的业务结果逐字段等于终态缓存；256个unresolved中252个已缓存为accepted，另外4个只是在该snapshot中缺席，不能据此推断未执行。原校验器先重放confirmed-only集合，再检查allKnown；漏掉已执行但未确认的命令会使后续订单号/commandSeq错位，产生误导的business mismatch。修复将完整结果集合检查移到重放之前，保持unresolved失败与原始CSV，不将离线缓存发现回填成客户端确认。独立同身份恢复及其结果另存。
+
+严格窗口[传输归因](../evidence/2026-10-23/runpod-optimization/window350k/analysis/failed-window-attribution-summary.json)显示W256 node0自有UDP drop增量233,810、负载端498,367；node0 NAK sent增量1,722,367。负载端drop集中在共享ingress publication的source/control socket，node0也包含ingress与consensus发送通道control socket；三节点固定LOG端口该窗口drops为0。256个session在窗口开始存在，未见session-cap拒绝；driver线程接近1核，线程/FD采样未触上限。下一受控因素为node与load同时显式设置unicast NAK delay：1,000ns对100,000ns，retry ratio保持100，分别对应100μs/10ms重复请求间隔。是否改善修复流量和容量必须另测；这些关联不能证明唯一原因，也不把NAK次数等同业务丢单。
 
 ## 已完成的代码验证
 
