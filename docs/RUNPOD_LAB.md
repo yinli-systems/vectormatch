@@ -1,6 +1,6 @@
 # Runpod 三节点 UDP 实验记录
 
-2026-10-23，本项目在 Runpod `EU-RO-1` 实际创建了三个开启 Global Networking 的 GPU Pod。私网 UDP 全互连预检和随后三成员真实撮合 smoke 均已通过。六组原始 client/server 报告、三台身份/网络/cgroup 预检及文件 SHA-256 汇总见 [runpod-network/summary.json](../evidence/2026-10-23/runpod-network/summary.json)；业务测试单独见 [runpod-cluster/result.json](../evidence/2026-10-23/runpod-cluster/result.json)。故障恢复、数据库投影和资源收尾逐项验收，不由网络 PASS 推定。
+2026-10-23，本项目在 Runpod `EU-RO-1` 实际创建了三个开启 Global Networking 的 GPU Pod。私网 UDP 全互连、初始撮合、修复后两轮 leader SIGKILL 和重复全 JVM 冷重启均已通过对应检查；冷重启后又完成一轮 900 个测量命令和 300 笔成交。六组原始 client/server 报告、三台身份/网络/cgroup 预检及文件 SHA-256 汇总见 [runpod-network/summary.json](../evidence/2026-10-23/runpod-network/summary.json)。[故障时间线](../evidence/2026-10-23/runpod-cluster/fault-timeline.json)完整保留初次失败、补丁和复测。随后恢复 outbox 到 PostgreSQL、HTTP 业务 smoke、三帧 WebSocket 状态及 SQL 账本连续性也分别取得通过证据。离线备份已完成；用户选择三台再保留运行 6 小时，服务已恢复，Pod 计费继续。
 
 ## 实际资源与预算
 
@@ -10,7 +10,7 @@
 | 1 | `9zt5cl1tpc7zt7` / `10.1.60.60` | RTX PRO 4000 | 12 vCPU / 31GB | 10.2 | 30,999,998,464 B | $0.570 + 约 $0.007/h |
 | 2 | `h21wqh0s7g26bk` / `10.1.81.207` | RTX PRO 4500 | 28 vCPU / 62GB | 23.8 | 61,999,996,928 B | $0.720 + 约 $0.007/h |
 
-三台运行报价按上述分项合计 **$1.551/h**，规划时上调为 **约 $1.56/h**。本项目总预算是 **$20**。这不是已经发生的扣费金额；三台启动时间不同，实际费用必须在实验结束后按各 Pod 的运行时长和提供方账单核对。目前没有账户余额或其他既有任务的费用信息，不能把此项目预算描述成账户自动停机上限。收尾时先导出证据，再结束本项目新增资源；当前收尾状态保留为待完成。
+三台运行报价按上述分项合计 **$1.551/h**，规划时上调为 **约 $1.56/h**。本项目总预算是 **$20**，不是账户自动停机上限。资源状态记录时，按各 Pod 估算启动时间计算的本项目累计费用约 **$1.17**，保守规划约 **$1.35**；这些是估算值，尚未与提供方账单结算，不包括其他任务或账户余额信息。用户已明确选择再保留运行 6 小时，三台均未执行 Stop，计费继续。按当前费率估计，到提醒时项目累计约 **$10.5–11**，后续配置、运行时长和实际账单仍可能影响费用。
 
 GPU 不是撮合算法的计算资源。本轮使用这些有货的 NVIDIA GPU Pod，是为了获得已经实际验证的私网连接和 CPU 运行环境。这里的 CPU quota 是当前进程可见 cgroup 的 CPU 时间上界，不是独占物理核心，也不是持续性能保证。node 0/1 能看到 48 个宿主逻辑 CPU，node 2 能看到 112 个，但它们分别受到上述更低配额限制；隐藏的上级 cgroup 或共享调度仍可能进一步限制资源。完整解释保留在每台 `nodeN-preflight.json` 中。
 
@@ -58,11 +58,14 @@ GPU 不是撮合算法的计算资源。本轮使用这些有货的 NVIDIA GPU P
 
 ## 当前应用部署与后续验收
 
-三台已按源码版本 **`924ecdd`** 启动各自的 Aeron 成员，使用同一有序成员列表、端口 base `19000`、sync level **2**、outbox capacity **65536**、Aeron MTU **1248**。分发包和源码校验清单保存在 [DEPLOYMENT.json](../evidence/2026-10-23/runpod-cluster/DEPLOYMENT.json)，启动记录保存在同目录的 `startup/`。部署根目录为 `/opt/vectormatch`，JDK 位于 `/opt/vectormatch/tools/jdk`，本代状态目录为 `/opt/vectormatch/runtime/cloud-20261023-01`。
+初始撮合基线使用 **`924ecdd`**；其分发包和源码校验清单保存在 [DEPLOYMENT.json](../evidence/2026-10-23/runpod-cluster/DEPLOYMENT.json)，初始启动记录位于同目录 `startup/`。后续恢复及冷重启采用两个明确分开的版本：**Java 不可变 release `2597bc3b849d8e042c8bbe67f0a5142580871a5b`**，以及根目录下的 **Python launcher `e1972ed1842b8d333163d8313ccfea7fd0f96dcd`**。Java release 修复新客户端 bootstrap，launcher 单独修复启动身份建立窗口；不能把只升级 Python 描述成替换了 Java 构件。部署和升级过程记录在故障时间线中，冷重启后每台 `processRecord.arguments` 记录了实际使用的不可变 release classpath。
+
+三台使用同一有序成员列表、端口 base `19000`、sync level **2**、outbox capacity **65536**、Aeron MTU **1248**。部署根目录为 `/opt/vectormatch`，JDK 位于 `/opt/vectormatch/tools/jdk`，本代状态目录为 `/opt/vectormatch/runtime/cloud-20261023-01`。
 
 ```sh
 cd /opt/vectormatch
 export JAVA_HOME=/opt/vectormatch/tools/jdk
+export VECTOR_DIST_ROOT=/opt/vectormatch/releases/2597bc3b849d8e042c8bbe67f0a5142580871a5b/dist
 export VECTOR_STATE_DIR=/opt/vectormatch/runtime/cloud-20261023-01
 export VECTOR_CLUSTER_HOSTS='10.0.212.169,10.1.60.60,10.1.81.207'
 export VECTOR_PORT_BASE=19000
@@ -80,22 +83,72 @@ bash deploy/remote-node.sh status 0
 
 该次 single-inflight closed-loop 测量历时 **9.458770483 秒**，confirmed goodput 为 **95.149787 command/s**，execute RTT **p50 = 9.148866 ms、p99 = 12.361379 ms、p99.9 / max = 526.493987 ms**。900 个样本的 nearest-rank p99.9 恰好落在最大样本，不能把它当作大样本容量结论；测量期记录 902 个 accepted transport attempt，其中 2 个为重发。所有实际 RTT 均保留，没有删去这些尾部样本。goodput 的分母包含 reference 验证和记录样本的开销；RTT 计时只包围 `execute` 调用，包括自动重试。
 
+重复全 JVM 冷重启并验证保存状态后，另一次相同规模 smoke 也通过了逐命令 reference、canonical bytes、不变量及同 key 重放检查。两次分开的运行并列保存，不合并分位数或用较快结果覆盖基线：
+
+| 运行 | Java 版本 | 测量命令 / 成交 | goodput | RTT p50 / p99 / max | accepted resend / unknown |
+|---|---|---:|---:|---|---:|
+| [初始基线](../evidence/2026-10-23/runpod-cluster/runs/cloud-3nodes-01/result.json) | `924ecdd` | 900 / 300 | 95.149787 command/s | 9.148866 / 12.361379 / **526.493987 ms** | 2 / 0 |
+| [冷重启后](../evidence/2026-10-23/runpod-cluster/runs/cloud-after-cold-final/result.json) | `2597bc3` | 900 / 300 | 96.849023 command/s | 9.124065 / 12.295407 / **524.124121 ms** | 2 / 0 |
+
+冷重启后运行的测量期为 **9.292814470 秒**，同样排除 2 笔 deposit 和 90 个预热命令，成交量为 1,200 lot；902 个 accepted attempt 中有 2 个重发，另有 3 个 unaccepted offer。该次运行结束时 command/event/market 序号为 **2174 / 2896 / 2888**，hash 为 `bfbc71cfe6261ee53e90fec15c32401ed37bf4baa88e93f8bfd626aad7610f52`。这里的差异只是两次有限观察，没有同步 trace 来确定尾延迟原因，也不是容量或补丁加速结论。
+
 负载生成器运行在 **node 2**，与一个集群成员共享资源；这不是第四台独立压测机，也没有采用 open-loop 到达模型或寻找饱和容量。节点 0/1/2 的 32 次 4KiB flush+fsync 预检分别观察到 p50 **0.101603 / 6.919250 / 2.563550 ms**，这只是有限文件同步探针，既不是磁盘容量结论，也不证明设备断电语义。
 
-PostgreSQL 已在 node 2 以非 root OS 用户、loopback 监听方式启动。事务投影采用 commit-before-ack 契约；它的真实游标、重复与故障恢复验证仍须由独立应用证据确认，不能由数据库进程存活推定。
+PostgreSQL 18.6 在 node 2 以非 root OS 用户、loopback 监听方式运行，已记录 `fsync=on`、`synchronous_commit=on`。网关和数据库均与该成员共享 CPU、磁盘和故障域，数据库没有配置复制或 HA。
+
+[恢复 outbox 到 PostgreSQL 的记录](../evidence/2026-10-23/runpod-workbench/outbox-to-postgres-summary.json)确认，在启动网关的新业务前，恢复出的 1574 个 pending event 与后续冷重启后交易事件已一并投影：**cursor / eventsStored = 2896、tradesStored = 722、marketSeq = 2888、观察 lag = 0**。这些是整代数据的累计计数，包含各轮预热和业务事件，不等于某一轮 300 笔 measured trade。事务导出遵循 commit-before-ack 契约。
+
+网关初次 HTTP 探针发生 ConnectionReset，留下的 `http-smoke/trace.json` 为空；[失败说明](../evidence/2026-10-23/runpod-workbench/http-smoke/failure.json)记录为 readiness 阶段、发送业务命令数为 0。随后 [readiness 记录](../evidence/2026-10-23/runpod-workbench/gateway-readiness.json)确认网关 UP，[重新执行的 HTTP smoke](../evidence/2026-10-23/runpod-workbench/http-smoke-ready/summary.json)验证真实 place、同 key retry、变更 payload conflict、cancel、余额恢复以及 mirror 与 replicated canonical snapshot 一致。该 smoke 本身有 **2 个新业务命令、0 笔新成交**；完成时异步数据库观察为 **cursor / eventsStored = 3300、tradesStored = 819、lag = 0**，这些仍是累计数据库状态。
+
+[WebSocket 记录](../evidence/2026-10-23/runpod-workbench/websocket.json)确认经本地 SSH tunnel 收到连续 **3 帧 full-state snapshot**，各帧 health 为 UP、projection cursor 为 3300、观察 lag 为 0。它验证的是状态展示通路，没有验证逐事件可靠送达、推送容量或 WebSocket 延迟。
+
+[PgAudit.java](../evidence/2026-10-23/runpod-workbench/PgAudit.java) 通过一个只读 repeatable-read JDBC 事务审计了完整 SQL 账本：[postgres-ledger.json](../evidence/2026-10-23/runpod-workbench/postgres-ledger.json)在该时点记录 **eventSeq 1..3300、非零 marketSeq 1..3286 全部连续，TRADE 行数 819 与 durable cursor/counters 一致**。这验证数据库内连续性与计数一致性，没有独立验证全部 payload 语义或与源逐事件相等。该审计与前述 HTTP 观察属于较早的 3300/819 时点，不能用后续恢复运行后的 3327/825 覆盖。
+
+网关报告的 PostgreSQL cursor 是后台采样并缓存的观察值，lag 是最后观察到的 source high-water mark 减 durable cursor；不能将其描述成原子 source/database snapshot 或当前不可见源位置的实时度量。上述功能通过不证明 PostgreSQL HA、数据库机器故障恢复或 Pod 生命周期后的持久性。
 
 | 验收项 | 本页写入时的状态 | 证据要求 |
 |---|---|---|
 | 六方向原生 UDP、DF、源地址、RTT | **PASS** | 本页引用的 21 份原始 JSON 及网络 summary |
 | 三成员启动与一致配置 | **PASS** | 各节点 startup/launch record、构建与文件校验记录 |
-| 正常交易与规范状态一致 | **PASS** | `runpod-cluster/result.json`：900 measured command、300 成交、规范状态一致 |
-| 外部停止 leader 后保持正确状态 | 待验证 | 精确故障时间与成员、实际新 leader、同 key 重放不增序号 |
-| 三个 Java 进程全部重启恢复 | 待验证 | 相同运行 Pod/数据目录、恢复日志和保存状态逐字节核对 |
-| 网关与 PostgreSQL 事务投影 | 已部署部分组件，待验收 | HTTP/WS 业务响应、真实 DB cursor、commit/ack 与无 gap |
-| 导出证据、结束新增资源、费用结算 | 待完成 | 证据导出清单、各 Pod 生命周期与账单 |
+| 正常交易与规范状态一致 | **PASS** | 初始和冷重启后分开的两次 900 measured command / 300 成交结果 |
+| 外部停止 leader 后保持正确状态 | **PASS，限定进程故障模型** | 修复后两轮 SIGKILL、不同新 leader、同 key 重放和随后新交易均验证 |
+| 三个 Java 进程全部重启恢复 | **PASS，限定同一运行 Pod/临时盘** | 快照、待导出 outbox、规范状态逐字节核对；修复 launcher 后重复全停/全起通过 |
+| 恢复 outbox 到 PostgreSQL | **PASS，限定本次单节点数据库** | 2896 个累计事件、722 个累计成交、观察 lag 0 |
+| HTTP 业务与 mirror/DB 观察 | **PASS，功能 smoke** | place / retry / conflict / cancel、余额与 canonical snapshot；观察 cursor 3300 |
+| WebSocket 状态展示 | **PASS，3 帧 full-state snapshot** | SSH tunnel、health UP；没有逐事件或延迟保证 |
+| SQL 账本连续性 | **PASS，该次只读事务时点** | event 1..3300、非零 market 1..3286、TRADE 819 与持久化计数一致 |
+| 离线备份与清单 | **PASS，备份创建及本地校验** | 三份归档的大小、SHA-256 和路径已校验；未演练从这些副本恢复 |
+| Pod 保留与计费 | **用户选择三台再运行 6 小时** | 未执行 Pod Stop；服务已恢复、合成 flow 已暂停，计费继续 |
+| 最终停止 / 费用结算 | 未执行 / 未结算 | 到期仅提醒；没有自动 Stop 或清盘 |
 
 `RemoteClusterExperiment run` 的默认计划是两笔 deposit、30 个预热 cycle、300 个测量 cycle；每 cycle 包含 maker 10 lot、IOC taker 4 lot 和撤销 maker 余量，共 900 个 measured command、300 笔期望成交。`verify` 读取保存的预期 snapshot 与最后一笔命令，检查故障后的状态、相同身份重放和冲突拒绝。它本身不杀成员，调用耗时也不能冒充从外部故障开始计算的完整恢复耗时。
 
 本轮故障模型限定在**运行中 Pod 的 Java 进程停止/终止/重启，以及同一临时磁盘可用时的日志恢复**。sync level 2 和 fsync 调用不证明设备断电持久性；本轮也不证明 Pod 停止、重建、宿主断电或临时盘消失后的数据可恢复。需要这些保证时，再单独设计存储、独立故障域和备份恢复试验。
 
-首轮故障还暴露了真实客户端问题：终止 node 0 后，官方 ClusterTool 确认 node 2 已成为新 leader，node 1/2 的日志位置相同；但新建客户端仍卡在失效旧入口并于 20 秒超时。[原始失败时间线](../evidence/2026-10-23/runpod-cluster/fault-timeline.json)和 `post-first-failed-bootstrap/` 被完整保留。启动入口轮换补丁已通过本地真实三进程回归，云端复测尚在继续；此时不将最终故障恢复标为 PASS。用户已明确授权将本次纯合成测试的原始证据保存本地并推送到本私有仓库；不包含任何私钥或 API 密钥。
+## 故障发现、修复与实际恢复证据
+
+首轮故障暴露了客户端问题：终止 node 0 后，官方 ClusterTool 确认 node 2 已成为新 leader，node 1/2 的日志位置相同；但新建客户端仍卡在失效旧入口并于 20 秒超时。Java release `2597bc3` 部署后，**原 leader 仍保持停止**时，新客户端已验证原规范状态及相同身份重放。随后才重新加入原成员。原始失败及 `post-first-failed-bootstrap/` 全部保留。
+
+在该修复版本上又完成两轮 leader SIGKILL，分别观察到新的 leader、相同 checkpoint 的客户端验证、随后新的业务写入和成交、被终止成员重入追平。时间线记录的编排总体耗时分别为 **28.451178 秒**和 **31.386420 秒**，包含 SSH 建连、信号分发、新客户端 JVM 启动、连接、快照与重放核对；它们不是首次新写入的恢复延迟，也不构成 failover SLA。
+
+快照后首次全停三个 JVM 的操作成功，但首次重新启动出现 `Process identity was not established`。该失败与 `cold-start-failed/` 保留。Python launcher `e1972ed` 将单次身份采样改为最多 2 秒的有界建立窗口，持续检查子进程存活并保持 exact startTicks / argv SHA 和 pidfd 停止验证；三台均通过 18 项 launcher 测试。升级 launcher 后补起并核对，再次**全部停止三个 JVM、重新启动三个 JVM**的完整复测通过。该补丁的成功复测不意味着已证明最初 `/proc` 采样失败的全部底层成因。
+
+[冷重启后的三台记录](../evidence/2026-10-23/runpod-cluster/after-cold-restart/)各自包含恢复日志：`commands=1182 exported=0 pending=1574`，恢复 hash 均为：
+
+```text
+296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae
+```
+
+同一 checkpoint 的客户端 canonical bytes 与重放检查通过，官方 ClusterTool 随后列出的三个成员均处于 **term 6、logPosition 909632**。这验证了在相同 Pod 和临时盘仍可用时，核心状态和 **1574 个尚未导出的 outbox 事件**可跨 JVM 全停/全起恢复。接着才运行前述冷重启后的新 900-command 工作负载；不能混淆恢复时 checkpoint 和新交易后的最终状态。
+
+用户已明确授权将本次纯合成测试的原始证据保存本地并推送到本私有仓库；不包含任何私钥或 API 密钥。
+
+## 离线备份、恢复保留服务与到期提醒
+
+备份前，三个成员写入了同一最终 checkpoint：**commands=2440、exported=3300、pending=0**，hash 为 `0425728d6119c011db1d45d0607c5370a3a156969ba740ba6044a23183b26abd`，见 [final-before-archive](../evidence/2026-10-23/runpod-cluster/final-before-archive/)。随后网关、projector、三个 JVM 和 PostgreSQL 均优雅停止，针对静止数据制作三份离线归档并导出到本地。node 0/1 归档各自的 Archive/Cluster 数据，node 2 还包括 PostgreSQL 数据目录。
+
+[离线备份摘要](../evidence/2026-10-23/runpod-cleanup/offline-backups-summary.json)及 [node 0](../evidence/2026-10-23/runpod-cleanup/node0-archive-manifest.json)、[node 1](../evidence/2026-10-23/runpod-cleanup/node1-archive-manifest.json)、[node 2](../evidence/2026-10-23/runpod-cleanup/node2-archive-manifest.json)清单记录了本地归档位置、字节大小、SHA-256、允许的成员路径与版本；这些清单和摘要已推送到私有仓库。归档创建和本地校验已完成，尚未从这些本地副本进行恢复演练。
+
+用户随后选择保留运行，停止 Pod 的弹窗已取消，**三个 Pod 没有 Stop，也没有清空临时盘**。集群、PostgreSQL、projector 和网关在原始、未替换的数据目录上恢复服务，离线归档仍代表先前静止时点，并未用备份覆盖线上数据。[保留平台 readiness](../evidence/2026-10-23/runpod-cleanup/retained-platform-readiness.json)记录 health UP、recoveredCommands **2440**；恢复后 mirror 为 **2454 commands / 3327 events**，数据库观察为 **cursor 3327、marketSeq 3313、tradesStored 825、lag 0**，并已将 synthetic flow 暂停。上述新观察不是对旧 3300/819 SQL 审计的重写，也不代表执行过 Pod 重启或备份恢复。
+
+用户已选择**再保留 6 小时**。一次性到期提醒已创建并检查，automation ID 为 `vectormatch`，创建时间 **2026-10-23 18:23:59.656 UTC**；到期约为 **2026-10-24 00:24 UTC / 迪拜 04:24**。它只提醒，不自动 Stop、不清空磁盘，也不执行预算封顶。三台继续按约 $1.56/h 计费，最终停止资源和实际账单结算尚未发生。

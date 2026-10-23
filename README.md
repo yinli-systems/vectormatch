@@ -16,7 +16,9 @@ A private engineering project exploring a limit-order matching engine, replicate
 
 Executable deterministic matching, a local journaled workbench, a three-process Aeron Cluster backend, replicated bounded outbox, and transactional PostgreSQL event export. The React console shows actual order books, commands, replica checks, cached projection observations, and recorded benchmark evidence. See [the implementation contract](docs/IMPLEMENTATION.md).
 
-Verified locally: leader termination and replacement, snapshot/cold restart with unacknowledged events, outbox backpressure, idempotent retries, PostgreSQL commit-before-ack recovery, and HTTP-to-quorum-to-database execution. All three cluster processes currently share one host. Independent-machine deployment, high connection-count fanout, sharding and production authentication remain future work.
+Verified locally: leader termination and replacement, snapshot/cold restart with unacknowledged events, outbox backpressure, idempotent retries, PostgreSQL commit-before-ack recovery, and HTTP-to-quorum-to-database execution.
+
+Also verified on **three Runpod Pods using native private UDP**: six-direction network preflight, two 900-command matching trials, leader-process failure/rejoin, complete JVM cold restart, restored outbox projection and the HTTP/WebSocket workbench. The post-restart trial confirmed 900 commands and 300 trades at 96.85 commands/s, with execute RTT p50 9.124 ms, p99 12.295 ms and max 524.124 ms. This is a single-inflight correctness smoke with the load generator sharing a member, not a saturation capacity result. See the [campaign report and raw evidence](docs/RUNPOD_LAB.md), including preserved failures and repairs. Physical anti-affinity and persistence after Pod stop remain unverified. High connection-count fanout, sharding and production authentication remain future work.
 
 ## Toolchain
 
@@ -65,5 +67,5 @@ bench/build/install/bench/bin/bench 20000 3 reports/local/core-20k
 
 This measures a fixed-rate **in-process memory-only** path, including scheduling delay in its main latency histogram. It excludes network, persistence, and replication. Raw baseline artifacts are in `evidence/`; see [measurement boundaries](docs/BENCHMARKS.md).
 
-The repository also includes a bounded [HTTP arrival-rate generator](bench/HTTP_LOAD.md), [replicated concurrency experiment](cluster/BENCHMARKS.md), and [USD 20 cloud-testing plan](docs/CLOUD_TESTING.md). Initial shared-host results are evidence for further investigation, not production latency or throughput guarantees.
+The repository also includes a bounded [HTTP arrival-rate generator](bench/HTTP_LOAD.md), [replicated concurrency experiment](cluster/BENCHMARKS.md), and [USD 20 cloud campaign](docs/CLOUD_TESTING.md). Recorded smoke results are evidence for further investigation, not production latency or throughput guarantees.
 
