@@ -27,6 +27,24 @@ OPENS = ["--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED",
 MAINS = {"node": "io.vectormatch.cluster.ClusterNodeMain",
          "gateway": "io.vectormatch.server.WorkbenchServer",
          "projector": "io.vectormatch.projector.ProjectorMain"}
+CONFIGURATION_VERSION = 1
+# Only explicitly non-secret settings may enter this digest. Never include the full
+# environment, JDBC URLs, passwords, tokens or other low-entropy credentials.
+NETWORK_CONFIGURATION = ("VECTOR_CLUSTER_HOSTS", "VECTOR_AERON_MTU_LENGTH")
+CLIENT_CONFIGURATION = NETWORK_CONFIGURATION + ("VECTOR_CLIENT_EGRESS_HOST", "VECTOR_CLIENT_EGRESS_PORT")
+CONFIGURATION_KEYS = {
+    "node": NETWORK_CONFIGURATION,
+    "gateway": CLIENT_CONFIGURATION + ("VM_CLUSTER_ID",),
+    "projector": CLIENT_CONFIGURATION + ("VM_CLUSTER_ID", "VM_CLUSTER_PORT_BASE", "VM_PROJECTOR_DRIVER",
+                                         "VM_PROJECTOR_BATCH_SIZE", "VM_PROJECTOR_TIMEOUT_MS", "VM_PROJECTOR_POLL_MS"),
+}
+
+
+def configuration_fingerprint(role: str, environment: dict[str, str]) -> str:
+    safe = {name: environment.get(name) for name in CONFIGURATION_KEYS[role]}
+    payload = {"version": CONFIGURATION_VERSION, "role": role, "settings": safe}
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def positive_int(name: str, default: int, low: int, high: int) -> int:
@@ -167,9 +185,14 @@ def start(role: str, node: int | None, state: Path, record_path: Path):
         raise ValueError(f"PID identity changed; refusing to replace or signal PID {existing['pid']}")
     args, environment = command(role, node, state, "start")
     expected = hashlib.sha256(b"\0".join(os.fsencode(arg) for arg in args) + b"\0").hexdigest()
+    configuration = configuration_fingerprint(role, environment)
     if status == "running":
         if existing["commandSha256"] != expected:
             raise ValueError("Process already running with different arguments; stop it explicitly first")
+        if existing.get("configurationVersion") != CONFIGURATION_VERSION or not existing.get("configurationSha256"):
+            raise ValueError("Running process has no recognized configuration fingerprint; stop it explicitly first")
+        if existing["configurationSha256"] != configuration:
+            raise ValueError("Process already running with different non-secret configuration; stop it explicitly first")
         print(f"{state.name} already running pid={existing['pid']}")
         return
     log_path = state / "process.log"
@@ -181,6 +204,7 @@ def start(role: str, node: int | None, state: Path, record_path: Path):
         if current is None or current["commandSha256"] != expected:
             raise RuntimeError(f"Process identity was not established; inspect {log_path}")
         record = {"version": 1, "pid": child.pid, **current, "role": role,
+                  "configurationVersion": CONFIGURATION_VERSION, "configurationSha256": configuration,
                   "createdAt": datetime.now(timezone.utc).isoformat(),
                   "arguments": args, "log": str(log_path)}
         write_json(record_path, record)

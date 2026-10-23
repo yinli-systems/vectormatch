@@ -14,6 +14,10 @@ SPEC.loader.exec_module(remote)
 
 
 class RemoteServiceTest(unittest.TestCase):
+    @staticmethod
+    def command_hash(args):
+        return hashlib.sha256(b"\0".join(os.fsencode(arg) for arg in args) + b"\0").hexdigest()
+
     def test_proc_stat_accepts_parentheses_and_spaces_in_process_name(self):
         fields = ["S"] + ["0"] * 18 + ["123456"] + ["0"] * 5
         command = b"/usr/bin/java\0Main\0"
@@ -84,6 +88,84 @@ class RemoteServiceTest(unittest.TestCase):
             self.assertNotIn(configuration["VM_PG_URL"], json.dumps(args))
             self.assertEqual(environment["VM_PG_PASSWORD"], "secret-value")
             self.assertEqual(args[-1], "init")
+
+    def test_changed_mtu_repeated_start_refuses_the_existing_process(self):
+        configuration = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4",
+                         "VECTOR_AERON_MTU_LENGTH": "1248"}
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.dict(os.environ, configuration, clear=True), \
+                patch.object(remote, "distribution", return_value=Path("/bundle/dist/cluster")), \
+                patch.object(remote, "java", return_value="/jdk/bin/java"):
+            state = Path(temporary)
+            args, environment = remote.command("node", 1, state, "start")
+            existing = {"pid": 42, "commandSha256": self.command_hash(args),
+                        "configurationVersion": remote.CONFIGURATION_VERSION,
+                        "configurationSha256": remote.configuration_fingerprint("node", environment)}
+            os.environ["VECTOR_AERON_MTU_LENGTH"] = "1216"
+            self.assertEqual(args, remote.command("node", 1, state, "start")[0], "MTU is not an argv setting")
+            with patch.object(remote, "record_state", return_value=("running", existing)), \
+                    patch.object(remote.subprocess, "Popen") as launch:
+                with self.assertRaisesRegex(ValueError, "different non-secret configuration"):
+                    remote.start("node", 1, state, state / "process.json")
+                launch.assert_not_called()
+
+    def test_existing_process_without_configuration_fingerprint_requires_explicit_stop(self):
+        args, environment = ["/jdk/bin/java", "Main"], {"VECTOR_AERON_MTU_LENGTH": "1248"}
+        existing = {"pid": 42, "commandSha256": self.command_hash(args)}
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(remote, "command", return_value=(args, environment)), \
+                patch.object(remote, "record_state", return_value=("running", existing)), \
+                patch.object(remote.subprocess, "Popen") as launch:
+            state = Path(temporary)
+            with self.assertRaisesRegex(ValueError, "no recognized configuration fingerprint"):
+                remote.start("node", 0, state, state / "process.json")
+            launch.assert_not_called()
+
+    def test_matching_configuration_keeps_repeated_start_idempotent(self):
+        args, environment = ["/jdk/bin/java", "Main"], {"VECTOR_AERON_MTU_LENGTH": "1248"}
+        existing = {"pid": 42, "commandSha256": self.command_hash(args),
+                    "configurationVersion": remote.CONFIGURATION_VERSION,
+                    "configurationSha256": remote.configuration_fingerprint("node", environment)}
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(remote, "command", return_value=(args, environment)), \
+                patch.object(remote, "record_state", return_value=("running", existing)), \
+                patch.object(remote.subprocess, "Popen") as launch:
+            state = Path(temporary)
+            remote.start("node", 0, state, state / "process.json")
+            launch.assert_not_called()
+
+    def test_configuration_fingerprint_excludes_credentials_and_jdbc_urls(self):
+        environment = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4", "VM_CLUSTER_ID": "lineage-one",
+                       "VM_PG_URL": "jdbc:postgresql://user:short-password@host/db?password=1234",
+                       "VM_PG_PASSWORD": "1234", "VM_PG_USER": "database-user", "OTHER_API_TOKEN": "short-token"}
+        real_sha = hashlib.sha256
+        with patch.object(remote.hashlib, "sha256", wraps=real_sha) as hashed:
+            original = remote.configuration_fingerprint("projector", environment)
+            encoded = hashed.call_args.args[0]
+            for excluded in ("VM_PG_URL", "VM_PG_PASSWORD", "VM_PG_USER", "OTHER_API_TOKEN",
+                             "short-password", "1234", "database-user", "short-token", "jdbc:"):
+                self.assertNotIn(excluded.encode(), encoded)
+        changed_secrets = {**environment, "VM_PG_URL": "jdbc:postgresql://another-host/other-db?password=other",
+                           "VM_PG_PASSWORD": "5678", "VM_PG_USER": "another-user", "OTHER_API_TOKEN": "other"}
+        self.assertEqual(original, remote.configuration_fingerprint("projector", changed_secrets))
+        self.assertNotEqual(original, remote.configuration_fingerprint("projector", {**environment, "VM_CLUSTER_ID": "lineage-two"}))
+
+    def test_stop_uses_recorded_identity_even_after_environment_has_changed(self):
+        legacy_record = {"pid": 42, "startTicks": 100, "commandSha256": "recorded-command"}
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.dict(os.environ, {"VECTOR_AERON_MTU_LENGTH": "bad-new-setting", "VECTOR_CLUSTER_HOSTS": "bad-hosts"}, clear=True), \
+                patch.object(remote, "record_state", side_effect=[("running", legacy_record),
+                             ("running", legacy_record), ("stopped", legacy_record)]), \
+                patch.object(remote, "command") as command, \
+                patch.object(remote, "configuration_fingerprint") as fingerprint, \
+                patch.object(remote.os, "pidfd_open", return_value=999, create=True), \
+                patch.object(remote.signal, "pidfd_send_signal", create=True) as send, \
+                patch.object(remote.os, "close"):
+            state = Path(temporary)
+            remote.stop(state, state / "process.json")
+            send.assert_called_once_with(999, remote.signal.SIGTERM)
+            command.assert_not_called()
+            fingerprint.assert_not_called()
 
 
 if __name__ == "__main__":

@@ -32,7 +32,7 @@ The smoke test starts its own isolated cluster and reports process IDs, old/new 
 
 `VECTOR_SYNC_LEVEL=2` is the launcher default. It sets Archive data, Archive catalog, and ConsensusModule metadata synchronization to level 2 on every node. This requests file data and metadata synchronization; end-to-end guarantees still depend on the operating system, filesystem, device, and tested fault model. Report this setting with every benchmark. Never compare profile 0 throughput against profile 2 without disclosing the difference. Restarting an already-running node does not change its configuration; inspect its launch command and startup log.
 
-The development profile uses shared media/archive threads, backoff idle strategies, 64 KiB terms, and 128 KiB socket buffer requests to run on laptops. It is not the final low-latency production tuning profile. Do not run benchmarks while the machine is sleeping, heavily loaded, or sharing CPU with a load generator and describe the results as independent-host measurements.
+The development profile uses shared media/archive threads, backoff idle strategies, and 128 KiB socket buffer requests. Ingress and Archive control channels explicitly use 64 KiB terms; the replicated log preserves Aeron's default 64 MiB term unless configured otherwise, and other IPC publication sizes follow driver defaults. It is not the final low-latency production tuning profile. Do not run benchmarks while the machine is sleeping, heavily loaded, or sharing CPU with a load generator and describe the results as independent-host measurements.
 
 ## State-machine boundaries
 
@@ -54,4 +54,10 @@ Before applying a business command, the core computes a deterministic upper boun
 
 `ClusterClient.readSnapshot(timeout)` reads a frozen canonical **core** snapshot for mirror initialization. Each wire chunk carries a consistent digest token; the client verifies the complete SHA-256 digest before returning it. It can safely retry if another reader replaces the frozen view or recovery expires it. This administrative path allocates and copies the snapshot on every member; do not run it per order or include its cost invisibly in a low-latency benchmark.
 
-Service egress is attempted once per response. A slow or disconnected client cannot indefinitely block the replicated state machine. Its committed result remains recoverable through business idempotency. This first transport has no authentication and is bound to loopback; production access control belongs at an authenticated gateway.
+Service egress is attempted once per response. A slow or disconnected client cannot indefinitely block the replicated state machine. Its committed result remains recoverable through business idempotency. The local default binds to loopback; configured remote mode uses explicit private IPv4 addresses. This transport has no authentication, so remote lab access is limited to the authorized private network; production access control belongs at an authenticated gateway.
+
+## Remote process configuration
+
+The [remote launcher](REMOTE.md) checks both process identity and a versioned fingerprint of explicitly non-secret configuration before treating a repeated `start` as idempotent. The fingerprint covers membership, UDP MTU, client return address/port, and the applicable projector lineage/driver/batch/timeout settings. Changed arguments or fingerprint require an explicit `stop` before a new `start`. Older PID records without this fingerprint also require an explicit stop; the launcher does not assume their configuration matches.
+
+PID ownership and `stop` still use only the recorded Linux start ticks and complete command-line hash. Changing or removing current environment settings does not prevent safely stopping the previously owned process. Fingerprints contain only an allowlist; passwords, tokens, JDBC URLs and database usernames are neither saved nor hashed into them. Database connection/credential changes therefore also require an explicit stop/start; a repeated start does not detect those excluded values.
