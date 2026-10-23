@@ -285,6 +285,28 @@ def comparison_identity(configuration, trial):
                 "release": release, "deploymentBundleSha256": bundle.lower() if isinstance(bundle, str) else bundle,
                 "preparedSnapshotSha256": prepared.lower() if isinstance(prepared, str) else prepared,
                 "fixedNodeConfiguration": fixed}
+    load_names = ("loadGeneratorRevision", "loadGeneratorBundleSha256", "loadGeneratorRelease")
+    if any(name in source for source in (trial, configuration) for name in load_names):
+        # Load code can intentionally differ from the fixed node deployment. Never
+        # fold this revision into the node source aliases above.
+        load_revision = declared("loadGeneratorRevision",
+                                 lambda value: isinstance(value, str) and re.fullmatch(r"[0-9a-fA-F]{40}|[0-9a-fA-F]{64}", value) is not None,
+                                 "a full load-generator commit hash is required")
+        load_bundle = declared("loadGeneratorBundleSha256", sha256,
+                               "an independent load-generator archive SHA-256 is required")
+        load_release = declared("loadGeneratorRelease",
+                                lambda value: isinstance(value, str) and Path(value).is_absolute(),
+                                "an absolute commit-named load-generator release path is required")
+        if isinstance(load_release, str) and isinstance(load_revision, str) and Path(load_release).name.lower() != load_revision.lower():
+            issues.append("loadGeneratorRelease basename differs from loadGeneratorRevision")
+        identity.update({"loadGeneratorRevision": load_revision.lower() if isinstance(load_revision, str) else load_revision,
+                         "loadGeneratorBundleSha256": load_bundle.lower() if isinstance(load_bundle, str) else load_bundle,
+                         "loadGeneratorRelease": load_release})
+    else:
+        # Older campaigns deployed one common bundle for nodes and load code.
+        identity.update({"loadGeneratorRevision": identity["sourceRevision"],
+                         "loadGeneratorBundleSha256": identity["deploymentBundleSha256"],
+                         "loadGeneratorRelease": identity["release"]})
     return identity, issues
 
 
@@ -371,7 +393,7 @@ def analyze_trial(directory, criteria=None):
             "configuration": configuration, "fixedLeaderCheck": fixed_leader,
             "comparisonConfiguration": comparison, "comparisonFingerprintSha256": fingerprint,
             "configurationIdentityIssues": identity_issues,
-            "configurationIdentityScope": "Checks completeness and agreement of declared source/deployment/prepared-state/configuration identities. Artifact bytes and actual node configuration require separate deployment evidence. Rate, worker count and queue size are not inside this fingerprint; grouping additionally separates phase/workers/queue.",
+            "configurationIdentityScope": "Checks completeness and agreement of declared node source/deployment, separate load-generator source/deployment, prepared-state and configuration identities. Missing all load-generator fields means the historical common node/load bundle; any explicit load-generator identity requires all three fields. Artifact bytes and actual node configuration require separate deployment evidence. Rate, worker count and queue size are not inside this fingerprint; grouping additionally separates phase/workers/queue.",
             "targetArrivalRatePerSecond": rate, "scheduledArrivals": scheduled, "arrivalWindowSeconds": window,
             "workers": field("workers"), "queueCapacityPerWorker": field("queueCapacityPerWorker", "queuePerWorker"),
             "rawSummary": {key: raw[key] for key in RAW_KEYS if key in raw},

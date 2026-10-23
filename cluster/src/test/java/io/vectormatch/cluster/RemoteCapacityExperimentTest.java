@@ -168,19 +168,96 @@ class RemoteCapacityExperimentTest {
                 HexFormat.of().formatHex(ClusterStateSnapshot.digest(engine.snapshot())), "Baseline preparation must match already published cloud trials byte for byte");
     }
 
+
+    @Test void explicit128ProfileRetainsExtendedPreparationAndOldWorkerBounds() {
+        var profile = RemoteCapacityExperiment.Profile.EXTENDED_90K_128;
+        assertEquals(profile, RemoteCapacityExperiment.Profile.parse("extended-90k-128"));
+        assertEquals(128, profile.maximumWorkers);
+        assertEquals(12, profile.sessionReapWaitSeconds);
+        assertEquals(8, profile.connectionConcurrency);
+        assertDoesNotThrow(() -> new RemoteCapacityExperiment.Options(directory, 19000, 8000, 90_000, 128, 64, 2000, 30_000, 0, 20, profile));
+        assertThrows(IllegalArgumentException.class, () -> new RemoteCapacityExperiment.Options(directory, 19000, 8000, 90_000, 129, 64, 2000, 30_000, 0, 20, profile));
+        assertThrows(IllegalArgumentException.class, () -> new RemoteCapacityExperiment.Options(directory, 19000, 8000, 90_000, 128, 64, 2000, 30_000, 0, 20, RemoteCapacityExperiment.Profile.EXTENDED_90K));
+        assertThrows(IllegalArgumentException.class, () -> options(8000, 30_000, 128, 64, 2000, 30_000));
+        assertThrows(IllegalArgumentException.class, () -> RemoteCapacityExperiment.validateOutboxProfile(profile, Map.of()));
+        assertDoesNotThrow(() -> RemoteCapacityExperiment.validateOutboxProfile(profile, Map.of("VECTOR_OUTBOX_CAPACITY", "262144")));
+        assertEquals(RemoteCapacityExperiment.preparationCommands(RemoteCapacityExperiment.Profile.EXTENDED_90K, "capacity-fixed-v1"),
+                RemoteCapacityExperiment.preparationCommands(profile, "capacity-fixed-v1"));
+        MatchingEngine engine = ClusterCapacity.newEngine();
+        for (Command command : RemoteCapacityExperiment.preparationCommands(profile, "capacity-fixed-v1")) assertTrue(engine.apply(command).result().accepted());
+        assertEquals("bcd308591d3aef73744f7516977061afc170135ea773fd1bfcd182a57eaf7915", HexFormat.of().formatHex(ClusterStateSnapshot.digest(engine.snapshot())));
+    }
+
+    @Test void twoIndependentProducersShareOneFundedBuyerWithoutIdentityCollision() {
+        var first = new RemoteCapacityExperiment.Sample(0, 128, "capacity-fixed-v1");
+        var second = new RemoteCapacityExperiment.Sample(64, 128, "capacity-fixed-v1");
+        assertEquals(first.command.accountId(), second.command.accountId());
+        assertEquals(1_000_100, first.command.accountId());
+        assertEquals(1, first.command.requestSeq());
+        assertEquals(1, second.command.requestSeq());
+        assertNotEquals(first.command.producerId(), second.command.producerId());
+        MatchingEngine engine = ClusterCapacity.newEngine();
+        for (Command command : RemoteCapacityExperiment.preparationCommands(RemoteCapacityExperiment.Profile.EXTENDED_90K_128, "capacity-fixed-v1")) assertTrue(engine.apply(command).result().accepted());
+        assertEquals(1, engine.apply(first.command).result().tradeCount());
+        assertEquals(1, engine.apply(second.command).result().tradeCount());
+        assertEquals(169, engine.lastCommandSeq());
+        assertEquals(2, engine.account(first.command.accountId()).base().available());
+        assertEquals(899_980_000, engine.account(first.command.accountId()).quote().available());
+        byte[] before = engine.snapshot();
+        assertTrue(engine.apply(first.command).replayed());
+        assertTrue(engine.apply(second.command).replayed());
+        assertArrayEquals(before, engine.snapshot());
+        engine.checkInvariants();
+    }
+
+    @Test void eightConnectionSlotsStillStartAndMeasureAll128Workers() throws Exception {
+        var opts = new RemoteCapacityExperiment.Options(directory, 19000, 1000, 128, 128, 2, 100, 1000, 0, 1000,
+                RemoteCapacityExperiment.Profile.EXTENDED_90K_128);
+        AtomicInteger connecting = new AtomicInteger(), peakConnecting = new AtomicInteger(), connected = new AtomicInteger(), closed = new AtomicInteger(), sequence = new AtomicInteger();
+        var load = RemoteCapacityExperiment.runLoad(opts, samples(128, 128), worker -> {
+            int active = connecting.incrementAndGet();
+            peakConnecting.accumulateAndGet(active, Math::max);
+            LockSupport.parkNanos(15_000_000);
+            connecting.decrementAndGet();
+            connected.incrementAndGet();
+            return new FakeTransport() {
+                public CommandCodec.Reply execute(Command command, Duration timeout) {
+                    assertEquals(128, connected.get(), "All workers must finish connecting before the measurement starts");
+                    return accepted(command, sequence.incrementAndGet(), false);
+                }
+                public void close() { closed.incrementAndGet(); }
+            };
+        });
+        assertTrue(peakConnecting.get() <= 8 && peakConnecting.get() > 1, "Connection semaphore must bound construction without serializing all clients");
+        assertEquals(128, connected.get());
+        assertEquals(128, closed.get());
+        assertEquals(128, load.completed.get());
+        assertEquals(128, load.workerCounters.size());
+        assertEquals(0, load.dropped.get());
+        assertNull(load.workerFailure);
+    }
+
     @Test void ninetyThousandTradesAndUnackedOutboxRestoreWithinOneGiBHeap() throws Exception {
+        runProfileProbe(64, "EXTENDED_90K_1G_PASS");
+    }
+
+    @Test void ninetyThousandTradesAcross128ProducersRestoreWithinOneGiBHeap() throws Exception {
+        runProfileProbe(128, "EXTENDED_90K_128_1G_PASS");
+    }
+
+    private void runProfileProbe(int workers, String expectedMarker) throws Exception {
         String classpath = String.join(File.pathSeparator,
                 Path.of(RemoteCapacityExperimentTest.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString(),
                 Path.of(RemoteCapacityExperiment.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString(),
                 Path.of(MatchingEngine.class.getProtectionDomain().getCodeSource().getLocation().toURI()).toString());
-        Path log = directory.resolve("extended-profile-1g-probe.log");
+        Path log = directory.resolve("extended-profile-" + workers + "-1g-probe.log");
         Process child = new ProcessBuilder(Path.of(System.getProperty("java.home"), "bin", "java").toString(),
-                "-Xmx1g", "-cp", classpath, ExtendedProfileProbe.class.getName()).redirectErrorStream(true).redirectOutput(log.toFile()).start();
+                "-Xmx1g", "-cp", classpath, ExtendedProfileProbe.class.getName(), Integer.toString(workers)).redirectErrorStream(true).redirectOutput(log.toFile()).start();
         try {
             assertTrue(child.waitFor(120, TimeUnit.SECONDS), "1 GiB profile probe exceeded 120 seconds");
             String output = Files.readString(log, StandardCharsets.UTF_8);
             assertEquals(0, child.exitValue(), output);
-            assertTrue(output.contains("EXTENDED_90K_1G_PASS"), output);
+            assertTrue(output.contains(expectedMarker), output);
             System.out.print(output);
         } finally {
             if (child.isAlive()) { child.destroyForcibly(); child.waitFor(10, TimeUnit.SECONDS); }
@@ -199,7 +276,9 @@ class RemoteCapacityExperimentTest {
         }
         public static void main(String[] arguments) {
             long started = System.nanoTime();
-            var profile = RemoteCapacityExperiment.Profile.EXTENDED_90K;
+            int workers = arguments.length == 0 ? 64 : Integer.parseInt(arguments[0]);
+            require(workers == 64 || workers == 128, "Probe supports the explicit 64/128 comparison only");
+            var profile = workers == 128 ? RemoteCapacityExperiment.Profile.EXTENDED_90K_128 : RemoteCapacityExperiment.Profile.EXTENDED_90K;
             MatchingEngine engine = ClusterCapacity.newEngine();
             ReplicatedOutbox outbox = new ReplicatedOutbox(profile.outboxCapacity);
             ClusterCapacity.validate(engine.limits(), outbox.capacity());
@@ -209,16 +288,19 @@ class RemoteCapacityExperimentTest {
             int[] bought = new int[64];
             Command last = null;
             for (int index = 0; index < profile.maximumArrivals; index++) {
-                RemoteCapacityExperiment.Sample sample = new RemoteCapacityExperiment.Sample(index, 64, "capacity-fixed-v1");
+                RemoteCapacityExperiment.Sample sample = new RemoteCapacityExperiment.Sample(index, workers, "capacity-fixed-v1");
                 Execution execution = apply(engine, outbox, sample.command);
                 require(execution.result().tradeCount() == 1 && execution.result().remainingQuantity() == 0, "IOC did not fully trade one lot");
                 require(execution.events().size() == 2, "IOC did not produce exactly acceptance and trade");
-                bought[sample.worker]++;
+                bought[index % 64]++;
                 last = sample.command;
             }
             engine.checkInvariants();
             require(engine.lastCommandSeq() == 90_167 && engine.lastEventSeq() == 180_267 && engine.lastMarketSeq() == 180_201, "Final sequence counters differ");
             require(engine.retainedOrderCount() == 90_101 && engine.retainedOrderCount() < engine.limits().maxRetainedOrders(), "Retained order count/budget differs");
+            int expectedCachedResults = 167;
+            for (int worker = 0; worker < workers; worker++) expectedCachedResults += Math.min(1024, 90_000 / workers + (worker < 90_000 % workers ? 1 : 0));
+            require(engine.cachedResultCount() == expectedCachedResults && engine.producerCount() == 67 + workers, "Producer/cache counts differ");
             require(outbox.size() == 180_267 && outbox.capacity() == 262_144 && outbox.exportedSeq() == 0, "Unacknowledged outbox differs");
             require(engine.order(1).orElseThrow().remainingQuantity() == 89_900, "Maker residual differs");
             require(engine.account(1_000_001).base().available() == 0 && engine.account(1_000_001).base().reserved() == 89_900
@@ -245,7 +327,7 @@ class RemoteCapacityExperimentTest {
             Execution duplicate = restored.engine().apply(last);
             require(duplicate.replayed() && duplicate.events().isEmpty() && restored.engine().stateHash().equals(expectedHash), "Restored identical retry duplicated business state");
             require(restored.outbox().acknowledge(180_267) == 180_267 && restored.outbox().size() == 0, "Restored pending events could not be acknowledged contiguously");
-            System.out.println("EXTENDED_90K_1G_PASS maxHeapBytes=" + Runtime.getRuntime().maxMemory()
+            System.out.println((workers == 128 ? "EXTENDED_90K_128_1G_PASS" : "EXTENDED_90K_1G_PASS") + " workers=" + workers + " cachedResults=" + engine.cachedResultCount() + " producers=" + engine.producerCount() + " maxHeapBytes=" + Runtime.getRuntime().maxMemory()
                     + " measuredCommands=90000 measuredTrades=90000 retainedOrders=" + engine.retainedOrderCount()
                     + " pendingEvents=" + outbox.size() + " snapshotBytes=" + bytes.length
                     + " checkpointBudgetBytes=" + ClusterCapacity.snapshotBudget(engine.limits(), profile.outboxCapacity)

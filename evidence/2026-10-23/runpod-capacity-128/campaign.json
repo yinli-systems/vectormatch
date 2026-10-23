@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "registeredAtUtc": "2026-10-23T19:44:13.552578+00:00",
+  "protocol": "docs/CAPACITY_CAMPAIGN.md",
+  "budgetUsd": 20,
+  "hourlyConservativeUsd": 1.56,
+  "recoveryReserveUsd": 2,
+  "newResources": 0,
+  "fixed": {
+    "leader": 0,
+    "syncLevel": 2,
+    "aeronMtuLength": 1248,
+    "nodeHeap": "1g",
+    "loadHeap": "2g",
+    "maxClusterSessions": 128,
+    "portBase": 23000,
+    "queuePerWorker": 64,
+    "requestTimeoutMs": 2000,
+    "drainTimeoutMs": 30000,
+    "schedulerLatenessLimitMs": 20,
+    "loadGeneratorMember": 2,
+    "outboxCapacity": 262144,
+    "capacityProfile": "extended-90k-128",
+    "seededMakerQuantity": 180000,
+    "seededQuotePerBuyer": 900000000,
+    "connectionConstructionParallelism": 8,
+    "sessionCleanupWaitMillis": 12000
+  },
+  "screeningRates": [
+    8000,
+    9000
+  ],
+  "concurrencySweep": [
+    64,
+    128
+  ],
+  "maxArrivalsPerTrial": 90000,
+  "scope": "Finite-window fixed-arrival client + replicated matching path; shared load generator, not full HTTP/projection/fanout capacity",
+  "profile": "extended-90k-128",
+  "reason": "W64@8000/s queue loss with native RTT far below scheduled latency; compare W64/W128 on one new loadgen release while node jars and configuration stay unchanged",
+  "screeningWorkers": 64,
+  "maxWindowSeconds": 30,
+  "sourceCampaign": "evidence/2026-10-23/runpod-capacity-extended",
+  "nodeDeploymentRevision": "8b4bea3f37d623cd08f7c26ea4b5f6506fc3c5bd"
+}

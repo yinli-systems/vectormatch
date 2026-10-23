@@ -5,6 +5,8 @@ ROOT='/opt/vectormatch'; RELEASE=json.loads((remote.ROOT/'current-release.json')
 ORIGINAL=ROOT+'/releases/e1db2e755a834234efb60b7a1ed291b31ce33c16'
 OUT=pathlib.Path.cwd()/'evidence/2026-10-23/runpod-capacity';OUT.mkdir(exist_ok=True)
 PROFILE='baseline-30k'
+LOAD_RELEASE=RELEASE
+LOAD_IDENTITY={}
 JAVA=ROOT+'/tools/jdk/bin/java'; OPENS=['--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED','--add-opens=java.base/java.util.zip=ALL-UNNAMED']
 COMMON={'JAVA_HOME':ROOT+'/tools/jdk','VECTOR_CLUSTER_HOSTS':','.join(n['private_ipv4'] for n in remote.NODES),'VECTOR_CLIENT_EGRESS_HOST':remote.NODES[2]['private_ipv4'],'VECTOR_AERON_MTU_LENGTH':'1248','VECTOR_SYNC_LEVEL':'2','VECTOR_PORT_BASE':'23000','VECTOR_DIST_ROOT':RELEASE+'/dist','VECTOR_APPOINTED_LEADER_ID':'0','VECTOR_MAX_CLUSTER_SESSIONS':'128','VECTOR_MAX_HEAP':'1g'}
 ORIG={**COMMON,'VECTOR_DIST_ROOT':ORIGINAL+'/dist','VECTOR_PORT_BASE':'19000','VECTOR_STATE_DIR':ROOT+'/runtime/cloud-20261023-01','VECTOR_APPOINTED_LEADER_ID':'','VECTOR_MAX_CLUSTER_SESSIONS':'','VM_PG_URL':'jdbc:postgresql://127.0.0.1:55432/postgres','VM_PG_USER':'vectormatch','VM_CLUSTER_ID':'runpod-cloud-20261023-01','VM_HTTP_PORT':'8000','VECTOR_WEB_DIR':ROOT+'/web/dist'}
@@ -99,7 +101,7 @@ def trial(ident,rate,arrivals,workers,phase='screen',rep=1):
  local.mkdir(parents=True)
  state=ROOT+'/runtime/capacity-20261023/'+ident; evidence=ROOT+'/evidence/capacity-'+ident; watch=state+'/watch'
  env={**COMMON,'VECTOR_STATE_DIR':state}
- manifest={'id':ident,'rate':rate,'arrivals':arrivals,'workers':workers,'queuePerWorker':64,'windowSeconds':arrivals/rate,'phase':phase,'repetition':rep,'state':state,'release':RELEASE,'profile':PROFILE,'budgetBefore':budget(),'startedAt':now()};save(local/'trial.json',manifest)
+ manifest={'id':ident,'rate':rate,'arrivals':arrivals,'workers':workers,'queuePerWorker':64,'windowSeconds':arrivals/rate,'phase':phase,'repetition':rep,'state':state,'release':RELEASE,'profile':PROFILE,**LOAD_IDENTITY,'budgetBefore':budget(),'startedAt':now()};save(local/'trial.json',manifest)
  record('trial-start',id=ident,rate=rate,workers=workers,budget=manifest['budgetBefore'])
  record('nodes-start',id=ident,stdout=parallel(lambda i:service(i,'node','start',env)))
  deadline=time.monotonic()+60
@@ -115,7 +117,7 @@ def trial(ident,rate,arrivals,workers,phase='screen',rep=1):
         'counters':[JAVA,*OPENS,'-Xmx128m','-cp',RELEASE+'/dist/cluster/lib/*','io.vectormatch.cluster.CapacityCounters',state+f'/node-{i}/driver',watch+f'/node{i}-counters.jsonl','600','1000']}
   return json.loads(py(i,'RELEASE='+repr(RELEASE)+'\nWATCH='+repr(watch)+'\nENV='+repr(env)+'\nJOBS='+repr(jobs)+'\n'+SPAWN))
  save(local/'observer-processes.json',parallel(watchstart))
- args=[JAVA,*OPENS,'-Xmx2g','-cp',RELEASE+'/dist/cluster/lib/*','io.vectormatch.cluster.RemoteCapacityExperiment',evidence,'23000',str(rate),str(arrivals),str(workers),'64','2000','30000','0','20']+(['extended-90k'] if PROFILE=='extended-90k' else [])
+ args=[JAVA,*OPENS,'-Xmx2g','-cp',LOAD_RELEASE+'/dist/cluster/lib/*','io.vectormatch.cluster.RemoteCapacityExperiment',evidence,'23000',str(rate),str(arrivals),str(workers),'64','2000','30000','0','20']+([PROFILE] if PROFILE.startswith('extended-') else [])
  cfg={'release':RELEASE,'watch':watch,'env':env,'args':args}
  code='WATCH='+repr(watch)+'\nCONFIG='+repr(cfg)+'\nCODE='+repr(CONTROLLER)+'\n'+'''import pathlib,subprocess,json
 base=pathlib.Path(WATCH);p=base/'load-controller.py';assert not p.exists();p.write_text(CODE);p.with_suffix('.json').write_text(json.dumps(CONFIG))

@@ -24,13 +24,19 @@ public final class RemoteCapacityExperiment {
 
     enum Profile {
         BASELINE("baseline-30k", MAX_ARRIVALS, 60_000, 300_000_000, 65_536),
-        EXTENDED_90K("extended-90k", 90_000, 180_000, 900_000_000, 262_144);
+        EXTENDED_90K("extended-90k", 90_000, 180_000, 900_000_000, 262_144),
+        EXTENDED_90K_128("extended-90k-128", 90_000, 180_000, 900_000_000, 262_144, 128, 12, 8);
         final String label;
-        final int maximumArrivals, outboxCapacity;
+        final int maximumArrivals, outboxCapacity, maximumWorkers, sessionReapWaitSeconds, connectionConcurrency;
         final long makerQuantity, buyerFunding;
         Profile(String label, int maximumArrivals, long makerQuantity, long buyerFunding, int outboxCapacity) {
+            this(label, maximumArrivals, makerQuantity, buyerFunding, outboxCapacity, 64, 0, 0);
+        }
+        Profile(String label, int maximumArrivals, long makerQuantity, long buyerFunding, int outboxCapacity,
+                int maximumWorkers, int sessionReapWaitSeconds, int connectionConcurrency) {
             this.label = label; this.maximumArrivals = maximumArrivals; this.makerQuantity = makerQuantity;
-            this.buyerFunding = buyerFunding; this.outboxCapacity = outboxCapacity;
+            this.buyerFunding = buyerFunding; this.outboxCapacity = outboxCapacity; this.maximumWorkers = maximumWorkers;
+            this.sessionReapWaitSeconds = sessionReapWaitSeconds; this.connectionConcurrency = connectionConcurrency;
         }
         static Profile parse(String value) {
             for (Profile profile : values()) if (profile.label.equals(value)) return profile;
@@ -55,12 +61,12 @@ public final class RemoteCapacityExperiment {
         Options {
             Objects.requireNonNull(profile, "profile");
             if (rate < 1 || rate > 1_000_000 || arrivals < 1 || arrivals > profile.maximumArrivals
-                    || workers < 1 || workers > 64 || queueCapacity < 1 || queueCapacity > profile.maximumArrivals
+                    || workers < 1 || workers > profile.maximumWorkers || queueCapacity < 1 || queueCapacity > profile.maximumArrivals
                     || requestTimeoutMs < 10 || requestTimeoutMs > 30_000 || drainTimeoutMs < requestTimeoutMs
                     || drainTimeoutMs > 120_000 || expectedLeader < 0 || expectedLeader > 2
                     || schedulerLatenessLimitMs < 1 || schedulerLatenessLimitMs > 1000
                     || offsetNanos(arrivals, rate) > TimeUnit.MINUTES.toNanos(5))
-                throw new IllegalArgumentException("Invalid bounds: rate 1..1000000, arrivals/queue within selected profile limit, workers 1..64, timeout 10..30000ms, drain timeout..120000ms, leader 0..2; arrival window <=300s");
+                throw new IllegalArgumentException("Invalid bounds: rate 1..1000000, arrivals/queue within selected profile limit, workers within selected profile limit, timeout 10..30000ms, drain timeout..120000ms, leader 0..2; arrival window <=300s");
         }
     }
 
@@ -83,7 +89,7 @@ public final class RemoteCapacityExperiment {
         volatile String error = "";
         Sample(int index, int workers, String producer) {
             this.index = index; worker = index % workers;
-            command = new Place(FIRST_BUYER + worker, producer + "-w" + worker, index / workers + 1L,
+            command = new Place(FIRST_BUYER + worker % SEEDED_BUYERS, producer + "-w" + worker, index / workers + 1L,
                     "ioc-" + producer + '-' + index, Side.BUY, PRICE, 1, TimeInForce.IOC);
         }
         boolean hasReply() { return reply != null; }
@@ -127,6 +133,8 @@ public final class RemoteCapacityExperiment {
         String producer = "capacity-fixed-v1"; // Isolated fresh trial state is required; deterministic preparation permits byte-for-byte baseline comparisons.
         Map<String, Object> configuration = fields("startedAt", Instant.now().toString(), "producerPrefix", producer,
                 "profile", profile.label, "profileMaximumArrivals", profile.maximumArrivals, "declaredOutboxCapacity", profile.outboxCapacity,
+                "profileMaximumWorkers", profile.maximumWorkers, "sessionReapWaitSecondsPerPhase", profile.sessionReapWaitSeconds,
+                "clientConnectionConcurrencyLimit", profile.connectionConcurrency == 0 ? "unbounded" : profile.connectionConcurrency,
                 "validationTimeoutSeconds", CHECK_TIMEOUT.toSeconds(), "setupTimeoutSeconds", SETUP_TIMEOUT.toSeconds(),
                 "ratePerSecond", options.rate(), "scheduledArrivals", options.arrivals(), "workers", options.workers(),
                 "maxServiceRequestsInFlight", options.workers(), "queueCapacityPerWorker", options.queueCapacity(),
@@ -181,6 +189,7 @@ public final class RemoteCapacityExperiment {
             }
             long preparedCommandSeq = reference.lastCommandSeq(), preparedEventSeq = reference.lastEventSeq(), preparedMarketSeq = reference.lastMarketSeq();
             int preparedOrders = reference.retainedOrderCount();
+            awaitSessionReap(directory, "after-setup", profile);
             load = runLoad(options, samples, worker -> realTransport(new ClusterClient(directory.resolve("load-driver-" + worker), options.portBase())));
             writeSamples(directory.resolve("arrivals.csv"), load);
             writeBacklog(directory.resolve("backlog.csv"), load);
@@ -188,6 +197,7 @@ public final class RemoteCapacityExperiment {
             if (load.workerFailure != null) throw new IllegalStateException("A capacity worker failed; inspect every arrival outcome", load.workerFailure);
             Map<String, Object> result = summarize(load);
             boolean canonical = false;
+            awaitSessionReap(directory, "before-validation", profile);
             Instant validationStartedAt = Instant.now();
             long validationStartedNanos = System.nanoTime();
             write(directory.resolve("validation-start.json"), fields("startedAt", validationStartedAt.toString(),
@@ -229,8 +239,8 @@ public final class RemoteCapacityExperiment {
                             && actual.account(SELLER).base().reserved() == profile.makerQuantity - WARMUP - accepted
                             && actual.account(SELLER).base().available() == 0 && actual.account(SELLER).quote().reserved() == 0, "Seller conservation differs");
                     for (int worker = 0; worker < SEEDED_BUYERS; worker++) {
-                        final int selectedWorker = worker;
-                        long trades = confirmed.stream().filter(s -> s.worker == selectedWorker && s.reply.result().accepted()).count();
+                        final long selectedAccount = FIRST_BUYER + worker;
+                        long trades = confirmed.stream().filter(s -> s.command.accountId() == selectedAccount && s.reply.result().accepted()).count();
                         AccountView account = actual.account(FIRST_BUYER + worker);
                         require(account.base().available() == trades && account.base().reserved() == 0
                                 && account.quote().available() == profile.buyerFunding - trades * PRICE && account.quote().reserved() == 0, "Buyer asset conservation differs");
@@ -278,12 +288,13 @@ public final class RemoteCapacityExperiment {
         for (int i = 0; i < options.workers(); i++) queues.add(new ArrayBlockingQueue<>(options.queueCapacity()));
         CountDownLatch ready = new CountDownLatch(options.workers());
         AtomicReference<Throwable> startupFailure = new AtomicReference<>();
+        Semaphore connectionSlots = options.profile().connectionConcurrency > 0 ? new Semaphore(options.profile().connectionConcurrency, true) : null;
         List<Thread> workers = new ArrayList<>();
         for (int index = 0; index < options.workers(); index++) {
             final int worker = index;
             Thread thread = new Thread(() -> {
                 boolean announced = false;
-                try (Transport transport = factory.open(worker)) {
+                try (Transport transport = openTransport(factory, worker, connectionSlots)) {
                     if (transport.leader() != options.expectedLeader()) load.leaderChanged.set(true);
                     ClusterClient.TransportCounters before = transport.counters();
                     ready.countDown(); announced = true;
@@ -358,6 +369,32 @@ public final class RemoteCapacityExperiment {
         require(workers.stream().noneMatch(Thread::isAlive), "Worker did not terminate after bounded drain");
         load.workerFailure = startupFailure.get();
         return load;
+    }
+
+    private static Transport openTransport(TransportFactory factory, int worker, Semaphore slots) throws Exception {
+        if (slots == null) return factory.open(worker);
+        slots.acquire();
+        try { return factory.open(worker); } finally { slots.release(); }
+    }
+
+    /** Aeron's default session timeout is 10 seconds; this explicit new-profile pause is outside measurement. */
+    private static void awaitSessionReap(Path directory, String phase, Profile profile) throws IOException, InterruptedException {
+        if (profile.sessionReapWaitSeconds == 0) return;
+        Instant startedAt = Instant.now();
+        long startedNanos = System.nanoTime();
+        boolean completed = false;
+        try {
+            Thread.sleep(TimeUnit.SECONDS.toMillis(profile.sessionReapWaitSeconds));
+            completed = true;
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw interrupted;
+        } finally {
+            write(directory.resolve("session-reap-" + phase + ".json"), fields("phase", phase, "profile", profile.label,
+                    "startedAt", startedAt.toString(), "completedAt", Instant.now().toString(), "requestedSeconds", profile.sessionReapWaitSeconds,
+                    "elapsedSeconds", (System.nanoTime() - startedNanos) / 1e9, "completed", completed,
+                    "scope", "session reclamation pause after closed clients; excluded from load and validation timing"));
+        }
     }
 
     private static void executeResolving(Sample sample, Transport transport, LoadResult load) {

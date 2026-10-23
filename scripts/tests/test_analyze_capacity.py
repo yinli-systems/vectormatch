@@ -217,6 +217,72 @@ class CapacityAnalysisTest(unittest.TestCase):
         self.assertFalse(errors)
         self.assertEqual(before, after)
 
+    def load_identity(self, directory, **changes):
+        path = directory / "trial.json"
+        document = json.loads(path.read_text())
+        document.update({"loadGeneratorRevision": "d" * 40,
+                         "loadGeneratorBundleSha256": "e" * 64,
+                         "loadGeneratorRelease": "/opt/vectormatch/loadgen-releases/" + "d" * 40})
+        document.update(changes)
+        path.write_text(json.dumps(document))
+
+    def test_separate_load_revision_is_legal_and_same_new_load_code_compares_across_workers(self):
+        first, second = self.fixture("clients64"), self.fixture("clients128")
+        for directory, workers in ((first, 64), (second, 128)):
+            self.load_identity(directory)
+            path = directory / "result.json"
+            document = json.loads(path.read_text())
+            document["workers"] = workers
+            path.write_text(json.dumps(document))
+        rows = [analysis.analyze_trial(first), analysis.analyze_trial(second)]
+        self.assertTrue(all(row["measurementValid"] for row in rows))
+        identity = rows[0]["comparisonConfiguration"]
+        self.assertEqual("a" * 40, identity["sourceRevision"])
+        self.assertEqual("d" * 40, identity["loadGeneratorRevision"])
+        self.assertEqual(rows[0]["comparisonFingerprintSha256"], rows[1]["comparisonFingerprintSha256"])
+        self.assertEqual(2, len(analysis.summarize_groups(rows)), "Worker groups stay separate despite common deployment fingerprint")
+
+    def test_distinct_load_bundle_sha_is_not_merged_with_identical_nodes(self):
+        first, second = self.fixture("first-load"), self.fixture("second-load")
+        self.load_identity(first)
+        self.load_identity(second, loadGeneratorBundleSha256="f" * 64)
+        rows = [analysis.analyze_trial(first), analysis.analyze_trial(second)]
+        self.assertTrue(all(row["measurementValid"] for row in rows))
+        self.assertEqual(2, len(analysis.summarize_groups(rows)))
+
+    def test_any_explicit_load_identity_requires_all_three_valid_fields(self):
+        for missing in ("loadGeneratorRevision", "loadGeneratorBundleSha256", "loadGeneratorRelease"):
+            with self.subTest(missing=missing):
+                directory = self.fixture("missing-" + missing)
+                self.load_identity(directory)
+                path = directory / "trial.json"
+                document = json.loads(path.read_text())
+                del document[missing]
+                path.write_text(json.dumps(document))
+                row = analysis.analyze_trial(directory)
+                self.assertFalse(row["measurementValid"])
+                self.assertTrue(any(missing + " missing" in issue for issue in row["configurationIdentityIssues"]))
+
+    def test_load_release_must_be_absolute_and_match_its_commit(self):
+        for name, changes, issue in (
+                ("relative", {"loadGeneratorRelease": "releases/" + "d" * 40}, "invalid loadGeneratorRelease"),
+                ("mismatch", {"loadGeneratorRelease": "/opt/releases/" + "f" * 40}, "basename differs"),
+                ("bad-hash", {"loadGeneratorBundleSha256": "not-a-sha"}, "invalid loadGeneratorBundleSha256")):
+            with self.subTest(name=name):
+                directory = self.fixture(name)
+                self.load_identity(directory, **changes)
+                row = analysis.analyze_trial(directory)
+                self.assertFalse(row["measurementValid"])
+                self.assertTrue(any(issue in entry for entry in row["configurationIdentityIssues"]))
+
+    def test_legacy_load_identity_defaults_to_common_node_bundle(self):
+        row = analysis.analyze_trial(self.fixture())
+        self.assertTrue(row["measurementValid"])
+        identity = row["comparisonConfiguration"]
+        self.assertEqual(identity["sourceRevision"], identity["loadGeneratorRevision"])
+        self.assertEqual(identity["deploymentBundleSha256"], identity["loadGeneratorBundleSha256"])
+        self.assertEqual(identity["release"], identity["loadGeneratorRelease"])
+
     def test_malformed_arrival_index_is_retained_as_invalid_not_tool_crash(self):
         directory = self.fixture()
         path = directory / "arrivals.csv"
