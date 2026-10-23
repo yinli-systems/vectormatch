@@ -1,6 +1,6 @@
 # 受控优化与瓶颈归因
 
-本轮首先检验负载端资源布局：在同一三节点撮合集群上，将 **128 个客户端 MediaDriver 改为一个共享 MediaDriver**，保留 128 个独立 Aeron 客户端、session、worker 与单请求在途窗口。预先登记的 A/B/A/B 已完成：客户端资源节省可重复，但四轮 15k/s 均未达到稳定标准；当前没有提高稳定吞吐上限的证据。节点接收缓冲的交替对照也已完成：目标 socket 丢包改善，但稳定吞吐和 p99 改善未成立。正在进行节点线程调度对照。完整历史容量结果见 [CAPACITY_RESULTS.md](CAPACITY_RESULTS.md)，本轮方案见 [OPTIMIZATION_CAMPAIGN.md](OPTIMIZATION_CAMPAIGN.md)。
+本轮首先检验负载端资源布局：在同一三节点撮合集群上，将 **128 个客户端 MediaDriver 改为一个共享 MediaDriver**，保留 128 个独立 Aeron 客户端、session、worker 与单请求在途窗口。预先登记的 A/B/A/B 已完成：客户端资源节省可重复，但四轮 15k/s 均未达到稳定标准；当前没有提高稳定吞吐上限的证据。节点接收缓冲的交替对照也已完成：目标 socket 丢包改善，但稳定吞吐和 p99 改善未成立。节点线程调度对照也已完成，两轮 DEDICATED 的吞吐和 p99 均未优于 SHARED。下一步为独立并发配置对照。完整历史容量结果见 [CAPACITY_RESULTS.md](CAPACITY_RESULTS.md)，本轮方案见 [OPTIMIZATION_CAMPAIGN.md](OPTIMIZATION_CAMPAIGN.md)。
 
 ## 为什么先检查负载端
 
@@ -68,11 +68,30 @@ A/B 分别保留 [isolated 登记](../evidence/2026-10-23/runpod-optimization/is
 
 需要同时比较初次 API RTT、FIFO 等待、活跃槽位、排空、CPU/RSS/线程、Aeron 修复和记录/提交/服务位置。新增相同的只读观察器按 PID/startTicks/命令摘要验证进程，采集其线程及所拥有 UDP inode 的队列/丢包；不抓包、不读环境、不做 JVM attach。namespace UDP 重叠计数不相加，`wchan=0`、缺失 sysctl 或零 schedstat 不解释为没有等待，采样队列字节不等于有效 payload 或实际 SO_RCVBUF。具体限制保留于 [观察器部署与范围](../evidence/2026-10-23/runpod-optimization/attribution-deployment.json)。
 
-## 正在进行的线程调度对照
+## 线程调度对照
 
 [预登记计划](../evidence/2026-10-23/runpod-optimization/threading/plan.json) 固定新节点源 `33e6ab32d9a736eaacd8e4060af8036c614b6fe2` / bundle `c043d263521343572fdfbef7fcc1feeb3ef6769a016a550a76d6070019c5c5ea`，按节点 SHARED → DEDICATED → SHARED → DEDICATED 运行 15k/s、190k 到达、W128。客户端仍是一个 shared driver 加 128 个独立 Aeron/session/worker，节点两组使用同一 artifact，原 128 KiB 缓冲前后独立核验。Archive 仍为 SHARED，所有 sync2 设置保留。
 
-Aeron 的默认角色等待参数与原显式 Agrona 默认存在差别，直接改 threadingMode 会混入等待策略变化。这里在同一新 artifact 中，为 shared/sender/receiver/conductor/native-resource 各自建立独立、参数相同的 Backoff(10 spins,5 yields,1000ns min park,1000000ns max park)，并在启动日志记录。DEDICATED 是四个 driver runners，相比共享 composite 多三个，不代表撮合逻辑并行化。CPU、节流、丢包、排空和原正确性规则继续记录。目前结果未齐，尚不宣称收益。
+Aeron 的默认角色等待参数与原显式 Agrona 默认存在差别，直接改 threadingMode 会混入等待策略变化。这里在同一新 artifact 中，为 shared/sender/receiver/conductor/native-resource 各自建立独立、参数相同的 Backoff(10 spins,5 yields,1000ns min park,1000000ns max park)，并在启动日志记录。DEDICATED 是四个 driver runners，相比共享 composite 多三个，不代表撮合逻辑并行化。CPU、节流、丢包、排空和原正确性规则继续记录。四轮均有效且非稳定，DEDICATED 没有性能收益。
+
+| 顺序 | 节点模式 | 窗口 goodput /s | 已接受条件 p99 ms | 未发送 | 排空 ms |
+|---|---|---:|---:|---:|---:|
+| S1 | SHARED | 14,411.684 | 541.591 | 19 | 567.278 |
+| D1 | DEDICATED | 13,115.763 | 729.875 | 15,642 | 604.966 |
+| S2 | SHARED | 14,273.526 | 615.179 | 1,037 | 626.578 |
+| D2 | DEDICATED | 13,535.289 | 666.773 | 10,277 | 632.898 |
+
+[完整逐行审计](../evidence/2026-10-23/runpod-optimization/threading/README.md) 复核 760,000 个计划到达为 733,025 个最终接受、26,975 个明确未发送；四轮全量接受 p99 均不可用，unknown、业务拒绝和 server error 均为零。两个 DEDICATED goodput 相对对应控制分别低约 8.99% / 5.17%，条件 p99 高约 34.77% / 8.39%。这些结果保留，下一轮采用节点 SHARED。
+
+node0 JVM CPU 由 S 的 2.528 / 2.577 核增加为 D 的 3.055 / 2.992 核，线程由 28 到 31。严格窗口内 cgroup 累计限流时间分别为 S：0 / 32.52μs，D：369.17 / 80.59ms。它不是单请求暂停时间；均值 CPU 未满配额也不能排除周期内限流。日志 socket drops 294/365 对比 0/15，NAK 与限流时序不完全重合，不能声称限流解释了全部退化。
+
+## 下一组并发配置与全量 pilot
+
+独立新 profile `capacity-350k-v1` / `extended-350k-256` 将 retained 上限固定为 360,000、outbox800,000、全量 checkpoint512MiB、core-view256MiB，其余账户/producer/缓存限制与业务撮合规则保留。新源 `52fbf7fa46ed274891a2bbf0d9fba9d87456d1f5` 的完整 117 项 Java tests 通过；匹配 core、依赖、ClusterClient 和 NodeMain class 内容相对前一发行包逐项一致，仅容量 profile/负载选项类变化。这不是已经测得的容量。
+
+先以 W128、10,000/s、350,000 个计划到达执行 35 秒云端 pilot，并完成全部终态/完整快照核对，验证原600秒进程期限与2GiB heap可用。此前的本地测试只覆盖小夹具恢复与边界，不冒充350k全量测试。pilot完成后才登记 W128/W256/W128/W256 交替对照；双方统一 maxSessions256、节点SHARED、原128KiB接收、sync2、相同新 artifact 与准备 SHA。
+
+每 worker FIFO保持64意味着总FIFO为8,192/16,384；它是整个并发配置的比较，不将全部变化归给纯在途窗口。每轮350k原始CSV保留在本地，Git保存无损 `arrivals.csv.gz` 与原始/压缩 bytes/SHA 清单；`python3 scripts/archive-capacity-arrivals.py restore RUN_DIR` 可精确恢复再运行原分析器。旧轮次原CSV不改写。所有过载、无效或失败数据也按同口径保存。
 
 ## 已完成的代码验证
 

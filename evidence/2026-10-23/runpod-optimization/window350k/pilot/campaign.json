@@ -1,0 +1,105 @@
+{
+  "version": 1,
+  "registeredAtUtc": "2026-10-23T22:39:05.892335+00:00",
+  "budgetUsd": 20,
+  "hourlyConservativeUsd": 1.56,
+  "recoveryReserveUsd": 2,
+  "newResources": 0,
+  "fixed": {
+    "leader": 0,
+    "syncLevel": 2,
+    "aeronMtuLength": 1248,
+    "nodeHeap": "2g",
+    "loadHeap": "2g",
+    "maxClusterSessions": 256,
+    "portBase": 23000,
+    "queuePerWorker": 64,
+    "requestTimeoutMs": 2000,
+    "drainTimeoutMs": 30000,
+    "schedulerLatenessLimitMs": 20,
+    "loadGeneratorMember": 2,
+    "outboxCapacity": 800000,
+    "capacityProfile": "extended-350k-256",
+    "seededMakerQuantity": 380000,
+    "seededQuotePerBuyer": 1900000000,
+    "stateProfile": "capacity-350k-v1",
+    "checkpointMaxBytes": 536870912,
+    "maxRetainedOrders": 360000,
+    "resultCachePerProducer": 1024,
+    "socketReceiveBufferArgumentBytes": 131072,
+    "socketReceiveBufferBytes": 131072,
+    "driverThreadingArgument": "SHARED",
+    "driverThreading": "SHARED",
+    "driverIdleMaxSpins": 10,
+    "driverIdleMaxYields": 5,
+    "driverIdleMinParkNs": 1000,
+    "driverIdleMaxParkNs": 1000000,
+    "idleStrategy": "BackoffIdleStrategy(10,5,1000,1000000), independent per driver role",
+    "archiveThreading": "SHARED"
+  },
+  "profile": "extended-350k-256",
+  "clientDriverMode": "shared",
+  "maxArrivalsPerTrial": 350000,
+  "maxWindowSeconds": 35,
+  "screeningRates": [
+    10000
+  ],
+  "screeningWorkers": 128,
+  "concurrencySweep": [
+    128
+  ],
+  "sourceCampaign": "/Users/kevin/Documents/ChatGPT/App 2/evidence/2026-10-23/runpod-optimization/threading/shared/campaign.json",
+  "threadingPrerequisites": {
+    "planSha256": "f39ead30192bc5a4c16a1860a3da9b99334505da019f914939d6455c2f57ec03",
+    "completionTimelineSha256": "51410fd22d8c6b3c0efd485cf054209fbd6b283233fb188f4fa9942e8ae3965f",
+    "trials": [
+      {
+        "id": "t-shared-15000-w128-r1",
+        "classification": "OBSERVED_OVERLOAD_OR_UNDERSIZED_CLIENT",
+        "resultSha256": "b61881f7e15e3e18a3ed14079f8cd4066d4e0981f48861d956fb2186c1f997a2",
+        "summarySha256": "906f52f8b16403021d78cbc52e2c9e7b92d15bef3b8c893a1c4cbad8e71a6831",
+        "goodput": 14411.684211284826,
+        "conditionalP99Millis": 541.590618
+      },
+      {
+        "id": "t-dedicated-15000-w128-r1",
+        "classification": "OBSERVED_OVERLOAD_OR_UNDERSIZED_CLIENT",
+        "resultSha256": "58c90ad573db3c8de58b5511c10c85c11b74ac2a26a516ae1c0ca5fbb246f69e",
+        "summarySha256": "57c3e4e5e6ae86ca22996c54613610ca9f3b108ba7034c531f708ba28419e9ed",
+        "goodput": 13115.763158585041,
+        "conditionalP99Millis": 729.875035
+      },
+      {
+        "id": "t-shared-15000-w128-r2",
+        "classification": "OBSERVED_OVERLOAD_OR_UNDERSIZED_CLIENT",
+        "resultSha256": "96ab3a6d3ba22bca559f2018cbbfe8b3f1f4b4a1b561f9424f125ccd32ce8bd5",
+        "summarySha256": "906f52f8b16403021d78cbc52e2c9e7b92d15bef3b8c893a1c4cbad8e71a6831",
+        "goodput": 14273.526316540712,
+        "conditionalP99Millis": 615.178692
+      },
+      {
+        "id": "t-dedicated-15000-w128-r2",
+        "classification": "OBSERVED_OVERLOAD_OR_UNDERSIZED_CLIENT",
+        "resultSha256": "3864f3cff6da6d8aa65d03ca364d9ade19aebee9b09e78faa7e9bbe6d91a5895",
+        "summarySha256": "57c3e4e5e6ae86ca22996c54613610ca9f3b108ba7034c531f708ba28419e9ed",
+        "goodput": 13535.289474396595,
+        "conditionalP99Millis": 666.772611
+      }
+    ]
+  },
+  "loadWholeProcessTimeoutSeconds": 600,
+  "validationTimeoutSeconds": 600,
+  "scope": "Pilot: one W128,350000-arrival35-second correctness/full-checkpoint validation with the unchanged600-second outer process deadline.",
+  "archivePolicy": {
+    "rawCsvRetainedLocally": true,
+    "gitRepresentation": [
+      "arrivals.csv.gz",
+      "arrivals-archive.json"
+    ],
+    "archiveToolSha256": "9e35dd40dc2ec7ea6403e287fe988015f7240dcfcd9587f5914be401c352020b",
+    "rawShaSource": "immutable analyzer inputSha256[arrivals.csv], including invalid/failed trials",
+    "maximumDecodedBytes": 268435456,
+    "neverDirectlyStageCsvAtOrAboveBytes": 104857600,
+    "restoreCommand": "python3 scripts/archive-capacity-arrivals.py restore RUN_DIR"
+  }
+}
