@@ -47,5 +47,471 @@
     "action": "FAILED",
     "errorType": "RuntimeError",
     "error": "node2 1: Exception in thread \"main\" io.aeron.exceptions.TimeoutException: ERROR - cluster connect timeout: state=AWAIT_PUBLICATION_CONNECTED messageTimeout=20s ingressChannel=aeron:udp?mtu=1248|term-length=64k ingressEndpoints=0=10.0.212.169:19002,1=10.1.60.60:19102,2=10.1.81.207:19202 ingressPublication=Publication{originalRegistrationId=5, registrationId=5, isClosed=false, isConnected=false, initialTermId=485496042, termBufferLength=65536, sessionId=-465664898, streamId=101, channel='aeron:udp?mtu=1248|endpoint=10.0.212.169:19002|term-length=64k', position=0} egress.isConnected=false responseChannel=aeron:udp?rejoin=false|mtu=1248|endpoint=10.1.81.207:38446|term-length=64k\n\tat io.aeron.cluster.client.AeronCluster$AsyncConnect.checkDeadline(AeronCluster.java:2331)\n\tat io.aeron.cluster.client.AeronCluster$AsyncConnect.poll(AeronCluster.java:2285)\n\tat io.aeron.cluster.client.AeronCluster.connect(AeronCluster.java:164)\n\tat io.vectormatch.cluster.ClusterClient.<init>(ClusterClient.java:61)\n\tat io.vectormatch.cluster.ClusterClient.<init>(ClusterClient.java:44)\n\tat io.vectormatch.cluster.ClusterClient.<init>(ClusterClient.java:40)\n\tat io.vectormatch.cluster.RemoteClusterExperiment.verify(RemoteClusterExperiment.java:198)\n\tat io.vectormatch.cluster.RemoteClusterExperiment.main(RemoteClusterExperiment.java:60)\n\n "
+  },
+  {
+    "timestamp": "2026-10-23T18:04:50.861313+00:00",
+    "action": "client-bootstrap-patch-deployed",
+    "release": {
+      "revision": "2597bc3b849d8e042c8bbe67f0a5142580871a5b",
+      "root": "/opt/vectormatch/releases/2597bc3b849d8e042c8bbe67f0a5142580871a5b",
+      "bundleSha256": "690298bcd08233fd93125ae9b72d7c118b0307d88dec88a54feb732535fb7261"
+    },
+    "originalLeader": 0,
+    "originalLeaderStillStopped": true
+  },
+  {
+    "timestamp": "2026-10-23T18:05:09.473824+00:00",
+    "action": "experiment-verify",
+    "folder": "cloud-3nodes-01",
+    "stdout": "VECTOR_REMOTE_VERIFY_PASS leader=2 hash=a98ae2f819d473742a6f3d015b2ecdc5cd78d74728a1ffccd8dedbf1fbfb9804\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:05:09.475893+00:00",
+    "action": "fresh-client-fixed-while-original-leader-remains-down",
+    "leader": 2,
+    "unchangedCanonicalStateVerified": true
+  },
+  {
+    "timestamp": "2026-10-23T18:05:13.379269+00:00",
+    "action": "restart-original-member-after-patch-check",
+    "node": 0,
+    "stdout": "node-0 launched pid=924; log=/opt/vectormatch/runtime/cloud-20261023-01/node-0/process.log; launch is not readiness\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:05:15.689530+00:00",
+    "action": "all-members-caught-up",
+    "leader": 2,
+    "targetLogPosition": 362272,
+    "members": {
+      "0": {
+        "term": 1,
+        "position": 362272
+      },
+      "1": {
+        "term": 1,
+        "position": 362272
+      },
+      "2": {
+        "term": 1,
+        "position": 362272
+      }
+    },
+    "officialClusterToolOutput": "currentTimeNs=1792778715765000000, leaderMemberId=2, memberId=2, activeMembers=[ClusterMember{id=0, isBallotSent=false, isLeader=false, leadershipTermId=1, logPosition=362272, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792778715726000000, ingressEndpoint='10.0.212.169:19002', consensusEndpoint='10.0.212.169:19003', logEndpoint='10.0.212.169:19004', catchupEndpoint='10.0.212.169:19005', archiveEndpoint='10.0.212.169:19001', endpoints='10.0.212.169:19002,10.0.212.169:19003,10.0.212.169:19004,10.0.212.169:19005,10.0.212.169:19001', publication=null, vote=null}, ClusterMember{id=1, isBallotSent=false, isLeader=false, leadershipTermId=1, logPosition=362272, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792778715589000000, ingressEndpoint='10.1.60.60:19102', consensusEndpoint='10.1.60.60:19103', logEndpoint='10.1.60.60:19104', catchupEndpoint='10.1.60.60:19105', archiveEndpoint='10.1.60.60:19101', endpoints='10.1.60.60:19102,10.1.60.60:19103,10.1.60.60:19104,10.1.60.60:19105,10.1.60.60:19101', publication=null, vote=null}, ClusterMember{id=2, isBallotSent=false, isLeader=true, leadershipTermId=1, logPosition=362272, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792778715765000000, ingressEndpoint='10.1.81.207:19202', consensusEndpoint='10.1.81.207:19203', logEndpoint='10.1.81.207:19204', catchupEndpoint='10.1.81.207:19205', archiveEndpoint='10.1.81.207:19201', endpoints='10.1.81.207:19202,10.1.81.207:19203,10.1.81.207:19204,10.1.81.207:19205,10.1.81.207:19201', publication=null, vote=null}]\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:05:30.913914+00:00",
+    "action": "experiment-verify",
+    "folder": "cloud-3nodes-01",
+    "stdout": "VECTOR_REMOTE_VERIFY_PASS leader=2 hash=a98ae2f819d473742a6f3d015b2ecdc5cd78d74728a1ffccd8dedbf1fbfb9804\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:05:34.994293+00:00",
+    "action": "all-members-caught-up",
+    "leader": 2,
+    "targetLogPosition": 421696,
+    "members": {
+      "0": {
+        "term": 1,
+        "position": 421696
+      },
+      "1": {
+        "term": 1,
+        "position": 421696
+      },
+      "2": {
+        "term": 1,
+        "position": 421696
+      }
+    },
+    "officialClusterToolOutput": "currentTimeNs=1792778735084000000, leaderMemberId=2, memberId=2, activeMembers=[ClusterMember{id=0, isBallotSent=false, isLeader=false, leadershipTermId=1, logPosition=421696, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792778735030000000, ingressEndpoint='10.0.212.169:19002', consensusEndpoint='10.0.212.169:19003', logEndpoint='10.0.212.169:19004', catchupEndpoint='10.0.212.169:19005', archiveEndpoint='10.0.212.169:19001', endpoints='10.0.212.169:19002,10.0.212.169:19003,10.0.212.169:19004,10.0.212.169:19005,10.0.212.169:19001', publication=null, vote=null}, ClusterMember{id=1, isBallotSent=false, isLeader=false, leadershipTermId=1, logPosition=421696, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792778735038000000, ingressEndpoint='10.1.60.60:19102', consensusEndpoint='10.1.60.60:19103', logEndpoint='10.1.60.60:19104', catchupEndpoint='10.1.60.60:19105', archiveEndpoint='10.1.60.60:19101', endpoints='10.1.60.60:19102,10.1.60.60:19103,10.1.60.60:19104,10.1.60.60:19105,10.1.60.60:19101', publication=null, vote=null}, ClusterMember{id=2, isBallotSent=false, isLeader=true, leadershipTermId=1, logPosition=421696, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792778735084000000, ingressEndpoint='10.1.81.207:19202', consensusEndpoint='10.1.81.207:19203', logEndpoint='10.1.81.207:19204', catchupEndpoint='10.1.81.207:19205', archiveEndpoint='10.1.81.207:19201', endpoints='10.1.81.207:19202,10.1.81.207:19203,10.1.81.207:19204,10.1.81.207:19205,10.1.81.207:19201', publication=null, vote=null}]\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:05:34.998770+00:00",
+    "action": "fault-start",
+    "round": 1,
+    "oldLeader": 2,
+    "scope": "Root monotonic duration includes SSH setup, SIGKILL dispatch, JVM start, connect and snapshot/replay verification; not first-new-write recovery latency"
+  },
+  {
+    "timestamp": "2026-10-23T18:05:38.636483+00:00",
+    "action": "SIGKILL-confirmed",
+    "node": 2,
+    "pid": 2517,
+    "startTicks": 33804083,
+    "signal": "SIGKILL",
+    "remoteTimestamp": "2026-10-23T18:05:38.775615+00:00"
+  },
+  {
+    "timestamp": "2026-10-23T18:06:03.448720+00:00",
+    "action": "experiment-verify",
+    "folder": "cloud-3nodes-01",
+    "stdout": "VECTOR_REMOTE_VERIFY_PASS leader=1 hash=a98ae2f819d473742a6f3d015b2ecdc5cd78d74728a1ffccd8dedbf1fbfb9804\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:06:03.450007+00:00",
+    "action": "verified-after-SIGKILL",
+    "round": 1,
+    "oldLeader": 2,
+    "newLeader": 1,
+    "orchestrationInclusiveSeconds": 28.451178207999995
+  },
+  {
+    "timestamp": "2026-10-23T18:06:26.840324+00:00",
+    "action": "experiment-run",
+    "folder": "cloud-after-fault-01",
+    "stdout": "VECTOR_REMOTE_EXPERIMENT_PASS commands=3 trades=1 goodput=78.830/s p99=12257.946us leader=1 hash=a8d11a8f644d0b91c3f8a69b1e253b49bee22b2e0b93530d67f5fcbf8a1c93bd\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:06:26.841476+00:00",
+    "action": "new-commands-after-fault-confirmed",
+    "round": 1,
+    "checkpointFolder": "cloud-after-fault-01"
+  },
+  {
+    "timestamp": "2026-10-23T18:06:30.690717+00:00",
+    "action": "restart-killed-member",
+    "node": 2,
+    "stdout": "node-2 launched pid=4307; log=/opt/vectormatch/runtime/cloud-20261023-01/node-2/process.log; launch is not readiness\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:06:35.867166+00:00",
+    "action": "all-members-caught-up",
+    "leader": 1,
+    "targetLogPosition": 587456,
+    "members": {
+      "0": {
+        "term": 2,
+        "position": 587456
+      },
+      "1": {
+        "term": 2,
+        "position": 587456
+      },
+      "2": {
+        "term": 2,
+        "position": 587456
+      }
+    },
+    "officialClusterToolOutput": "currentTimeNs=1792778795949000000, leaderMemberId=1, memberId=1, activeMembers=[ClusterMember{id=0, isBallotSent=false, isLeader=false, leadershipTermId=2, logPosition=587456, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792778795945000000, ingressEndpoint='10.0.212.169:19002', consensusEndpoint='10.0.212.169:19003', logEndpoint='10.0.212.169:19004', catchupEndpoint='10.0.212.169:19005', archiveEndpoint='10.0.212.169:19001', endpoints='10.0.212.169:19002,10.0.212.169:19003,10.0.212.169:19004,10.0.212.169:19005,10.0.212.169:19001', publication=null, vote=null}, ClusterMember{id=1, isBallotSent=false, isLeader=true, leadershipTermId=2, logPosition=587456, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792778795949000000, ingressEndpoint='10.1.60.60:19102', consensusEndpoint='10.1.60.60:19103', logEndpoint='10.1.60.60:19104', catchupEndpoint='10.1.60.60:19105', archiveEndpoint='10.1.60.60:19101', endpoints='10.1.60.60:19102,10.1.60.60:19103,10.1.60.60:19104,10.1.60.60:19105,10.1.60.60:19101', publication=null, vote=null}, ClusterMember{id=2, isBallotSent=false, isLeader=false, leadershipTermId=2, logPosition=587456, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792778795750000000, ingressEndpoint='10.1.81.207:19202', consensusEndpoint='10.1.81.207:19203', logEndpoint='10.1.81.207:19204', catchupEndpoint='10.1.81.207:19205', archiveEndpoint='10.1.81.207:19201', endpoints='10.1.81.207:19202,10.1.81.207:19203,10.1.81.207:19204,10.1.81.207:19205,10.1.81.207:19201', publication=null, vote=null}]\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:06:35.868287+00:00",
+    "action": "fault-start",
+    "round": 2,
+    "oldLeader": 1,
+    "scope": "Root monotonic duration includes SSH setup, SIGKILL dispatch, JVM start, connect and snapshot/replay verification; not first-new-write recovery latency"
+  },
+  {
+    "timestamp": "2026-10-23T18:06:40.034266+00:00",
+    "action": "SIGKILL-confirmed",
+    "node": 1,
+    "pid": 2483,
+    "startTicks": 33588441,
+    "signal": "SIGKILL",
+    "remoteTimestamp": "2026-10-23T18:06:40.181984+00:00"
+  },
+  {
+    "timestamp": "2026-10-23T18:07:07.253428+00:00",
+    "action": "experiment-verify",
+    "folder": "cloud-after-fault-01",
+    "stdout": "VECTOR_REMOTE_VERIFY_PASS leader=0 hash=a8d11a8f644d0b91c3f8a69b1e253b49bee22b2e0b93530d67f5fcbf8a1c93bd\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:07:07.254772+00:00",
+    "action": "verified-after-SIGKILL",
+    "round": 2,
+    "oldLeader": 1,
+    "newLeader": 0,
+    "orchestrationInclusiveSeconds": 31.38641991600001
+  },
+  {
+    "timestamp": "2026-10-23T18:07:31.944550+00:00",
+    "action": "experiment-run",
+    "folder": "cloud-after-fault-02",
+    "stdout": "VECTOR_REMOTE_EXPERIMENT_PASS commands=3 trades=1 goodput=86.212/s p99=11210.683us leader=0 hash=296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:07:31.949610+00:00",
+    "action": "new-commands-after-fault-confirmed",
+    "round": 2,
+    "checkpointFolder": "cloud-after-fault-02"
+  },
+  {
+    "timestamp": "2026-10-23T18:07:34.757230+00:00",
+    "action": "restart-killed-member",
+    "node": 1,
+    "stdout": "node-1 launched pid=2766; log=/opt/vectormatch/runtime/cloud-20261023-01/node-1/process.log; launch is not readiness\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:07:37.165155+00:00",
+    "action": "all-members-caught-up",
+    "leader": 0,
+    "targetLogPosition": 767136,
+    "members": {
+      "0": {
+        "term": 3,
+        "position": 767136
+      },
+      "1": {
+        "term": 3,
+        "position": 767136
+      },
+      "2": {
+        "term": 3,
+        "position": 767136
+      }
+    },
+    "officialClusterToolOutput": "currentTimeNs=1792778857236000000, leaderMemberId=0, memberId=0, activeMembers=[ClusterMember{id=0, isBallotSent=false, isLeader=true, leadershipTermId=3, logPosition=767136, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792778857236000000, ingressEndpoint='10.0.212.169:19002', consensusEndpoint='10.0.212.169:19003', logEndpoint='10.0.212.169:19004', catchupEndpoint='10.0.212.169:19005', archiveEndpoint='10.0.212.169:19001', endpoints='10.0.212.169:19002,10.0.212.169:19003,10.0.212.169:19004,10.0.212.169:19005,10.0.212.169:19001', publication=null, vote=null}, ClusterMember{id=1, isBallotSent=false, isLeader=false, leadershipTermId=3, logPosition=767136, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792778857131000000, ingressEndpoint='10.1.60.60:19102', consensusEndpoint='10.1.60.60:19103', logEndpoint='10.1.60.60:19104', catchupEndpoint='10.1.60.60:19105', archiveEndpoint='10.1.60.60:19101', endpoints='10.1.60.60:19102,10.1.60.60:19103,10.1.60.60:19104,10.1.60.60:19105,10.1.60.60:19101', publication=null, vote=null}, ClusterMember{id=2, isBallotSent=false, isLeader=false, leadershipTermId=3, logPosition=767136, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792778857038000000, ingressEndpoint='10.1.81.207:19202', consensusEndpoint='10.1.81.207:19203', logEndpoint='10.1.81.207:19204', catchupEndpoint='10.1.81.207:19205', archiveEndpoint='10.1.81.207:19201', endpoints='10.1.81.207:19202,10.1.81.207:19203,10.1.81.207:19204,10.1.81.207:19205,10.1.81.207:19201', publication=null, vote=null}]\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:07:40.959357+00:00",
+    "action": "snapshot-request",
+    "leader": 0,
+    "stdout": "Member [0]: SNAPSHOT applied successfully\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:07:48.662905+00:00",
+    "action": "graceful-stop",
+    "node": 0,
+    "stdout": "node-0 stopped; persistent state preserved\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:07:48.675821+00:00",
+    "action": "graceful-stop",
+    "node": 1,
+    "stdout": "node-1 stopped; persistent state preserved\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:07:48.676196+00:00",
+    "action": "graceful-stop",
+    "node": 2,
+    "stdout": "node-2 stopped; persistent state preserved\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:07:48.676763+00:00",
+    "action": "all-three-JVMs-stopped",
+    "persistentStatePreserved": true
+  },
+  {
+    "timestamp": "2026-10-23T18:07:52.052122+00:00",
+    "action": "FAILED",
+    "errorType": "RuntimeError",
+    "error": "node0 1: remote launcher: Process identity was not established; inspect /opt/vectormatch/runtime/cloud-20261023-01/node-0/process.log\n\n "
+  },
+  {
+    "timestamp": "2026-10-23T18:11:58.900847+00:00",
+    "action": "supervisor-identity-upgrade",
+    "revision": "e1972ed",
+    "node": 0,
+    "tests": 18,
+    "exitCode": 0
+  },
+  {
+    "timestamp": "2026-10-23T18:11:59.835531+00:00",
+    "action": "supervisor-identity-upgrade",
+    "revision": "e1972ed",
+    "node": 1,
+    "tests": 18,
+    "exitCode": 0
+  },
+  {
+    "timestamp": "2026-10-23T18:12:00.582531+00:00",
+    "action": "supervisor-identity-upgrade",
+    "revision": "e1972ed",
+    "node": 2,
+    "tests": 18,
+    "exitCode": 0
+  },
+  {
+    "timestamp": "2026-10-23T18:12:04.119287+00:00",
+    "action": "resume-cold-start",
+    "node": 0,
+    "stdout": "node-0 launched pid=1222; log=/opt/vectormatch/runtime/cloud-20261023-01/node-0/process.log; launch is not readiness\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:12:21.149919+00:00",
+    "action": "experiment-verify",
+    "folder": "cloud-after-fault-02",
+    "stdout": "VECTOR_REMOTE_VERIFY_PASS leader=2 hash=296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:12:23.916431+00:00",
+    "action": "all-members-caught-up",
+    "leader": 2,
+    "targetLogPosition": 838432,
+    "members": {
+      "0": {
+        "term": 5,
+        "position": 838432
+      },
+      "1": {
+        "term": 5,
+        "position": 838432
+      },
+      "2": {
+        "term": 5,
+        "position": 838432
+      }
+    },
+    "officialClusterToolOutput": "currentTimeNs=1792779144060000000, leaderMemberId=2, memberId=2, activeMembers=[ClusterMember{id=0, isBallotSent=false, isLeader=false, leadershipTermId=5, logPosition=838432, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792779143918000000, ingressEndpoint='10.0.212.169:19002', consensusEndpoint='10.0.212.169:19003', logEndpoint='10.0.212.169:19004', catchupEndpoint='10.0.212.169:19005', archiveEndpoint='10.0.212.169:19001', endpoints='10.0.212.169:19002,10.0.212.169:19003,10.0.212.169:19004,10.0.212.169:19005,10.0.212.169:19001', publication=null, vote=null}, ClusterMember{id=1, isBallotSent=false, isLeader=false, leadershipTermId=5, logPosition=838432, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792779143924000000, ingressEndpoint='10.1.60.60:19102', consensusEndpoint='10.1.60.60:19103', logEndpoint='10.1.60.60:19104', catchupEndpoint='10.1.60.60:19105', archiveEndpoint='10.1.60.60:19101', endpoints='10.1.60.60:19102,10.1.60.60:19103,10.1.60.60:19104,10.1.60.60:19105,10.1.60.60:19101', publication=null, vote=null}, ClusterMember{id=2, isBallotSent=false, isLeader=true, leadershipTermId=5, logPosition=838432, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792779144060000000, ingressEndpoint='10.1.81.207:19202', consensusEndpoint='10.1.81.207:19203', logEndpoint='10.1.81.207:19204', catchupEndpoint='10.1.81.207:19205', archiveEndpoint='10.1.81.207:19201', endpoints='10.1.81.207:19202,10.1.81.207:19203,10.1.81.207:19204,10.1.81.207:19205,10.1.81.207:19201', publication=null, vote=null}]\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:12:23.917513+00:00",
+    "action": "all-three-cold-restored-after-launcher-repair",
+    "leader": 2
+  },
+  {
+    "timestamp": "2026-10-23T18:12:28.209977+00:00",
+    "action": "repeat-graceful-stop",
+    "node": 0,
+    "stdout": "node-0 stopped; persistent state preserved\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:12:28.211093+00:00",
+    "action": "repeat-graceful-stop",
+    "node": 1,
+    "stdout": "node-1 stopped; persistent state preserved\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:12:28.211716+00:00",
+    "action": "repeat-graceful-stop",
+    "node": 2,
+    "stdout": "node-2 stopped; persistent state preserved\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:12:28.212492+00:00",
+    "action": "repeat-all-three-JVMs-stopped",
+    "persistentStatePreserved": true
+  },
+  {
+    "timestamp": "2026-10-23T18:12:31.018472+00:00",
+    "action": "repeat-cold-start",
+    "node": 0,
+    "stdout": "node-0 launched pid=1286; log=/opt/vectormatch/runtime/cloud-20261023-01/node-0/process.log; launch is not readiness\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:12:31.021498+00:00",
+    "action": "repeat-cold-start",
+    "node": 1,
+    "stdout": "node-1 launched pid=3114; log=/opt/vectormatch/runtime/cloud-20261023-01/node-1/process.log; launch is not readiness\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:12:31.021808+00:00",
+    "action": "repeat-cold-start",
+    "node": 2,
+    "stdout": "node-2 launched pid=4937; log=/opt/vectormatch/runtime/cloud-20261023-01/node-2/process.log; launch is not readiness\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:12:50.115159+00:00",
+    "action": "experiment-verify",
+    "folder": "cloud-after-fault-02",
+    "stdout": "VECTOR_REMOTE_VERIFY_PASS leader=0 hash=296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:12:53.248845+00:00",
+    "action": "all-members-caught-up",
+    "leader": 0,
+    "targetLogPosition": 909632,
+    "members": {
+      "0": {
+        "term": 6,
+        "position": 909632
+      },
+      "1": {
+        "term": 6,
+        "position": 909632
+      },
+      "2": {
+        "term": 6,
+        "position": 909632
+      }
+    },
+    "officialClusterToolOutput": "currentTimeNs=1792779173345000000, leaderMemberId=0, memberId=0, activeMembers=[ClusterMember{id=0, isBallotSent=false, isLeader=true, leadershipTermId=6, logPosition=909632, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792779173345000000, ingressEndpoint='10.0.212.169:19002', consensusEndpoint='10.0.212.169:19003', logEndpoint='10.0.212.169:19004', catchupEndpoint='10.0.212.169:19005', archiveEndpoint='10.0.212.169:19001', endpoints='10.0.212.169:19002,10.0.212.169:19003,10.0.212.169:19004,10.0.212.169:19005,10.0.212.169:19001', publication=null, vote=null}, ClusterMember{id=1, isBallotSent=false, isLeader=false, leadershipTermId=6, logPosition=909632, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792779173255000000, ingressEndpoint='10.1.60.60:19102', consensusEndpoint='10.1.60.60:19103', logEndpoint='10.1.60.60:19104', catchupEndpoint='10.1.60.60:19105', archiveEndpoint='10.1.60.60:19101', endpoints='10.1.60.60:19102,10.1.60.60:19103,10.1.60.60:19104,10.1.60.60:19105,10.1.60.60:19101', publication=null, vote=null}, ClusterMember{id=2, isBallotSent=false, isLeader=false, leadershipTermId=6, logPosition=909632, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792779173252000000, ingressEndpoint='10.1.81.207:19202', consensusEndpoint='10.1.81.207:19203', logEndpoint='10.1.81.207:19204', catchupEndpoint='10.1.81.207:19205', archiveEndpoint='10.1.81.207:19201', endpoints='10.1.81.207:19202,10.1.81.207:19203,10.1.81.207:19204,10.1.81.207:19205,10.1.81.207:19201', publication=null, vote=null}]\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:12:53.256188+00:00",
+    "action": "cloud-recovery-PASS",
+    "leader": 0,
+    "checkpointFolder": "cloud-after-fault-02",
+    "javaRevision": "2597bc3",
+    "supervisorRevision": "e1972ed",
+    "scope": "Two remote Java leader SIGKILLs, rejoin/catchup, snapshot and repeated all-JVM cold restart. Initial launcher identity check failed, was preserved and repaired before repeat. Ephemeral container filesystems remained mounted. No Pod-stop, physical power loss or AZ-loss durability proof."
+  },
+  {
+    "timestamp": "2026-10-23T18:13:56.111761+00:00",
+    "action": "experiment-run",
+    "folder": "cloud-after-cold-final",
+    "stdout": "VECTOR_REMOTE_EXPERIMENT_PASS commands=900 trades=300 goodput=96.849/s p99=12295.407us leader=0 hash=bfbc71cfe6261ee53e90fec15c32401ed37bf4baa88e93f8bfd626aad7610f52\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:13:58.830679+00:00",
+    "action": "new-business-after-cold-restart-confirmed",
+    "checkpointFolder": "cloud-after-cold-final"
+  },
+  {
+    "timestamp": "2026-10-23T18:14:17.468731+00:00",
+    "action": "restored-outbox-through-PostgreSQL-PASS",
+    "passed": true,
+    "restoredPendingBeforeNewBusiness": 1574,
+    "expectedFinalEventSeq": 2896,
+    "expectedTrades": 722,
+    "database": {
+      "clusterId": "runpod-cloud-20261023-01",
+      "cursor": 2896,
+      "marketSeq": 2888,
+      "eventsStored": 2896,
+      "tradesStored": 722,
+      "batchesCommitted": 181,
+      "sourceLastObservedSeq": 2896,
+      "lag": 0,
+      "updatedAt": "2026-10-23T18:14:17.481953Z"
+    },
+    "scope": "Restored pending outbox plus new post-cold business, projected to loopback PostgreSQL on member2; commit-before-ack, no PostgreSQL HA or Pod-stop durability proof."
+  },
+  {
+    "timestamp": "2026-10-23T18:18:11.027530+00:00",
+    "action": "final-role-stop",
+    "role": "gateway",
+    "stdout": "gateway stopped; persistent state preserved\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:18:15.377779+00:00",
+    "action": "final-role-stop",
+    "role": "projector",
+    "stdout": "projector stopped; persistent state preserved\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:18:18.149144+00:00",
+    "action": "final-snapshot-request",
+    "leader": 0,
+    "stdout": "Member [0]: SNAPSHOT applied successfully\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:18:24.364375+00:00",
+    "action": "final-node-stop",
+    "node": 0,
+    "stdout": "node-0 stopped; persistent state preserved\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:18:24.370983+00:00",
+    "action": "final-node-stop",
+    "node": 1,
+    "stdout": "node-1 stopped; persistent state preserved\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:18:24.374160+00:00",
+    "action": "final-node-stop",
+    "node": 2,
+    "stdout": "node-2 stopped; persistent state preserved\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:18:28.407378+00:00",
+    "action": "PostgreSQL-clean-shutdown",
+    "stdout": "waiting for server to shut down.... done\nserver stopped\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:18:36.774178+00:00",
+    "action": "offline-state-backups-verified",
+    "archives": 3
   }
 ]

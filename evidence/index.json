@@ -197,6 +197,74 @@
       ],
       "artifactPath": "evidence/2026-10-23/runpod-cluster/result.json",
       "timestamp": "2026-10-23T17:48:45.930579864Z"
+    },
+    {
+      "id": "runpod-recovery",
+      "label": "Runpod recovery \u00b7 leader kill & cold restart",
+      "scope": "Two successful leader SIGKILL rounds after bootstrap repair; snapshot, all-JVM stop/start and canonical state verification",
+      "model": "EXTERNAL_PROCESS_FAULTS; same running Pods and mounted ephemeral filesystems",
+      "commands": null,
+      "trades": null,
+      "throughput": null,
+      "p50Millis": null,
+      "p99Millis": null,
+      "unknown": null,
+      "correctnessPassed": true,
+      "durability": "Sync level 2; replicated core and 1,574 pending outbox events restored",
+      "limitations": [
+        "Campaign preserved one initial bootstrap timeout and one launcher identity failure; repairs preceded the successful repeat.",
+        "Two successful orchestration intervals were 28.451 and 31.386 seconds, including SSH/JVM/checks; pure election and first-new-write latency were not measured.",
+        "Same core hash at command 1,182; all three members restored snapshot and caught up. This command count includes setup and warmup.",
+        "No Pod-stop, physical power-loss, AZ-loss or persistent-volume recovery proof; physical anti-affinity is unverified."
+      ],
+      "artifactPath": "evidence/2026-10-23/runpod-cluster/recovery-summary.json",
+      "timestamp": "2026-10-23T18:12:53.256188Z"
+    },
+    {
+      "id": "runpod-replicated-after-cold",
+      "label": "Runpod matching \u00b7 after full process restart",
+      "scope": "execute call only: encode, UDP transport, replication/commit, matching, response, automatic retries",
+      "model": "CLOSED_LOOP_SINGLE_INFLIGHT; maximum one request in flight; load generator shares member 2",
+      "commands": 900,
+      "trades": 300,
+      "throughput": 96.84902274821806,
+      "p50Millis": 9.124065,
+      "p99Millis": 12.295406999999999,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "durability": "3 Pods; Archive/catalog/consensus sync level 2; temporary container disks",
+      "limitations": [
+        "Second 900-command measured trial with 2 setup and 90 warmup commands excluded. Initial 95.15/s trial remains published.",
+        "Single-inflight closed-loop smoke; this is not saturation capacity, open-loop load or a concurrency claim.",
+        "RTT max/p99.9 524.124121 ms; 2 accepted resends and 3 unaccepted offers retained; zero unknown timeouts.",
+        "Canonical bytes, state hash, invariants and same-key replay passed against the same deterministic MatchingEngine implementation.",
+        "Shared load-generator/member host; no Pod-stop disk durability or certified physical anti-affinity."
+      ],
+      "artifactPath": "evidence/2026-10-23/runpod-cluster/runs/cloud-after-cold-final/result.json",
+      "timestamp": "2026-10-23T18:13:56.244160034Z"
+    },
+    {
+      "id": "runpod-workbench-postgres",
+      "label": "Runpod end to end \u00b7 quorum through PostgreSQL",
+      "scope": "HTTP -> Aeron quorum -> gateway mirror -> asynchronous PostgreSQL cursor observation | Caller-supplied layout: Runpod EU-RO-1 three-Pod private UDP cluster; gateway/database share member 2; cluster members=3; gatewaySharesClusterMember=true; postgresSharesClusterMember=true",
+      "model": "FUNCTIONAL_SMOKE; HTTP place / retry / conflict / cancel / mirror replay / database cursor",
+      "commands": 2,
+      "trades": 0,
+      "throughput": null,
+      "p50Millis": null,
+      "p99Millis": null,
+      "unknown": null,
+      "correctnessPassed": true,
+      "durability": "Aeron quorum and asynchronous PostgreSQL 18.6; fsync and synchronous_commit enabled",
+      "limitations": [
+        "Functional verification, not a latency or capacity benchmark. Gateway and PostgreSQL share member 2.",
+        "Before gateway startup, restored outbox plus post-cold business projected 2,896 events and 722 trades with observed lag 0.",
+        "HTTP verification reached confirmed event/cursor 3,300 and 819 cumulative trades after separate synthetic market flow; the two HTTP commands themselves made zero trades.",
+        "Database cursor is a cached observation. PostgreSQL is one instance on an ephemeral disk; PostgreSQL HA and Pod-stop recovery were not tested.",
+        "Initial HTTP attempt preceded gateway readiness and failed before sending business commands; successful follow-up trace is retained."
+      ],
+      "artifactPath": "evidence/2026-10-23/runpod-workbench/http-smoke-ready/summary.json",
+      "timestamp": "2026-10-23T18:15:15.570656+00:00"
     }
   ]
 }

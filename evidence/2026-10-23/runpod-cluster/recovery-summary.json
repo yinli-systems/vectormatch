@@ -1,0 +1,842 @@
+{
+  "schemaVersion": 1,
+  "test": "runpod-private-udp-cluster-process-fault-and-cold-restart-recovery",
+  "passed": true,
+  "status": "PASS_AFTER_PRESERVED_FAILURES_AND_REPAIRS",
+  "scope": "Three prestarted Runpod Pods using native private UDP. Java process SIGKILL, member rejoin/catchup, coordinated snapshots and repeated all-JVM graceful stop/restart on still-mounted ephemeral container filesystems.",
+  "evidenceWindowThroughTimestamp": "2026-10-23T18:12:53.256188+00:00",
+  "sourceTimelineLastIncludedEvent": {
+    "path": "fault-timeline.json",
+    "jsonPointer": "/50"
+  },
+  "laterBusinessLoadRunsAndPostgresEvidenceIncluded": false,
+  "configuration": {
+    "clusterMemberCount": 3,
+    "clusterPrivateIps": [
+      "10.0.212.169",
+      "10.1.60.60",
+      "10.1.81.207"
+    ],
+    "aeronMtuLength": 1248,
+    "configuredSyncLevel": 2,
+    "javaRevisionForRecovery": "2597bc3",
+    "supervisorRevisionForSuccessfulRepeat": "e1972ed",
+    "physicalHostIsolationEstablishedByThisEvidence": false,
+    "independentMachines": null
+  },
+  "attemptAccounting": {
+    "leaderSigkillSignalsTotal": 3,
+    "initialFreshClientBootstrapAttemptsFailed": 1,
+    "successfulLeaderSigkillRoundsAfterClientPatch": 2,
+    "initialAllJvmRestartAttemptFailedAtLauncher": true,
+    "repairedPartialRestartVerified": true,
+    "subsequentFullAllJvmStopRestartPassed": true
+  },
+  "initialClientBootstrapFailure": {
+    "passed": false,
+    "originalLeader": 0,
+    "failureTimestamp": "2026-10-23T17:51:52.262785+00:00",
+    "failureType": "Fresh client Aeron connect timeout while original leader ingress was unavailable",
+    "connectTimeoutSeconds": 20,
+    "stateLossEstablished": false,
+    "sources": [
+      {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/4"
+      }
+    ],
+    "repair": {
+      "deployedAt": "2026-10-23T18:04:50.861313+00:00",
+      "revision": "2597bc3b849d8e042c8bbe67f0a5142580871a5b",
+      "bundleSha256": "690298bcd08233fd93125ae9b72d7c118b0307d88dec88a54feb732535fb7261",
+      "originalLeaderStillStoppedDuringDeployment": true,
+      "verifiedAt": "2026-10-23T18:05:09.475893+00:00",
+      "connectedLeaderAfterPatch": 2,
+      "unchangedCanonicalStateVerified": true,
+      "sources": [
+        {
+          "path": "fault-timeline.json",
+          "jsonPointer": "/5"
+        },
+        {
+          "path": "fault-timeline.json",
+          "jsonPointer": "/7"
+        }
+      ],
+      "rawVerificationArtifact": {
+        "path": "runs/cloud-3nodes-01/verify-1792778693657-ea7bb0bf.json",
+        "sha256": "c28eae469c2128d95d5c43ee5487bd0f7b43704a80c25dee1fd8f61cd5c01c34"
+      }
+    },
+    "rawVerificationArtifact": {
+      "path": "runs/cloud-3nodes-01/verify-1792777892122-a19d372c.json",
+      "sha256": "859a6e95e08854608bd378c7d03da4697b937dc2fcce4bf989f315bdd8315d8c"
+    }
+  },
+  "successfulLeaderSigkillRounds": [
+    {
+      "roundAfterClientPatch": 1,
+      "passed": true,
+      "oldLeader": 2,
+      "newLeader": 1,
+      "faultStartTimestamp": "2026-10-23T18:05:34.998770+00:00",
+      "sigkillConfirmedTimestamp": "2026-10-23T18:05:38.636483+00:00",
+      "verificationCompletedTimestamp": "2026-10-23T18:06:03.450007+00:00",
+      "orchestrationInclusiveSeconds": 28.451178207999995,
+      "pureFailoverRtoSeconds": null,
+      "firstNewWriteRecoverySeconds": null,
+      "durationScope": "Root monotonic duration includes SSH setup, SIGKILL dispatch, JVM start, connect and snapshot/replay verification; not first-new-write recovery latency",
+      "canonicalCheckpointAndSameKeyReplayVerified": true,
+      "verificationEvidenceKind": "Archived RemoteClusterExperiment verification JSON, SHA256 matched to export manifest, plus timeline-captured PASS stdout. Checks unchanged canonical bytes, same-key replay, rejected conflicting payload and core invariants.",
+      "newBusinessProbeAfterVerification": {
+        "folder": "cloud-after-fault-01",
+        "measuredCommands": 3,
+        "measuredTrades": 1,
+        "performanceBenchmark": false,
+        "includesSeparateSetupAndWarmup": true,
+        "source": {
+          "path": "fault-timeline.json",
+          "jsonPointer": "/17"
+        }
+      },
+      "restartedMemberCaughtUp": {
+        "observerLeader": 1,
+        "targetLogPosition": 587456,
+        "members": {
+          "0": {
+            "term": 2,
+            "position": 587456
+          },
+          "1": {
+            "term": 2,
+            "position": 587456
+          },
+          "2": {
+            "term": 2,
+            "position": 587456
+          }
+        },
+        "source": {
+          "path": "fault-timeline.json",
+          "jsonPointer": "/19"
+        }
+      },
+      "sources": [
+        {
+          "path": "fault-timeline.json",
+          "jsonPointer": "/12"
+        },
+        {
+          "path": "fault-timeline.json",
+          "jsonPointer": "/13"
+        },
+        {
+          "path": "fault-timeline.json",
+          "jsonPointer": "/15"
+        }
+      ],
+      "rawVerificationArtifact": {
+        "path": "runs/cloud-3nodes-01/verify-1792778741233-56091ce1.json",
+        "sha256": "01027d774b0fcf0b9a2661b396bbb0a4ee660588f40e9191ebdaf77ef95c0884"
+      }
+    },
+    {
+      "roundAfterClientPatch": 2,
+      "passed": true,
+      "oldLeader": 1,
+      "newLeader": 0,
+      "faultStartTimestamp": "2026-10-23T18:06:35.868287+00:00",
+      "sigkillConfirmedTimestamp": "2026-10-23T18:06:40.034266+00:00",
+      "verificationCompletedTimestamp": "2026-10-23T18:07:07.254772+00:00",
+      "orchestrationInclusiveSeconds": 31.38641991600001,
+      "pureFailoverRtoSeconds": null,
+      "firstNewWriteRecoverySeconds": null,
+      "durationScope": "Root monotonic duration includes SSH setup, SIGKILL dispatch, JVM start, connect and snapshot/replay verification; not first-new-write recovery latency",
+      "canonicalCheckpointAndSameKeyReplayVerified": true,
+      "verificationEvidenceKind": "Archived RemoteClusterExperiment verification JSON, SHA256 matched to export manifest, plus timeline-captured PASS stdout. Checks unchanged canonical bytes, same-key replay, rejected conflicting payload and core invariants.",
+      "newBusinessProbeAfterVerification": {
+        "folder": "cloud-after-fault-02",
+        "measuredCommands": 3,
+        "measuredTrades": 1,
+        "performanceBenchmark": false,
+        "includesSeparateSetupAndWarmup": true,
+        "source": {
+          "path": "fault-timeline.json",
+          "jsonPointer": "/25"
+        }
+      },
+      "restartedMemberCaughtUp": {
+        "observerLeader": 0,
+        "targetLogPosition": 767136,
+        "members": {
+          "0": {
+            "term": 3,
+            "position": 767136
+          },
+          "1": {
+            "term": 3,
+            "position": 767136
+          },
+          "2": {
+            "term": 3,
+            "position": 767136
+          }
+        },
+        "source": {
+          "path": "fault-timeline.json",
+          "jsonPointer": "/27"
+        }
+      },
+      "sources": [
+        {
+          "path": "fault-timeline.json",
+          "jsonPointer": "/20"
+        },
+        {
+          "path": "fault-timeline.json",
+          "jsonPointer": "/21"
+        },
+        {
+          "path": "fault-timeline.json",
+          "jsonPointer": "/23"
+        }
+      ],
+      "rawVerificationArtifact": {
+        "path": "runs/cloud-after-fault-01/verify-1792778802963-293efa78.json",
+        "sha256": "6d0003784fa42646462932bfa6d414eccf04c8d7fcbd0e56f6e30cff19704e60"
+      }
+    }
+  ],
+  "snapshotCheckpoint": {
+    "coreStateHash": "296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae",
+    "lastCommandSeq": 1182,
+    "exportedEventSeq": 0,
+    "pendingOutboxEvents": 1574,
+    "coreHashDoesNotIndependentlyHashOutboxPayloads": true,
+    "outboxPayloadsIndependentlyComparedByThisSummary": false,
+    "writtenByAllThreeMembers": true,
+    "restoredByAllThreeLatestProcesses": true,
+    "beforeRestartMemberLogs": [
+      {
+        "coreStateHash": "296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae",
+        "lastCommandSeq": 1182,
+        "exportedEventSeq": 0,
+        "pendingOutboxEvents": 1574,
+        "logLine": "VECTOR_SNAPSHOT_WRITTEN hash=296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae commands=1182 exported=0 pending=1574",
+        "node": 0,
+        "source": "before-cold-restart/node0.json",
+        "pid": 924
+      },
+      {
+        "coreStateHash": "296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae",
+        "lastCommandSeq": 1182,
+        "exportedEventSeq": 0,
+        "pendingOutboxEvents": 1574,
+        "logLine": "VECTOR_SNAPSHOT_WRITTEN hash=296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae commands=1182 exported=0 pending=1574",
+        "node": 1,
+        "source": "before-cold-restart/node1.json",
+        "pid": 2766
+      },
+      {
+        "coreStateHash": "296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae",
+        "lastCommandSeq": 1182,
+        "exportedEventSeq": 0,
+        "pendingOutboxEvents": 1574,
+        "logLine": "VECTOR_SNAPSHOT_WRITTEN hash=296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae commands=1182 exported=0 pending=1574",
+        "node": 2,
+        "source": "before-cold-restart/node2.json",
+        "pid": 4307
+      }
+    ],
+    "afterRepeatedRestartMemberLogs": [
+      {
+        "coreStateHash": "296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae",
+        "lastCommandSeq": 1182,
+        "exportedEventSeq": 0,
+        "pendingOutboxEvents": 1574,
+        "logLine": "VECTOR_SNAPSHOT_RESTORED hash=296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae commands=1182 exported=0 pending=1574",
+        "node": 0,
+        "source": "after-cold-restart/node0.json",
+        "pid": 1286,
+        "latestProcessDescribedByOfficialTool": true
+      },
+      {
+        "coreStateHash": "296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae",
+        "lastCommandSeq": 1182,
+        "exportedEventSeq": 0,
+        "pendingOutboxEvents": 1574,
+        "logLine": "VECTOR_SNAPSHOT_RESTORED hash=296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae commands=1182 exported=0 pending=1574",
+        "node": 1,
+        "source": "after-cold-restart/node1.json",
+        "pid": 3114,
+        "latestProcessDescribedByOfficialTool": true
+      },
+      {
+        "coreStateHash": "296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae",
+        "lastCommandSeq": 1182,
+        "exportedEventSeq": 0,
+        "pendingOutboxEvents": 1574,
+        "logLine": "VECTOR_SNAPSHOT_RESTORED hash=296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae commands=1182 exported=0 pending=1574",
+        "node": 2,
+        "source": "after-cold-restart/node2.json",
+        "pid": 4937,
+        "latestProcessDescribedByOfficialTool": true
+      }
+    ],
+    "lastEventSeqVerifiedByRecoveryProbe": 1574,
+    "lastMarketSeqVerifiedByRecoveryProbe": 1568
+  },
+  "allJvmRestart": {
+    "initialAttempt": {
+      "passed": false,
+      "failureTimestamp": "2026-10-23T18:07:52.052122+00:00",
+      "failureType": "Launcher could not establish node0 process identity",
+      "failureSource": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/33"
+      },
+      "observationsAtFailure": [
+        {
+          "node": 0,
+          "source": "cold-start-failed/node0.json",
+          "recordedStatus": "stopped",
+          "lastRestoredSnapshot": null
+        },
+        {
+          "node": 1,
+          "source": "cold-start-failed/node1.json",
+          "recordedStatus": "running",
+          "lastRestoredSnapshot": {
+            "coreStateHash": "296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae",
+            "lastCommandSeq": 1182,
+            "exportedEventSeq": 0,
+            "pendingOutboxEvents": 1574,
+            "logLine": "VECTOR_SNAPSHOT_RESTORED hash=296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae commands=1182 exported=0 pending=1574"
+          }
+        },
+        {
+          "node": 2,
+          "source": "cold-start-failed/node2.json",
+          "recordedStatus": "running",
+          "lastRestoredSnapshot": {
+            "coreStateHash": "296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae",
+            "lastCommandSeq": 1182,
+            "exportedEventSeq": 0,
+            "pendingOutboxEvents": 1574,
+            "logLine": "VECTOR_SNAPSHOT_RESTORED hash=296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae commands=1182 exported=0 pending=1574"
+          }
+        }
+      ],
+      "snapshotCorruptionEstablished": false
+    },
+    "launcherRepair": {
+      "description": "Process supervisor identity-check upgrade; preserve initial failed evidence rather than replacing it",
+      "deployments": [
+        {
+          "node": 0,
+          "revision": "e1972ed",
+          "testsReportedPassed": 18,
+          "exitCode": 0,
+          "source": {
+            "path": "fault-timeline.json",
+            "jsonPointer": "/34"
+          }
+        },
+        {
+          "node": 1,
+          "revision": "e1972ed",
+          "testsReportedPassed": 18,
+          "exitCode": 0,
+          "source": {
+            "path": "fault-timeline.json",
+            "jsonPointer": "/35"
+          }
+        },
+        {
+          "node": 2,
+          "revision": "e1972ed",
+          "testsReportedPassed": 18,
+          "exitCode": 0,
+          "source": {
+            "path": "fault-timeline.json",
+            "jsonPointer": "/36"
+          }
+        }
+      ],
+      "repairedPartialRestartVerifiedAt": "2026-10-23T18:12:23.917513+00:00",
+      "repairedPartialRestartLeader": 2,
+      "source": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/40"
+      },
+      "rawVerificationArtifact": {
+        "path": "runs/cloud-after-fault-02/verify-1792779126895-f45c066f.json",
+        "sha256": "0ef32a7bb9b788f28d652789f361fc32326f392431d82ed16577785aff5d87a1"
+      }
+    },
+    "repeatedFullRestart": {
+      "passed": true,
+      "allThreeStoppedTimestamp": "2026-10-23T18:12:28.212492+00:00",
+      "persistentFilesystemsPreserved": true,
+      "allThreeStoppedSource": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/44"
+      },
+      "startObservations": [
+        {
+          "node": 0,
+          "timestamp": "2026-10-23T18:12:31.018472+00:00",
+          "source": {
+            "path": "fault-timeline.json",
+            "jsonPointer": "/45"
+          }
+        },
+        {
+          "node": 1,
+          "timestamp": "2026-10-23T18:12:31.021498+00:00",
+          "source": {
+            "path": "fault-timeline.json",
+            "jsonPointer": "/46"
+          }
+        },
+        {
+          "node": 2,
+          "timestamp": "2026-10-23T18:12:31.021808+00:00",
+          "source": {
+            "path": "fault-timeline.json",
+            "jsonPointer": "/47"
+          }
+        }
+      ],
+      "canonicalCheckpointAndSameKeyReplayVerified": true,
+      "finalCaughtUpObservation": {
+        "timestamp": "2026-10-23T18:12:53.248845+00:00",
+        "observerMemberIsLeader": true,
+        "leader": 0,
+        "targetLogPosition": 909632,
+        "members": {
+          "0": {
+            "term": 6,
+            "position": 909632
+          },
+          "1": {
+            "term": 6,
+            "position": 909632
+          },
+          "2": {
+            "term": 6,
+            "position": 909632
+          }
+        },
+        "source": {
+          "path": "fault-timeline.json",
+          "jsonPointer": "/49"
+        }
+      },
+      "completedAt": "2026-10-23T18:12:53.256188+00:00",
+      "source": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/50"
+      },
+      "pureRecoveryRtoSeconds": null,
+      "firstNewBusinessWriteAfterColdRestartVerifiedWithinThisEvidenceWindow": false,
+      "rawVerificationArtifact": {
+        "path": "runs/cloud-after-fault-02/verify-1792779154779-c2aeb795.json",
+        "sha256": "4681a066195cc1d7a1ce345709a1d3b2953a3c028a16728494373a739adb2c84"
+      }
+    }
+  },
+  "officialLeaderCatchupObservations": [
+    {
+      "timestamp": "2026-10-23T17:51:26.959523+00:00",
+      "observerMemberIsLeader": true,
+      "leader": 0,
+      "targetLogPosition": 302752,
+      "members": {
+        "0": {
+          "term": 0,
+          "position": 302752
+        },
+        "1": {
+          "term": 0,
+          "position": 302752
+        },
+        "2": {
+          "term": 0,
+          "position": 302752
+        }
+      },
+      "source": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/1"
+      }
+    },
+    {
+      "timestamp": "2026-10-23T18:05:15.689530+00:00",
+      "observerMemberIsLeader": true,
+      "leader": 2,
+      "targetLogPosition": 362272,
+      "members": {
+        "0": {
+          "term": 1,
+          "position": 362272
+        },
+        "1": {
+          "term": 1,
+          "position": 362272
+        },
+        "2": {
+          "term": 1,
+          "position": 362272
+        }
+      },
+      "source": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/9"
+      }
+    },
+    {
+      "timestamp": "2026-10-23T18:05:34.994293+00:00",
+      "observerMemberIsLeader": true,
+      "leader": 2,
+      "targetLogPosition": 421696,
+      "members": {
+        "0": {
+          "term": 1,
+          "position": 421696
+        },
+        "1": {
+          "term": 1,
+          "position": 421696
+        },
+        "2": {
+          "term": 1,
+          "position": 421696
+        }
+      },
+      "source": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/11"
+      }
+    },
+    {
+      "timestamp": "2026-10-23T18:06:35.867166+00:00",
+      "observerMemberIsLeader": true,
+      "leader": 1,
+      "targetLogPosition": 587456,
+      "members": {
+        "0": {
+          "term": 2,
+          "position": 587456
+        },
+        "1": {
+          "term": 2,
+          "position": 587456
+        },
+        "2": {
+          "term": 2,
+          "position": 587456
+        }
+      },
+      "source": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/19"
+      }
+    },
+    {
+      "timestamp": "2026-10-23T18:07:37.165155+00:00",
+      "observerMemberIsLeader": true,
+      "leader": 0,
+      "targetLogPosition": 767136,
+      "members": {
+        "0": {
+          "term": 3,
+          "position": 767136
+        },
+        "1": {
+          "term": 3,
+          "position": 767136
+        },
+        "2": {
+          "term": 3,
+          "position": 767136
+        }
+      },
+      "source": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/27"
+      }
+    },
+    {
+      "timestamp": "2026-10-23T18:12:23.916431+00:00",
+      "observerMemberIsLeader": true,
+      "leader": 2,
+      "targetLogPosition": 838432,
+      "members": {
+        "0": {
+          "term": 5,
+          "position": 838432
+        },
+        "1": {
+          "term": 5,
+          "position": 838432
+        },
+        "2": {
+          "term": 5,
+          "position": 838432
+        }
+      },
+      "source": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/39"
+      }
+    },
+    {
+      "timestamp": "2026-10-23T18:12:53.248845+00:00",
+      "observerMemberIsLeader": true,
+      "leader": 0,
+      "targetLogPosition": 909632,
+      "members": {
+        "0": {
+          "term": 6,
+          "position": 909632
+        },
+        "1": {
+          "term": 6,
+          "position": 909632
+        },
+        "2": {
+          "term": 6,
+          "position": 909632
+        }
+      },
+      "source": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/49"
+      }
+    }
+  ],
+  "timingInterpretation": {
+    "leaderFaultDurationsAreOrchestrationInclusive": true,
+    "includes": "SSH setup, SIGKILL dispatch, verifier JVM start/connect and snapshot/replay checks",
+    "pureElectionDurationMeasured": false,
+    "firstNewWriteRecoveryLatencyMeasured": false,
+    "coldRestartMonotonicDurationRecorded": false,
+    "crossMachineWallClockDifferencesUsedAsLatency": false
+  },
+  "limitations": [
+    "Initial failures are part of the campaign: one old-client bootstrap timeout and one launcher identity failure were repaired before successful follow-up checks.",
+    "The two successful leader-fault durations are end-to-end orchestration intervals, not pure RTO, election time, or first-new-write latency.",
+    "Full restart was graceful all-JVM stop/start with ephemeral Pod filesystems still mounted; no Pod stop/termination, physical power loss, disk loss or availability-zone loss was tested.",
+    "Sync level 2 is evidenced configuration, not an independent power-loss or storage-device durability guarantee.",
+    "Aeron leader-side member observations show reported log positions caught up. This summary does not inspect physical hosts or prove independent hardware failure domains.",
+    "Canonical snapshot/retry verification uses the deterministic core implementation. It is not an independent matching implementation or a formal distributed-systems proof.",
+    "Snapshot logs expose the same core hash and outbox exported/pending counters; this summary does not independently compare every outbox payload.",
+    "The 1182 command high-water mark includes setup and warmup as well as measured business commands. It is not a capacity measurement.",
+    "No new 900-command post-recovery workload, PostgreSQL projection, browser session, or subsequent business-run evidence is included in this recovery-only summary.",
+    "Recovery verifier JSON timestamps identify invocation start, not fault start or completion. Their per-probe elapsed values must not be reported as pure failover or cold-restart RTO."
+  ],
+  "sourceArtifactsSha256": {
+    "after-cold-restart/node0.json": "650d6631aecf5f0372c4b319d8ad958a0d3fa5170e1c5a6d57bd6643b4b0a022",
+    "after-cold-restart/node1.json": "d58a68020d7de92931f23557bb965fe9a0de4e40682e45a0dd883552dde4288c",
+    "after-cold-restart/node2.json": "d85abbe70421ef9334c3052210658c1d2c7223233cd329cf060971d98c6cca5f",
+    "before-cold-restart/node0.json": "1c097a5dd4cf5793d5303c3347c3921bb2a497ae505566a3a4ecf2aab945a2ce",
+    "before-cold-restart/node1.json": "334410ab957c133525c345343566355dc4114e92a4400048048baa5353d9d1be",
+    "before-cold-restart/node2.json": "65027489f3029d6534c275c04aa16a7ae80fb275f0aa266941b7a66d69433924",
+    "cold-start-failed/node0.json": "dbc150250abf195d932fc7ccd03886d6900793196c23f10f8044430b24c43dac",
+    "cold-start-failed/node1.json": "89732473d25acc59dcfcf138e9ab3a71d655ae657ae2198ef3fa48f789356859",
+    "cold-start-failed/node2.json": "5c105ce47c7fceb6d809ae089452161e878387bae809c982de5fd54a53d14e15",
+    "fault-timeline.json": "1bbfdcb1e66363d66109ee8ccb24d66133d9d5e185fdbaa4523d56a9270b6879",
+    "runs/cloud-3nodes-01/verify-1792777871897-39c74fa9.json": "04b2812b0ec3d4a55e7e31e5a5c6cbccdc5f02e6103a1494b32a9ba44c5fbbe6",
+    "runs/cloud-3nodes-01/verify-1792777892122-a19d372c.json": "859a6e95e08854608bd378c7d03da4697b937dc2fcce4bf989f315bdd8315d8c",
+    "runs/cloud-3nodes-01/verify-1792778693657-ea7bb0bf.json": "c28eae469c2128d95d5c43ee5487bd0f7b43704a80c25dee1fd8f61cd5c01c34",
+    "runs/cloud-3nodes-01/verify-1792778719014-9ee9c384.json": "47d744c6e3eb79c9e258feccbff54ea94e64d71360bf1910839cd0409731ed65",
+    "runs/cloud-3nodes-01/verify-1792778741233-56091ce1.json": "01027d774b0fcf0b9a2661b396bbb0a4ee660588f40e9191ebdaf77ef95c0884",
+    "runs/cloud-after-fault-01/verify-1792778802963-293efa78.json": "6d0003784fa42646462932bfa6d414eccf04c8d7fcbd0e56f6e30cff19704e60",
+    "runs/cloud-after-fault-02/verify-1792779126895-f45c066f.json": "0ef32a7bb9b788f28d652789f361fc32326f392431d82ed16577785aff5d87a1",
+    "runs/cloud-after-fault-02/verify-1792779154779-c2aeb795.json": "4681a066195cc1d7a1ce345709a1d3b2953a3c028a16728494373a739adb2c84",
+    "run-artifacts-sha256.json": "58daaacb6387fc750c697285ec7fbb33cf284ea0ddec93425c0f5dcd9f0775a4"
+  },
+  "sourceHashNote": "Hashes identify artifact bytes captured when rawVerificationArchiveReviewedAt was recorded. The complete captured timeline may contain later appended events; only /0 through sourceTimelineLastIncludedEvent is included in this recovery-only summary. Later benchmark and PostgreSQL artifacts are excluded.",
+  "recoveryVerificationArtifacts": [
+    {
+      "stage": "baseline-before-initial-fault",
+      "path": "runs/cloud-3nodes-01/verify-1792777871897-39c74fa9.json",
+      "sha256": "04b2812b0ec3d4a55e7e31e5a5c6cbccdc5f02e6103a1494b32a9ba44c5fbbe6",
+      "sha256MatchesExportManifest": true,
+      "passed": true,
+      "verifierInvocationTimestamp": "2026-10-23T17:51:11.927470721Z",
+      "timelineSource": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/0"
+      },
+      "leaderMemberId": 0,
+      "finalCommandSeq": 992,
+      "finalEventSeq": 1322,
+      "finalMarketSeq": 1320,
+      "stateHash": "a98ae2f819d473742a6f3d015b2ecdc5cd78d74728a1ffccd8dedbf1fbfb9804",
+      "canonicalSnapshotBytesVerified": true,
+      "sameKeyReplayVerified": true,
+      "conflictingPayloadRejectedWithoutMutation": true,
+      "invariantsVerified": true
+    },
+    {
+      "stage": "initial-client-bootstrap-failure",
+      "path": "runs/cloud-3nodes-01/verify-1792777892122-a19d372c.json",
+      "sha256": "859a6e95e08854608bd378c7d03da4697b937dc2fcce4bf989f315bdd8315d8c",
+      "sha256MatchesExportManifest": true,
+      "passed": false,
+      "verifierInvocationTimestamp": "2026-10-23T17:51:32.152139562Z",
+      "timelineSource": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/4"
+      },
+      "errorType": "io.aeron.exceptions.TimeoutException",
+      "probeElapsedSeconds": 20.219818862
+    },
+    {
+      "stage": "client-bootstrap-repair-original-leader-still-down",
+      "path": "runs/cloud-3nodes-01/verify-1792778693657-ea7bb0bf.json",
+      "sha256": "c28eae469c2128d95d5c43ee5487bd0f7b43704a80c25dee1fd8f61cd5c01c34",
+      "sha256MatchesExportManifest": true,
+      "passed": true,
+      "verifierInvocationTimestamp": "2026-10-23T18:04:53.687329845Z",
+      "timelineSource": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/6"
+      },
+      "leaderMemberId": 2,
+      "finalCommandSeq": 992,
+      "finalEventSeq": 1322,
+      "finalMarketSeq": 1320,
+      "stateHash": "a98ae2f819d473742a6f3d015b2ecdc5cd78d74728a1ffccd8dedbf1fbfb9804",
+      "canonicalSnapshotBytesVerified": true,
+      "sameKeyReplayVerified": true,
+      "conflictingPayloadRejectedWithoutMutation": true,
+      "invariantsVerified": true
+    },
+    {
+      "stage": "baseline-after-original-member-rejoined",
+      "path": "runs/cloud-3nodes-01/verify-1792778719014-9ee9c384.json",
+      "sha256": "47d744c6e3eb79c9e258feccbff54ea94e64d71360bf1910839cd0409731ed65",
+      "sha256MatchesExportManifest": true,
+      "passed": true,
+      "verifierInvocationTimestamp": "2026-10-23T18:05:19.043783209Z",
+      "timelineSource": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/10"
+      },
+      "leaderMemberId": 2,
+      "finalCommandSeq": 992,
+      "finalEventSeq": 1322,
+      "finalMarketSeq": 1320,
+      "stateHash": "a98ae2f819d473742a6f3d015b2ecdc5cd78d74728a1ffccd8dedbf1fbfb9804",
+      "canonicalSnapshotBytesVerified": true,
+      "sameKeyReplayVerified": true,
+      "conflictingPayloadRejectedWithoutMutation": true,
+      "invariantsVerified": true
+    },
+    {
+      "stage": "successful-leader-sigkill-round-1",
+      "path": "runs/cloud-3nodes-01/verify-1792778741233-56091ce1.json",
+      "sha256": "01027d774b0fcf0b9a2661b396bbb0a4ee660588f40e9191ebdaf77ef95c0884",
+      "sha256MatchesExportManifest": true,
+      "passed": true,
+      "verifierInvocationTimestamp": "2026-10-23T18:05:41.263159132Z",
+      "timelineSource": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/14"
+      },
+      "leaderMemberId": 1,
+      "finalCommandSeq": 992,
+      "finalEventSeq": 1322,
+      "finalMarketSeq": 1320,
+      "stateHash": "a98ae2f819d473742a6f3d015b2ecdc5cd78d74728a1ffccd8dedbf1fbfb9804",
+      "canonicalSnapshotBytesVerified": true,
+      "sameKeyReplayVerified": true,
+      "conflictingPayloadRejectedWithoutMutation": true,
+      "invariantsVerified": true
+    },
+    {
+      "stage": "successful-leader-sigkill-round-2",
+      "path": "runs/cloud-after-fault-01/verify-1792778802963-293efa78.json",
+      "sha256": "6d0003784fa42646462932bfa6d414eccf04c8d7fcbd0e56f6e30cff19704e60",
+      "sha256MatchesExportManifest": true,
+      "passed": true,
+      "verifierInvocationTimestamp": "2026-10-23T18:06:42.992746314Z",
+      "timelineSource": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/22"
+      },
+      "leaderMemberId": 0,
+      "finalCommandSeq": 1087,
+      "finalEventSeq": 1448,
+      "finalMarketSeq": 1444,
+      "stateHash": "a8d11a8f644d0b91c3f8a69b1e253b49bee22b2e0b93530d67f5fcbf8a1c93bd",
+      "canonicalSnapshotBytesVerified": true,
+      "sameKeyReplayVerified": true,
+      "conflictingPayloadRejectedWithoutMutation": true,
+      "invariantsVerified": true
+    },
+    {
+      "stage": "repaired-partial-cold-restart",
+      "path": "runs/cloud-after-fault-02/verify-1792779126895-f45c066f.json",
+      "sha256": "0ef32a7bb9b788f28d652789f361fc32326f392431d82ed16577785aff5d87a1",
+      "sha256MatchesExportManifest": true,
+      "passed": true,
+      "verifierInvocationTimestamp": "2026-10-23T18:12:06.924891727Z",
+      "timelineSource": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/38"
+      },
+      "leaderMemberId": 2,
+      "finalCommandSeq": 1182,
+      "finalEventSeq": 1574,
+      "finalMarketSeq": 1568,
+      "stateHash": "296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae",
+      "canonicalSnapshotBytesVerified": true,
+      "sameKeyReplayVerified": true,
+      "conflictingPayloadRejectedWithoutMutation": true,
+      "invariantsVerified": true
+    },
+    {
+      "stage": "repeated-full-all-jvm-cold-restart",
+      "path": "runs/cloud-after-fault-02/verify-1792779154779-c2aeb795.json",
+      "sha256": "4681a066195cc1d7a1ce345709a1d3b2953a3c028a16728494373a739adb2c84",
+      "sha256MatchesExportManifest": true,
+      "passed": true,
+      "verifierInvocationTimestamp": "2026-10-23T18:12:34.808936799Z",
+      "timelineSource": {
+        "path": "fault-timeline.json",
+        "jsonPointer": "/48"
+      },
+      "leaderMemberId": 0,
+      "finalCommandSeq": 1182,
+      "finalEventSeq": 1574,
+      "finalMarketSeq": 1568,
+      "stateHash": "296778015e702417f40a705afbdf4598926ec2f3ee239fb52d3b8e871a656fae",
+      "canonicalSnapshotBytesVerified": true,
+      "sameKeyReplayVerified": true,
+      "conflictingPayloadRejectedWithoutMutation": true,
+      "invariantsVerified": true
+    }
+  ],
+  "rawVerificationArchiveValidation": {
+    "manifestPath": "run-artifacts-sha256.json",
+    "manifestSha256AtReview": "58daaacb6387fc750c697285ec7fbb33cf284ea0ddec93425c0f5dcd9f0775a4",
+    "verifiedRecoveryOnlyManifestEntries": 8,
+    "passArtifacts": 7,
+    "failureArtifacts": 1,
+    "allListedArtifactBytesMatchManifest": true,
+    "scope": "Only the eight listed recovery verifier artifacts are included. Other manifest entries, including the later 900-command cloud-after-cold-final workload, are outside this recovery summary."
+  },
+  "rawVerificationArchiveReviewedAt": "2026-10-23T18:16:10.108442+00:00",
+  "sourceTimelineCapture": {
+    "capturedAt": "2026-10-23T18:16:10.108442+00:00",
+    "fileSha256": "1bbfdcb1e66363d66109ee8ccb24d66133d9d5e185fdbaa4523d56a9270b6879",
+    "eventsInCapturedFile": 54,
+    "includedJsonPointerRange": "/0 through /50",
+    "includedThroughTimestamp": "2026-10-23T18:12:53.256188+00:00",
+    "laterCapturedEventsUsedForClaims": false
+  }
+}
