@@ -451,7 +451,7 @@ export default function Evidence() {
                       size={12}
                     />
                     {run.correctnessPassed === true
-                      ? "CHECKS PASSED"
+                      ? "CORRECTNESS PASS"
                       : run.correctnessPassed === false
                         ? "CHECKS FAILED"
                         : "UNVERIFIED"}
