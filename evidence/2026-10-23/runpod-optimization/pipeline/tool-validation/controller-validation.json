@@ -1,0 +1,85 @@
+{
+  "commands": [
+    {
+      "command": [
+        "python3",
+        "-B",
+        "runtime/cloud/optimization-20261024/pipeline/campaign.py",
+        "--self-test"
+      ],
+      "exitCode": 0,
+      "stderr": "test_business_mismatch_never_allowed (__main__.self_test.<locals>.Guards) ... ok\ntest_create_new (__main__.self_test.<locals>.Guards) ... ok\ntest_embedded_remote_source_compiles (__main__.self_test.<locals>.Guards) ... ok\ntest_exact_unknown_guard (__main__.self_test.<locals>.Guards) ... ok\ntest_factor_node_and_client_exact (__main__.self_test.<locals>.Guards) ... ok\ntest_formal_preflight_includes_all_four_states_and_explicit_load_controller_observers (__main__.self_test.<locals>.Guards) ... ok\ntest_full_formal_prerequisite_retains_failed_invalid_and_rejects_missing_receipts (__main__.self_test.<locals>.Guards) ... ok\ntest_full_summary_difference_rejected_even_when_unknown_count_matches (__main__.self_test.<locals>.Guards) ... ok\ntest_guard_count_mismatch (__main__.self_test.<locals>.Guards) ... ok\ntest_owned_stop_source_bounded_and_receipt (__main__.self_test.<locals>.Guards) ... ok\ntest_terminal_failed_unknown_config_only_without_result (__main__.self_test.<locals>.Guards) ... ok\ntest_transport_campaign_changes_only_session_arrangement (__main__.self_test.<locals>.Guards) ... ok\ntest_transport_metadata_matches_real_verifier_and_logical_window (__main__.self_test.<locals>.Guards) ... ok\ntest_zero_or_missing_unknown_not_allowed (__main__.self_test.<locals>.Guards) ... ok\n\n----------------------------------------------------------------------\nRan 14 tests in 2.555s\n\nOK\n",
+      "stdout": ""
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "runtime/cloud/optimization-20261024/pipeline/register.py"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": "{\n  \"draftOnly\": true,\n  \"noRegistrationOrLaunch\": true,\n  \"kind\": \"matrix\",\n  \"trials\": [\n    {\n      \"id\": \"p-direct-26000-w128-r1\",\n      \"cohort\": \"direct\",\n      \"rate\": 26000,\n      \"arrivals\": 350000,\n      \"workers\": 128,\n      \"transportMode\": \"direct\",\n      \"phase\": \"pipeline-session-ownership-arrangement-control\",\n      \"repetition\": 1\n    },\n    {\n      \"id\": \"p-multiplexed-26000-w128-r1\",\n      \"cohort\": \"multiplexed\",\n      \"rate\": 26000,\n      \"arrivals\": 350000,\n      \"workers\": 128,\n      \"transportMode\": \"multiplexed\",\n      \"phase\": \"pipeline-session-ownership-arrangement-control\",\n      \"repetition\": 1\n    },\n    {\n      \"id\": \"p-direct-26000-w128-r2\",\n      \"cohort\": \"direct\",\n      \"rate\": 26000,\n      \"arrivals\": 350000,\n      \"workers\": 128,\n      \"transportMode\": \"direct\",\n      \"phase\": \"pipeline-session-ownership-arrangement-control\",\n      \"repetition\": 2\n    },\n    {\n      \"id\": \"p-multiplexed-26000-w128-r2\",\n      \"cohort\": \"multiplexed\",\n      \"rate\": 26000,\n      \"arrivals\": 350000,\n      \"workers\": 128,\n      \"transportMode\": \"multiplexed\",\n      \"phase\": \"pipeline-session-ownership-arrangement-control\",\n      \"repetition\": 2\n    }\n  ],\n  \"mandatoryMultiplexedPilot\": true,\n  \"sameLogicalInFlight\": 128,\n  \"sameFifoSlots\": 8192,\n  \"fixedNakNodeAndLoadNs\": 1000,\n  \"fixedNakRetryRatio\": 100,\n  \"writeRequires\": [\n    \"new source-pinned committed artifact and immutable upload\",\n    \"complete valid canonical350k multiplexed pilot before formal\",\n    \"stopped owned processes and unchanged prerequisite hashes\",\n    \"budget including USD2 recovery reserve\"\n  ]\n}\n"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "runtime/cloud/optimization-20261024/pipeline/register.py",
+        "--kind",
+        "pilot"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": "{\n  \"draftOnly\": true,\n  \"noRegistrationOrLaunch\": true,\n  \"kind\": \"pilot\",\n  \"trials\": [\n    {\n      \"id\": \"p-pilot-multiplexed-10000-w128\",\n      \"cohort\": \"pilot\",\n      \"rate\": 10000,\n      \"arrivals\": 350000,\n      \"workers\": 128,\n      \"transportMode\": \"multiplexed\",\n      \"phase\": \"pipeline-multiplexed-full350k-canonical-pilot\",\n      \"repetition\": 1\n    }\n  ],\n  \"mandatoryMultiplexedPilot\": true,\n  \"sameLogicalInFlight\": 128,\n  \"sameFifoSlots\": 8192,\n  \"fixedNakNodeAndLoadNs\": 1000,\n  \"fixedNakRetryRatio\": 100,\n  \"writeRequires\": [\n    \"new source-pinned committed artifact and immutable upload\",\n    \"complete valid canonical350k multiplexed pilot before formal\",\n    \"stopped owned processes and unchanged prerequisite hashes\",\n    \"budget including USD2 recovery reserve\"\n  ]\n}\n"
+    }
+  ],
+  "controllerSha256": {
+    "build.py": "d31706773022e588bb385e6ef9b16254027e27b1e3edf2e7e05f3c4fe0118c92",
+    "bundle-node.py": "72f8d27c955389d6c9d82d68bdd8549441993f27b7534a871c33cca9c67402fa",
+    "campaign.py": "5e5e338c306e313af8badc851f0cef5784792a8793490184c2c9cf628b79a5b0",
+    "deploy-node.py": "d3b3a0d83c3aca1562551ccdbe34661485ae317218f6380c64505e5d68a7bd84",
+    "matrix.py": "9064cd59011380de48241ba5d51ba53e6e4070fc57108f13e078b887b009b256",
+    "register.py": "6ba3b85601c6a5df59212a34feecd2c3cc8e221ad6e9d677906309d44c08887e"
+  },
+  "createdAtUtc": "2026-10-23T23:38:50.167619+00:00",
+  "formalPrerequisiteSyntheticFixture": {
+    "changedCompressedArchiveRejected": true,
+    "completionBeforeLastStopRejected": true,
+    "completionMustFollowEveryTerminalAndStopReceipt": true,
+    "exactRegisteredFourAttemptOrderRequired": true,
+    "failedAndMeasurementInvalidAttemptsRetained": true,
+    "formalLoadControllerObserverNodeRecordsRequiredPresent": true,
+    "freshReadonlyPreflightContainsAllFourFormalStates": true,
+    "incompleteFourAttemptPlanRejected": true,
+    "missingCompletionEventRejected": true,
+    "missingLoadStopRecordRejected": true,
+    "missingTerminalOutcomeRejected": true,
+    "remoteProbeMocked": true,
+    "scope": "Small synthetic metadata/archive guard fixture, not a350k row/business audit or cloud process attestation.",
+    "terminalOutcomesAndCompressedArchiveReceiptsRequired": true
+  },
+  "registeredPlansCreated": false,
+  "remoteCallsExecuted": false,
+  "scope": "Original12 offline guard/mode/terminal-fixture tests plus2 targeted NAK formal prerequisite/preflight tests;6 AST files and2 stdout-only drafts. Full prior NAK formal archive/completion/stop prerequisites are mandatory before pipeline registration/launch; no stability/canonical pass requirement for prior attempts. New implementation Java tests/build, immutable upload, realLinux lifecycle and cloud results remain root actions; no deployment/performance claim.",
+  "selfTests": 14,
+  "sourceArchiveSha256": "239bedf1d0b6053a8a797b1710250f59b5155bece85126c65ce900eb311dde91",
+  "sourceInputsForVerifierTests": {
+    "scripts/tests/test_capacity_config.py": {
+      "bytes": 37902,
+      "sha256": "186791091baa190317c7f5b7421bb3fdc9ad4bb1e3e386047de64564203e9c77"
+    },
+    "scripts/verify-capacity-config.py": {
+      "bytes": 23412,
+      "sha256": "beb8eaf5f5ba1311aa02e7ff89777505270fa13d5506a4d3850153f802f7f100"
+    }
+  },
+  "syntaxParsedFiles": [
+    "build.py",
+    "bundle-node.py",
+    "campaign.py",
+    "deploy-node.py",
+    "matrix.py",
+    "register.py"
+  ]
+}
