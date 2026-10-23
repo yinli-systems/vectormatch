@@ -1,0 +1,100 @@
+# 受控优化与瓶颈归因
+
+本轮首先检验负载端资源布局：在同一三节点撮合集群上，将 **128 个客户端 MediaDriver 改为一个共享 MediaDriver**，保留 128 个独立 Aeron 客户端、session、worker 与单请求在途窗口。预先登记的 A/B/A/B 已完成：客户端资源节省可重复，但四轮 15k/s 均未达到稳定标准；当前没有提高稳定吞吐上限的证据。下一组只改变节点接收缓冲，尚未形成测量结论。完整历史容量结果见 [CAPACITY_RESULTS.md](CAPACITY_RESULTS.md)，本轮方案见 [OPTIMIZATION_CAMPAIGN.md](OPTIMIZATION_CAMPAIGN.md)。
+
+## 为什么先检查负载端
+
+此前固定 128 客户端、2 GiB 节点、sync2 的长窗试验中，13k/s 两次通过稳定窗口标准，15k/s 两次未通过，14k/s 一稳一非稳。这是直接客户端加复制撮合路径的有限窗口结果。
+
+对历史 [long arrivals 原始数据](../evidence/2026-10-23/runpod-capacity-long/runs/) 的每条 API 执行区间与到达窗口求交，再求区间总长除以窗口长度，可重算平均活跃请求数。13k 两轮约为 **109.28 / 109.54**；15k 两轮为 **127.90 / 127.93**，16k 为 **127.93**，接近 128 个同步槽位的上限。15k 两轮平均 API RTT 约为 8.744 / 8.909 ms，对应 `128 / mean RTT` 约 14,639 / 14,368 次每秒，与实际 goodput 接近。这个恒等关系支持同步窗口直接限制调用路径，不能进一步证明 RTT 的唯一来源。
+
+历史 [telemetry](../evidence/2026-10-23/runpod-capacity-long/analysis/telemetry-summary.json) 显示，负载进程在这些窗口约有 423–425 个线程，平均消耗约 8.9–9.4 个 CPU 等价量；每个原客户端都拥有自己的嵌入式 driver 和 Aeron 连接。共址的 member 2 与发生器相互影响仍是限制。node1 Archive recorder 的 write-path wall-time 占比约为 0.99，计时包含写入与 `force`，也可能包含调度等待；它不是磁盘设备利用率，更不能单独证明落盘是唯一瓶颈。
+
+## 对照协议与不可变配置
+
+| 因素 | A：isolated | B：shared |
+|---|---|---|
+| 负载阶段 MediaDriver 数量 | 128，每客户端一个 | 1，由负载阶段统一持有 |
+| Aeron / ClusterClient / session / worker | 各 128 | 各 128 |
+| 每 worker 在途请求 / FIFO | 1 / 64 | 1 / 64 |
+| 负载端源与 bundle | 同一新 artifact | 同一新 artifact |
+| 节点源、heap、sync、leader、MTU、socket、idle | 固定 | 与 A 相同 |
+
+主序列登记为 **A15k-r1 → B15k-r1 → A15k-r2 → B15k-r2**，每轮计划 190,000 条命令，窗口 12.666666666 秒。先运行 B 的 8k/s、20k arrivals smoke，仅验证连接、正确性与归档路径；其 2.5 秒窗口不具备正式容量判定时长。只有完成的原始数据、固定 leader、配置身份和终态校验都通过后，才纳入结论。
+
+两种模式使用相同 producer/request/client-order 身份、绝对时间调度和原始超时重试策略。共享 driver 不共享 Aeron 实例；每个响应入口使用独立解析的临时 UDP 端口。客户端只关闭自己持有的 Aeron/session，负载阶段在全部客户端退出后统一关闭共享 driver。连接建立、12 秒 session 清理等待、准备与终态验证均在测量窗外。
+
+节点版本固定为 `b6f6c5cd165110e330d409e2ff51ee4574a3720b`，node bundle SHA 为 `0c17626c6aed8061a71915e4dd784887ed9221f7fb3ba56d7fbf1f96985c062d`。A/B 的新负载版本均为 `bdfe09a2907d9b953309e9e870d6f61f28c5e054`，见 [artifact 清单](../evidence/2026-10-23/runpod-optimization/loadgen-deployment-manifest.json) 与 [上传校验](../evidence/2026-10-23/runpod-optimization/loadgen-upload-receipt.json)。新 bundle 中除 ClusterClient/RemoteCapacityExperiment 外的 cluster class 与依赖内容均与固定节点发行包核对；节点 JVM 继续引用原发行目录。
+
+组内准备 SHA 保持 `2247db9c15b0043a0b28172c5bfa2d9e4f20b5748f6a16424d881e296102655f`：64 个买方各 1.9B quote、380k lot 单价 10,000 ticks 的 maker、100 条预热单。每个测量命令为一 lot IOC 买单，成功产生一笔成交。节点与发生器 heap 均为 2 GiB，sync2、leader0、MTU1248、128 KiB UDP 收发缓冲、SHARED driver/archive、默认 Backoff、session 上限128、outbox524288、200k retained orders、512 MiB full checkpoint 均不改变。原 gateway/projector 在测量窗暂停；负载仍与 member 2 共用已有 Pod。
+
+A/B 分别保留 [isolated 登记](../evidence/2026-10-23/runpod-optimization/isolated/campaign.json) 与 [shared 登记](../evidence/2026-10-23/runpod-optimization/shared/campaign.json)。实际 JVM 属性、运行模式/driver 数/Aeron 所有权、node/load revision 和 bundle、准备 SHA 都进入校验与比较身份；两个模式保留独立曲线，不把不同 driver 数的样本混成一个 p99。
+
+## 结果与判定口径
+
+四个主测量点均完成正确性、终态、固定 leader/term0 和配置验证；它们也均有效且非稳定。所有过载点保留。
+
+| 顺序 | 客户端模式 | 窗口 goodput /s | 已接受请求的计划到确认 p99 ms | 未发送 | 排空 ms | 稳定判定 |
+|---|---|---:|---:|---:|---:|---|
+| A1 | isolated，128 drivers | 14,176.579 | 664.706 | 2,200 | 635.988 | 未通过 |
+| B1 | shared，1 driver | 14,336.211 | 575.981 | 451 | 585.641 | 未通过 |
+| A2 | isolated，128 drivers | 14,192.132 | 623.971 | 1,986 | 623.372 | 未通过 |
+| B2 | shared，1 driver | 14,552.921 | 440.259 | 0 | 450.614 | 未通过 |
+
+每轮均计划 190,000 条、15,000/s；初次与最终 unknown、业务拒绝和 server error 均为 0。前三轮有未发送请求，全量接受 p99 不可用；表中条件 p99 不能代表这些未成功请求的延迟。B2 最终全部接受，但仍因排空和后半段积压增长未通过原稳定标准。不能把排空后的成功计入窗口吞吐。按对应轮次，B 的 goodput 仅提高约 1.1% / 2.5%，条件 p99 下降约 13.3% / 29.4%；这些有限窗口变化没有建立新的稳定边界。
+
+同样的严格内部采样重复显示 [负载端资源下降](../evidence/2026-10-23/runpod-optimization/analysis/attribution-summary.json)：A 平均约 8.83–9.12 核、420 线程、256 个自有 UDP sockets、RSS 中位数 6,343–6,366 MiB；B 为 4.12–4.36 核、293 线程、129 sockets、RSS 中位数 521–532 MiB。两轮 CPU 节省约 52% / 53%。内存含大量文件映射，不能把 RSS 节省等同 Java heap 的减少。
+
+四轮 node0 的一个 driver 一致性命名线程仍为约 0.957–0.965 核，node1 日志 socket 在严格匹配窗口内 drop 增量为 116–186。每秒采样不能捕捉全部瞬时队列峰值；丢包计数也不等于业务丢单。当前证据支持继续检验节点网络处理与复制接收路径，不能断言唯一瓶颈已经确定。
+
+网络对照已另行 [登记](../evidence/2026-10-23/runpod-optimization/network/plan.json)：同一新节点 artifact、相同 shared 客户端，按 128 KiB → 1 MiB → 128 KiB → 1 MiB 的接收请求运行 15k/s。新版本仅 ClusterNodeMain 类内容相对前一构建变化，业务 core/dependencies 不变；两个缓冲组均用该新版本。每轮负载窗外通过 verified PID/startTicks/FD/inode 和已知本机端口过滤的 ss，核验内核实际 rb/tb，避免把请求值当成生效值。send buffer、sync2、leader、heap、MTU、idle、状态 profile、队列与独立身份保持一致。此组仍在测量，尚不报告改善。
+
+已完成的 [shared smoke](../evidence/2026-10-23/runpod-optimization/shared/runs/o-smoke-shared-8000-w128/) 计划 20,000 条命令，在 2.5 秒窗口内确认 19,947 条，对应窗口 goodput **7,978.8/s**；最终 20,000 条全部接受，计划到达至确认 p99 **17.223594 ms**，零未发送、业务拒绝、server error 和初次/最终 unknown。终态与 leader0/term0 校验通过，但正式分类为 `INSUFFICIENT_WINDOW_OBSERVATIONS`，只列为功能验证。
+
+吞吐仅计计划到达窗口内确认的成功新命令，排空后的确认不回填窗口 goodput。p99 从计划时刻计到确认，含调度与 FIFO 等待；任一计划请求未被接受时，全量接受 p99 记为不可用，已接受回复的条件 p99 单列。队列满未发送、业务拒绝、server error、首次 unknown 和最终 unknown 分别计数；原身份重试不增加成功新命令数。
+
+稳定窗口标准沿用容量轮次：至少 10 秒，全部计划命令接受、零首次/最终 unknown、终态与 leader 校验通过，窗口 goodput 达目标的 95%，排空不超过 `max(100 ms, 窗口的 1%)`，后半程 outstanding 拟合增长不超过 `max(2, arrivals 的 1%)`。这允许有限正漂移，不证明长期稳定；p99 没有被事后增加为筛选门槛。
+
+需要同时比较初次 API RTT、FIFO 等待、活跃槽位、排空、CPU/RSS/线程、Aeron 修复和记录/提交/服务位置。新增相同的只读观察器按 PID/startTicks/命令摘要验证进程，采集其线程及所拥有 UDP inode 的队列/丢包；不抓包、不读环境、不做 JVM attach。namespace UDP 重叠计数不相加，`wchan=0`、缺失 sysctl 或零 schedstat 不解释为没有等待，采样队列字节不等于有效 payload 或实际 SO_RCVBUF。具体限制保留于 [观察器部署与范围](../evidence/2026-10-23/runpod-optimization/attribution-deployment.json)。
+
+## 已完成的代码验证
+
+新负载版本从已提交源码 `git archive` 建立隔离 checkout，运行全部 Java tests 与 `:cluster:installDist`，记录 **109 tests、0 failures、0 errors、0 skipped**，见 [Java 验证](../evidence/2026-10-23/runpod-optimization/tool-validation/java-tests.json)。测试覆盖共享 driver 下独立 session/Aeron、关闭一个客户端后其他客户端继续工作、连接失败不关闭借用 driver、错误模式/固定端口拒绝、运行元数据及固定到达调度等路径；这些检查不替代云端容量测量。
+
+归因观察器在三台 Linux Pod 各完成 14 项测试与有界采样 smoke：[node0](../evidence/2026-10-23/runpod-optimization/tool-validation/attribution-node0.json)、[node1](../evidence/2026-10-23/runpod-optimization/tool-validation/attribution-node1.json)、[node2](../evidence/2026-10-23/runpod-optimization/tool-validation/attribution-node2.json)。配置验证器另用四组历史真实 command SHA 回归，拒绝 mode/count 错配、部分运行声明、非法 JVM 属性，并验证显式默认属性同样进入 NUL 分隔的完整参数摘要。
+
+## 三个“一亿”目标的验收边界
+
+用户要求的三个目标分别为累计一亿成功新命令、每秒一亿成功新命令、一亿同时在线连接。当前实验均未证明这三项；它们需要分别登记接口、持续时间、错误预算、延迟目标、账目和资源口径。
+
+### 累计一亿成功新命令
+
+当前 retained orders 包括成交、取消或过期订单且不会自动回收，测试 profile 上限为 200k；outbox 也有明确上限。单纯提高 MAX_ARRIVALS、定期重置后把计数相加、丢弃事件或把重试算新订单，都不能证明连续接收与可恢复处理一亿订单。
+
+长期实现至少需要三个有明确恢复合同的部分：
+
+1. 活跃撮合状态与不可变订单/成交审计历史分离；终态回收保留 client-order 唯一性、取消查询和引用规则，不能只从订单 Map 删除。
+2. 持续消费 outbox，外部事件、投影和消费游标原子提交后才 ack；checkpoint 保存可验证的 exported cursor 与保留边界，积压时执行明确背压，不能先 ack 再持久化。
+3. 明确 producer high-water、幂等结果保留窗及过期请求语义。已过重试保留窗的旧请求可拒绝或查询持久审计记录，不能被误当作新命令再执行；恢复后规则必须保持。
+
+真正验收应在持续运行、跨越多次清理/checkpoint 和至少一次故障恢复的情况下，由独立审计游标与唯一业务身份核对 **≥100,000,000 个 accepted new commands**，同时证明资产守恒、事件连续、无重复执行、最终未知结果归零，保留拒绝/丢弃/重试与窗口吞吐曲线。有限 isolated epochs 的累计量可单独报告，不能称作不间断服务运行。
+
+仅按历史 13k/s 估算，纯发送一亿条也需约 2.14 小时；这是算术下界，未含当前大约分钟级的准备、快照和终态验证，更不是已测可持续吞吐或完整费用报价。现有逐 190k 轮次流程不能据此承诺在总预算 20 美元内完成该验收。
+
+### 每秒一亿成功新命令
+
+当前约百字节的命令编码意味着，仅入口 payload 已是每秒数十 Gbit 量级，还需响应、复制和协议开销。当前三 Pod 的测量不能外推至这个目标。后续可按独立交易标的分片并分离接入/行情分发，但单订单簿的价格时间顺序、账户资金预留与跨片风险仍须有明确协议；把单片数字乘以假设片数不构成集群实测。
+
+验收必须由独立分布式发生器观测整个系统的 **实际** 窗口 accepted-new-command 总数、分片分布、排队、p99 和故障后账目，公开网络/CPU/持久化资源以及热点单簿表现。纯内存循环、UDP 包数、批次中名义命令数和关闭同步持久化后的数字都需另列范围，不能替代该目标。
+
+### 一亿同时在线连接
+
+当前 128 个 Aeron session 不等于公网 TCP/WebSocket 连接容量。这个目标需要独立的接入与订阅网关层，实测每连接内存、fd、心跳、重连风暴、慢消费者和扇出开销；交易 session 与只读行情连接应分别计数，并保持用户可见的连接/订阅语义。
+
+验收须证明同一时间窗内一亿个独立活跃端点完成规定的握手、心跳与收发，报告断线、丢消息、重复、延迟及资源费用。累计建连次数、模拟 ID 数或同一连接上的虚拟订阅不能直接当作一亿同时在线连接。本轮三 Pod、总预算 20 美元无法诚实验收这两个瞬时大规模目标，状态保持未验证。
+
+## 证据、预算与服务恢复
+
+原始目录为 [isolated](../evidence/2026-10-23/runpod-optimization/isolated/) 与 [shared](../evidence/2026-10-23/runpod-optimization/shared/)，准备状态、到达明细、backlog、进程参数、CnC、线程/socket 观察、官方 members、终态核对和无效点均保留。代码和已完成的合成证据持续进入原 private repo。
+
+本轮复用原三台 Pod，不增加资源；总项目预算为 **20 美元**，按合计保守报价 **1.56 美元/小时**估算，登记保留 **2 美元恢复余量**，不是另加预算。费用估算不是供应商结算账单或平台硬上限。最终累计费用与原应用恢复结果，在本轮结束后的实际记录完成时更新；目前不声称已完成本轮恢复。

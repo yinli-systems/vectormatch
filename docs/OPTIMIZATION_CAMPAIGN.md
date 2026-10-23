@@ -31,3 +31,17 @@ Reuse the three existing Pods, with no new purchase or global kernel change. Bef
 Raw evidence and code continue to the existing private repository. Native PostgreSQL/application archives are not newly exported: the prior automatic rejection remains respected; use same-Pod offline copies and metadata if another backup is needed. Synthetic capacity arrivals/results, protocol counters and the explicit project telemetry are within the user's archival authorization.
 
 References: [pinned Aeron client ownership](https://github.com/aeron-io/aeron/blob/1.53.3/aeron-client/src/main/java/io/aeron/Aeron.java), [client concurrency model](https://github.com/aeron-io/aeron/wiki/Client-Concurrency-Model), [Aeron performance factors](https://aeron.io/docs/aeron-cluster/performance-limits/).
+
+## Registered receive-buffer follow-up
+
+After all four formal client-driver trials completed, neither shared run met the registered stability rule at 15k/s. The resource reduction was reproducible; the owned follower log receive socket still accumulated drops. A separate [network plan](../evidence/2026-10-23/runpod-optimization/network/plan.json) was frozen before new load, referencing the four completed result digests.
+
+The receive-buffer sequence is 128 KiB request → 1 MiB → 128 KiB → 1 MiB, all at 15k/s, 190k arrivals,128 workers. Both configurations use node source `071029fb1f3c1718b15a8850eb531783677674fe` and bundle `fac70db5c98d7d8e03de737e68552bdf606acfe540afbfcba7c8658884ebddd3`, with the same prior `bdfe09a` load artifact in shared mode. Only ClusterNodeMain entries differ from the prior bdfe distribution; core/dependencies match. This comparison does not substitute the previous b6f node runs as controls.
+
+The node's explicit eighth positional argument requests the receive buffer for its MediaDriver UDP sockets. Every other source setting remains fixed, including send buffer128KiB, SHARED node/archive drivers, existing Backoff, sync2, leader0,MTU1248,2GiB heaps, the prepared-state digest and capacity profile. The two values have separate fixed-configuration identities.
+
+Outside each arrival window, identical read-only probes verify PID/startTicks/command identity and stable owned socket FD/inode joins, using only the known ingress/log local ports in filtered ss output. Archive only owned local socket kernel rb/tb, queue/drop and safe diagnostics; no packet contents or peer list. Linux commonly doubles buffer accounting, so report the actual rb/tb values rather than calling the request the effective value. Require both pre/post observations and an actual treatment increase, and preserve missing/failing attestations. The same source-digested probe runs in every group. A known exact cgroup-mount metadata warning is recorded by diagnostic code; any other stderr or nonzero ss status fails the attestation.
+
+The initial strict probe correctly rejected node0's cgroup warning and its receipt remains in tool-validation; node1/2 attestations passed. The narrowly corrected probe is separately identified and validated before this matrix. No earlier raw receipt is overwritten. This observer correction occurs before the network trials and is not a measured optimization.
+
+Keep all original correctness, scheduler,>=10s stability,goodput,drain,backlog and unknown rules. Network loss reduction alone is not a throughput/latency win. Preserve A/B/A/B outcomes and choose any later threading factor only from the completed evidence. Original application recovery and the project USD20 total guard remain mandatory.

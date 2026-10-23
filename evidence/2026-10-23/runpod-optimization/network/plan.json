@@ -1,0 +1,104 @@
+{
+  "registeredAtUtc": "2026-10-23T21:58:27.442503+00:00",
+  "primaryDriverMatrix": [
+    {
+      "id": "o-isolated-15000-w128-r1",
+      "classification": "OBSERVED_OVERLOAD_OR_UNDERSIZED_CLIENT",
+      "resultSha256": "30b64dcddf5e9605add59beb59b07cb163861ef71c042bfe4d27c1349f49e955",
+      "conditionalP99Millis": 664.705655,
+      "goodput": 14176.578948114557
+    },
+    {
+      "id": "o-isolated-15000-w128-r2",
+      "classification": "OBSERVED_OVERLOAD_OR_UNDERSIZED_CLIENT",
+      "resultSha256": "41a4375aada86d17ee015daa18130c849ba4cf7d866ae1e511c9c629bce443a9",
+      "conditionalP99Millis": 623.971256,
+      "goodput": 14192.131579694324
+    },
+    {
+      "id": "o-shared-15000-w128-r1",
+      "classification": "OBSERVED_OVERLOAD_OR_UNDERSIZED_CLIENT",
+      "resultSha256": "84c8f18bb1d87fbc76f198574f40597a6b73ad9fb7f8cac37db9ab5ae3f7c053",
+      "conditionalP99Millis": 575.981291,
+      "goodput": 14336.210527070327
+    },
+    {
+      "id": "o-shared-15000-w128-r2",
+      "classification": "OBSERVED_OVERLOAD_OR_UNDERSIZED_CLIENT",
+      "resultSha256": "3a2e6de27616fb81f39ed013efe8e41830c2c03b96a56906661108f1bbde7acb",
+      "conditionalP99Millis": 440.259014,
+      "goodput": 14552.921053397524
+    }
+  ],
+  "reason": "Client resource reduction did not establish15k stability; verified owned follower log sockets had drops, while node0 shared driver remained near one CPU. Test buffer effect before selecting threading factor.",
+  "node": {
+    "revision": "071029fb1f3c1718b15a8850eb531783677674fe",
+    "root": "/opt/vectormatch/optimization-node-releases/071029fb1f3c1718b15a8850eb531783677674fe",
+    "archive": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/optimization-20261024/network/node-071029fb1f3c1718b15a8850eb531783677674fe.tar.gz",
+    "bundleSha256": "fac70db5c98d7d8e03de737e68552bdf606acfe540afbfcba7c8658884ebddd3",
+    "archiveBytes": 3986969
+  },
+  "load": {
+    "revision": "bdfe09a2907d9b953309e9e870d6f61f28c5e054",
+    "root": "/opt/vectormatch/loadgen-releases/bdfe09a2907d9b953309e9e870d6f61f28c5e054",
+    "archive": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/optimization-20261024/loadgen-bdfe09a2907d9b953309e9e870d6f61f28c5e054.tar.gz",
+    "bundleSha256": "0afb2570dbfdfe6c11b43a68f18135b9e21e4c0efd79a66a8e5996f0f6f4f6c4",
+    "archiveBytes": 3965200
+  },
+  "effectiveBufferProbe": {
+    "source": "runtime/cloud/optimization-20261024/owned-socket-buffer.py",
+    "sha256": "29eaef020c644e9f64384c0b1773a5b4ede25326552b2cf6c68bf61799ebaf50",
+    "remotePath": "/opt/vectormatch/probe/owned-socket-buffer-29eaef020c644e9f.py"
+  },
+  "trials": [
+    {
+      "id": "n-r128k-15000-w128-r1",
+      "cohort": "receive128k",
+      "receiveBytes": 131072,
+      "rate": 15000,
+      "arrivals": 190000,
+      "workers": 128,
+      "phase": "node-receive-buffer-control",
+      "repetition": 1
+    },
+    {
+      "id": "n-r1m-15000-w128-r1",
+      "cohort": "receive1m",
+      "receiveBytes": 1048576,
+      "rate": 15000,
+      "arrivals": 190000,
+      "workers": 128,
+      "phase": "node-receive-buffer-control",
+      "repetition": 1
+    },
+    {
+      "id": "n-r128k-15000-w128-r2",
+      "cohort": "receive128k",
+      "receiveBytes": 131072,
+      "rate": 15000,
+      "arrivals": 190000,
+      "workers": 128,
+      "phase": "node-receive-buffer-control",
+      "repetition": 2
+    },
+    {
+      "id": "n-r1m-15000-w128-r2",
+      "cohort": "receive1m",
+      "receiveBytes": 1048576,
+      "rate": 15000,
+      "arrivals": 190000,
+      "workers": 128,
+      "phase": "node-receive-buffer-control",
+      "repetition": 2
+    }
+  ],
+  "budget": {
+    "asOfUtc": "2026-10-23T21:58:27.442515+00:00",
+    "estimatedAccruedUsd": 6.767520368557221,
+    "nextTrialReserveSeconds": 3600,
+    "projectedIncludingRecoveryReserveUsd": 10.327520368557222,
+    "budgetUsd": 20,
+    "scope": "Project three Pods only, launch-time/rate estimate, not reconciled bill"
+  },
+  "scope": "A/B/A/B on same new node artifact with shared client driver. No stability/latency rule changed; original app remains paused; no new Pods or global sysctl."
+}
