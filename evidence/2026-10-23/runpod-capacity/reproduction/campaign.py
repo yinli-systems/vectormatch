@@ -24,7 +24,8 @@ def py(i,code,timeout=90):
  return p.stdout
 
 def service(i,role,action,env):
- args=['python3','-B',RELEASE+'/deploy/remote_service.py',role,action]+([str(i)] if role=='node' else [])
+ supervisor=ROOT+'/deploy/remote_service.py' if env.get('VECTOR_STATE_DIR')==ORIG['VECTOR_STATE_DIR'] else RELEASE+'/deploy/remote_service.py'
+ args=['python3','-B',supervisor,role,action]+([str(i)] if role=='node' else [])
  code='CONFIG='+repr({**env,'VECTOR_MAX_HEAP':'1g' if role=='node' else '512m'})+'\nARGS='+repr(args)+'\n'+'''import os,subprocess
 e=os.environ.copy();e.update(CONFIG);p=subprocess.run(ARGS,cwd='/opt/vectormatch',env=e,capture_output=True,text=True,timeout=45);print(p.stdout+p.stderr);raise SystemExit(p.returncode)
 '''

@@ -15,6 +15,7 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import tempfile
 
 
@@ -233,6 +234,60 @@ def leader_evidence_valid(value):
     return isinstance(terms, list) and bool(terms) and all(term == value["preTerm"] for term in terms)
 
 
+def comparison_identity(configuration, trial):
+    """Check declared identities before grouping; does not attest binaries or node settings."""
+    issues = []
+    release = trial.get("release", configuration.get("release"))
+    revisions = []
+    for source in (trial, configuration):
+        for key in ("sourceRevision", "revision", "appRevision", "deploymentRevision", "codeRevision"):
+            value = source.get(key)
+            if value is None:
+                continue
+            values = list(value.values()) if isinstance(value, dict) else [value]
+            if not values or any(not isinstance(item, str) or not re.fullmatch(r"[0-9a-fA-F]{40}|[0-9a-fA-F]{64}", item) for item in values):
+                issues.append(f"invalid {key}: expected full source commit hash")
+            else:
+                revisions.extend(item.lower() for item in values)
+    release_revision = None
+    if release is not None:
+        if not isinstance(release, str) or not release:
+            issues.append("release must be a nonempty string")
+        else:
+            basename = Path(release).name
+            if re.fullmatch(r"[0-9a-fA-F]{40}|[0-9a-fA-F]{64}", basename):
+                release_revision = basename.lower()
+                revisions.append(release_revision)
+    distinct_revisions = sorted(set(revisions))
+    if not distinct_revisions:
+        issues.append("source revision missing; a full commit hash or commit-named release is required")
+    elif len(distinct_revisions) != 1:
+        issues.append("source revision declarations disagree")
+
+    def declared(name, predicate, expectation):
+        values = [source[name] for source in (trial, configuration) if name in source]
+        if not values:
+            issues.append(f"{name} missing; {expectation}")
+            return None
+        value = values[0]
+        if not predicate(value):
+            issues.append(f"invalid {name}; {expectation}")
+        if any(other != value for other in values[1:]):
+            issues.append(f"{name} declarations disagree")
+        return value
+
+    sha256 = lambda value: isinstance(value, str) and re.fullmatch(r"[0-9a-fA-F]{64}", value) is not None
+    bundle = declared("deploymentBundleSha256", sha256, "a deployment archive SHA-256 is required")
+    prepared = declared("preparedSnapshotSha256", sha256, "a prepared-state SHA-256 is required")
+    fixed = declared("fixedNodeConfiguration", lambda value: isinstance(value, dict) and bool(value),
+                     "a nonempty common node-configuration object is required")
+    identity = {"sourceRevision": distinct_revisions[0] if len(distinct_revisions) == 1 else None,
+                "release": release, "deploymentBundleSha256": bundle.lower() if isinstance(bundle, str) else bundle,
+                "preparedSnapshotSha256": prepared.lower() if isinstance(prepared, str) else prepared,
+                "fixedNodeConfiguration": fixed}
+    return identity, issues
+
+
 def analyze_trial(directory, criteria=None):
     criteria = {**DEFAULT_CRITERIA, **(criteria or {})}
     errors, sources = [], {}
@@ -266,6 +321,7 @@ def analyze_trial(directory, criteria=None):
         errors.append({"file": source_name, "error": "invalid-or-missing-offered-count-rate-window"})
     derived = analyze_arrivals(arrivals, scheduled, window)
     queue = analyze_backlog(backlog, window)
+    identity, identity_issues = comparison_identity(configuration, trial)
     consistency = []
     for key, value in (("confirmedAcceptedCommands", derived["confirmedAccepted"]), ("businessRejectedCommands", derived["businessRejected"]),
                        ("serverErrors", derived["serverErrors"]), ("clientNotSentCommands", derived["clientNotSent"]),
@@ -286,6 +342,7 @@ def analyze_trial(directory, criteria=None):
         "arrivalRecordsValid": not derived["validationIssues"],
         "backlogRecordsValid": not queue["validationIssues"],
         "reportedCountsMatchRawCsv": not consistency,
+        "configurationIdentityVerified": not identity_issues,
     }
     drain_limit = max(criteria["maxDrainSecondsFloor"], (window or 0) * criteria["maxDrainWindowFraction"])
     growth_limit = max(criteria["maxBacklogGrowthCommandsFloor"], (scheduled or 0) * criteria["maxBacklogGrowthArrivalFraction"])
@@ -307,12 +364,14 @@ def analyze_trial(directory, criteria=None):
     conditional_p99 = derived["latency"]["conditionalAccepted"]["p99Millis"]
     target = criteria["latencyTargetP99Millis"]
     comparison = {key: configuration.get(key) for key in COMPARISON_KEYS}
-    comparison["sourceRevision"] = {key: trial[key] for key in ("revision", "appRevision", "deploymentRevision", "codeRevision") if key in trial}
+    comparison.update(identity)
     fingerprint = hashlib.sha256(json.dumps(comparison, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     return {"id": trial.get("id", directory.name), "directory": str(directory), "sourceResult": source_name,
             "phase": trial.get("phase"), "repetition": trial.get("repetition"), "trial": trial,
             "configuration": configuration, "fixedLeaderCheck": fixed_leader,
             "comparisonConfiguration": comparison, "comparisonFingerprintSha256": fingerprint,
+            "configurationIdentityIssues": identity_issues,
+            "configurationIdentityScope": "Checks completeness and agreement of declared source/deployment/prepared-state/configuration identities. Artifact bytes and actual node configuration require separate deployment evidence. Rate, worker count and queue size are not inside this fingerprint; grouping additionally separates phase/workers/queue.",
             "targetArrivalRatePerSecond": rate, "scheduledArrivals": scheduled, "arrivalWindowSeconds": window,
             "workers": field("workers"), "queueCapacityPerWorker": field("queueCapacityPerWorker", "queuePerWorker"),
             "rawSummary": {key: raw[key] for key in RAW_KEYS if key in raw},

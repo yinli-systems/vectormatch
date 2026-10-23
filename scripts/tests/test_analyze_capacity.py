@@ -30,7 +30,14 @@ class CapacityAnalysisTest(unittest.TestCase):
                        "fixedLeaderVerified": True, "leaderChanged": False, "generatorTimingInvalid": False,
                        "schedulerLatenessAboveLimitCount": 0}
         (directory / ("result.json" if result else "load-result.json")).write_text(json.dumps(result_json))
-        (directory / "trial.json").write_text(json.dumps({"id": name, "phase": "curve", "repetition": 1}))
+        (directory / "trial.json").write_text(json.dumps({
+            "id": name, "phase": "curve", "repetition": 1,
+            "release": "/opt/vectormatch/releases/" + "a" * 40,
+            "deploymentBundleSha256": "b" * 64,
+            "fixedNodeConfiguration": {"archiveFileSyncLevel": 2, "maxHeap": "1g", "outboxCapacity": 65536,
+                                       "appointedLeaderId": 0},
+        }))
+        (directory / "configuration.json").write_text(json.dumps({"preparedSnapshotSha256": "c" * 64}))
         (directory / "fixed-leader-check.json").write_text(json.dumps({"passed": True, "preTerm": 0, "postTerm": 0, "observedTerms": [0, 0], "observedRoles": ["LEADER"]}))
         columns = ["index", "outcome", "confirmed_offset_ns", "scheduled_to_confirmed_ns", "initial_execute_rtt_ns",
                    "queue_delay_ns", "scheduler_lateness_ns", "unknown_at_initial_deadline"]
@@ -143,10 +150,72 @@ class CapacityAnalysisTest(unittest.TestCase):
 
     def test_different_request_timeout_is_not_merged_into_same_capacity_group(self):
         first, second = self.fixture("first"), self.fixture("second")
-        (first / "configuration.json").write_text('{"requestTimeoutMs":1000}')
-        (second / "configuration.json").write_text('{"requestTimeoutMs":2000}')
+        for directory, timeout in ((first, 1000), (second, 2000)):
+            path = directory / "configuration.json"
+            configuration = json.loads(path.read_text())
+            configuration["requestTimeoutMs"] = timeout
+            path.write_text(json.dumps(configuration))
         groups = analysis.summarize_groups([analysis.analyze_trial(first), analysis.analyze_trial(second)])
         self.assertEqual(2, len(groups))
+
+    def test_release_commit_is_derived_and_different_release_is_not_merged(self):
+        first, second = self.fixture("first"), self.fixture("second")
+        path = second / "trial.json"
+        trial = json.loads(path.read_text())
+        trial["release"] = "/opt/vectormatch/releases/" + "d" * 40
+        path.write_text(json.dumps(trial))
+        observations = [analysis.analyze_trial(first), analysis.analyze_trial(second)]
+        self.assertTrue(all(row["measurementValid"] for row in observations))
+        self.assertEqual("a" * 40, observations[0]["comparisonConfiguration"]["sourceRevision"])
+        self.assertEqual("d" * 40, observations[1]["comparisonConfiguration"]["sourceRevision"])
+        self.assertEqual(2, len(analysis.summarize_groups(observations)))
+
+    def test_different_prepared_state_bundle_and_node_settings_are_separate_groups(self):
+        for changed in ("preparedSnapshotSha256", "deploymentBundleSha256", "fixedNodeConfiguration"):
+            with self.subTest(changed=changed):
+                first, second = self.fixture("first-" + changed), self.fixture("second-" + changed)
+                path = second / ("configuration.json" if changed == "preparedSnapshotSha256" else "trial.json")
+                document = json.loads(path.read_text())
+                document[changed] = ({"archiveFileSyncLevel": 0, "maxHeap": "1g"}
+                                     if changed == "fixedNodeConfiguration" else "e" * 64)
+                path.write_text(json.dumps(document))
+                observations = [analysis.analyze_trial(first), analysis.analyze_trial(second)]
+                self.assertTrue(all(row["measurementValid"] for row in observations))
+                self.assertEqual(2, len(analysis.summarize_groups(observations)))
+
+    def test_missing_identity_is_explicitly_unverified_not_stable(self):
+        directory = self.fixture()
+        path = directory / "trial.json"
+        document = json.loads(path.read_text())
+        del document["deploymentBundleSha256"]
+        path.write_text(json.dumps(document))
+        result = analysis.analyze_trial(directory)
+        self.assertFalse(result["measurementValid"])
+        self.assertFalse(result["observedStableWindow"])
+        self.assertFalse(result["validationChecks"]["configurationIdentityVerified"])
+        self.assertTrue(any("deploymentBundleSha256 missing" in issue for issue in result["configurationIdentityIssues"]))
+
+    def test_disagreeing_explicit_source_revision_and_release_is_unverified(self):
+        directory = self.fixture()
+        path = directory / "trial.json"
+        document = json.loads(path.read_text())
+        document["sourceRevision"] = "f" * 40
+        path.write_text(json.dumps(document))
+        result = analysis.analyze_trial(directory)
+        self.assertFalse(result["measurementValid"])
+        self.assertIn("source revision declarations disagree", result["configurationIdentityIssues"])
+
+    def test_source_alias_and_rate_worker_metadata_do_not_change_effective_identity(self):
+        configuration = {"preparedSnapshotSha256": "c" * 64, "ratePerSecond": 100, "workers": 4}
+        trial = {"release": "/opt/releases/" + "a" * 40, "deploymentBundleSha256": "b" * 64,
+                 "fixedNodeConfiguration": {"syncLevel": 2}}
+        before, errors = analysis.comparison_identity(configuration, trial)
+        self.assertFalse(errors)
+        configuration.update({"ratePerSecond": 200, "workers": 16})
+        trial["sourceRevision"] = "a" * 40
+        after, errors = analysis.comparison_identity(configuration, trial)
+        self.assertFalse(errors)
+        self.assertEqual(before, after)
 
     def test_malformed_arrival_index_is_retained_as_invalid_not_tool_crash(self):
         directory = self.fixture()

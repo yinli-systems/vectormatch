@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { API_BASE, asObject } from "./api";
+import CapacityCurve, {
+  normalizeCapacity,
+  type CapacityEvidence,
+} from "./CapacityCurve";
 
 interface EvidenceRun {
   id: string;
@@ -344,6 +348,7 @@ function EvidenceDrawer({
 
 export default function Evidence() {
   const [runs, setRuns] = useState<EvidenceRun[]>([]);
+  const [capacity, setCapacity] = useState<CapacityEvidence>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
   const [selected, setSelected] = useState<EvidenceRun>();
@@ -363,6 +368,7 @@ export default function Evidence() {
       if (!Array.isArray(data.runs))
         throw new Error("Evidence response does not contain a runs array");
       setRuns(data.runs.map(normalize));
+      setCapacity(normalizeCapacity(data.capacity));
       setError(undefined);
     } catch (failure) {
       setError(
@@ -416,6 +422,7 @@ export default function Evidence() {
           {error}. Showing the last retrieved artifacts.
         </p>
       )}
+      {capacity && <CapacityCurve evidence={capacity} />}
       {runs.length ? (
         <div className="evidence-grid">
           {runs.map((run, index) => {
