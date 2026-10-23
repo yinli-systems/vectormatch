@@ -1,0 +1,1110 @@
+{
+  "schemaVersion": 1,
+  "test": "runpod-private-udp-full-mesh",
+  "date": "2026-10-23",
+  "passed": true,
+  "verdictScope": "Native private-IP IPv4 authenticated UDP request/echo reachability and RTT on all six ordered node pairs; not matching latency, throughput saturation, physical anti-affinity, HA or durability proof",
+  "tool": {
+    "revision": "08729f20a55b3620b8088d577246a0962bcf5153",
+    "revisionShort": "08729f2",
+    "sourcePath": "scripts/udp-preflight.py",
+    "sourceSha256": "6db40df778f80d99594e4af4920c76cb9895a40d6ccf56926bafbccec85abd13",
+    "allThreeReportedSourceHashesMatch": true
+  },
+  "topology": {
+    "pods": 3,
+    "dataCenter": "EU-RO-1",
+    "networkInterface": "podnet1",
+    "interfaceMtu": 1300,
+    "orderedMemberIps": [
+      "10.0.212.169",
+      "10.1.60.60",
+      "10.1.81.207"
+    ],
+    "distinctKernelBootIds": true,
+    "providerMachineIdsObtained": false,
+    "providerSelfGetStatusCodes": [
+      403,
+      403,
+      403
+    ],
+    "physicalAntiAffinityVerified": false,
+    "bareMetalOrDedicatedCpuClaimed": false,
+    "identityLimit": "Distinct kernel boot IDs, container identities and externally observed SSH endpoints support distinct runtime contexts; provider machine IDs were unavailable (403), so physical placement is not certified"
+  },
+  "method": {
+    "orderedPairRuns": 6,
+    "requestsPerRun": 3000,
+    "payloadSizesBytes": [
+      96,
+      512,
+      1248
+    ],
+    "requestsPerSizePerRun": 1000,
+    "configuredRequestsPerSecondPerRun": 200,
+    "dontFragment": true,
+    "payloadBytesExcludeIpv4UdpHeaders": true,
+    "largestIpv4DatagramBytesIncludingUdpAndIpv4Headers": 1276,
+    "clientDrainSeconds": 2,
+    "authentication": "HMAC-SHA256 plus run ID, expected source IP/port, sequence and packet-size checks",
+    "rttClock": "Client monotonic elapsed time; no synchronized remote clocks required",
+    "oneWayLatencyMeasured": false,
+    "percentileMethod": "Nearest rank, recomputed from every returned client sample; pooled statistics merge equal-size runs and are not average percentiles",
+    "artifactLabelNote": "udp-A-to-B file labels use server node A and client node B; requestFromNode/requestToNode use actual client/server bound endpoints"
+  },
+  "totals": {
+    "requestsExpected": 18000,
+    "requestsSent": 18000,
+    "requestsNotSent": 0,
+    "requestsReceivedUniqueByServers": 18000,
+    "echoesSentByServers": 18000,
+    "echoesReceivedUniqueByClients": 18000,
+    "requestEchoRoundTrips": 18000,
+    "udpDatagramsSentRequestsPlusEchoes": 36000,
+    "requestOrEchoLoss": 0,
+    "duplicatesObserved": 0,
+    "reorderedObserved": 0,
+    "allSourceAddressesVerified": true
+  },
+  "pooledRtt": {
+    "samples": 18000,
+    "minMillis": 0.34104,
+    "p50Millis": 0.653665,
+    "p95Millis": 0.890793,
+    "p99Millis": 1.298711,
+    "p999Millis": 9.909679,
+    "maxMillis": 39.338844
+  },
+  "pooledRttPerPacketSize": [
+    {
+      "packetBytes": 96,
+      "rtt": {
+        "samples": 6000,
+        "minMillis": 0.34104,
+        "p50Millis": 0.629702,
+        "p95Millis": 0.926124,
+        "p99Millis": 1.541868,
+        "p999Millis": 29.444375,
+        "maxMillis": 39.338844
+      }
+    },
+    {
+      "packetBytes": 512,
+      "rtt": {
+        "samples": 6000,
+        "minMillis": 0.3435,
+        "p50Millis": 0.658859,
+        "p95Millis": 0.875951,
+        "p99Millis": 1.241795,
+        "p999Millis": 2.822791,
+        "maxMillis": 4.090468
+      }
+    },
+    {
+      "packetBytes": 1248,
+      "rtt": {
+        "samples": 6000,
+        "minMillis": 0.34787,
+        "p50Millis": 0.668129,
+        "p95Millis": 0.887011,
+        "p99Millis": 1.227398,
+        "p999Millis": 1.875058,
+        "maxMillis": 4.288653
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "node": 0,
+      "podId": "aykai4bhv4zdf9",
+      "privateIp": "10.0.212.169",
+      "dataCenter": "EU-RO-1",
+      "gpuSkuObservedInConsole": "RTX 2000 Ada",
+      "uiVcpu": 6,
+      "uiMemoryGB": 31,
+      "visibleCpuQuotaUpperBound": 5.1,
+      "visibleCpuUpperBound": 5.1,
+      "visibleMemoryUpperBoundBytes": 30999998464,
+      "affinityCpuCount": 48,
+      "hostVisibleLogicalCpuCount": 48,
+      "cpuModel": "AMD EPYC 7352 24-Core Processor",
+      "kernelBootId": "61ef2fd8-3817-4705-bacf-4fcafbe09776",
+      "containerHostname": "98c8afab5f88",
+      "providerSelfGetStatus": 403,
+      "providerMachineId": null,
+      "networkInterface": "podnet1",
+      "networkInterfaceMtu": 1300,
+      "probeSourceSha256": "6db40df778f80d99594e4af4920c76cb9895a40d6ccf56926bafbccec85abd13",
+      "probeSourceMatchesRevision": true,
+      "diskBytes": {
+        "total": 53687091200,
+        "free": 53100265472
+      },
+      "syncProbe": {
+        "scope": "32 sequential 4KiB buffered writes + flush + fsync, one temporary file; OS/device semantics apply",
+        "samples": 32,
+        "p50Millis": 0.101603,
+        "p99Millis": 0.412879,
+        "notDiskCapacityOrPowerLossProof": true
+      },
+      "quoteGpuUsdPerHour": 0.24,
+      "quoteContainerDiskUsdPerHour": 0.007,
+      "quoteTotalUsdPerHour": 0.247,
+      "artifacts": {
+        "identity": "node0-identity.json",
+        "network": "node0-network.json",
+        "preflight": "node0-preflight.json"
+      }
+    },
+    {
+      "node": 1,
+      "podId": "9zt5cl1tpc7zt7",
+      "privateIp": "10.1.60.60",
+      "dataCenter": "EU-RO-1",
+      "gpuSkuObservedInConsole": "RTX PRO 4000",
+      "uiVcpu": 12,
+      "uiMemoryGB": 31,
+      "visibleCpuQuotaUpperBound": 10.2,
+      "visibleCpuUpperBound": 10.2,
+      "visibleMemoryUpperBoundBytes": 30999998464,
+      "affinityCpuCount": 48,
+      "hostVisibleLogicalCpuCount": 48,
+      "cpuModel": "AMD EPYC 7352 24-Core Processor",
+      "kernelBootId": "91c31319-9f52-46d4-810f-ff26906f8061",
+      "containerHostname": "da5b8beacb43",
+      "providerSelfGetStatus": 403,
+      "providerMachineId": null,
+      "networkInterface": "podnet1",
+      "networkInterfaceMtu": 1300,
+      "probeSourceSha256": "6db40df778f80d99594e4af4920c76cb9895a40d6ccf56926bafbccec85abd13",
+      "probeSourceMatchesRevision": true,
+      "diskBytes": {
+        "total": 53687091200,
+        "free": 53100261376
+      },
+      "syncProbe": {
+        "scope": "32 sequential 4KiB buffered writes + flush + fsync, one temporary file; OS/device semantics apply",
+        "samples": 32,
+        "p50Millis": 6.91925,
+        "p99Millis": 9.566197,
+        "notDiskCapacityOrPowerLossProof": true
+      },
+      "quoteGpuUsdPerHour": 0.57,
+      "quoteContainerDiskUsdPerHour": 0.007,
+      "quoteTotalUsdPerHour": 0.577,
+      "artifacts": {
+        "identity": "node1-identity.json",
+        "network": "node1-network.json",
+        "preflight": "node1-preflight.json"
+      }
+    },
+    {
+      "node": 2,
+      "podId": "h21wqh0s7g26bk",
+      "privateIp": "10.1.81.207",
+      "dataCenter": "EU-RO-1",
+      "gpuSkuObservedInConsole": "RTX PRO 4500",
+      "uiVcpu": 28,
+      "uiMemoryGB": 62,
+      "visibleCpuQuotaUpperBound": 23.8,
+      "visibleCpuUpperBound": 23.8,
+      "visibleMemoryUpperBoundBytes": 61999996928,
+      "affinityCpuCount": 112,
+      "hostVisibleLogicalCpuCount": 112,
+      "cpuModel": "AMD EPYC 7663 56-Core Processor",
+      "kernelBootId": "86296a61-67e9-4da8-8faf-d1011f01ec73",
+      "containerHostname": "8524fd966262",
+      "providerSelfGetStatus": 403,
+      "providerMachineId": null,
+      "networkInterface": "podnet1",
+      "networkInterfaceMtu": 1300,
+      "probeSourceSha256": "6db40df778f80d99594e4af4920c76cb9895a40d6ccf56926bafbccec85abd13",
+      "probeSourceMatchesRevision": true,
+      "diskBytes": {
+        "total": 53687091200,
+        "free": 53100240896
+      },
+      "syncProbe": {
+        "scope": "32 sequential 4KiB buffered writes + flush + fsync, one temporary file; OS/device semantics apply",
+        "samples": 32,
+        "p50Millis": 2.56355,
+        "p99Millis": 7.165258,
+        "notDiskCapacityOrPowerLossProof": true
+      },
+      "quoteGpuUsdPerHour": 0.72,
+      "quoteContainerDiskUsdPerHour": 0.007,
+      "quoteTotalUsdPerHour": 0.727,
+      "artifacts": {
+        "identity": "node2-identity.json",
+        "network": "node2-network.json",
+        "preflight": "node2-preflight.json"
+      }
+    }
+  ],
+  "runs": [
+    {
+      "artifactLabel": "udp-1-to-0",
+      "requestFromNode": 0,
+      "requestToNode": 1,
+      "clientEndpoint": {
+        "ip": "10.0.212.169",
+        "port": 19081
+      },
+      "serverEndpoint": {
+        "ip": "10.1.60.60",
+        "port": 19080
+      },
+      "runId": "3f2265a677cd01a34f26b4f7d627253e",
+      "timestamp": "2026-10-23T17:37:42.625984+00:00",
+      "requestsSent": 3000,
+      "requestsNotSent": 0,
+      "requestsReceivedUniqueByServer": 3000,
+      "echoesSentByServer": 3000,
+      "echoesReceivedUniqueByClient": 3000,
+      "requestOrEchoLoss": 0,
+      "serverRequestsMissing": 0,
+      "clientDuplicates": 0,
+      "serverDuplicates": 0,
+      "clientReordered": 0,
+      "serverReordered": 0,
+      "serverEchoSendErrors": 0,
+      "clientRejectedPackets": {
+        "source": 0,
+        "size": 0,
+        "authentication": 0,
+        "protocol_or_run": 0,
+        "unmatched": 0
+      },
+      "serverRejectedPackets": {
+        "source": 0,
+        "size": 0,
+        "authentication": 0,
+        "protocol_or_run": 0,
+        "sequence_or_size": 0
+      },
+      "clientAuthenticatedSources": [
+        {
+          "ip": "10.1.60.60",
+          "port": 19080,
+          "packets": 3000
+        }
+      ],
+      "serverAuthenticatedSources": [
+        {
+          "ip": "10.0.212.169",
+          "port": 19081,
+          "packets": 3000
+        }
+      ],
+      "sourceAddressesVerifiedAgainstSamples": true,
+      "dontFragment": true,
+      "configuredRequestsPerSecond": 200.0,
+      "rtt": {
+        "samples": 3000,
+        "minMillis": 0.404889,
+        "p50Millis": 0.650706,
+        "p95Millis": 0.875911,
+        "p99Millis": 1.392543,
+        "p999Millis": 2.583242,
+        "maxMillis": 4.090468
+      },
+      "perPacketSize": [
+        {
+          "packetBytes": 96,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.404889,
+            "p50Millis": 0.616184,
+            "p95Millis": 0.874771,
+            "p99Millis": 1.522237,
+            "maxMillis": 2.532621
+          }
+        },
+        {
+          "packetBytes": 512,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.434081,
+            "p50Millis": 0.694777,
+            "p95Millis": 0.910231,
+            "p99Millis": 1.622549,
+            "maxMillis": 4.090468
+          }
+        },
+        {
+          "packetBytes": 1248,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.45578,
+            "p50Millis": 0.638605,
+            "p95Millis": 0.793069,
+            "p99Millis": 0.942743,
+            "maxMillis": 1.350063
+          }
+        }
+      ],
+      "passed": true,
+      "artifacts": {
+        "client": "udp-1-to-0-client.json",
+        "server": "udp-1-to-0-server.json"
+      }
+    },
+    {
+      "artifactLabel": "udp-2-to-0",
+      "requestFromNode": 0,
+      "requestToNode": 2,
+      "clientEndpoint": {
+        "ip": "10.0.212.169",
+        "port": 19081
+      },
+      "serverEndpoint": {
+        "ip": "10.1.81.207",
+        "port": 19080
+      },
+      "runId": "855c2bdebf6ae8667d1663513bfc98d2",
+      "timestamp": "2026-10-23T17:41:34.060935+00:00",
+      "requestsSent": 3000,
+      "requestsNotSent": 0,
+      "requestsReceivedUniqueByServer": 3000,
+      "echoesSentByServer": 3000,
+      "echoesReceivedUniqueByClient": 3000,
+      "requestOrEchoLoss": 0,
+      "serverRequestsMissing": 0,
+      "clientDuplicates": 0,
+      "serverDuplicates": 0,
+      "clientReordered": 0,
+      "serverReordered": 0,
+      "serverEchoSendErrors": 0,
+      "clientRejectedPackets": {
+        "source": 0,
+        "size": 0,
+        "authentication": 0,
+        "protocol_or_run": 0,
+        "unmatched": 0
+      },
+      "serverRejectedPackets": {
+        "source": 0,
+        "size": 0,
+        "authentication": 0,
+        "protocol_or_run": 0,
+        "sequence_or_size": 0
+      },
+      "clientAuthenticatedSources": [
+        {
+          "ip": "10.1.81.207",
+          "port": 19080,
+          "packets": 3000
+        }
+      ],
+      "serverAuthenticatedSources": [
+        {
+          "ip": "10.0.212.169",
+          "port": 19081,
+          "packets": 3000
+        }
+      ],
+      "sourceAddressesVerifiedAgainstSamples": true,
+      "dontFragment": true,
+      "configuredRequestsPerSecond": 200.0,
+      "rtt": {
+        "samples": 3000,
+        "minMillis": 0.39954,
+        "p50Millis": 0.704567,
+        "p95Millis": 0.922772,
+        "p99Millis": 1.27389,
+        "p999Millis": 1.575228,
+        "maxMillis": 4.288653
+      },
+      "perPacketSize": [
+        {
+          "packetBytes": 96,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.39954,
+            "p50Millis": 0.718867,
+            "p95Millis": 0.936143,
+            "p99Millis": 1.270541,
+            "maxMillis": 1.528467
+          }
+        },
+        {
+          "packetBytes": 512,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.41716,
+            "p50Millis": 0.658936,
+            "p95Millis": 0.866181,
+            "p99Millis": 1.084296,
+            "maxMillis": 1.67276
+          }
+        },
+        {
+          "packetBytes": 1248,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.40507,
+            "p50Millis": 0.746418,
+            "p95Millis": 0.971474,
+            "p99Millis": 1.358722,
+            "maxMillis": 4.288653
+          }
+        }
+      ],
+      "passed": true,
+      "artifacts": {
+        "client": "udp-2-to-0-client.json",
+        "server": "udp-2-to-0-server.json"
+      }
+    },
+    {
+      "artifactLabel": "udp-0-to-1",
+      "requestFromNode": 1,
+      "requestToNode": 0,
+      "clientEndpoint": {
+        "ip": "10.1.60.60",
+        "port": 19081
+      },
+      "serverEndpoint": {
+        "ip": "10.0.212.169",
+        "port": 19080
+      },
+      "runId": "65952e4bd20c274cc462387adfd5c7dd",
+      "timestamp": "2026-10-23T17:37:11.125235+00:00",
+      "requestsSent": 3000,
+      "requestsNotSent": 0,
+      "requestsReceivedUniqueByServer": 3000,
+      "echoesSentByServer": 3000,
+      "echoesReceivedUniqueByClient": 3000,
+      "requestOrEchoLoss": 0,
+      "serverRequestsMissing": 0,
+      "clientDuplicates": 0,
+      "serverDuplicates": 0,
+      "clientReordered": 0,
+      "serverReordered": 0,
+      "serverEchoSendErrors": 0,
+      "clientRejectedPackets": {
+        "source": 0,
+        "size": 0,
+        "authentication": 0,
+        "protocol_or_run": 0,
+        "unmatched": 0
+      },
+      "serverRejectedPackets": {
+        "source": 0,
+        "size": 0,
+        "authentication": 0,
+        "protocol_or_run": 0,
+        "sequence_or_size": 0
+      },
+      "clientAuthenticatedSources": [
+        {
+          "ip": "10.0.212.169",
+          "port": 19080,
+          "packets": 3000
+        }
+      ],
+      "serverAuthenticatedSources": [
+        {
+          "ip": "10.1.60.60",
+          "port": 19081,
+          "packets": 3000
+        }
+      ],
+      "sourceAddressesVerifiedAgainstSamples": true,
+      "dontFragment": true,
+      "configuredRequestsPerSecond": 200.0,
+      "rtt": {
+        "samples": 3000,
+        "minMillis": 0.410549,
+        "p50Millis": 0.632439,
+        "p95Millis": 0.882768,
+        "p99Millis": 1.284368,
+        "p999Millis": 22.945996,
+        "maxMillis": 37.712394
+      },
+      "perPacketSize": [
+        {
+          "packetBytes": 96,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.410549,
+            "p50Millis": 0.592129,
+            "p95Millis": 0.823558,
+            "p99Millis": 1.853447,
+            "maxMillis": 37.712394
+          }
+        },
+        {
+          "packetBytes": 512,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.43598,
+            "p50Millis": 0.638949,
+            "p95Millis": 0.857259,
+            "p99Millis": 0.993759,
+            "maxMillis": 2.360767
+          }
+        },
+        {
+          "packetBytes": 1248,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.448599,
+            "p50Millis": 0.663109,
+            "p95Millis": 0.949888,
+            "p99Millis": 1.375428,
+            "maxMillis": 2.636396
+          }
+        }
+      ],
+      "passed": true,
+      "artifacts": {
+        "client": "udp-0-to-1-client.json",
+        "server": "udp-0-to-1-server.json"
+      }
+    },
+    {
+      "artifactLabel": "udp-2-to-1",
+      "requestFromNode": 1,
+      "requestToNode": 2,
+      "clientEndpoint": {
+        "ip": "10.1.60.60",
+        "port": 19081
+      },
+      "serverEndpoint": {
+        "ip": "10.1.81.207",
+        "port": 19080
+      },
+      "runId": "1c0b40dd07fec0a6c2b657e4df7c3261",
+      "timestamp": "2026-10-23T17:42:29.291026+00:00",
+      "requestsSent": 3000,
+      "requestsNotSent": 0,
+      "requestsReceivedUniqueByServer": 3000,
+      "echoesSentByServer": 3000,
+      "echoesReceivedUniqueByClient": 3000,
+      "requestOrEchoLoss": 0,
+      "serverRequestsMissing": 0,
+      "clientDuplicates": 0,
+      "serverDuplicates": 0,
+      "clientReordered": 0,
+      "serverReordered": 0,
+      "serverEchoSendErrors": 0,
+      "clientRejectedPackets": {
+        "source": 0,
+        "size": 0,
+        "authentication": 0,
+        "protocol_or_run": 0,
+        "unmatched": 0
+      },
+      "serverRejectedPackets": {
+        "source": 0,
+        "size": 0,
+        "authentication": 0,
+        "protocol_or_run": 0,
+        "sequence_or_size": 0
+      },
+      "clientAuthenticatedSources": [
+        {
+          "ip": "10.1.81.207",
+          "port": 19080,
+          "packets": 3000
+        }
+      ],
+      "serverAuthenticatedSources": [
+        {
+          "ip": "10.1.60.60",
+          "port": 19081,
+          "packets": 3000
+        }
+      ],
+      "sourceAddressesVerifiedAgainstSamples": true,
+      "dontFragment": true,
+      "configuredRequestsPerSecond": 200.0,
+      "rtt": {
+        "samples": 3000,
+        "minMillis": 0.34104,
+        "p50Millis": 0.695269,
+        "p95Millis": 0.933738,
+        "p99Millis": 1.255688,
+        "p999Millis": 1.624198,
+        "maxMillis": 2.863606
+      },
+      "perPacketSize": [
+        {
+          "packetBytes": 96,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.34104,
+            "p50Millis": 0.631949,
+            "p95Millis": 1.069948,
+            "p99Millis": 1.314508,
+            "maxMillis": 1.743788
+          }
+        },
+        {
+          "packetBytes": 512,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.3435,
+            "p50Millis": 0.723239,
+            "p95Millis": 0.857738,
+            "p99Millis": 1.067569,
+            "maxMillis": 2.863606
+          }
+        },
+        {
+          "packetBytes": 1248,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.34787,
+            "p50Millis": 0.699469,
+            "p95Millis": 0.889498,
+            "p99Millis": 1.258758,
+            "maxMillis": 1.573418
+          }
+        }
+      ],
+      "passed": true,
+      "artifacts": {
+        "client": "udp-2-to-1-client.json",
+        "server": "udp-2-to-1-server.json"
+      }
+    },
+    {
+      "artifactLabel": "udp-0-to-2",
+      "requestFromNode": 2,
+      "requestToNode": 0,
+      "clientEndpoint": {
+        "ip": "10.1.81.207",
+        "port": 19081
+      },
+      "serverEndpoint": {
+        "ip": "10.0.212.169",
+        "port": 19080
+      },
+      "runId": "1ed5944d15fe61e1642f1ad96b487f5c",
+      "timestamp": "2026-10-23T17:41:03.223249+00:00",
+      "requestsSent": 3000,
+      "requestsNotSent": 0,
+      "requestsReceivedUniqueByServer": 3000,
+      "echoesSentByServer": 3000,
+      "echoesReceivedUniqueByClient": 3000,
+      "requestOrEchoLoss": 0,
+      "serverRequestsMissing": 0,
+      "clientDuplicates": 0,
+      "serverDuplicates": 0,
+      "clientReordered": 0,
+      "serverReordered": 0,
+      "serverEchoSendErrors": 0,
+      "clientRejectedPackets": {
+        "source": 0,
+        "size": 0,
+        "authentication": 0,
+        "protocol_or_run": 0,
+        "unmatched": 0
+      },
+      "serverRejectedPackets": {
+        "source": 0,
+        "size": 0,
+        "authentication": 0,
+        "protocol_or_run": 0,
+        "sequence_or_size": 0
+      },
+      "clientAuthenticatedSources": [
+        {
+          "ip": "10.0.212.169",
+          "port": 19080,
+          "packets": 3000
+        }
+      ],
+      "serverAuthenticatedSources": [
+        {
+          "ip": "10.1.81.207",
+          "port": 19081,
+          "packets": 3000
+        }
+      ],
+      "sourceAddressesVerifiedAgainstSamples": true,
+      "dontFragment": true,
+      "configuredRequestsPerSecond": 200.0,
+      "rtt": {
+        "samples": 3000,
+        "minMillis": 0.383451,
+        "p50Millis": 0.627463,
+        "p95Millis": 0.915813,
+        "p99Millis": 1.802357,
+        "p999Millis": 24.455425,
+        "maxMillis": 39.338844
+      },
+      "perPacketSize": [
+        {
+          "packetBytes": 96,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.402242,
+            "p50Millis": 0.592682,
+            "p95Millis": 0.944254,
+            "p99Millis": 2.584,
+            "maxMillis": 39.338844
+          }
+        },
+        {
+          "packetBytes": 512,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.405371,
+            "p50Millis": 0.622812,
+            "p95Millis": 0.922584,
+            "p99Millis": 1.759057,
+            "maxMillis": 3.009812
+          }
+        },
+        {
+          "packetBytes": 1248,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.383451,
+            "p50Millis": 0.659852,
+            "p95Millis": 0.884354,
+            "p99Millis": 1.170314,
+            "maxMillis": 2.295459
+          }
+        }
+      ],
+      "passed": true,
+      "artifacts": {
+        "client": "udp-0-to-2-client.json",
+        "server": "udp-0-to-2-server.json"
+      }
+    },
+    {
+      "artifactLabel": "udp-1-to-2",
+      "requestFromNode": 2,
+      "requestToNode": 1,
+      "clientEndpoint": {
+        "ip": "10.1.81.207",
+        "port": 19081
+      },
+      "serverEndpoint": {
+        "ip": "10.1.60.60",
+        "port": 19080
+      },
+      "runId": "caac1bac77ecf3cc5903cbf6ce4b7ae3",
+      "timestamp": "2026-10-23T17:42:01.766444+00:00",
+      "requestsSent": 3000,
+      "requestsNotSent": 0,
+      "requestsReceivedUniqueByServer": 3000,
+      "echoesSentByServer": 3000,
+      "echoesReceivedUniqueByClient": 3000,
+      "requestOrEchoLoss": 0,
+      "serverRequestsMissing": 0,
+      "clientDuplicates": 0,
+      "serverDuplicates": 0,
+      "clientReordered": 0,
+      "serverReordered": 0,
+      "serverEchoSendErrors": 0,
+      "clientRejectedPackets": {
+        "source": 0,
+        "size": 0,
+        "authentication": 0,
+        "protocol_or_run": 0,
+        "unmatched": 0
+      },
+      "serverRejectedPackets": {
+        "source": 0,
+        "size": 0,
+        "authentication": 0,
+        "protocol_or_run": 0,
+        "sequence_or_size": 0
+      },
+      "clientAuthenticatedSources": [
+        {
+          "ip": "10.1.60.60",
+          "port": 19080,
+          "packets": 3000
+        }
+      ],
+      "serverAuthenticatedSources": [
+        {
+          "ip": "10.1.81.207",
+          "port": 19081,
+          "packets": 3000
+        }
+      ],
+      "sourceAddressesVerifiedAgainstSamples": true,
+      "dontFragment": true,
+      "configuredRequestsPerSecond": 200.0,
+      "rtt": {
+        "samples": 3000,
+        "minMillis": 0.349881,
+        "p50Millis": 0.628243,
+        "p95Millis": 0.803213,
+        "p99Millis": 1.164074,
+        "p999Millis": 23.631183,
+        "maxMillis": 38.423991
+      },
+      "perPacketSize": [
+        {
+          "packetBytes": 96,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.356102,
+            "p50Millis": 0.649073,
+            "p95Millis": 0.827833,
+            "p99Millis": 1.284335,
+            "maxMillis": 38.423991
+          }
+        },
+        {
+          "packetBytes": 512,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.349881,
+            "p50Millis": 0.613802,
+            "p95Millis": 0.811913,
+            "p99Millis": 1.155155,
+            "maxMillis": 1.650237
+          }
+        },
+        {
+          "packetBytes": 1248,
+          "sent": 1000,
+          "receivedUnique": 1000,
+          "lost": 0,
+          "lossFraction": 0.0,
+          "rtt": {
+            "samples": 1000,
+            "minMillis": 0.359951,
+            "p50Millis": 0.625193,
+            "p95Millis": 0.772983,
+            "p99Millis": 0.936794,
+            "maxMillis": 2.119508
+          }
+        }
+      ],
+      "passed": true,
+      "artifacts": {
+        "client": "udp-1-to-2-client.json",
+        "server": "udp-1-to-2-server.json"
+      }
+    }
+  ],
+  "cost": {
+    "currency": "USD",
+    "projectBudget": 20,
+    "scope": "Only the three newly rented Pods for this project; no account-balance or unrelated-workload information is available",
+    "quoteGpuTotalPerHour": 1.53,
+    "quoteContainerDiskTotalPerHour": 0.021,
+    "quoteCombinedPerHour": 1.551,
+    "roundedPlanningPerHour": 1.56,
+    "basis": "Console hourly quotes observed during deployment; disk component approximately $0.007/h per 50GB container disk",
+    "actualBilledCost": null,
+    "actualBilledCostStatus": "Awaiting experiment end and provider billing records; staggered Pod start/stop times must be accounted for",
+    "cleanupStatus": "Pending evidence export and termination of this project's newly created resources"
+  },
+  "storage": {
+    "containerDiskConfiguredGBPerPod": 50,
+    "additionalPersistentVolumesAttached": false,
+    "podStopOrRestartPersistenceVerified": false,
+    "hostPowerLossDurabilityVerified": false,
+    "allowedFaultModel": "Java process stop/kill/restart while the same running Pod and its temporary disk remain available; business recovery results require separate evidence"
+  },
+  "applicationExperiment": {
+    "deployedRevisionShort": "924ecdd",
+    "declaredSyncLevel": 2,
+    "aeronMtuLength": 1248,
+    "status": "Three configured members launched; the separately exported normal-business smoke passed. External leader-failure, full-process restart and transactional projection checks remain separate.",
+    "postgres": "Reported running on node 2 as a non-root OS user, listening on loopback; transactional projection checks are separate",
+    "deploymentRoot": "/opt/vectormatch",
+    "javaHome": "/opt/vectormatch/tools/jdk",
+    "stateDirectory": "/opt/vectormatch/runtime/cloud-20261023-01",
+    "normalBusinessEvidence": {
+      "path": "../runpod-cluster/result.json",
+      "sha256": "f17e21caa8a079aa0426b1c2cc000546ae439135e2e73513560d54fc90248a9f",
+      "passed": true
+    }
+  },
+  "limitations": [
+    "Low-rate finite reachability probe; zero observed loss does not guarantee zero future loss",
+    "100 Mbps provider private-network specification was not tested to saturation",
+    "Pooled RTT includes all samples including cold-tail outliers; no warmup samples were discarded",
+    "Visible cgroup quotas are upper bounds; hidden ancestors or shared scheduling can impose tighter limits",
+    "No provider machineId, spread policy or power-domain isolation proof",
+    "Temporary container disks are not a promise of persistence after Pod lifecycle operations"
+  ],
+  "rawArtifacts": [
+    {
+      "path": "node0-identity.json",
+      "bytes": 274,
+      "sha256": "4d0680aca83e460b8f87618b690e9f778f76a24cb7219211ce9b9639b77df322"
+    },
+    {
+      "path": "node0-network.json",
+      "bytes": 1144,
+      "sha256": "e418694f60555290670c38e5434774f266d007e96bce0dbabb58fcd2c3c17f50"
+    },
+    {
+      "path": "node0-preflight.json",
+      "bytes": 19242,
+      "sha256": "09ad948751f89e0cf3f5c3d691045157f69da89703c368238eb8427972303add"
+    },
+    {
+      "path": "node1-identity.json",
+      "bytes": 275,
+      "sha256": "5488c00aedd3f74c48e9f9e1d582d89864b73704b394d6c21a4cd20b51837479"
+    },
+    {
+      "path": "node1-network.json",
+      "bytes": 1141,
+      "sha256": "f44edd1d8df9526d95f51e0d90c71029060bfdc6f7f1fad51231e91df1cc95db"
+    },
+    {
+      "path": "node1-preflight.json",
+      "bytes": 11569,
+      "sha256": "c6665a155d000d6e593e5c8d593078c601194da0ddd07fa0183276dc82ed8309"
+    },
+    {
+      "path": "node2-identity.json",
+      "bytes": 275,
+      "sha256": "67ecb679874c4595115b4e6b59efffa5918f5b964e04afc1c11b46fffc59fffe"
+    },
+    {
+      "path": "node2-network.json",
+      "bytes": 1144,
+      "sha256": "18d7696cc4dd5a6afacfe7cab48f1a35486e91e595450339372ffd3699866a39"
+    },
+    {
+      "path": "node2-preflight.json",
+      "bytes": 12809,
+      "sha256": "5bbdbdd5c5cd0a37c49ae0bf6cebf943389ba858d2d5f887667be42bf5cf04a4"
+    },
+    {
+      "path": "udp-0-to-1-client.json",
+      "bytes": 458467,
+      "sha256": "764f8e79ff7772bae4e449c0777eeb6caba4f782471e380315df24817d17a3b4"
+    },
+    {
+      "path": "udp-0-to-1-server.json",
+      "bytes": 2580,
+      "sha256": "57295f1534745987bb6a284354034dcb151b171f81bb60f20c0c00e1c9e29d89"
+    },
+    {
+      "path": "udp-0-to-2-client.json",
+      "bytes": 459394,
+      "sha256": "bd1b8ebf4559e6b43bbc5c20aeeb3bc491193de18bbc173bdffade9f55212e47"
+    },
+    {
+      "path": "udp-0-to-2-server.json",
+      "bytes": 2581,
+      "sha256": "67d776002b29cdaf761077170d5f0186f1285c7cb85476c20a6fcd5a0580ce30"
+    },
+    {
+      "path": "udp-1-to-0-client.json",
+      "bytes": 452613,
+      "sha256": "342de177d1f1ff03a742139a53d00c4bc66dd60ba97bdde55272c06c135ec3b2"
+    },
+    {
+      "path": "udp-1-to-0-server.json",
+      "bytes": 2581,
+      "sha256": "f7fa285ced4c9b01a2704d60d0c6fc8a5d994c6ac8d892a93e22ae6d7d472ee4"
+    },
+    {
+      "path": "udp-1-to-2-client.json",
+      "bytes": 453398,
+      "sha256": "ebaec716f0b865ee3b8e7c69f66e114680d3609c756369ccea523f6f60e8356f"
+    },
+    {
+      "path": "udp-1-to-2-server.json",
+      "bytes": 2580,
+      "sha256": "9f485b0b4664be5f2a7deeccd7eaba0427b1dc7748ab0237f1d8be99871164e7"
+    },
+    {
+      "path": "udp-2-to-0-client.json",
+      "bytes": 455473,
+      "sha256": "eda85b83d6d5d8aa8fb0f34f645095b17bf5cc08888db832762d2f45da0d2cf9"
+    },
+    {
+      "path": "udp-2-to-0-server.json",
+      "bytes": 3236,
+      "sha256": "b3854220dabd204a035d356d54938a3ca15c101ff7e34d52279115ce753a187e"
+    },
+    {
+      "path": "udp-2-to-1-client.json",
+      "bytes": 455509,
+      "sha256": "bb839fe61e5d8d1d7e40542864c8590f3e91d6210597646a55549941d14ee6c8"
+    },
+    {
+      "path": "udp-2-to-1-server.json",
+      "bytes": 3231,
+      "sha256": "ff447c0860af9e2481d6482870276a6fedf524974affedd4b8ea8fa31b7cc0d2"
+    }
+  ]
+}

@@ -149,6 +149,54 @@
       ],
       "artifactPath": "evidence/2026-10-23/reviewed-workbench/summary.json",
       "timestamp": "2026-10-23T16:40:06.163560+00:00"
+    },
+    {
+      "id": "runpod-private-udp-fullmesh",
+      "label": "Runpod private UDP \u00b7 3 Pods / full mesh",
+      "scope": "Raw private IPv4 UDP echo RTT; 18,000 request/echo roundtrips across six ordered Pod pairs",
+      "model": "LOW_RATE_FIXED_ARRIVAL; 200 requests/s on one tested path at a time; authenticated UDP echo",
+      "commands": null,
+      "trades": null,
+      "throughput": null,
+      "p50Millis": 0.653665,
+      "p99Millis": 1.298711,
+      "unknown": null,
+      "correctnessPassed": true,
+      "durability": "None; UDP echo has no journal, quorum or persistent business state",
+      "limitations": [
+        "Network reachability/source/payload checks only; these samples are not business commands, matching latency or a capacity benchmark.",
+        "Three EU-RO-1 Pods with distinct Pod identities and kernel boot IDs; provider self-GET returned 403, machineId was unavailable, and physical anti-affinity is not certified.",
+        "Each ordered pair sent 3,000 requests: 1,000 each at 96, 512 and 1248 payload bytes, all with IPv4 DF. Largest tested IP datagram was 1276 bytes on a 1300-MTU private interface.",
+        "18,000 unique returned echoes; zero observed loss, duplicates or reordering. Finite low-rate observations do not guarantee future zero loss.",
+        "Pooled nearest-rank RTT includes every returned sample: p99.9 9.909679 ms; max 39.338844 ms. No cold-tail samples were removed; no one-way latency was measured.",
+        "Global Networking is specified at 100 Mbps by the provider; bandwidth saturation was not measured."
+      ],
+      "artifactPath": "evidence/2026-10-23/runpod-network/summary.json",
+      "timestamp": "2026-10-23T17:42:29.291026+00:00"
+    },
+    {
+      "id": "runpod-replicated-single",
+      "label": "Runpod replicated matching \u00b7 3 Pods / 1 client",
+      "scope": "Client execute RTT: encoding, private UDP transport, quorum commit, matching, response and automatic retries",
+      "model": "CLOSED_LOOP_SINGLE_INFLIGHT; maximum one logical request in flight",
+      "commands": 900,
+      "trades": 300,
+      "throughput": 95.14978734472375,
+      "p50Millis": 9.148866,
+      "p99Millis": 12.361379,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "durability": "3 Pods; Archive/catalog/consensus sync level 2; temporary container overlay disks",
+      "limitations": [
+        "900 measured accepted commands, 300 trades and 1,200 executed lots; two deposits and 90 warmup commands are excluded from measurement.",
+        "Single-inflight closed-loop smoke, not open-loop saturation or a capacity result. Throughput elapsed time includes reference matching, validation and sample recording.",
+        "Load generator shares node 2 with a cluster member; this is not an independent fourth load-generation host.",
+        "Measured execute RTT max 526.493987 ms; p99.9 equals this maximum with only 900 samples. 2 accepted automatic resends and 3 unaccepted offers were retained; zero unknown request timeouts.",
+        "Same running Pods and temporary disks; sync level 2 does not establish persistence after Pod stop/rebuild or host power loss. Physical anti-affinity was not provider-certified.",
+        "This card verifies normal matching, canonical state bytes, invariants and same-key replay. External recovery and PostgreSQL projection results require separate evidence."
+      ],
+      "artifactPath": "evidence/2026-10-23/runpod-cluster/result.json",
+      "timestamp": "2026-10-23T17:48:45.930579864Z"
     }
   ]
 }

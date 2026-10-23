@@ -1,0 +1,46 @@
+{
+  "node": 2,
+  "processRecord": {
+    "version": 1,
+    "pid": 2517,
+    "startTicks": 33804083,
+    "commandSha256": "773998d497e0c9c73d37bc918f1bb873c32d925da0fbfa18342cb31f14a84c2a",
+    "role": "node",
+    "configurationVersion": 1,
+    "configurationSha256": "0eda26c6104caf62d3e8260f9c8e41e37d75b39b2153ddd6715d00c3670c07a8",
+    "createdAt": "2026-10-23T17:45:52.553590+00:00",
+    "arguments": [
+      "/opt/vectormatch/tools/jdk-21.0.13+9/bin/java",
+      "--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED",
+      "--add-opens=java.base/java.util.zip=ALL-UNNAMED",
+      "-Xmx1g",
+      "-Dvm.process.identity=/opt/vectormatch/runtime/cloud-20261023-01/node-2",
+      "-cp",
+      "/opt/vectormatch/dist/cluster/lib/*",
+      "io.vectormatch.cluster.ClusterNodeMain",
+      "2",
+      "/opt/vectormatch/runtime/cloud-20261023-01",
+      "19000",
+      "2",
+      "65536",
+      "10.0.212.169,10.1.60.60,10.1.81.207"
+    ],
+    "log": "/opt/vectormatch/runtime/cloud-20261023-01/node-2/process.log"
+  },
+  "launchLog": "VECTOR_CLUSTER_STARTED node=2 pid=2517 sync=2 state=/opt/vectormatch/runtime/cloud-20261023-01/node-2 members=0,10.0.212.169:19002,10.0.212.169:19003,10.0.212.169:19004,10.0.212.169:19005,10.0.212.169:19001|1,10.1.60.60:19102,10.1.60.60:19103,10.1.60.60:19104,10.1.60.60:19105,10.1.60.60:19101|2,10.1.81.207:19202,10.1.81.207:19203,10.1.81.207:19204,10.1.81.207:19205,10.1.81.207:19201 mtu=1248\nVECTOR_CLUSTER_ERROR node=2\nio.aeron.cluster.client.ClusterEvent: WARN - leader heartbeat timeout\nVECTOR_CLUSTER_ROLE role=LEADER\n",
+  "describe": {
+    "exitCode": 0,
+    "stdout": "Type: CONSENSUS_MODULE 17:53:06 (start: 2026-10-23 17:45:52, activity: 2026-10-23 17:53:05)\n[MarkFileHeader](sbeTemplateId=200|sbeSchemaId=110|sbeSchemaVersion=2|sbeBlockLength=128):version=768|componentType=CONSENSUS_MODULE|activityTimestamp=1792777985633|startTimestamp=1792777552901|pid=2517|candidateTermId=-1|archiveStreamId=10|serviceStreamId=104|consensusModuleStreamId=105|ingressStreamId=101|memberId=2|serviceId=-1|headerLength=8192|errorBufferLength=1048576|clusterId=0|aeronDirectory='/opt/vectormatch/runtime/cloud-20261023-01/node-2/driver'|controlChannel='aeron:ipc?term-length=128k'|ingressChannel='aeron:udp?mtu=1248|endpoint=10.1.81.207:19202|term-length=64k'|serviceName=''|authenticator='io.aeron.security.DefaultAuthenticatorSupplier'|servicesClusterDir='/opt/vectormatch/runtime/cloud-20261023-01/node-2/cluster'\nINFO: mark file exists: /opt/vectormatch/runtime/cloud-20261023-01/node-2/cluster/cluster-mark-service-0.dat\nType: CONTAINER 17:53:06 (start: 2026-10-23 17:45:52, activity: 2026-10-23 17:53:06)\n[MarkFileHeader](sbeTemplateId=200|sbeSchemaId=110|sbeSchemaVersion=2|sbeBlockLength=128):version=768|componentType=CONTAINER|activityTimestamp=1792777986013|startTimestamp=1792777552968|pid=2517|candidateTermId=-1|archiveStreamId=10|serviceStreamId=104|consensusModuleStreamId=105|ingressStreamId=-1|memberId=2|serviceId=0|headerLength=8192|errorBufferLength=1048576|clusterId=0|aeronDirectory='/opt/vectormatch/runtime/cloud-20261023-01/node-2/driver'|controlChannel='aeron:ipc?term-length=128k'|ingressChannel=''|serviceName='clustered-service-0-0'|authenticator=''|servicesClusterDir=''\n",
+    "stderr": ""
+  },
+  "list-members": {
+    "exitCode": 0,
+    "stdout": "currentTimeNs=1792777986669000000, leaderMemberId=2, memberId=2, activeMembers=[ClusterMember{id=0, isBallotSent=false, isLeader=false, leadershipTermId=-1, logPosition=-1, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792777612624000000, ingressEndpoint='10.0.212.169:19002', consensusEndpoint='10.0.212.169:19003', logEndpoint='10.0.212.169:19004', catchupEndpoint='10.0.212.169:19005', archiveEndpoint='10.0.212.169:19001', endpoints='10.0.212.169:19002,10.0.212.169:19003,10.0.212.169:19004,10.0.212.169:19005,10.0.212.169:19001', publication=null, vote=null}, ClusterMember{id=1, isBallotSent=false, isLeader=false, leadershipTermId=1, logPosition=302848, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792777986503000000, ingressEndpoint='10.1.60.60:19102', consensusEndpoint='10.1.60.60:19103', logEndpoint='10.1.60.60:19104', catchupEndpoint='10.1.60.60:19105', archiveEndpoint='10.1.60.60:19101', endpoints='10.1.60.60:19102,10.1.60.60:19103,10.1.60.60:19104,10.1.60.60:19105,10.1.60.60:19101', publication=null, vote=null}, ClusterMember{id=2, isBallotSent=false, isLeader=true, leadershipTermId=1, logPosition=302848, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792777986669000000, ingressEndpoint='10.1.81.207:19202', consensusEndpoint='10.1.81.207:19203', logEndpoint='10.1.81.207:19204', catchupEndpoint='10.1.81.207:19205', archiveEndpoint='10.1.81.207:19201', endpoints='10.1.81.207:19202,10.1.81.207:19203,10.1.81.207:19204,10.1.81.207:19205,10.1.81.207:19201', publication=null, vote=null}]\n",
+    "stderr": ""
+  },
+  "errors": {
+    "exitCode": 0,
+    "stdout": "Type: CONSENSUS_MODULE 17:53:06 (start: 2026-10-23 17:45:52, activity: 2026-10-23 17:53:06)\nCluster component error log:\n\n1 observations from 2026-10-23 17:51:39.283+0000 to 2026-10-23 17:51:39.283+0000 for:\nio.aeron.cluster.client.ClusterEvent: WARN - leader heartbeat timeout\n\n\n1 distinct errors observed.\n\nAeron driver error log (directory: /opt/vectormatch/runtime/cloud-20261023-01/node-2/driver):\n\n0 distinct errors observed\nINFO: mark file exists: /opt/vectormatch/runtime/cloud-20261023-01/node-2/cluster/cluster-mark-service-0.dat\nType: CONTAINER 17:53:06 (start: 2026-10-23 17:45:52, activity: 2026-10-23 17:53:06)\nCluster component error log:\n\n0 distinct errors observed\n",
+    "stderr": ""
+  }
+}

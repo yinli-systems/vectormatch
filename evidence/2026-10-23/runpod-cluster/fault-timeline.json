@@ -1,0 +1,51 @@
+[
+  {
+    "timestamp": "2026-10-23T17:51:24.584070+00:00",
+    "action": "experiment-verify",
+    "folder": "cloud-3nodes-01",
+    "stdout": "VECTOR_REMOTE_VERIFY_PASS leader=0 hash=a98ae2f819d473742a6f3d015b2ecdc5cd78d74728a1ffccd8dedbf1fbfb9804\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T17:51:26.959523+00:00",
+    "action": "all-members-caught-up",
+    "leader": 0,
+    "targetLogPosition": 302752,
+    "members": {
+      "0": {
+        "term": 0,
+        "position": 302752
+      },
+      "1": {
+        "term": 0,
+        "position": 302752
+      },
+      "2": {
+        "term": 0,
+        "position": 302752
+      }
+    },
+    "officialClusterToolOutput": "currentTimeNs=1792777887024000000, leaderMemberId=0, memberId=0, activeMembers=[ClusterMember{id=0, isBallotSent=false, isLeader=true, leadershipTermId=0, logPosition=302752, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792777887024000000, ingressEndpoint='10.0.212.169:19002', consensusEndpoint='10.0.212.169:19003', logEndpoint='10.0.212.169:19004', catchupEndpoint='10.0.212.169:19005', archiveEndpoint='10.0.212.169:19001', endpoints='10.0.212.169:19002,10.0.212.169:19003,10.0.212.169:19004,10.0.212.169:19005,10.0.212.169:19001', publication=null, vote=null}, ClusterMember{id=1, isBallotSent=false, isLeader=false, leadershipTermId=0, logPosition=302752, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792777886869000000, ingressEndpoint='10.1.60.60:19102', consensusEndpoint='10.1.60.60:19103', logEndpoint='10.1.60.60:19104', catchupEndpoint='10.1.60.60:19105', archiveEndpoint='10.1.60.60:19101', endpoints='10.1.60.60:19102,10.1.60.60:19103,10.1.60.60:19104,10.1.60.60:19105,10.1.60.60:19101', publication=null, vote=null}, ClusterMember{id=2, isBallotSent=false, isLeader=false, leadershipTermId=0, logPosition=302752, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792777886869000000, ingressEndpoint='10.1.81.207:19202', consensusEndpoint='10.1.81.207:19203', logEndpoint='10.1.81.207:19204', catchupEndpoint='10.1.81.207:19205', archiveEndpoint='10.1.81.207:19201', endpoints='10.1.81.207:19202,10.1.81.207:19203,10.1.81.207:19204,10.1.81.207:19205,10.1.81.207:19201', publication=null, vote=null}]\n"
+  },
+  {
+    "timestamp": "2026-10-23T17:51:26.959862+00:00",
+    "action": "fault-start",
+    "round": 1,
+    "oldLeader": 0,
+    "scope": "Root monotonic duration includes SSH setup, SIGKILL dispatch, JVM start, connect and snapshot/replay verification; not first-new-write recovery latency"
+  },
+  {
+    "timestamp": "2026-10-23T17:51:29.301009+00:00",
+    "action": "SIGKILL-confirmed",
+    "node": 0,
+    "pid": 727,
+    "startTicks": 33489735,
+    "signal": "SIGKILL",
+    "remoteTimestamp": "2026-10-23T17:51:29.420889+00:00"
+  },
+  {
+    "timestamp": "2026-10-23T17:51:52.262785+00:00",
+    "action": "FAILED",
+    "errorType": "RuntimeError",
+    "error": "node2 1: Exception in thread \"main\" io.aeron.exceptions.TimeoutException: ERROR - cluster connect timeout: state=AWAIT_PUBLICATION_CONNECTED messageTimeout=20s ingressChannel=aeron:udp?mtu=1248|term-length=64k ingressEndpoints=0=10.0.212.169:19002,1=10.1.60.60:19102,2=10.1.81.207:19202 ingressPublication=Publication{originalRegistrationId=5, registrationId=5, isClosed=false, isConnected=false, initialTermId=485496042, termBufferLength=65536, sessionId=-465664898, streamId=101, channel='aeron:udp?mtu=1248|endpoint=10.0.212.169:19002|term-length=64k', position=0} egress.isConnected=false responseChannel=aeron:udp?rejoin=false|mtu=1248|endpoint=10.1.81.207:38446|term-length=64k\n\tat io.aeron.cluster.client.AeronCluster$AsyncConnect.checkDeadline(AeronCluster.java:2331)\n\tat io.aeron.cluster.client.AeronCluster$AsyncConnect.poll(AeronCluster.java:2285)\n\tat io.aeron.cluster.client.AeronCluster.connect(AeronCluster.java:164)\n\tat io.vectormatch.cluster.ClusterClient.<init>(ClusterClient.java:61)\n\tat io.vectormatch.cluster.ClusterClient.<init>(ClusterClient.java:44)\n\tat io.vectormatch.cluster.ClusterClient.<init>(ClusterClient.java:40)\n\tat io.vectormatch.cluster.RemoteClusterExperiment.verify(RemoteClusterExperiment.java:198)\n\tat io.vectormatch.cluster.RemoteClusterExperiment.main(RemoteClusterExperiment.java:60)\n\n "
+  }
+]
