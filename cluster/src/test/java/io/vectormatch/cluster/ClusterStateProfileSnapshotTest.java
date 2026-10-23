@@ -106,7 +106,7 @@ class ClusterStateProfileSnapshotTest {
     @Test void capacityProfileDoesNotExpandTheCoreViewOffsetProtocol() {
         MatchingClusteredService service = new MatchingClusteredService(524_288, CAPACITY);
         CapturingSession session = new CapturingSession();
-        byte[] request = CommandCodec.snapshot(1, (long) SnapshotTransport.MAX_SNAPSHOT_BYTES + 1, "");
+        byte[] request = CommandCodec.snapshot(1, SnapshotTransport.MAX_SNAPSHOT_BYTES + 1, "");
         service.onSessionMessage(session, 0, new UnsafeBuffer(request), 0, request.length, null);
         var response = CommandCodec.decodeSnapshotChunk(session.response);
         assertEquals("INVALID_SNAPSHOT_OFFSET_OR_TOKEN", response.error());
