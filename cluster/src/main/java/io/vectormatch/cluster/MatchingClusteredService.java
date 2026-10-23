@@ -2,6 +2,7 @@ package io.vectormatch.cluster;
 
 import io.aeron.ExclusivePublication;
 import io.aeron.Image;
+import io.aeron.Publication;
 import io.aeron.cluster.codecs.CloseReason;
 import io.aeron.cluster.service.ClientSession;
 import io.aeron.cluster.service.Cluster;
@@ -17,6 +18,7 @@ import java.util.List;
 
 /** Thin deterministic Cluster adapter; transport IDs never become business idempotency IDs. */
 public final class MatchingClusteredService implements ClusteredService {
+    private static final int MAX_RESPONSE_OFFER_ATTEMPTS = 3;
     private MatchingEngine engine = ClusterCapacity.newEngine();
     private ReplicatedOutbox outbox;
     private Cluster cluster;
@@ -124,7 +126,13 @@ public final class MatchingClusteredService implements ClusteredService {
     }
 
     private void respond(ClientSession session, byte[] response) {
-        if (session != null) session.offer(new UnsafeBuffer(response), 0, response.length);
+        if (session == null) return;
+        UnsafeBuffer buffer = new UnsafeBuffer(response);
+        for (int attempt = 0; attempt < MAX_RESPONSE_OFFER_ATTEMPTS; attempt++) {
+            // Term rotation rejects the current offer; retry that response without applying the command again.
+            // Every other outcome returns immediately. Exhaustion keeps the existing same-key client recovery.
+            if (session.offer(buffer, 0, response.length) != Publication.ADMIN_ACTION) return;
+        }
     }
 
     @Override public void onRoleChange(Cluster.Role role) {

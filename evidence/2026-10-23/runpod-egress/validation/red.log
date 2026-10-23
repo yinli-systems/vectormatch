@@ -1,0 +1,58 @@
+> Task :cluster:processResources NO-SOURCE
+> Task :cluster:processTestResources NO-SOURCE
+> Task :core:compileJava UP-TO-DATE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar UP-TO-DATE
+> Task :cluster:compileJava UP-TO-DATE
+> Task :cluster:classes UP-TO-DATE
+> Task :cluster:compileTestJava
+> Task :cluster:testClasses
+
+> Task :cluster:test
+
+MatchingClusteredServiceEgressRotationTest > lightweightControlReplySurvivesARealEgressTermRotation() FAILED
+    org.opentest4j.AssertionFailedError: Reply was lost after actual ADMIN_ACTION; session offer results=[-3] ==> expected: not <null>
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:152)
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+        at app//org.junit.jupiter.api.AssertNotNull.failNull(AssertNotNull.java:49)
+        at app//org.junit.jupiter.api.AssertNotNull.assertNotNull(AssertNotNull.java:35)
+        at app//org.junit.jupiter.api.Assertions.assertNotNull(Assertions.java:312)
+        at app//io.vectormatch.cluster.MatchingClusteredServiceEgressRotationTest$Egress.targetReply(MatchingClusteredServiceEgressRotationTest.java:168)
+        at app//io.vectormatch.cluster.MatchingClusteredServiceEgressRotationTest.lightweightControlReplySurvivesARealEgressTermRotation(MatchingClusteredServiceEgressRotationTest.java:60)
+
+MatchingClusteredServiceEgressRotationTest > fragmentedSnapshotReplySurvivesARealEgressTermRotation() FAILED
+    org.opentest4j.AssertionFailedError: Reply was lost after actual ADMIN_ACTION; session offer results=[-3] ==> expected: not <null>
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:152)
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+        at app//org.junit.jupiter.api.AssertNotNull.failNull(AssertNotNull.java:49)
+        at app//org.junit.jupiter.api.AssertNotNull.assertNotNull(AssertNotNull.java:35)
+        at app//org.junit.jupiter.api.Assertions.assertNotNull(Assertions.java:312)
+        at app//io.vectormatch.cluster.MatchingClusteredServiceEgressRotationTest$Egress.targetReply(MatchingClusteredServiceEgressRotationTest.java:168)
+        at app//io.vectormatch.cluster.MatchingClusteredServiceEgressRotationTest.fragmentedSnapshotReplySurvivesARealEgressTermRotation(MatchingClusteredServiceEgressRotationTest.java:78)
+
+MatchingClusteredServiceEgressRotationTest > normalBusinessReplySurvivesARealEgressTermRotation() FAILED
+    org.opentest4j.AssertionFailedError: Reply was lost after actual ADMIN_ACTION; session offer results=[-3] ==> expected: not <null>
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:152)
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+        at app//org.junit.jupiter.api.AssertNotNull.failNull(AssertNotNull.java:49)
+        at app//org.junit.jupiter.api.AssertNotNull.assertNotNull(AssertNotNull.java:35)
+        at app//org.junit.jupiter.api.Assertions.assertNotNull(Assertions.java:312)
+        at app//io.vectormatch.cluster.MatchingClusteredServiceEgressRotationTest$Egress.targetReply(MatchingClusteredServiceEgressRotationTest.java:168)
+        at app//io.vectormatch.cluster.MatchingClusteredServiceEgressRotationTest.normalBusinessReplySurvivesARealEgressTermRotation(MatchingClusteredServiceEgressRotationTest.java:43)
+
+3 tests completed, 3 failed
+
+> Task :cluster:test FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':cluster:test'.
+> There were failing tests. See the report at: file:///Users/kevin/Documents/ChatGPT/App%202/cluster/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 7s
+5 actionable tasks: 2 executed, 3 up-to-date

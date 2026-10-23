@@ -1,0 +1,56 @@
+{
+  "scope": "Local macOS real embedded MediaDriver + UDP publication/subscription; service ClientSession adapter wraps the same 32-byte cluster header. Not a three-member replication or cloud performance test.",
+  "baselineGitHead": "5082866e6143b4cdd92de14868f0d9db56cfb908",
+  "red": {
+    "tests": 3,
+    "failures": 3,
+    "cause": "Actual Publication.ADMIN_ACTION (-3) at publication.position 65440, term 65536; no target reply received",
+    "productionSourceSha256": "6c109569278fc5f494a05f77d1c40c7d70d7106aba1a931bcb70e087ce8596c8",
+    "log": "red.log",
+    "junit": "red-junit/",
+    "testFixtureNote": "The final fixture additionally closes driver/Aeron if constructor initialization fails; RED and GREEN target assertions, framing, connected/consumption checks and term-boundary setup are unchanged."
+  },
+  "green": {
+    "tests": 7,
+    "failures": 0,
+    "skipped": 0,
+    "errors": 0,
+    "log": "green.log",
+    "junit": "green-junit/",
+    "suites": [
+      {
+        "name": "io.vectormatch.cluster.MatchingClusteredServiceEgressRotationTest",
+        "tests": "3",
+        "skipped": "0",
+        "failures": "0",
+        "errors": "0",
+        "time": "1.918"
+      },
+      {
+        "name": "io.vectormatch.cluster.MatchingClusteredServiceResponseBoundTest",
+        "tests": "4",
+        "skipped": "0",
+        "failures": "0",
+        "errors": "0",
+        "time": "0.011"
+      }
+    ]
+  },
+  "repair": "At most 3 offers of identical encoded response; retry only ADMIN_ACTION; all other outcomes return immediately; no queue or additional business apply.",
+  "files": [
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/MatchingClusteredService.java",
+      "sha256": "9be7c6d4dad2d4d87b80a33b9ebff4bebd5b868b7f8c55ac37c80282a077d401"
+    },
+    {
+      "path": "cluster/src/test/java/io/vectormatch/cluster/MatchingClusteredServiceEgressRotationTest.java",
+      "sha256": "2eb2475746ef282d6f8f5a382c3cce633c089b7224be7040ca97d846e5a17318"
+    },
+    {
+      "path": "cluster/src/test/java/io/vectormatch/cluster/MatchingClusteredServiceResponseBoundTest.java",
+      "sha256": "119e1b55461e94dd391c638f906c701a71cb6a2eff608ed66b40bf3a4ae8e964"
+    }
+  ],
+  "command": "./gradlew :cluster:test --tests io.vectormatch.cluster.MatchingClusteredServiceEgressRotationTest --tests io.vectormatch.cluster.MatchingClusteredServiceResponseBoundTest --console=plain",
+  "inferenceLimit": "Explains 409-command/500ms pattern by code and exact frame sizes, but historical cloud service offer return codes were not recorded, so those individual samples are not directly proven causal."
+}

@@ -581,5 +581,56 @@
       "lagScope": "last observed source high-water mark minus durable cursor; not a live source measurement",
       "sourceLastObservedSeq": 3327
     }
+  },
+  {
+    "timestamp": "2026-10-23T18:27:50.358013+00:00",
+    "action": "egress-comparison-quiesce",
+    "role": "gateway",
+    "stdout": "gateway stopped; persistent state preserved\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:27:53.056042+00:00",
+    "action": "egress-comparison-quiesce",
+    "role": "projector",
+    "stdout": "projector stopped; persistent state preserved\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:28:51.142007+00:00",
+    "action": "experiment-run",
+    "folder": "cloud-egress-control",
+    "stdout": "VECTOR_REMOTE_EXPERIMENT_PASS commands=900 trades=300 goodput=122.509/s p99=9115.065us leader=2 hash=6519aeaa2fe96b75d7160ee13e3c0f0dfb0951f8a5919976b72c5552fc7ae695\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:29:34.706897+00:00",
+    "action": "experiment-verify",
+    "folder": "cloud-egress-control",
+    "stdout": "VECTOR_REMOTE_VERIFY_PASS leader=2 hash=6519aeaa2fe96b75d7160ee13e3c0f0dfb0951f8a5919976b72c5552fc7ae695\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:29:37.613908+00:00",
+    "action": "all-members-caught-up",
+    "leader": 2,
+    "targetLogPosition": 2778624,
+    "members": {
+      "0": {
+        "term": 7,
+        "position": 2778624
+      },
+      "1": {
+        "term": 7,
+        "position": 2778624
+      },
+      "2": {
+        "term": 7,
+        "position": 2778624
+      }
+    },
+    "officialClusterToolOutput": "currentTimeNs=1792780177777000000, leaderMemberId=2, memberId=2, activeMembers=[ClusterMember{id=0, isBallotSent=false, isLeader=false, leadershipTermId=7, logPosition=2778624, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792780177713000000, ingressEndpoint='10.0.212.169:19002', consensusEndpoint='10.0.212.169:19003', logEndpoint='10.0.212.169:19004', catchupEndpoint='10.0.212.169:19005', archiveEndpoint='10.0.212.169:19001', endpoints='10.0.212.169:19002,10.0.212.169:19003,10.0.212.169:19004,10.0.212.169:19005,10.0.212.169:19001', publication=null, vote=null}, ClusterMember{id=1, isBallotSent=false, isLeader=false, leadershipTermId=7, logPosition=2778624, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792780177716000000, ingressEndpoint='10.1.60.60:19102', consensusEndpoint='10.1.60.60:19103', logEndpoint='10.1.60.60:19104', catchupEndpoint='10.1.60.60:19105', archiveEndpoint='10.1.60.60:19101', endpoints='10.1.60.60:19102,10.1.60.60:19103,10.1.60.60:19104,10.1.60.60:19105,10.1.60.60:19101', publication=null, vote=null}, ClusterMember{id=2, isBallotSent=false, isLeader=true, leadershipTermId=7, logPosition=2778624, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792780177777000000, ingressEndpoint='10.1.81.207:19202', consensusEndpoint='10.1.81.207:19203', logEndpoint='10.1.81.207:19204', catchupEndpoint='10.1.81.207:19205', archiveEndpoint='10.1.81.207:19201', endpoints='10.1.81.207:19202,10.1.81.207:19203,10.1.81.207:19204,10.1.81.207:19205,10.1.81.207:19201', publication=null, vote=null}]\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:29:40.531916+00:00",
+    "action": "egress-comparison-pre-upgrade-snapshot",
+    "leader": 2,
+    "stdout": "Member [2]: SNAPSHOT applied successfully\n\n"
   }
 ]
