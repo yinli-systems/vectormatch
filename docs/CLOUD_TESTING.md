@@ -2,7 +2,7 @@
 
 The initial approved cloud testing budget is **USD 20 total**. No instances have been purchased by this project. Record the actual hourly quote, storage charges, start/stop times and exported evidence. Run a short campaign, then terminate unused resources after preserving evidence; stopped persistent disks can still incur charges. A benchmark process stopping does not stop a provider's billing.
 
-The selected next campaign is now a real multi-host UDP lab: **3 × Hetzner CCX23 + 1 × CCX13**, with private networking and a spread placement group. The [exact rental and SSH handoff guide](HETZNER_LAB.md) supersedes the initial single-machine suggestion below. Its 12-hour estimate is USD 6.8724 before tax; 24 hours is USD 13.7448. Current account quota and stock must be confirmed in the provider console before purchase.
+The user now prefers Runpod. A [GPU private-network preflight configuration](RUNPOD_LAB.md) has been selected in the signed-in browser, without deploying. Native private UDP and independent-host placement remain unverified. The alternative is **3 × Hetzner CCX23 + 1 × CCX13**, with private networking and a spread placement group; its [rental and SSH handoff guide](HETZNER_LAB.md) estimates USD 6.8724 for 12 hours before tax or USD 13.7448 for 24 hours, subject to account quota and stock.
 
 ## First machine
 
