@@ -84,4 +84,33 @@ class ClusterTopologyTest {
                 Map.of("VECTOR_STATE_PROFILE", "capacity-190k-v1"));
         assertEquals(ClusterCapacity.StateProfile.DEFAULT, normal.stateProfile());
     }
+
+    @Test void nodeReceiveBufferOnlyChangesThroughBoundedEighthArgument() {
+        String[] original = {"0", "build/unused-receive-buffer", "23000", "2", "524288", "127.0.0.1", "capacity-190k-v1"};
+        var normal = ClusterNodeMain.configuration(original, Map.of());
+        assertEquals(131072, normal.socketReceiveBufferBytes());
+        assertEquals(131072, ClusterNodeMain.configuration(original,
+                Map.of("VECTOR_SOCKET_RECEIVE_BUFFER_BYTES", "1048576")).socketReceiveBufferBytes(),
+                "Only the launcher's explicit argv opt-in changes the node request");
+        for (String value : List.of("65536", "131072", "1048576", "4194304")) {
+            String[] explicit = java.util.Arrays.copyOf(original, 8);
+            explicit[7] = value;
+            var configured = ClusterNodeMain.configuration(explicit, Map.of());
+            assertEquals(Integer.parseInt(value), configured.socketReceiveBufferBytes());
+            assertEquals(normal.node(), configured.node());
+            assertEquals(normal.base(), configured.base());
+            assertEquals(normal.sync(), configured.sync());
+            assertEquals(normal.outboxCapacity(), configured.outboxCapacity());
+            assertEquals(normal.topology().members(), configured.topology().members());
+            assertEquals(normal.transport(), configured.transport());
+            assertEquals(normal.stateProfile(), configured.stateProfile());
+        }
+        for (String invalid : List.of("", "0", "-1", "65535", "4194305", "2147483648", "1m", "131072 -Xmx8g")) {
+            String[] explicit = java.util.Arrays.copyOf(original, 8);
+            explicit[7] = invalid;
+            assertThrows(IllegalArgumentException.class, () -> ClusterNodeMain.configuration(explicit, Map.of()), invalid);
+        }
+        assertThrows(IllegalArgumentException.class,
+                () -> ClusterNodeMain.configuration(java.util.Arrays.copyOf(original, 9), Map.of()));
+    }
 }

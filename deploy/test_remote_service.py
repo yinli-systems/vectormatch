@@ -77,6 +77,72 @@ class RemoteServiceTest(unittest.TestCase):
             self.assertEqual(environment["VECTOR_AERON_MTU_LENGTH"], "1248")
             self.assertIn("-Xmx1g", args)
 
+    def test_receive_buffer_opt_in_preserves_optional_state_profile_position(self):
+        settings = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4"}
+        with patch.dict(os.environ, settings, clear=True), \
+                patch.object(remote, "distribution", return_value=Path("/bundle/dist/cluster")), \
+                patch.object(remote, "java", return_value="/jdk/bin/java"):
+            original, environment = remote.command("node", 0, Path("/state/node-0"), "start")
+            original_fingerprint = remote.configuration_fingerprint("node", environment)
+            self.assertEqual(len(original[original.index(remote.MAINS["node"]) + 1:]), 6)
+            os.environ["VECTOR_SOCKET_RECEIVE_BUFFER_BYTES"] = "131072"
+            explicit, configured = remote.command("node", 0, Path("/state/node-0"), "start")
+            self.assertEqual(explicit[-2:], ["default", "131072"])
+            self.assertEqual(explicit[:-2], original)
+            self.assertNotEqual(original_fingerprint, remote.configuration_fingerprint("node", configured))
+            os.environ["VECTOR_STATE_PROFILE"] = "capacity-190k-v1"
+            os.environ["VECTOR_OUTBOX_CAPACITY"] = "524288"
+            os.environ["VECTOR_SOCKET_RECEIVE_BUFFER_BYTES"] = "1048576"
+            capacity, _ = remote.command("node", 0, Path("/state/node-0"), "start")
+            self.assertEqual(capacity[-3:], [settings["VECTOR_CLUSTER_HOSTS"], "capacity-190k-v1", "1048576"])
+
+    def test_receive_buffer_bounds_are_validated_before_launch(self):
+        settings = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4"}
+        with patch.dict(os.environ, settings, clear=True), \
+                patch.object(remote, "distribution", return_value=Path("/bundle/dist/cluster")), \
+                patch.object(remote, "java", return_value="/jdk/bin/java"):
+            for value in ("65536", "1048576", "4194304"):
+                with self.subTest(value=value):
+                    os.environ["VECTOR_SOCKET_RECEIVE_BUFFER_BYTES"] = value
+                    args, environment = remote.command("node", 1, Path("/state/node-1"), "start")
+                    self.assertEqual(args[-1], value)
+                    self.assertEqual(environment["VECTOR_SOCKET_RECEIVE_BUFFER_BYTES"], value)
+            for value in ("", "0", "65535", "4194305", "-1", "1m", "131072 -Xmx8g"):
+                with self.subTest(value=value):
+                    os.environ["VECTOR_SOCKET_RECEIVE_BUFFER_BYTES"] = value
+                    with self.assertRaises(ValueError):
+                        remote.command("node", 1, Path("/state/node-1"), "start")
+
+    def test_absent_receive_buffer_retains_historical_fingerprint_and_is_node_only(self):
+        environment = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4", "VECTOR_AERON_MTU_LENGTH": "1248"}
+        historical = {"version": 1, "role": "node", "settings": {
+            "VECTOR_CLUSTER_HOSTS": environment["VECTOR_CLUSTER_HOSTS"], "VECTOR_AERON_MTU_LENGTH": "1248",
+            "VECTOR_APPOINTED_LEADER_ID": None, "VECTOR_MAX_CLUSTER_SESSIONS": None, "VECTOR_STATE_PROFILE": None}}
+        expected = hashlib.sha256(json.dumps(historical, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        self.assertEqual(expected, remote.configuration_fingerprint("node", environment))
+        changed = {**environment, "VECTOR_SOCKET_RECEIVE_BUFFER_BYTES": "1048576"}
+        self.assertNotEqual(expected, remote.configuration_fingerprint("node", changed))
+        self.assertEqual(remote.configuration_fingerprint("gateway", environment),
+                         remote.configuration_fingerprint("gateway", changed))
+
+    def test_changed_receive_buffer_refuses_to_hot_change_running_driver(self):
+        settings = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4",
+                    "VECTOR_SOCKET_RECEIVE_BUFFER_BYTES": "131072"}
+        with tempfile.TemporaryDirectory() as temporary, patch.dict(os.environ, settings, clear=True), \
+                patch.object(remote, "distribution", return_value=Path("/bundle/dist/cluster")), \
+                patch.object(remote, "java", return_value="/jdk/bin/java"):
+            state = Path(temporary)
+            args, environment = remote.command("node", 0, state, "start")
+            existing = {"pid": 42, "commandSha256": self.command_hash(args),
+                        "configurationVersion": remote.CONFIGURATION_VERSION,
+                        "configurationSha256": remote.configuration_fingerprint("node", environment)}
+            os.environ["VECTOR_SOCKET_RECEIVE_BUFFER_BYTES"] = "1048576"
+            with patch.object(remote, "record_state", return_value=("running", existing)), \
+                    patch.object(remote.subprocess, "Popen") as launch:
+                with self.assertRaisesRegex(ValueError, "different arguments"):
+                    remote.start("node", 0, state, state / "process.json")
+                launch.assert_not_called()
+
     def test_database_secrets_are_not_command_arguments(self):
         configuration = {"VM_PG_URL": "jdbc:postgresql://127.0.0.1/test", "VM_CLUSTER_ID": "generation-42",
                          "VM_PG_PASSWORD": "secret-value"}

@@ -122,6 +122,54 @@ class CapacityConfigTest(unittest.TestCase):
         self.assertNotEqual(config.command_sha256(["ab", "c"]), config.command_sha256(["a", "bc"]))
         self.assertNotEqual(hashlib.sha256(b"ab\0c").hexdigest(), config.command_sha256(["ab", "c"]))
 
+    def test_historical_node_argv_is_unchanged_without_new_opt_in(self):
+        for cohort in ("runpod-capacity", "runpod-capacity-extended", "runpod-capacity-128", "runpod-capacity-long"):
+            root = ROOT / "evidence/2026-10-23" / cohort
+            directory = next(p for p in sorted((root / "runs").iterdir())
+                             if (p / "load-process.json").exists() and (p / "result.json").exists())
+            fixed = json.loads((root / "campaign.json").read_text())["fixed"]
+            fixed.setdefault("outboxCapacity", 65536)
+            trial = json.loads((directory / "trial.json").read_text())
+            hosts = ",".join(json.loads((directory / "configuration.json").read_text())["memberHosts"])
+            for node in range(3):
+                with self.subTest(cohort=cohort, node=node):
+                    arguments = json.loads((directory / f"node{node}" / "process.json").read_text())["arguments"]
+                    offset = arguments.index("io.vectormatch.cluster.ClusterNodeMain") + 1
+                    self.assertEqual(arguments[offset:], config.node_arguments(trial, fixed, node, hosts))
+                    config.verify_requested_receive_buffer_startup(fixed, "legacy startup without receive buffer field")
+
+    def test_new_receive_buffer_keeps_profile_in_seventh_position(self):
+        fixed = {"portBase": 23000, "syncLevel": 2, "outboxCapacity": 65536,
+                 "socketReceiveBufferArgumentBytes": 1048576}
+        trial = {"state": "/state/trial"}
+        expected = ["0", "/state/trial", "23000", "2", "65536", "127.0.0.1", "default", "1048576"]
+        self.assertEqual(expected, config.node_arguments(trial, fixed, 0, "127.0.0.1"))
+        fixed.update(stateProfile="capacity-190k-v1", outboxCapacity=524288)
+        arguments = config.node_arguments(trial, fixed, 0, "127.0.0.1")
+        self.assertEqual(["capacity-190k-v1", "1048576"], arguments[-2:])
+        self.assertEqual("524288", arguments[4])
+
+    def test_receive_buffer_argument_requires_bounded_integer(self):
+        for value in (65536, 131072, 1048576, 4194304):
+            with self.subTest(value=value):
+                self.assertEqual(value, config.socket_receive_buffer_argument({"socketReceiveBufferArgumentBytes": value}))
+        for value in (None, True, 131072.0, "131072", 0, -1, 65535, 4194305):
+            with self.subTest(value=value), self.assertRaisesRegex(AssertionError, "Invalid explicit"):
+                config.socket_receive_buffer_argument({"socketReceiveBufferArgumentBytes": value})
+
+    def test_explicit_receive_buffer_requires_matching_started_record(self):
+        fixed = {"socketReceiveBufferArgumentBytes": 1048576}
+        config.verify_requested_receive_buffer_startup(fixed,
+            "VECTOR_CLUSTER_STARTED node=0 requestedSocketReceiveBufferBytes=1048576\n")
+        for startup in ("VECTOR_CLUSTER_STARTED node=0\n", "",
+                        "VECTOR_CLUSTER_STARTED requestedSocketReceiveBufferBytes=131072\n",
+                        "error requestedSocketReceiveBufferBytes=1048576\n",
+                        "VECTOR_CLUSTER_STARTED requestedSocketReceiveBufferBytes=1048576garbage\n",
+                        "VECTOR_CLUSTER_STARTED requestedSocketReceiveBufferBytes=1048576\n"
+                        "VECTOR_CLUSTER_STARTED requestedSocketReceiveBufferBytes=131072\n"):
+            with self.subTest(startup=startup), self.assertRaisesRegex(AssertionError, "startup evidence"):
+                config.verify_requested_receive_buffer_startup(fixed, startup)
+
 
 if __name__ == "__main__":
     unittest.main()

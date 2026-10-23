@@ -60,6 +60,36 @@ def command_sha256(arguments):
     return hashlib.sha256(b"".join(value.encode() + b"\0" for value in arguments)).hexdigest()
 
 
+def socket_receive_buffer_argument(fixed):
+    """Return an explicitly requested node value; never infer effective SO_RCVBUF."""
+    if "socketReceiveBufferArgumentBytes" not in fixed:
+        return None
+    value = fixed["socketReceiveBufferArgumentBytes"]
+    assert type(value) is int and 65536 <= value <= 4194304, "Invalid explicit node receive buffer bytes"
+    return value
+
+
+def node_arguments(trial, fixed, node, hosts):
+    arguments = [str(node), trial["state"], str(fixed["portBase"]),
+                 str(fixed["syncLevel"]), str(fixed["outboxCapacity"]), hosts]
+    receive_buffer = socket_receive_buffer_argument(fixed)
+    if fixed.get("stateProfile") or receive_buffer is not None:
+        arguments.append(fixed.get("stateProfile") or "default")
+    if receive_buffer is not None:
+        arguments.append(str(receive_buffer))
+    return arguments
+
+
+def verify_requested_receive_buffer_startup(fixed, startup):
+    expected = socket_receive_buffer_argument(fixed)
+    if expected is None:
+        return
+    started = [line for line in startup.splitlines() if line.startswith("VECTOR_CLUSTER_STARTED ")]
+    values = [value for line in started for value in
+              re.findall(r"(?:^|\s)requestedSocketReceiveBufferBytes=([0-9]+)(?=\s|$)", line)]
+    assert values and set(values) == {str(expected)}, "Missing or differing requested receive buffer startup evidence"
+
+
 def main(root):
     campaign = json.loads((root / "campaign.json").read_text())
     deployment = json.loads((root / "deployment.json").read_text())
@@ -68,6 +98,11 @@ def main(root):
              "idleStrategy": "BackoffIdleStrategy defaults",
              "socketSendBufferBytes": 131072, "socketReceiveBufferBytes": 131072,
              "aeronVersion": "1.53.3", **campaign["fixed"]}
+    receive_buffer = socket_receive_buffer_argument(fixed)
+    if receive_buffer is not None:
+        if "socketReceiveBufferBytes" in campaign["fixed"]:
+            assert campaign["fixed"]["socketReceiveBufferBytes"] == receive_buffer, "Conflicting receive buffer declarations"
+        fixed["socketReceiveBufferBytes"] = receive_buffer
     checked = []
     for directory in sorted((root / "runs").iterdir()):
         if not (directory / "result.json").exists():
@@ -103,18 +138,16 @@ def main(root):
             assert "-Daeron.cluster.max.sessions=128" in args
             assert args[args.index("-cp") + 1] == release + "/dist/cluster/lib/*"
             index = args.index("io.vectormatch.cluster.ClusterNodeMain")
-            node_arguments = [str(node), trial["state"], str(fixed["portBase"]),
-                              str(fixed["syncLevel"]), str(fixed["outboxCapacity"]), hosts]
-            if fixed.get("stateProfile"):
-                node_arguments.append(fixed["stateProfile"])
-            assert args[index + 1:] == node_arguments
-            if fixed.get("stateProfile"):
+            assert args[index + 1:] == node_arguments(trial, fixed, node, hosts)
+            if fixed.get("stateProfile") or receive_buffer is not None:
                 startup = (directory / f"node{node}" / "process.log").read_text()
-                assert "profile=" + fixed["stateProfile"] in startup, "Missing state profile startup evidence"
-                assert "outbox=" + str(fixed["outboxCapacity"]) in startup, "Outbox startup evidence differs"
-                assert "checkpointMaxBytes=" + str(fixed["checkpointMaxBytes"]) in startup
-                assert "maxRetainedOrders=" + str(fixed["maxRetainedOrders"]) in startup
-                assert "resultCachePerProducer=" + str(fixed["resultCachePerProducer"]) in startup
+                if fixed.get("stateProfile"):
+                    assert "profile=" + fixed["stateProfile"] in startup, "Missing state profile startup evidence"
+                    assert "outbox=" + str(fixed["outboxCapacity"]) in startup, "Outbox startup evidence differs"
+                    assert "checkpointMaxBytes=" + str(fixed["checkpointMaxBytes"]) in startup
+                    assert "maxRetainedOrders=" + str(fixed["maxRetainedOrders"]) in startup
+                    assert "resultCachePerProducer=" + str(fixed["resultCachePerProducer"]) in startup
+                verify_requested_receive_buffer_startup(fixed, startup)
                 hashes[f"node{node}/process.log"] = hashlib.sha256(startup.encode()).hexdigest()
             hashes[str(path.relative_to(directory))] = hashlib.sha256(path.read_bytes()).hexdigest()
         snapshot = directory / "prepared-snapshot.bin"
@@ -135,7 +168,9 @@ def main(root):
             "recordedArgumentsVerified": True, "preparedSnapshotDigestVerified": True,
             "loadGeneratorArgumentsVerified": True,
             "rawSha256": hashes,
-            "scope": "Recorded supervisor arguments and deployment-transfer hash receipts; not a hardware, kernel fsync or independent provider durability attestation. Idle/socket settings are pinned source constants."})
+            "scope": ("Recorded supervisor arguments and deployment-transfer hash receipts; not a hardware, kernel fsync or independent provider durability attestation. Idle/socket settings are pinned source constants."
+                      if receive_buffer is None else
+                      "Recorded supervisor arguments, startup requested receive buffer, and deployment-transfer hash receipts; actual kernel effective SO_RCVBUF, hardware/fsync and provider durability are not attested. Other idle/socket settings are pinned source constants.")})
         checked.append({"id": directory.name, "preparedSnapshotSha256": configuration["preparedSnapshotSha256"]})
     assert len({row["preparedSnapshotSha256"] for row in checked}) <= 1, "Initial logical state changed"
     write(root / "configuration-verification.json", {"passed": True, "runs": checked,

@@ -22,6 +22,9 @@ import java.util.Map;
 
 /** A member of a statically configured directly-routed IPv4 cluster, local by default. */
 public final class ClusterNodeMain {
+    static final int DEFAULT_SOCKET_RECEIVE_BUFFER_BYTES = 128 * 1024;
+    static final int MIN_SOCKET_RECEIVE_BUFFER_BYTES = 64 * 1024;
+    static final int MAX_SOCKET_RECEIVE_BUFFER_BYTES = 4 * 1024 * 1024;
     private ClusterNodeMain() {}
 
     @SuppressWarnings("try")
@@ -50,7 +53,7 @@ public final class ClusterNodeMain {
                 .dirDeleteOnShutdown(true)
                 .termBufferSparseFile(true)
                 .socketSndbufLength(128 * 1024)
-                .socketRcvbufLength(128 * 1024)
+                .socketRcvbufLength(configuration.socketReceiveBufferBytes())
                 .mtuLength(transport.mtuLength())
                 .multicastFlowControlSupplier(new MinMulticastFlowControlSupplier())
                 .errorHandler(errors);
@@ -106,20 +109,22 @@ public final class ClusterNodeMain {
                      consensus.terminationHook(barrier::signalAll));
              ClusteredServiceContainer ignoredService = ClusteredServiceContainer.launch(
                      service.terminationHook(barrier::signalAll))) {
-            System.out.printf("VECTOR_CLUSTER_STARTED node=%d pid=%d sync=%d state=%s members=%s mtu=%d profile=%s limits=%s outbox=%d checkpointMaxBytes=%d resultCachePerProducer=%d%n",
+            System.out.printf("VECTOR_CLUSTER_STARTED node=%d pid=%d sync=%d state=%s members=%s mtu=%d profile=%s limits=%s outbox=%d checkpointMaxBytes=%d resultCachePerProducer=%d requestedSocketReceiveBufferBytes=%d%n",
                     node, ProcessHandle.current().pid(), sync, base, topology.members(), transport.mtuLength(),
                     configuration.stateProfile().id(), configuration.stateProfile().limits(), outboxCapacity,
-                    configuration.stateProfile().snapshotMaxBytes(), configuration.stateProfile().resultCachePerProducer());
+                    configuration.stateProfile().snapshotMaxBytes(), configuration.stateProfile().resultCachePerProducer(),
+                    configuration.socketReceiveBufferBytes());
             barrier.await();
         }
     }
 
     record Configuration(int node, Path base, int sync, int outboxCapacity, ClusterTopology topology,
-                         NetworkTransport transport, ClusterCapacity.StateProfile stateProfile) {}
+                         NetworkTransport transport, ClusterCapacity.StateProfile stateProfile,
+                         int socketReceiveBufferBytes) {}
 
     static Configuration configuration(String[] args, Map<String, String> environment) {
-        if (args.length < 2 || args.length > 7) {
-            throw new IllegalArgumentException("Usage: ClusterNodeMain <node> <state-dir> [port-base] [sync:0|2] [outbox-capacity] [hosts-csv] [state-profile]");
+        if (args.length < 2 || args.length > 8) {
+            throw new IllegalArgumentException("Usage: ClusterNodeMain <node> <state-dir> [port-base] [sync:0|2] [outbox-capacity] [hosts-csv] [state-profile] [receive-buffer-bytes:65536..4194304]");
         }
         int node = Integer.parseInt(args[0]);
         int ports = Integer.parseInt(args.length > 2 ? args[2] : environment.getOrDefault("VECTOR_PORT_BASE", "19000"));
@@ -132,7 +137,12 @@ public final class ClusterNodeMain {
                 : environment.get("VECTOR_STATE_PROFILE"));
         ClusterCapacity.validate(profile, profile.limits(), capacity);
         if (capacity < 1 || capacity > 1_000_000) throw new IllegalArgumentException("Invalid outbox capacity");
+        // Explicit launch argument only: inherited environment cannot hot-change a driver request.
+        int receiveBufferBytes = args.length > 7 ? Integer.parseInt(args[7]) : DEFAULT_SOCKET_RECEIVE_BUFFER_BYTES;
+        if (receiveBufferBytes < MIN_SOCKET_RECEIVE_BUFFER_BYTES || receiveBufferBytes > MAX_SOCKET_RECEIVE_BUFFER_BYTES)
+            throw new IllegalArgumentException("receive buffer bytes must be 65536..4194304");
         Path base = Path.of(args[1]).toAbsolutePath().normalize().resolve("node-" + node);
-        return new Configuration(node, base, sync, capacity, topology, NetworkTransport.fromEnvironment(environment), profile);
+        return new Configuration(node, base, sync, capacity, topology, NetworkTransport.fromEnvironment(environment), profile,
+                receiveBufferBytes);
     }
 }
