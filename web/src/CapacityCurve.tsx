@@ -9,8 +9,14 @@ interface CapacityPoint {
   goodput?: number;
   p99Millis?: number;
   queueDrops?: number;
+  clientNotSent?: number;
+  rejected?: number;
+  serverErrors?: number;
   unknown?: number;
   unresolved?: number;
+  allOfferedAcceptedP99Millis?: number;
+  drainSeconds?: number;
+  classification?: string;
   peakBacklog?: number;
   valid?: boolean;
   stable?: boolean;
@@ -18,10 +24,12 @@ interface CapacityPoint {
 }
 
 export interface CapacityEvidence {
+  id?: string;
   title: string;
   scope?: string;
   updatedAt?: string;
   reportPath?: string;
+  configurationFingerprint?: string;
   points: CapacityPoint[];
 }
 
@@ -49,10 +57,12 @@ export function normalizeCapacity(
   const data = asObject(value);
   if (!Array.isArray(data.points) || !data.points.length) return undefined;
   return {
+    id: text(data.id),
     title: text(data.title) || "Capacity under load",
     scope: text(data.scope),
     updatedAt: text(data.updatedAt),
     reportPath: text(data.reportPath),
+    configurationFingerprint: text(data.configurationFingerprint),
     points: data.points.map((value, index) => {
       const point = asObject(value);
       return {
@@ -62,8 +72,14 @@ export function normalizeCapacity(
         goodput: number(point.goodput),
         p99Millis: number(point.p99Millis),
         queueDrops: number(point.queueDrops),
+        clientNotSent: number(point.clientNotSent),
+        rejected: number(point.rejected),
+        serverErrors: number(point.serverErrors),
         unknown: number(point.unknown),
         unresolved: number(point.unresolved),
+        allOfferedAcceptedP99Millis: number(point.allOfferedAcceptedP99Millis),
+        drainSeconds: number(point.drainSeconds),
+        classification: text(point.classification),
         peakBacklog: number(point.peakBacklog),
         valid: bool(point.valid),
         stable: bool(point.stable),
@@ -73,9 +89,39 @@ export function normalizeCapacity(
   };
 }
 
+export function normalizeCapacityCohorts(value: unknown): CapacityEvidence[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  return value.flatMap((entry, index) => {
+    const evidence = normalizeCapacity(entry);
+    if (!evidence) return [];
+    const id = evidence.id || `cohort-${index + 1}`;
+    if (seen.has(id)) return [];
+    seen.add(id);
+    return [{ ...evidence, id }];
+  });
+}
+
+function verdict(point: CapacityPoint) {
+  if (point.valid === false) return "invalid";
+  if (point.valid !== true) return "unverified";
+  if (
+    point.windowSeconds === undefined ||
+    point.windowSeconds < 10 ||
+    point.classification === "INSUFFICIENT_WINDOW_OBSERVATIONS"
+  )
+    return "insufficient";
+  if (point.stable === true) return "stable";
+  if (point.stable === false) return "unstable";
+  return "unverified";
+}
+
 function status(point: CapacityPoint) {
   if (point.valid === false) return "Invalid measurement";
   if (point.valid !== true) return "Validity not reported";
+  if (point.windowSeconds === undefined) return "Window not reported";
+  if (point.windowSeconds < 10) return "Short window · under 10 s";
+  if (verdict(point) === "insufficient") return "Insufficient window evidence";
   if (point.stable === true) return "Stable window";
   if (point.stable === false) return "Unstable window";
   return "Stability not reported";
@@ -86,10 +132,11 @@ function groupColor(workers?: number) {
   if (workers === 16) return colors[0];
   if (workers === 32) return colors[1];
   if (workers === 64) return colors[2];
+  if (workers === 128) return colors[3];
   return colors[3];
 }
 function pointLabel(point: CapacityPoint) {
-  return `${point.id}, ${format(point.workers, 0)} clients, offered ${format(point.rate)} commands per second, confirmed ${format(point.goodput)} commands per second, conditional p99 ${format(point.p99Millis, 2)} milliseconds, ${status(point)}, ${format(point.queueDrops, 0)} queue drops, ${format(point.unknown, 0)} initial unknowns, ${format(point.unresolved, 0)} unresolved`;
+  return `${point.id}, ${format(point.workers, 0)} clients, offered ${format(point.rate)} commands per second, confirmed ${format(point.goodput)} commands per second, conditional p99 ${format(point.p99Millis, 2)} milliseconds, ${status(point)}, ${format(point.clientNotSent, 0)} client not sent, ${format(point.queueDrops, 0)} queue full, ${format(point.rejected, 0)} business rejects, ${format(point.serverErrors, 0)} server errors, ${format(point.unknown, 0)} initial unknowns, ${format(point.unresolved, 0)} unresolved`;
 }
 function niceMaximum(value: number) {
   if (value <= 0) return 1;
@@ -167,8 +214,10 @@ function CapacityChart({
         </title>
         <desc id={`${chartId}-description`}>
           All recorded points are retained. Hollow crosses are invalid or
-          unverified, triangles are unstable, and filled circles are stable.
-          Focus a point or use the run selector to inspect its counters.{" "}
+          unverified, diamonds have insufficient window evidence, triangles are
+          unstable, and filled circles are stable windows of at least 10
+          seconds. Focus a point or use the run selector to inspect its
+          counters.{" "}
           {missing
             ? `${missing} points lack this metric and remain available in the selector.`
             : ""}
@@ -221,8 +270,9 @@ function CapacityChart({
         {plotted.map(({ point, index }) => {
           const px = x(point.rate!),
             py = y(point[metric]!),
-            invalid = point.valid !== true,
-            unstable = point.valid === true && point.stable !== true,
+            state = verdict(point),
+            invalid = state === "invalid" || state === "unverified",
+            unstable = state === "unstable",
             color = groupColor(point.workers);
           return (
             <g
@@ -279,7 +329,15 @@ function CapacityChart({
                   aria-hidden="true"
                 />
               )}
-              {unstable ? (
+              {state === "insufficient" ? (
+                <path
+                  d="M0 -6 6 0 0 6 -6 0Z"
+                  fill="var(--panel)"
+                  stroke={color}
+                  strokeWidth="1.8"
+                  aria-hidden="true"
+                />
+              ) : unstable ? (
                 <path
                   d="M0 -6.5 6 5 -6 5Z"
                   fill={color}
@@ -340,18 +398,26 @@ function CapacityChart({
 
 export default function CapacityCurve({
   evidence,
+  cohorts,
 }: {
-  evidence: CapacityEvidence;
+  evidence?: CapacityEvidence;
+  cohorts?: CapacityEvidence[];
 }) {
+  const available = cohorts?.length ? cohorts : evidence ? [evidence] : [];
+  const [selectedCohortId, setSelectedCohortId] = useState<string>();
+  const chosen =
+    available.find((cohort) => cohort.id === selectedCohortId) ||
+    available[available.length - 1];
   const [selectedIndex, setSelectedIndex] = useState(0);
   const chartId = useId().replaceAll(":", "");
-  const selected = Math.min(selectedIndex, evidence.points.length - 1);
-  const point = evidence.points[selected];
-  const groups = [...new Set(evidence.points.map((p) => p.workers))].sort(
+  const [copied, setCopied] = useState(false);
+  if (!chosen) return null;
+  const selected = Math.min(selectedIndex, chosen.points.length - 1);
+  const point = chosen.points[selected];
+  const groups = [...new Set(chosen.points.map((p) => p.workers))].sort(
     (a, b) => (a || 0) - (b || 0),
   );
-  const updated = evidence.updatedAt ? new Date(evidence.updatedAt) : undefined;
-  const [copied, setCopied] = useState(false);
+  const updated = chosen.updatedAt ? new Date(chosen.updatedAt) : undefined;
   return (
     <section
       className="panel capacity-panel"
@@ -360,14 +426,35 @@ export default function CapacityCurve({
       <div className="capacity-panel-heading">
         <div>
           <span className="eyebrow">FIXED-ARRIVAL CAPACITY</span>
-          <h3 id={`${chartId}-heading`}>{evidence.title}</h3>
+          <h3 id={`${chartId}-heading`}>{chosen.title}</h3>
         </div>
         <span className="capacity-point-count">
-          {evidence.points.length} RECORDED{" "}
-          {evidence.points.length === 1 ? "POINT" : "POINTS"}
+          {chosen.points.length} RECORDED{" "}
+          {chosen.points.length === 1 ? "POINT" : "POINTS"}
         </span>
       </div>
-      {evidence.scope && <p className="capacity-scope">{evidence.scope}</p>}
+      {available.length > 1 && (
+        <div className="capacity-cohort-selector">
+          <label htmlFor={`${chartId}-cohort`}>FIXED CONFIGURATION GROUP</label>
+          <select
+            id={`${chartId}-cohort`}
+            value={chosen.id}
+            onChange={(event) => {
+              setSelectedCohortId(event.target.value);
+              setSelectedIndex(0);
+              setCopied(false);
+            }}
+          >
+            {available.map((cohort, index) => (
+              <option key={cohort.id || index} value={cohort.id}>
+                {cohort.title} · {cohort.points.length} points
+              </option>
+            ))}
+          </select>
+          <span>{available.length} groups · charted separately</span>
+        </div>
+      )}
+      {chosen.scope && <p className="capacity-scope">{chosen.scope}</p>}
       <div className="capacity-legend" aria-label="Chart legend">
         <div className="capacity-client-groups">
           {groups.map((workers) => (
@@ -382,19 +469,20 @@ export default function CapacityCurve({
         <div className="capacity-marker-legend">
           <span>● Stable</span>
           <span>▲ Unstable</span>
+          <span>◇ Short / incomplete window</span>
           <span>⊗ Invalid / unverified</span>
         </div>
       </div>
       <div className="capacity-charts">
         <CapacityChart
-          points={evidence.points}
+          points={chosen.points}
           selected={selected}
           select={setSelectedIndex}
           metric="goodput"
           chartId={`${chartId}-goodput`}
         />
         <CapacityChart
-          points={evidence.points}
+          points={chosen.points}
           selected={selected}
           select={setSelectedIndex}
           metric="p99Millis"
@@ -409,16 +497,14 @@ export default function CapacityCurve({
             value={selected}
             onChange={(event) => setSelectedIndex(Number(event.target.value))}
           >
-            {evidence.points.map((item, index) => (
+            {chosen.points.map((item, index) => (
               <option value={index} key={`${item.id}-${index}`}>
                 {item.id} · {format(item.workers, 0)} clients ·{" "}
                 {format(item.rate)} cmd/s
               </option>
             ))}
           </select>
-          <span
-            className={`capacity-verdict ${point.valid !== true ? "invalid" : point.stable !== true ? "unstable" : "stable"}`}
-          >
+          <span className={`capacity-verdict ${verdict(point)}`}>
             {status(point)}
           </span>
         </div>
@@ -431,8 +517,20 @@ export default function CapacityCurve({
             ["Offered load", format(point.rate), "cmd/s"],
             ["Confirmed in window", format(point.goodput), "cmd/s"],
             ["Conditional p99", format(point.p99Millis, 2), "ms"],
+            [
+              "All-offered accepted p99",
+              format(point.allOfferedAcceptedP99Millis, 2),
+              "ms",
+            ],
             ["Arrival window", format(point.windowSeconds, 2), "s"],
-            ["Queue drops", format(point.queueDrops, 0), ""],
+            ["Drain after window", format(point.drainSeconds, 3), "s"],
+            ["Client not sent", format(point.clientNotSent, 0), ""],
+            ["Queue full · not sent", format(point.queueDrops, 0), ""],
+            [
+              "Business rejects / server errors",
+              `${format(point.rejected, 0)} / ${format(point.serverErrors, 0)}`,
+              "",
+            ],
             ["Initial unknowns", format(point.unknown, 0), ""],
             ["Unresolved", format(point.unresolved, 0), ""],
             ["Peak backlog", format(point.peakBacklog, 0), "requests"],
@@ -452,7 +550,9 @@ export default function CapacityCurve({
         the arrival window. P99 includes scheduling and queue time, conditional
         on confirmed commands. Drops and unresolved requests have no confirmed
         latency; a low conditional p99 cannot establish the p99 of all offered
-        requests. Every recorded point remains visible.
+        requests. Windows shorter than 10 seconds are marked as insufficient
+        evidence. Every recorded point remains available within its
+        configuration group.
       </p>
       <div className="capacity-footer">
         <span>
@@ -460,12 +560,12 @@ export default function CapacityCurve({
             ? `Updated ${updated.toLocaleString("en-GB", { timeZone: "UTC", hour12: false })} UTC`
             : "Recorded capacity evidence"}
         </span>
-        {evidence.reportPath && (
+        {chosen.reportPath && (
           <button
-            title={evidence.reportPath}
+            title={chosen.reportPath}
             onClick={async () => {
               try {
-                await navigator.clipboard.writeText(evidence.reportPath!);
+                await navigator.clipboard.writeText(chosen.reportPath!);
                 setCopied(true);
               } catch {
                 setCopied(false);

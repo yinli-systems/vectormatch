@@ -491,6 +491,8 @@ def plot_trials(trials, output_dir):
                         continue
                     if not row["measurementValid"]:
                         axis.scatter([row["targetArrivalRatePerSecond"]], [value], marker="x", color="red", s=90, zorder=5)
+                    elif row["classification"] == "INSUFFICIENT_WINDOW_OBSERVATIONS":
+                        axis.scatter([row["targetArrivalRatePerSecond"]], [value], marker="D", facecolors="white", edgecolors=line.get_color(), s=70, zorder=5)
                     elif not row["observedStableWindow"]:
                         axis.scatter([row["targetArrivalRatePerSecond"]], [value], marker="^", facecolors="white", edgecolors=line.get_color(), s=95, zorder=5)
         titles = (("Accepted goodput during arrival window", "commands / second"),
@@ -507,7 +509,7 @@ def plot_trials(trials, output_dir):
         if positive and max(positive) / min(positive) > 10:
             axes[0, 1].set_yscale("log")
             axes[0, 1].set_ylabel("milliseconds (log scale)")
-        figure.suptitle("VectorMatch finite windows — all trials retained; triangle = nonstable, red X = invalid", fontsize=12)
+        figure.suptitle("VectorMatch finite windows — triangle = nonstable, diamond = insufficient window, red X = invalid", fontsize=11)
         files = []
         for extension in ("png", "svg"):
             path = output_dir / f"capacity.{extension}"
