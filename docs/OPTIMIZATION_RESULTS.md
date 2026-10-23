@@ -1,6 +1,6 @@
 # 受控优化与瓶颈归因
 
-本轮首先检验负载端资源布局：在同一三节点撮合集群上，将 **128 个客户端 MediaDriver 改为一个共享 MediaDriver**，保留 128 个独立 Aeron 客户端、session、worker 与单请求在途窗口。预先登记的 A/B/A/B 已完成：客户端资源节省可重复，但四轮 15k/s 均未达到稳定标准；当前没有提高稳定吞吐上限的证据。节点接收缓冲的交替对照也已完成：目标 socket 丢包改善，但稳定吞吐和 p99 改善未成立。节点线程调度对照也已完成，两轮 DEDICATED 的吞吐和 p99 均未优于 SHARED。350k并发配置对照在第二轮W256失稳时停止，原始unknown与失败保留，正在独立恢复与定位。完整历史容量结果见 [CAPACITY_RESULTS.md](CAPACITY_RESULTS.md)，本轮方案见 [OPTIMIZATION_CAMPAIGN.md](OPTIMIZATION_CAMPAIGN.md)。
+本轮首先检验负载端资源布局：在同一三节点撮合集群上，将 **128 个客户端 MediaDriver 改为一个共享 MediaDriver**，保留 128 个独立 Aeron 客户端、session、worker 与单请求在途窗口。预先登记的 A/B/A/B 已完成：客户端资源节省可重复，但四轮 15k/s 均未达到稳定标准；当前没有提高稳定吞吐上限的证据。节点接收缓冲、线程调度的交替对照均没有建立新的稳定边界。350k并发配置对照在第二轮W256失稳时停止，原256个unknown已获明确授权并独立恢复，原容量结果仍为INVALID。随后完成的NAK延迟四轮对照消除了两轮B的最终unknown，但仍然过载。完整历史容量结果见 [CAPACITY_RESULTS.md](CAPACITY_RESULTS.md)，本轮方案见 [OPTIMIZATION_CAMPAIGN.md](OPTIMIZATION_CAMPAIGN.md)。
 
 ## 为什么先检查负载端
 
@@ -101,7 +101,30 @@ node0 JVM CPU 由 S 的 2.528 / 2.577 核增加为 D 的 3.055 / 2.992 核，线
 
 用户明确批准后，独立[同身份恢复](../evidence/2026-10-23/runpod-optimization/window350k/unknown-recovery/README.md)已完成：live pre-core先与冻结快照完全一致，再核对256个原业务身份。252个返回缓存结果，另外4个以同key完成恢复，实际增加4个命令与8条事件；最终canonical core、资产和新增事件payload全部通过，未ACK，outbox pending7385→7393。原容量轮次仍为INVALID，原CSV和unknown计数未改。helper执行9.507秒不含编排，不能当作容量或故障恢复SLA。
 
-严格窗口[传输归因](../evidence/2026-10-23/runpod-optimization/window350k/analysis/failed-window-attribution-summary.json)显示W256 node0自有UDP drop增量233,810、负载端498,367；node0 NAK sent增量1,722,367。负载端drop集中在共享ingress publication的source/control socket，node0也包含ingress与consensus发送通道control socket；三节点固定LOG端口该窗口drops为0。256个session在窗口开始存在，未见session-cap拒绝；driver线程接近1核，线程/FD采样未触上限。下一受控因素为node与load同时显式设置unicast NAK delay：1,000ns对100,000ns，retry ratio保持100，分别对应100μs/10ms重复请求间隔。是否改善修复流量和容量必须另测；这些关联不能证明唯一原因，也不把NAK次数等同业务丢单。
+严格窗口[传输归因](../evidence/2026-10-23/runpod-optimization/window350k/analysis/failed-window-attribution-summary.json)显示W256 node0自有UDP drop增量233,810、负载端498,367；node0 NAK sent增量1,722,367。负载端drop集中在共享ingress publication的source/control socket，node0也包含ingress与consensus发送通道control socket；三节点固定LOG端口该窗口drops为0。256个session在窗口开始存在，未见session-cap拒绝；driver线程接近1核，线程/FD采样未触上限。这些关联不能证明唯一原因，也不把NAK次数等同业务丢单。
+
+## NAK延迟交替对照
+
+同一节点/负载源 `ab6fc73731642d0d17a242a930a2cb60aba11e16`，按1,000ns → 100,000ns → 1,000ns → 100,000ns运行26k/s、350k到达、W256/Q64。节点与负载共享driver同时设置，retry ratio保持100；固定leader0、sync2、2GiB、原131072接收请求和准备SHA。实际JVM参数、启动日志及负载driver context均独立核验。它是两端修复反馈延迟的整体对照。
+
+| 顺序 | NAK delay | 窗口确认/s | 已接受条件p99 ms | 最终未发送 | 初次/最终unknown | 判定 |
+|---|---|---:|---:|---:|---:|---|
+| A1 | 1,000ns | 129.406† | 43,137.974† | 346,245 | 695 / 256 | INVALID |
+| B1 | 100,000ns | 10,013.491 | 2,043.657 | 198,630 | 0 / 0 | 有效，过载 |
+| A2 | 1,000ns | 109.571† | 42,766.794† | 346,333 | 726 / 256 | INVALID |
+| B2 | 100,000ns | 9,989.274 | 2,077.543 | 198,936 | 0 / 0 | 有效，过载 |
+
+† A两轮只有客户端报告的诊断数，没有通过完整业务正确性验证，不能称为已验证吞吐，也不能用B/A比值宣传容量倍增。四轮全量接受p99均不可用；排空后成功不回填窗口吞吐。A两轮的最终256个unknown保留原状，没有沿用前一轮针对特定256个身份的恢复授权。
+
+B两轮完成canonical终态、逐条业务回复和资产验证，且初次/最终unknown均为0，表明同条件下未知结果崩溃得到重复改善；但每轮仍有约199k未发送，平均活跃槽位约255.876/256，不能称10k/s稳定容量。此前B的35秒10k/s pilot也有254条未发送、p991614.795ms，属于有效非稳定点。全部5次实际尝试与350k原始行分别保留在[NAK证据](../evidence/2026-10-23/runpod-optimization/nak/README.md)。
+
+冻结的[正式归因报告](../evidence/2026-10-23/runpod-optimization/nak/analysis/attribution-summary.json)核对138个输入/工具SHA。严格窗口内A两轮NAK约131–133k次/s，node0 socket drops230486/231512、load543700/513617；B约1.02–1.04k次/s，node0 drops7300/6961、load0/0。B的node0剩余丢包集中在ingress；不能把负载端归零扩大为全网络无丢包。A末段append−commit差897600/919392字节，B窗口最大14784/12864字节。两组driver前缀线程都约1核，B的consensus线程约0.946/0.943核；总CPU配额未持续耗尽，不足以排除局部线程、调度、传输或持久化等待。
+
+## 物理session与网络所有权对照
+
+新源 `e57e341909a49692b9ecbf9693803ed62a240b06` 已完成128项Java测试和不可变上传，云端容量尚待测量。两组统一W128、128个独立producer身份、每worker FIFO64和总FIFO8192、一个共享MediaDriver、NAK1000ns、相同2GiB/sync2节点与fixture；direct保留128个物理Aeron session，multiplexed使用一个session和一个网络owner，逻辑在途数不变。session数量、网络所有权与分发方式共同变化，不能将收益单独归于撮合引擎。
+
+先执行35秒、350k全部接受的multiplexed pilot，正确性、时间有效性及零未发送/拒绝/error/最终unknown均通过后才登记26k/s的A/B/A/B。每次API调用有独立发送截止时间；同key重试复用pending与correlation，截止后只轮询响应，不自动延长发送期限。新的失败路径先保存CSV/backlog/failure再抛出原错误，未知终态继续失败。测试与[预登记协议](../evidence/2026-10-23/runpod-optimization/pipeline/PRE_REGISTRATION.md)不替代实测结果。
 
 ## 已完成的代码验证
 
