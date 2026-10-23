@@ -1,9 +1,11 @@
 package io.vectormatch.cluster;
 
 import io.aeron.cluster.client.AeronCluster;
+import io.aeron.cluster.client.ClusterException;
 import io.aeron.cluster.client.EgressListener;
 import io.aeron.driver.MediaDriver;
 import io.aeron.driver.ThreadingMode;
+import io.aeron.exceptions.TimeoutException;
 import io.aeron.logbuffer.Header;
 import io.vectormatch.core.MatchingEngine.Command;
 import org.agrona.DirectBuffer;
@@ -20,6 +22,8 @@ import java.util.concurrent.TimeUnit;
 
 /** Single-thread-confined development client. Retries preserve the entire business command identity. */
 public final class ClusterClient implements AutoCloseable, EgressListener {
+    private static final long CONNECT_TIMEOUT_NS = TimeUnit.SECONDS.toNanos(20);
+    private static final long CONNECT_SEED_TIMEOUT_NS = TimeUnit.SECONDS.toNanos(2);
     private final MediaDriver driver;
     private final AeronCluster client;
     private final IdleStrategy idle = new BackoffIdleStrategy();
@@ -58,17 +62,51 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
                 .dirDeleteOnStart(false) // Aeron checks for an active driver before recreating stale files.
                 .dirDeleteOnShutdown(true));
         try {
-            client = AeronCluster.connect(new AeronCluster.Context()
-                    .aeronDirectoryName(driver.aeronDirectoryName())
-                    .egressListener(this)
-                    .messageTimeoutNs(TimeUnit.SECONDS.toNanos(20))
-                    .egressChannel(transport.withMtu(endpoint.channel()))
-                    .ingressChannel(transport.withMtu("aeron:udp?term-length=64k"))
-                    .ingressEndpoints(topology.ingressEndpoints()));
+            client = connect(topology, endpoint, transport);
         } catch (RuntimeException e) {
             driver.close();
             throw e;
         }
+    }
+
+    private AeronCluster connect(ClusterTopology topology, ClientEndpoint endpoint, NetworkTransport transport) {
+        long deadline = System.nanoTime() + CONNECT_TIMEOUT_NS;
+        int attempts = 0;
+        int member = 0;
+        String lastState = "NOT_STARTED";
+        RuntimeException lastFailure = null;
+        while (deadline - System.nanoTime() > 0) {
+            // Aeron 1.53.3 can retain a disconnected publication after a stale-leader redirect.
+            // A fresh bounded attempt against each configured seed also works when that leader is dead.
+            int seed = attempts++ % topology.memberCount();
+            member = seed;
+            long attemptDeadline = System.nanoTime() + Math.min(CONNECT_SEED_TIMEOUT_NS, deadline - System.nanoTime());
+            AeronCluster.Context context = new AeronCluster.Context()
+                    .aeronDirectoryName(driver.aeronDirectoryName())
+                    .egressListener(this)
+                    // This context survives a successful connection; retain the normal failover timeout.
+                    .messageTimeoutNs(CONNECT_TIMEOUT_NS)
+                    .egressChannel(transport.withMtu(endpoint.channel()))
+                    .ingressChannel(transport.withMtu("aeron:udp?term-length=64k"))
+                    .ingressEndpoints(seed + "=" + topology.endpoint(seed, ClusterTopology.INGRESS));
+            idle.reset();
+            // Incomplete attempts own their Aeron context; DONE.close() is explicitly a no-op.
+            try (AeronCluster.AsyncConnect connecting = AeronCluster.asyncConnect(context)) {
+                while (deadline - System.nanoTime() > 0 && attemptDeadline - System.nanoTime() > 0) {
+                    AeronCluster connected = connecting.poll(); // Propagates interruption without clearing it.
+                    if (connected != null) return connected;
+                    lastState = connecting.state().name();
+                    idle.idle();
+                }
+            } catch (TimeoutException | ClusterException transientFailure) {
+                lastFailure = transientFailure;
+                // Authentication, registration, configuration, and interruption errors propagate immediately.
+            }
+        }
+        TimeoutException failure = new TimeoutException("Cluster bootstrap timed out after 20s; attempts=" + attempts
+                + " lastSeed=" + member + " lastState=" + lastState + " endpoints=" + topology.ingressEndpoints());
+        if (lastFailure != null) failure.initCause(lastFailure);
+        throw failure;
     }
 
     public int leaderMemberId() { return client.leaderMemberId(); }

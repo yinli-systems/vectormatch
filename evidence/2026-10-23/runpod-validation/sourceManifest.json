@@ -1,0 +1,334 @@
+{
+  "capturedUtc": "2026-10-23T18:00:14.447220+00:00",
+  "gitHead": "080e686d03e6d34b9e326eb06afd9a7d39cd50a7",
+  "hostPlatform": "macOS local unit and integration validation; not Linux cloud performance",
+  "pendingBootstrapPatch": [
+    "cluster/src/main/java/io/vectormatch/cluster/ClusterClient.java",
+    "cluster/src/test/java/io/vectormatch/cluster/ClusterClientBootstrapTest.java"
+  ],
+  "environment": {
+    "java": "workspace JDK 21",
+    "gradle": "8.14.3",
+    "postgres": "local pre-existing PostgreSQL, explicit vectormatch trust role"
+  },
+  "commands": [
+    "VM_TEST_PG_URL=jdbc:postgresql://127.0.0.1:55432/postgres VM_TEST_PG_USER=vectormatch ./gradlew check --rerun-tasks --console=plain",
+    "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts/tests -v",
+    "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s deploy -p test_remote_service.py -v",
+    "bash -n scripts/run-workbench.sh scripts/env.sh scripts/run-replicated.sh deploy/remote-node.sh deploy/remote-workbench.sh deploy/postgres.sh deploy/cluster.sh"
+  ],
+  "files": [
+    {
+      "path": "bench/build.gradle.kts",
+      "sha256": "abe03d01db25de3aa086f5917db7bfecec63e8ad47216e5965b8efdde4247255"
+    },
+    {
+      "path": "bench/src/main/java/io/vectormatch/bench/CoreBenchmark.java",
+      "sha256": "a95b9bfbe2f89ac60d590295f4113ebded83b4c20351d8580d800d098407c729"
+    },
+    {
+      "path": "bench/src/main/java/io/vectormatch/bench/HttpLoadGenerator.java",
+      "sha256": "a93fe2621fb7401c43c7317ca6f9ea7528fdf7daf3128b33bf327e407d341886"
+    },
+    {
+      "path": "bench/src/test/java/io/vectormatch/bench/HttpLoadGeneratorTest.java",
+      "sha256": "9c9a5b7333e87f96ff358dac4061177dd936d06d4e73307c892d071498f2714c"
+    },
+    {
+      "path": "build.gradle.kts",
+      "sha256": "054af95799f23ab92d48ae4070951f4ba856f58f03e2be35808d9accca1e4c03"
+    },
+    {
+      "path": "cluster/build.gradle.kts",
+      "sha256": "cef9221e333ed19892673808529d23688f3e12cbe0ddefb008fbb7f9e293fbf5"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/ClientEndpoint.java",
+      "sha256": "8427c9fae70c1e1cebab3dcdfcc1a0cdf6966ce529dd1cba790e22bc126f9049"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/ClusterCapacity.java",
+      "sha256": "d63b55321dcb92a5b2a9b7406bd77b360a2ed3cdede35160c8d8a166f9152111"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/ClusterClient.java",
+      "sha256": "c4c39b3f311c8a28aa6ab04a851f468bf56b325d0b10daa3567b764cc09cc8b6"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/ClusterFailoverSmoke.java",
+      "sha256": "507903b5e7cf3a0da4d6403c09558e64f7bc5a192492451895e0797a4cfcd0f0"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/ClusterNodeMain.java",
+      "sha256": "e643c31dab0ce065498656ff36e37bf872e1d51d16628e4e042afaac061f3b27"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/ClusterStateSnapshot.java",
+      "sha256": "5d82a60a12192a0fbe1a1e4e0247431f12c9dd331109ee7dd1394cb8d3daa71a"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/ClusterTopology.java",
+      "sha256": "283385e9574276f0e11a9fb51473942e6eca1fa9bbd77e88cf3f729716ce1b49"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/CommandCodec.java",
+      "sha256": "8548feb40b4fe30931ea697f8fcf424c3e946c38a3177171d64f2534688b822f"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/EventBatch.java",
+      "sha256": "7c1a904b8f710b021f8854972568524612a532c4690029ce53403dd268b7ff38"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/LocalTopology.java",
+      "sha256": "d6d0149dc8e84b021f583411322f2cbd686637ae7fdaf6a39ccb39adcba5d260"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/MatchingClusteredService.java",
+      "sha256": "6c109569278fc5f494a05f77d1c40c7d70d7106aba1a931bcb70e087ce8596c8"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/NetworkTransport.java",
+      "sha256": "1c72d90d4b4afcd8d7bac83cd3946f3eb1f9a82a50fe7ec3e2d619eee88fbaea"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/RemoteClusterExperiment.java",
+      "sha256": "0ba513897d0db666f43b60c8e7716bba156ac11787c656c5da2fd7816ba2e90e"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/ReplicatedBenchmarkSmoke.java",
+      "sha256": "0f931a3ade9f7da54cde5dd9598548da2614004fa677bbb5796694eac6b300e7"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/ReplicatedConcurrencyComparison.java",
+      "sha256": "c59c573db491827c089b6ab0f09da9a11212b9f50252ee90bc0760b34e2d07f3"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/ReplicatedOutbox.java",
+      "sha256": "ad25cef47423776e20e17db19d8e09dd752e8dd3e0a619f949a5dafd02405fed"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/SnapshotTransport.java",
+      "sha256": "7286336bfd297f4e831a7093b7591b86d9a3b80a284ad542823ef9a258dfedd7"
+    },
+    {
+      "path": "cluster/src/test/java/io/vectormatch/cluster/ClientEndpointTest.java",
+      "sha256": "b910a0564f7a2fdfe61a465a83301c8f72164e317278dbee227cf4e1e3c34913"
+    },
+    {
+      "path": "cluster/src/test/java/io/vectormatch/cluster/ClusterCapacityTest.java",
+      "sha256": "a8cc1dd05815a1c0a2e6441976dcad6e5d419990de93084e26678692fea2650a"
+    },
+    {
+      "path": "cluster/src/test/java/io/vectormatch/cluster/ClusterClientBootstrapTest.java",
+      "sha256": "7aea9f80a35c7972474db7a8ac627e69e62c4bcea4608cebc3ab0e2817adce5f"
+    },
+    {
+      "path": "cluster/src/test/java/io/vectormatch/cluster/ClusterTopologyTest.java",
+      "sha256": "047684705859dd0b54c270203a239d4b517c7db8b251e8a1c96d872b419c729f"
+    },
+    {
+      "path": "cluster/src/test/java/io/vectormatch/cluster/CommandCodecTest.java",
+      "sha256": "d636e6fbd1e6dc9ba5e6f065b3bedee000bb89f04ea67b555364015929416b5e"
+    },
+    {
+      "path": "cluster/src/test/java/io/vectormatch/cluster/DriverDirectorySafetyTest.java",
+      "sha256": "512dd7e7d803ffa52cb5305813a092ca816d9e71dbf2f5e79e5947c3d5dcb610"
+    },
+    {
+      "path": "cluster/src/test/java/io/vectormatch/cluster/MatchingClusteredServiceTest.java",
+      "sha256": "6581f6670e16bec52eed103cb9932432733638cf60a679a12afa72257ea274d4"
+    },
+    {
+      "path": "cluster/src/test/java/io/vectormatch/cluster/NetworkTransportTest.java",
+      "sha256": "3a4a2f1dac940960d6c9881e2601dba4a9f29a701981eaa93d560453d7c3a133"
+    },
+    {
+      "path": "cluster/src/test/java/io/vectormatch/cluster/ReplicatedOutboxTest.java",
+      "sha256": "5e8d7ec4f26b0a67ee5a6071f099d3b144dd44c56ae51c6869756deddf5cb25a"
+    },
+    {
+      "path": "cluster/src/test/java/io/vectormatch/cluster/SnapshotTransportTest.java",
+      "sha256": "924529c3f5013cbac07e5b96eff580a6b997616c60c584f438f3dfff2cf5ddd2"
+    },
+    {
+      "path": "core/build.gradle.kts",
+      "sha256": "82a5d5ff0e23af5506784310d078b0a1b890c9f13cb2ae35105db168843a1497"
+    },
+    {
+      "path": "core/src/main/java/io/vectormatch/core/MatchingEngine.java",
+      "sha256": "b6e56f5884c7a2204726c4bca206f281558b4c967717cc3e46583d01db64db90"
+    },
+    {
+      "path": "core/src/test/java/io/vectormatch/core/MatchingEngineProperties.java",
+      "sha256": "c0d50d6f1f0f1a12de6cfb265b7118fe3a7c304a1cb0edfd6410023c31794d81"
+    },
+    {
+      "path": "core/src/test/java/io/vectormatch/core/MatchingEngineTest.java",
+      "sha256": "afd764b3b92d01458ad609f89fa75636a0a0057ca8ca35cc30844cdc92a3fae4"
+    },
+    {
+      "path": "core/src/test/java/io/vectormatch/core/ReferenceModel.java",
+      "sha256": "8efd38bf11ce3ed18ce427b1c4233b81bdc5ff4f711424da3fc7dcd0d639b8b5"
+    },
+    {
+      "path": "deploy/cluster.sh",
+      "sha256": "810afdf4713c33cda4181e0cb633e3382d4f250d81d124e8d5bc27905d7ac029"
+    },
+    {
+      "path": "deploy/postgres.sh",
+      "sha256": "d3465ea9cc9ba711eccbe17278d5836a760fad61c99dd327af89b47299f88a35"
+    },
+    {
+      "path": "deploy/remote-node.sh",
+      "sha256": "cb4360c9ab01d789c2226f08faf462c97aca9bd6f5cff1f964668f3222535fe2"
+    },
+    {
+      "path": "deploy/remote-workbench.sh",
+      "sha256": "8ac204ace60756e8d8af3c1a5cc529dcc2cee3e32b583f32f6f2f43b7bec2dc3"
+    },
+    {
+      "path": "deploy/remote_service.py",
+      "sha256": "18763fffbdeb5aa9971ba10b38d595e49df8389636adfe7ba0ca6cba3791be6a"
+    },
+    {
+      "path": "deploy/test_remote_service.py",
+      "sha256": "7240bf1bac1aaae6be2ad7a2611319a009278b4f4cbd6efa5ad69f3d93ffe133"
+    },
+    {
+      "path": "gradle.properties",
+      "sha256": "43a20d941219cb6bde5f858807fb9c943a8ae91bc5f8ae27bac7c779e2a8b0c8"
+    },
+    {
+      "path": "projector/build.gradle.kts",
+      "sha256": "3524b292506e76c2fab5c208e4b1017184e4810b7780f0335fec965335aa7ab1"
+    },
+    {
+      "path": "projector/src/main/java/io/vectormatch/projector/EventSource.java",
+      "sha256": "4ad2bbf73a2425d9d6345e6834e3395c4459ff73fa64db34723cd5bc13b8be1d"
+    },
+    {
+      "path": "projector/src/main/java/io/vectormatch/projector/PostgresEventStore.java",
+      "sha256": "51e0b37b55665184f22aaa2900cb8a0e8a04dd5f61a53302da9f6cd8978ef076"
+    },
+    {
+      "path": "projector/src/main/java/io/vectormatch/projector/ProjectionException.java",
+      "sha256": "d25ce307e6a6d5d25661a226a0721360e5947fec47f711973eb3f769d90f83be"
+    },
+    {
+      "path": "projector/src/main/java/io/vectormatch/projector/ProjectorConfig.java",
+      "sha256": "cc1aebec3ebc9407150d52c29d62414a6d2070d310d85c5d5dd16dcfead202ef"
+    },
+    {
+      "path": "projector/src/main/java/io/vectormatch/projector/ProjectorMain.java",
+      "sha256": "48b14a3841a554fd2095ab8fc66365a214236ba7d81a3ede926c09ea2490a692"
+    },
+    {
+      "path": "projector/src/main/java/io/vectormatch/projector/ReliableProjector.java",
+      "sha256": "a805eb1573a524564b7fe186f1c02b3d48764dbb4298f913dbe5d42ece976848"
+    },
+    {
+      "path": "projector/src/main/resources/db/schema.sql",
+      "sha256": "b4c3bd2cfe81f2943ed6671ca58b357156b713824798964bf8a9e9d93cc0ae9e"
+    },
+    {
+      "path": "projector/src/test/java/io/vectormatch/projector/PostgresProjectorIntegrationTest.java",
+      "sha256": "23bd4b3a3be3602abfc48edac3fb99c6b8e698c8d7b4a82795ff316ef454896b"
+    },
+    {
+      "path": "projector/src/test/java/io/vectormatch/projector/ProjectorConfigTest.java",
+      "sha256": "8297c45c938012f65add3c5225e66230b8342f0ab61ccb236b316c9423bc1c08"
+    },
+    {
+      "path": "scripts/bootstrap-postgres.py",
+      "sha256": "e8dd2c3db5f370a92e13938b59f7c29e65df89f2b8c872240abaaab613d47fd1"
+    },
+    {
+      "path": "scripts/bootstrap.py",
+      "sha256": "34c5707d27e650fb983f0da3dc27a6c733dad6cc63a51ddc344d25a528c759a0"
+    },
+    {
+      "path": "scripts/cgroup-limits.py",
+      "sha256": "b8dc220d6ae89fe1117e31f41962d2d30d6a078d03058b7849522c87d33643bb"
+    },
+    {
+      "path": "scripts/cloud-preflight.py",
+      "sha256": "fa2fc59019fee8e0f8f21ee8b1ad116301d9a6e41d4771923367c2d073061632"
+    },
+    {
+      "path": "scripts/env.sh",
+      "sha256": "5a7e2454330f3798a4fc59cfa36f9e2e8c8b3324bc7f3d5d563a08e8eeab12bc"
+    },
+    {
+      "path": "scripts/launcher-lock.py",
+      "sha256": "f7b44e2035d8c601243f99bb9604cdc3b82555c3ae770fcb4f3d0ff754e9e6ed"
+    },
+    {
+      "path": "scripts/run-replicated.sh",
+      "sha256": "b1801c2d53815c14ddb33e2132925fef038a2df6f39aff59cfe22840ccc18323"
+    },
+    {
+      "path": "scripts/run-workbench.sh",
+      "sha256": "64eeec0da124f33177e1338cc708363b1bb7f4a0fce93192c594dd75ceb42b9b"
+    },
+    {
+      "path": "scripts/tests/test_preflight_and_lock.py",
+      "sha256": "4b6e5aa1cb0ce8c6bb1f58a4cb1295edff282ed593b83400d47fb599265612f4"
+    },
+    {
+      "path": "scripts/tests/test_udp_preflight.py",
+      "sha256": "ca232c64795b939eada1bc9adc7c225080d4ebba75db7db5a90a2a72734f9d87"
+    },
+    {
+      "path": "scripts/tests/test_workbench_verifier_manifest.py",
+      "sha256": "ac255af337f52bf5a0b27ce79c39983e9acb91b0530b414052a99b7291642fcf"
+    },
+    {
+      "path": "scripts/udp-preflight.py",
+      "sha256": "6db40df778f80d99594e4af4920c76cb9895a40d6ccf56926bafbccec85abd13"
+    },
+    {
+      "path": "scripts/verify-replicated-workbench.py",
+      "sha256": "f6e493b14d47a5c95b76796bce9e86d9705d7784fda75bd49b6bdac86ffce959"
+    },
+    {
+      "path": "server/build.gradle.kts",
+      "sha256": "534b3e7162c7b90a2cde741ad063095d2524659fbb3f8f4a3ed7d42a20dee67a"
+    },
+    {
+      "path": "server/src/main/java/io/vectormatch/server/CommandJournal.java",
+      "sha256": "1130e77d9abb881314ea622c828c59674bb33d3cf53be30c29a9dd51220f7d82"
+    },
+    {
+      "path": "server/src/main/java/io/vectormatch/server/ProjectionObserver.java",
+      "sha256": "449b424682556491b3d65ce8620d8877224b20a8aee3768735254e5c46d81741"
+    },
+    {
+      "path": "server/src/main/java/io/vectormatch/server/Workbench.java",
+      "sha256": "fda404febed32f1421817e3cfc47661eeb92d078f01a453f534dd02f5e51780b"
+    },
+    {
+      "path": "server/src/main/java/io/vectormatch/server/WorkbenchServer.java",
+      "sha256": "9dc839b02a84207a172654ac385e5d9fc054336402fb0db1edb51ce75d50b835"
+    },
+    {
+      "path": "server/src/test/java/io/vectormatch/server/CommandJournalTest.java",
+      "sha256": "cca9fe30af2fe0343798c9334e49de9536ad8e9201785ab09ec4ed481621618b"
+    },
+    {
+      "path": "server/src/test/java/io/vectormatch/server/ProjectionObserverTest.java",
+      "sha256": "568ef4925564f91d845ba1f5e2af71c87a3037fc12752ef99df69ff12457bc72"
+    },
+    {
+      "path": "server/src/test/java/io/vectormatch/server/WorkbenchClusterTest.java",
+      "sha256": "04b6fd5585febf35eb95e6d21ea84f8b283090ed6fbbd27c3c895cd1784241c1"
+    },
+    {
+      "path": "server/src/test/java/io/vectormatch/server/WorkbenchServerTest.java",
+      "sha256": "c9ce80a2b2ccb57f22ef7a3c612021984f43a6f0009ccba6c8c01e6a95a6c81d"
+    },
+    {
+      "path": "settings.gradle.kts",
+      "sha256": "a2016f2603c5f44df69a1f0e097d3a279328609a1014666027b24a5e3b3f3196"
+    }
+  ]
+}
