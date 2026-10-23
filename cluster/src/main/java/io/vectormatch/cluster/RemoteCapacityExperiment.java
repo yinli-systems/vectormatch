@@ -18,20 +18,49 @@ import java.util.concurrent.locks.LockSupport;
 public final class RemoteCapacityExperiment {
     static final int MAX_ARRIVALS = 30_000;
     private static final int WARMUP = 100, SEEDED_BUYERS = 64;
-    private static final long SEEDED_MAKER_QUANTITY = 60_000, BUYER_FUNDING = MAX_ARRIVALS * 10_000L;
     private static final long PRICE = 10_000, SELLER = 1_000_001, WARM_BUYER = 1_000_002, FIRST_BUYER = 1_000_100;
-    private static final Duration CHECK_TIMEOUT = Duration.ofSeconds(180);
+    private static final Duration SETUP_TIMEOUT = Duration.ofSeconds(180);
+    private static final Duration CHECK_TIMEOUT = Duration.ofSeconds(600);
+
+    enum Profile {
+        BASELINE("baseline-30k", MAX_ARRIVALS, 60_000, 300_000_000, 65_536),
+        EXTENDED_90K("extended-90k", 90_000, 180_000, 900_000_000, 262_144);
+        final String label;
+        final int maximumArrivals, outboxCapacity;
+        final long makerQuantity, buyerFunding;
+        Profile(String label, int maximumArrivals, long makerQuantity, long buyerFunding, int outboxCapacity) {
+            this.label = label; this.maximumArrivals = maximumArrivals; this.makerQuantity = makerQuantity;
+            this.buyerFunding = buyerFunding; this.outboxCapacity = outboxCapacity;
+        }
+        static Profile parse(String value) {
+            for (Profile profile : values()) if (profile.label.equals(value)) return profile;
+            throw new IllegalArgumentException("Unknown capacity profile: " + value);
+        }
+    }
+
+    static void validateOutboxProfile(Profile profile, Map<String, String> environment) {
+        String configured = environment.get("VECTOR_OUTBOX_CAPACITY");
+        if (configured == null && profile == Profile.BASELINE) configured = "65536";
+        if (!Integer.toString(profile.outboxCapacity).equals(configured))
+            throw new IllegalArgumentException("Capacity profile " + profile.label + " requires VECTOR_OUTBOX_CAPACITY=" + profile.outboxCapacity);
+    }
 
     record Options(Path directory, int portBase, int rate, int arrivals, int workers, int queueCapacity,
-                   int requestTimeoutMs, int drainTimeoutMs, int expectedLeader, int schedulerLatenessLimitMs) {
+                   int requestTimeoutMs, int drainTimeoutMs, int expectedLeader, int schedulerLatenessLimitMs, Profile profile) {
+        Options(Path directory, int portBase, int rate, int arrivals, int workers, int queueCapacity,
+                int requestTimeoutMs, int drainTimeoutMs, int expectedLeader, int schedulerLatenessLimitMs) {
+            this(directory, portBase, rate, arrivals, workers, queueCapacity, requestTimeoutMs, drainTimeoutMs,
+                    expectedLeader, schedulerLatenessLimitMs, Profile.BASELINE);
+        }
         Options {
-            if (rate < 1 || rate > 1_000_000 || arrivals < 1 || arrivals > MAX_ARRIVALS
-                    || workers < 1 || workers > 64 || queueCapacity < 1 || queueCapacity > MAX_ARRIVALS
+            Objects.requireNonNull(profile, "profile");
+            if (rate < 1 || rate > 1_000_000 || arrivals < 1 || arrivals > profile.maximumArrivals
+                    || workers < 1 || workers > 64 || queueCapacity < 1 || queueCapacity > profile.maximumArrivals
                     || requestTimeoutMs < 10 || requestTimeoutMs > 30_000 || drainTimeoutMs < requestTimeoutMs
                     || drainTimeoutMs > 120_000 || expectedLeader < 0 || expectedLeader > 2
                     || schedulerLatenessLimitMs < 1 || schedulerLatenessLimitMs > 1000
                     || offsetNanos(arrivals, rate) > TimeUnit.MINUTES.toNanos(5))
-                throw new IllegalArgumentException("Invalid bounds: rate 1..1000000, arrivals 1..30000, workers 1..64, queue 1..30000, timeout 10..30000ms, drain timeout..120000ms, leader 0..2; arrival window <=300s");
+                throw new IllegalArgumentException("Invalid bounds: rate 1..1000000, arrivals/queue within selected profile limit, workers 1..64, timeout 10..30000ms, drain timeout..120000ms, leader 0..2; arrival window <=300s");
         }
     }
 
@@ -78,12 +107,13 @@ public final class RemoteCapacityExperiment {
     private RemoteCapacityExperiment() {}
 
     public static void main(String[] args) throws Exception {
-        if (args.length < 9 || args.length > 10) throw new IllegalArgumentException(
-                "Usage: RemoteCapacityExperiment EVIDENCE_DIR portBase targetRate arrivals workers queuePerWorker requestTimeoutMs drainTimeoutMs expectedLeaderId [schedulerLatenessLimitMs=20]");
+        if (args.length < 9 || args.length > 11) throw new IllegalArgumentException(
+                "Usage: RemoteCapacityExperiment EVIDENCE_DIR portBase targetRate arrivals workers queuePerWorker requestTimeoutMs drainTimeoutMs expectedLeaderId [schedulerLatenessLimitMs=20] [profile=baseline-30k]");
         Options options = new Options(Path.of(args[0]).toAbsolutePath().normalize(), Integer.parseInt(args[1]),
                 Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]), Integer.parseInt(args[5]),
                 Integer.parseInt(args[6]), Integer.parseInt(args[7]), Integer.parseInt(args[8]),
-                args.length == 10 ? Integer.parseInt(args[9]) : 20);
+                args.length >= 10 ? Integer.parseInt(args[9]) : 20, args.length == 11 ? Profile.parse(args[10]) : Profile.BASELINE);
+        validateOutboxProfile(options.profile(), System.getenv());
         ClusterTopology topology = ClusterTopology.fromEnvironment(options.portBase());
         require(topology.memberCount() == 3, "Three configured members required");
         Files.createDirectories(options.directory().getParent());
@@ -93,8 +123,11 @@ public final class RemoteCapacityExperiment {
 
     private static void run(Options options, ClusterTopology topology) throws Exception {
         Path directory = options.directory();
+        Profile profile = options.profile();
         String producer = "capacity-fixed-v1"; // Isolated fresh trial state is required; deterministic preparation permits byte-for-byte baseline comparisons.
         Map<String, Object> configuration = fields("startedAt", Instant.now().toString(), "producerPrefix", producer,
+                "profile", profile.label, "profileMaximumArrivals", profile.maximumArrivals, "declaredOutboxCapacity", profile.outboxCapacity,
+                "validationTimeoutSeconds", CHECK_TIMEOUT.toSeconds(), "setupTimeoutSeconds", SETUP_TIMEOUT.toSeconds(),
                 "ratePerSecond", options.rate(), "scheduledArrivals", options.arrivals(), "workers", options.workers(),
                 "maxServiceRequestsInFlight", options.workers(), "queueCapacityPerWorker", options.queueCapacity(),
                 "requestTimeoutMs", options.requestTimeoutMs(), "drainTimeoutMs", options.drainTimeoutMs(),
@@ -103,8 +136,8 @@ public final class RemoteCapacityExperiment {
                 "clientEgressHost", System.getenv().getOrDefault("VECTOR_CLIENT_EGRESS_HOST", "loopback-default"),
                 "loadGeneratorUsesMemberAddress", topology.hosts().contains(System.getenv().getOrDefault("VECTOR_CLIENT_EGRESS_HOST", "")),
                 "javaVersion", System.getProperty("java.version"), "processors", Runtime.getRuntime().availableProcessors(),
-                "warmupCommands", WARMUP, "seededBuyerAccounts", SEEDED_BUYERS, "seededMakerQuantity", SEEDED_MAKER_QUANTITY,
-                "seededQuotePerBuyer", BUYER_FUNDING, "priceTicks", PRICE, "quantityLotsPerMeasuredCommand", 1, "workload", "independent one-lot IOC buys, one pre-funded GTC maker, one trade per accepted command",
+                "warmupCommands", WARMUP, "seededBuyerAccounts", SEEDED_BUYERS, "seededMakerQuantity", profile.makerQuantity,
+                "seededQuotePerBuyer", profile.buyerFunding, "priceTicks", PRICE, "quantityLotsPerMeasuredCommand", 1, "workload", "independent one-lot IOC buys, one pre-funded GTC maker, one trade per accepted command",
                 "loadModel", "absolute fixed-arrival scheduler; bounded round-robin per-worker FIFO; one synchronous in-flight per worker",
                 "timeouts", "A timeout is unknown. Worker retries the identical identity before advancing; original and resolved completion times remain distinct.");
         write(directory.resolve("configuration.json"), configuration);
@@ -113,33 +146,31 @@ public final class RemoteCapacityExperiment {
         LoadResult load = null;
         try {
             MatchingEngine reference;
-            long makerId, preparedPending, preparedExported;
+            long makerId = 0, preparedPending, preparedExported;
             try (ClusterClient control = new ClusterClient(directory.resolve("setup-driver"), options.portBase())) {
                 require(control.leaderMemberId() == options.expectedLeader(), "Leader differs before setup");
-                byte[] initial = control.readSnapshot(CHECK_TIMEOUT);
+                byte[] initial = control.readSnapshot(SETUP_TIMEOUT);
                 Files.write(directory.resolve("initial-snapshot.bin"), initial);
                 reference = MatchingEngine.restore(initial);
                 reference.checkInvariants();
+                ClusterCapacity.validate(reference.limits(), profile.outboxCapacity);
                 require(reference.lastCommandSeq() == 0, "Trial requires fresh independent cluster state; never reset a live application lineage");
                 require(reference.book(1).bids().isEmpty() && reference.book(1).asks().isEmpty(), "Trial requires an empty book and no other business writers");
                 require(reference.retainedOrderCount() + options.arrivals() + WARMUP + 1 < reference.limits().maxRetainedOrders(), "Insufficient retained-order headroom");
                 require(reference.accounts().stream().noneMatch(a -> a.accountId() == SELLER || a.accountId() == WARM_BUYER
                         || a.accountId() >= FIRST_BUYER && a.accountId() < FIRST_BUYER + SEEDED_BUYERS), "Dedicated capacity accounts already exist; provision isolated trial state");
-                EventBatch outbox = control.fetchEvents(reference.lastEventSeq() + 1, 1, CHECK_TIMEOUT);
+                EventBatch outbox = control.fetchEvents(reference.lastEventSeq() + 1, 1, SETUP_TIMEOUT);
                 long eventBudget = SEEDED_BUYERS + 3L + 2L * (options.arrivals() + WARMUP);
-                require(outbox.lastEventSeq() - outbox.exportedSeq() + eventBudget < ReplicatedOutbox.DEFAULT_CAPACITY,
+                require(outbox.lastEventSeq() - outbox.exportedSeq() + eventBudget < profile.outboxCapacity,
                         "Trial could hit outbox state capacity; do not interpret state bounds as throughput");
-                seed(control, reference, new Deposit(SELLER, producer + "-seed", 1, Asset.BASE, SEEDED_MAKER_QUANTITY));
-                seed(control, reference, new Deposit(WARM_BUYER, producer + "-seed", 1, Asset.QUOTE, WARMUP * PRICE));
-                for (int worker = 0; worker < SEEDED_BUYERS; worker++) seed(control, reference,
-                        new Deposit(FIRST_BUYER + worker, producer + "-seed", 1, Asset.QUOTE, BUYER_FUNDING));
-                makerId = seed(control, reference, new Place(SELLER, producer + "-seed", 2, "maker-" + producer,
-                        Side.SELL, PRICE, SEEDED_MAKER_QUANTITY, TimeInForce.GTC)).result().orderId();
-                for (int i = 0; i < WARMUP; i++) seed(control, reference, new Place(WARM_BUYER, producer + "-warm", i + 1L,
-                        "warm-" + producer + '-' + i, Side.BUY, PRICE, 1, TimeInForce.IOC));
-                require(Arrays.equals(reference.snapshot(), control.readSnapshot(CHECK_TIMEOUT)), "Setup canonical state differs");
+                for (Command command : preparationCommands(profile, producer)) {
+                    CommandCodec.Reply reply = seed(control, reference, command);
+                    if (command instanceof Place place && place.accountId() == SELLER) makerId = reply.result().orderId();
+                }
+                require(makerId > 0, "Seed maker was not created");
+                require(Arrays.equals(reference.snapshot(), control.readSnapshot(SETUP_TIMEOUT)), "Setup canonical state differs");
                 Files.write(directory.resolve("prepared-snapshot.bin"), reference.snapshot());
-                EventBatch preparedOutbox = control.fetchEvents(reference.lastEventSeq() + 1, 1, CHECK_TIMEOUT);
+                EventBatch preparedOutbox = control.fetchEvents(reference.lastEventSeq() + 1, 1, SETUP_TIMEOUT);
                 preparedPending = preparedOutbox.lastEventSeq() - preparedOutbox.exportedSeq();
                 preparedExported = preparedOutbox.exportedSeq();
                 require(preparedExported == outbox.exportedSeq(), "External outbox acknowledger is running; isolate the trial");
@@ -157,6 +188,10 @@ public final class RemoteCapacityExperiment {
             if (load.workerFailure != null) throw new IllegalStateException("A capacity worker failed; inspect every arrival outcome", load.workerFailure);
             Map<String, Object> result = summarize(load);
             boolean canonical = false;
+            Instant validationStartedAt = Instant.now();
+            long validationStartedNanos = System.nanoTime();
+            write(directory.resolve("validation-start.json"), fields("startedAt", validationStartedAt.toString(),
+                    "timeoutSecondsPerValidationExchange", CHECK_TIMEOUT.toSeconds(), "scope", "connect, snapshot read, replay and final checks; excluded from measurement"));
             try (ClusterClient control = new ClusterClient(directory.resolve("validation-driver"), options.portBase())) {
                 if (control.leaderMemberId() != options.expectedLeader()) load.leaderChanged.set(true);
                 byte[] finalBytes = control.readSnapshot(CHECK_TIMEOUT);
@@ -189,16 +224,16 @@ public final class RemoteCapacityExperiment {
                             && finalOutbox.lastEventSeq() - finalOutbox.exportedSeq() == preparedPending + accepted * 2, "Outbox continuity/pending differs; an external acknowledger may be running");
                     result.put("finalOutboxPending", finalOutbox.lastEventSeq() - finalOutbox.exportedSeq());
                     result.put("outboxPendingVerified", true);
-                    require(actual.order(makerId).orElseThrow().remainingQuantity() == SEEDED_MAKER_QUANTITY - WARMUP - accepted, "Maker quantity differs");
+                    require(actual.order(makerId).orElseThrow().remainingQuantity() == profile.makerQuantity - WARMUP - accepted, "Maker quantity differs");
                     require(actual.account(SELLER).quote().available() == accepted * PRICE + WARMUP * PRICE
-                            && actual.account(SELLER).base().reserved() == SEEDED_MAKER_QUANTITY - WARMUP - accepted
+                            && actual.account(SELLER).base().reserved() == profile.makerQuantity - WARMUP - accepted
                             && actual.account(SELLER).base().available() == 0 && actual.account(SELLER).quote().reserved() == 0, "Seller conservation differs");
                     for (int worker = 0; worker < SEEDED_BUYERS; worker++) {
                         final int selectedWorker = worker;
                         long trades = confirmed.stream().filter(s -> s.worker == selectedWorker && s.reply.result().accepted()).count();
                         AccountView account = actual.account(FIRST_BUYER + worker);
                         require(account.base().available() == trades && account.base().reserved() == 0
-                                && account.quote().available() == BUYER_FUNDING - trades * PRICE && account.quote().reserved() == 0, "Buyer asset conservation differs");
+                                && account.quote().available() == profile.buyerFunding - trades * PRICE && account.quote().reserved() == 0, "Buyer asset conservation differs");
                     }
                     Files.write(directory.resolve("expected-snapshot.bin"), reference.snapshot());
                     canonical = true;
@@ -210,7 +245,15 @@ public final class RemoteCapacityExperiment {
                         "finalCommandSeq", actual.lastCommandSeq(), "finalEventSeq", actual.lastEventSeq(), "finalMarketSeq", actual.lastMarketSeq(),
                         "finalRetainedOrders", actual.retainedOrderCount(), "finalCachedResults", actual.cachedResultCount(), "finalProducers", actual.producerCount(), "stateHash", actual.stateHash(),
                         "leaderChanged", load.leaderChanged.get(), "fixedLeaderVerified", !load.leaderChanged.get()));
+            } finally {
+                write(directory.resolve("validation-timing.json"), fields("startedAt", validationStartedAt.toString(),
+                        "completedAt", Instant.now().toString(), "elapsedSeconds", (System.nanoTime() - validationStartedNanos) / 1e9,
+                        "timeoutSecondsPerValidationExchange", CHECK_TIMEOUT.toSeconds(), "canonicalSnapshotBytesVerified", canonical,
+                        "scope", "connect, snapshot read, deterministic replay and final checks; excluded from load measurement"));
             }
+            result.put("validationStartedAt", validationStartedAt.toString());
+            result.put("validationCompletedAt", Instant.now().toString());
+            result.put("validationElapsedSeconds", (System.nanoTime() - validationStartedNanos) / 1e9);
             boolean valid = canonical && !load.leaderChanged.get();
             result.put("passed", valid);
             result.put("measurementValid", valid && Boolean.FALSE.equals(result.get("generatorTimingInvalid")));
@@ -359,7 +402,8 @@ public final class RemoteCapacityExperiment {
         long lateScheduler = Arrays.stream(samples).filter(s -> s.enqueued - s.planned > TimeUnit.MILLISECONDS.toNanos(load.options.schedulerLatenessLimitMs())).count();
         long maxConfirmation = Arrays.stream(samples).mapToLong(s -> s.confirmed).max().orElse(load.windowEnd);
         long elapsed = Math.max(load.windowEnd, maxConfirmation) - load.origin;
-        return fields("test", "external-replicated-matching-fixed-arrival-capacity", "scheduledArrivals", samples.length,
+        return fields("test", "external-replicated-matching-fixed-arrival-capacity", "profile", load.options.profile().label,
+                "declaredOutboxCapacity", load.options.profile().outboxCapacity, "scheduledArrivals", samples.length,
                 "scheduledOriginUtcApproximate", load.scheduledOriginUtc, "targetArrivalRatePerSecond", load.options.rate(), "workers", load.options.workers(), "queueCapacityPerWorker", load.options.queueCapacity(),
                 "arrivalWindowSeconds", (load.windowEnd - load.origin) / 1e9, "completionWindowSeconds", elapsed / 1e9,
                 "enqueuedCommands", load.admitted.get(), "startedCommands", load.started.get(), "confirmedAcceptedCommands", accepted,
@@ -416,9 +460,22 @@ public final class RemoteCapacityExperiment {
             public void close() { client.close(); }
         };
     }
+    /** Fixed preparation sequence shared with the full-state profile regression probe; outside measurement. */
+    static List<Command> preparationCommands(Profile profile, String producer) {
+        List<Command> commands = new ArrayList<>(SEEDED_BUYERS + 3 + WARMUP);
+        commands.add(new Deposit(SELLER, producer + "-seed", 1, Asset.BASE, profile.makerQuantity));
+        commands.add(new Deposit(WARM_BUYER, producer + "-seed", 1, Asset.QUOTE, WARMUP * PRICE));
+        for (int worker = 0; worker < SEEDED_BUYERS; worker++)
+            commands.add(new Deposit(FIRST_BUYER + worker, producer + "-seed", 1, Asset.QUOTE, profile.buyerFunding));
+        commands.add(new Place(SELLER, producer + "-seed", 2, "maker-" + producer, Side.SELL, PRICE, profile.makerQuantity, TimeInForce.GTC));
+        for (int i = 0; i < WARMUP; i++) commands.add(new Place(WARM_BUYER, producer + "-warm", i + 1L,
+                "warm-" + producer + '-' + i, Side.BUY, PRICE, 1, TimeInForce.IOC));
+        return List.copyOf(commands);
+    }
+
     private static CommandCodec.Reply seed(ClusterClient client, MatchingEngine reference, Command command) {
         Execution expected = reference.apply(command);
-        CommandCodec.Reply actual = client.execute(command, CHECK_TIMEOUT);
+        CommandCodec.Reply actual = client.execute(command, SETUP_TIMEOUT);
         require(actual.error().isEmpty() && expected.result().accepted() && expected.result().equals(actual.result()), "Setup/warmup command differs");
         return actual;
     }

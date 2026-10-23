@@ -458,15 +458,19 @@ def plot_trials(trials, output_dir):
             rows = sorted(rows, key=lambda row: row["targetArrivalRatePerSecond"])
             label = f"{phase or 'trial'}: workers={workers}, queue={queue}, cfg={fingerprint[:6]}"
             x = [row["targetArrivalRatePerSecond"] for row in rows]
-            axes[0, 0].plot(x, [row["derived"]["arrivalWindowGoodputPerSecond"] for row in rows], "o-", label=label)
-            axes[0, 1].plot(x, [row["derived"]["latency"]["conditionalAccepted"]["p99Millis"] for row in rows], "o-", label=label)
-            axes[1, 0].plot(x, [row["derived"]["clientNotSent"] / row["scheduledArrivals"] if row["scheduledArrivals"] else None for row in rows], "o-", label=label)
-            axes[1, 1].plot(x, [row["backlog"]["secondHalfFittedGrowthCommands"] for row in rows], "o-", label=label)
-            invalid = [row for row in rows if not row["measurementValid"]]
-            for row in invalid:
-                value = row["derived"]["arrivalWindowGoodputPerSecond"]
-                if value is not None:
-                    axes[0, 0].scatter([row["targetArrivalRatePerSecond"]], [value], marker="x", color="red", s=90, zorder=5)
+            metrics = [[row["derived"]["arrivalWindowGoodputPerSecond"] for row in rows],
+                       [row["derived"]["latency"]["conditionalAccepted"]["p99Millis"] for row in rows],
+                       [row["derived"]["clientNotSent"] / row["scheduledArrivals"] if row["scheduledArrivals"] else None for row in rows],
+                       [row["backlog"]["secondHalfFittedGrowthCommands"] for row in rows]]
+            for axis, values in zip(axes.flat, metrics):
+                line, = axis.plot(x, values, "o-", label=label)
+                for row, value in zip(rows, values):
+                    if value is None:
+                        continue
+                    if not row["measurementValid"]:
+                        axis.scatter([row["targetArrivalRatePerSecond"]], [value], marker="x", color="red", s=90, zorder=5)
+                    elif not row["observedStableWindow"]:
+                        axis.scatter([row["targetArrivalRatePerSecond"]], [value], marker="^", facecolors="white", edgecolors=line.get_color(), s=95, zorder=5)
         titles = (("Accepted goodput during arrival window", "commands / second"),
                   ("Accepted-response conditional p99 (includes queue)", "milliseconds"),
                   ("Client admission / drain loss", "fraction of offered arrivals"),
@@ -476,7 +480,12 @@ def plot_trials(trials, output_dir):
             axis.grid(alpha=.25)
             if groups:
                 axis.legend(fontsize=7)
-        figure.suptitle("VectorMatch finite-window capacity trials — every trial retained; red X = invalid measurement", fontsize=12)
+        latencies = [row["derived"]["latency"]["conditionalAccepted"]["p99Millis"] for row in trials]
+        positive = [value for value in latencies if value is not None and value > 0]
+        if positive and max(positive) / min(positive) > 10:
+            axes[0, 1].set_yscale("log")
+            axes[0, 1].set_ylabel("milliseconds (log scale)")
+        figure.suptitle("VectorMatch finite windows — all trials retained; triangle = nonstable, red X = invalid", fontsize=12)
         files = []
         for extension in ("png", "svg"):
             path = output_dir / f"capacity.{extension}"

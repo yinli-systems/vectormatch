@@ -15,11 +15,11 @@ def write(path, value):
 def main(root):
     campaign = json.loads((root / "campaign.json").read_text())
     deployment = json.loads((root / "deployment.json").read_text())
-    fixed = {**campaign["fixed"], "outboxCapacity": 65536,
+    fixed = {"outboxCapacity": 65536,
              "driverThreading": "SHARED", "archiveThreading": "SHARED",
              "idleStrategy": "BackoffIdleStrategy defaults",
              "socketSendBufferBytes": 131072, "socketReceiveBufferBytes": 131072,
-             "aeronVersion": "1.53.3"}
+             "aeronVersion": "1.53.3", **campaign["fixed"]}
     checked = []
     for directory in sorted((root / "runs").iterdir()):
         if not (directory / "result.json").exists():
