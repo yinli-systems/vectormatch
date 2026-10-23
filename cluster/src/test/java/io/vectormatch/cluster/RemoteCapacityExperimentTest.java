@@ -31,6 +31,7 @@ class RemoteCapacityExperimentTest {
         });
         assertEquals("test-transport", RemoteCapacityExperiment.summarize(load).get("clientDriverMode"));
         assertNull(RemoteCapacityExperiment.summarize(load).get("clientDriverCount"));
+        assertNull(RemoteCapacityExperiment.summarize(load).get("clientNakUnicastDelayNs"));
     }
 
     @Test void actualFactoryDriverMetadataIsCapturedOnlyAfterEveryWorkerConnects() throws Exception {
@@ -44,10 +45,17 @@ class RemoteCapacityExperimentTest {
             }
             public String driverMode() { return "isolated"; }
             public Integer driverCount() { return connected.get(); }
+            public Long driverNakUnicastDelayNs() {
+                assertEquals(2, connected.get(), "Effective driver metadata must be captured after all workers connect");
+                return 100_000L;
+            }
+            public Long driverNakUnicastRetryDelayRatio() { return 100L; }
         });
         assertEquals(2, connected.get());
         assertEquals("isolated", RemoteCapacityExperiment.summarize(load).get("clientDriverMode"));
         assertEquals(2, RemoteCapacityExperiment.summarize(load).get("clientDriverCount"));
+        assertEquals(100_000L, RemoteCapacityExperiment.summarize(load).get("clientNakUnicastDelayNs"));
+        assertEquals(100L, RemoteCapacityExperiment.summarize(load).get("clientNakUnicastRetryDelayRatio"));
     }
 
     private RemoteCapacityExperiment.Options options(int rate, int arrivals, int workers, int queue, int timeout, int drain) {
@@ -67,6 +75,30 @@ class RemoteCapacityExperimentTest {
         public void idle() {}
         public ClusterClient.TransportCounters counters() { return new ClusterClient.TransportCounters(0, 0, 0, 0); }
         public void close() {}
+    }
+
+    @Test void executedCommandWithoutReplyPreventsMisleadingConfirmedOnlyReplay() {
+        var actual = new MatchingEngine();
+        var reference = new MatchingEngine();
+        var first = new Deposit(1, "first", 1, Asset.BASE, 1);
+        var second = new Deposit(2, "second", 1, Asset.BASE, 1);
+        assertTrue(actual.apply(first).result().accepted());
+        Result known = actual.apply(second).result();
+        assertEquals(2, known.commandSeq(), "The unresolved first command has already consumed sequence 1");
+        var offered = samples(2, 2);
+        offered[0].outcome = "UNKNOWN_UNRESOLVED";
+        offered[1].outcome = "CONFIRMED_ACCEPTED";
+        offered[1].reply = new CommandCodec.Reply(1, known, false, 2, 2, 0, "", "");
+        assertNotEquals(known, reference.apply(second).result(),
+                "Confirmed-only replay omits the executed first command and falsely reports a sequence mismatch");
+        IllegalStateException failure = assertThrows(IllegalStateException.class,
+                () -> RemoteCapacityExperiment.requireCompleteOutcomeSetForReplay(offered));
+        assertTrue(failure.getMessage().contains("Confirmed-only replay skipped"));
+        assertTrue(failure.getMessage().contains("1 UNKNOWN_UNRESOLVED"));
+        assertTrue(failure.getMessage().contains("no core business mismatch is established"));
+        offered[0].outcome = "CLIENT_QUEUE_FULL_NOT_SENT";
+        assertDoesNotThrow(() -> RemoteCapacityExperiment.requireCompleteOutcomeSetForReplay(offered),
+                "An explicitly not-sent request does not create an unknown execution gap");
     }
 
     @Test void fixedArrivalScheduleDoesNotWaitForSlowRepliesAndAccountsForEveryArrival() throws Exception {

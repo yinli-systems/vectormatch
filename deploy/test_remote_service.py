@@ -159,6 +159,57 @@ class RemoteServiceTest(unittest.TestCase):
             dedicated, _ = remote.command("node", 0, Path("/state/node-0"), "start")
             self.assertEqual(dedicated[-3:], ["capacity-190k-v1", "1048576", "DEDICATED"])
 
+    def test_nak_delay_is_strict_node_only_opt_in_and_changes_owned_command_identity(self):
+        settings = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4"}
+        with patch.dict(os.environ, settings, clear=True), \
+                patch.object(remote, "distribution", return_value=Path("/bundle/dist/cluster")), \
+                patch.object(remote, "java", return_value="/jdk/bin/java"):
+            original, old_environment = remote.command("node", 0, Path("/state/node-0"), "start")
+            old_fingerprint = remote.configuration_fingerprint("node", old_environment)
+            self.assertFalse(any("aeron.nak" in arg for arg in original))
+            for delay in ("1000", "100000", "1000000"):
+                os.environ["VECTOR_NAK_UNICAST_DELAY_NS"] = delay
+                arguments, environment = remote.command("node", 0, Path("/state/node-0"), "start")
+                flag = "-Daeron.nak.unicast.delay=" + delay
+                self.assertEqual([flag], [arg for arg in arguments if "aeron.nak" in arg])
+                self.assertLess(arguments.index(flag), arguments.index("-cp"))
+                self.assertEqual(original, [arg for arg in arguments if arg != flag])
+                self.assertNotEqual(old_fingerprint, remote.configuration_fingerprint("node", environment))
+                self.assertNotEqual(self.command_hash(original), self.command_hash(arguments))
+                self.assertEqual(remote.configuration_fingerprint("gateway", old_environment),
+                                 remote.configuration_fingerprint("gateway", environment))
+            os.environ["VECTOR_CLIENT_EGRESS_HOST"] = "10.0.0.4"
+            gateway, _ = remote.command("gateway", None, Path("/state/gateway"), "start")
+            self.assertFalse(any("aeron.nak" in arg for arg in gateway), "The opt-in is node-only")
+
+    def test_nak_delay_rejects_noncanonical_values_and_implicit_jvm_overrides(self):
+        settings = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4"}
+        with patch.dict(os.environ, settings, clear=True), \
+                patch.object(remote, "distribution", return_value=Path("/bundle/dist/cluster")), \
+                patch.object(remote, "java", return_value="/jdk/bin/java"):
+            for value in ("", "999", "1000001", "-1000", "+1000", "01000", "1000ns", "1000.0", "1_000", "1000 ", "1000 -Xmx8g"):
+                os.environ["VECTOR_NAK_UNICAST_DELAY_NS"] = value
+                with self.subTest(value=value), self.assertRaisesRegex(ValueError, "NAK_UNICAST_DELAY_NS"):
+                    remote.command("node", 0, Path("/state/node-0"), "start")
+            os.environ["VECTOR_NAK_UNICAST_DELAY_NS"] = "1000"
+            for name in ("JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS", "_JAVA_OPTIONS"):
+                with patch.dict(os.environ, {name: "-Daeron.nak.unicast.retry.delay.ratio=100"}):
+                    with self.subTest(name=name), self.assertRaisesRegex(ValueError, "Hidden Aeron NAK"):
+                        remote.command("node", 0, Path("/state/node-0"), "start")
+
+    def test_absent_nak_keeps_exact_previous_configuration_fingerprint(self):
+        environment = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4", "VECTOR_AERON_MTU_LENGTH": "1248",
+                       "VECTOR_DRIVER_THREADING_MODE": "SHARED", "VECTOR_SOCKET_RECEIVE_BUFFER_BYTES": "131072"}
+        old_settings = {name: environment.get(name) for name in remote.CONFIGURATION_KEYS["node"]}
+        old_settings.update(VECTOR_DRIVER_THREADING_MODE="SHARED", VECTOR_SOCKET_RECEIVE_BUFFER_BYTES="131072")
+        expected = hashlib.sha256(json.dumps({"version": 1, "role": "node", "settings": old_settings},
+                                            sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        self.assertEqual(expected, remote.configuration_fingerprint("node", environment))
+        default = {**environment, "VECTOR_NAK_UNICAST_DELAY_NS": "1000"}
+        tuned = {**environment, "VECTOR_NAK_UNICAST_DELAY_NS": "100000"}
+        self.assertEqual(3, len({expected, remote.configuration_fingerprint("node", default),
+                               remote.configuration_fingerprint("node", tuned)}))
+
     def test_driver_threading_rejects_every_non_whitelisted_value(self):
         settings = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4"}
         with patch.dict(os.environ, settings, clear=True), \

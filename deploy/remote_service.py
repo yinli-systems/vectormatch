@@ -42,6 +42,7 @@ CONFIGURATION_KEYS = {
 }
 SOCKET_RECEIVE_BUFFER_ENV = "VECTOR_SOCKET_RECEIVE_BUFFER_BYTES"
 DRIVER_THREADING_ENV = "VECTOR_DRIVER_THREADING_MODE"
+NAK_UNICAST_DELAY_ENV = "VECTOR_NAK_UNICAST_DELAY_NS"
 
 
 def configuration_fingerprint(role: str, environment: dict[str, str]) -> str:
@@ -51,6 +52,8 @@ def configuration_fingerprint(role: str, environment: dict[str, str]) -> str:
         safe[SOCKET_RECEIVE_BUFFER_ENV] = environment[SOCKET_RECEIVE_BUFFER_ENV]
     if role == "node" and DRIVER_THREADING_ENV in environment:
         safe[DRIVER_THREADING_ENV] = environment[DRIVER_THREADING_ENV]
+    if role == "node" and NAK_UNICAST_DELAY_ENV in environment:
+        safe[NAK_UNICAST_DELAY_ENV] = environment[NAK_UNICAST_DELAY_ENV]
     payload = {"version": CONFIGURATION_VERSION, "role": role, "settings": safe}
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -174,6 +177,15 @@ def command(role: str, node: int | None, state: Path, action: str) -> tuple[list
     if role == "node" and environment.get("VECTOR_MAX_CLUSTER_SESSIONS"):
         maximum_sessions = positive_int("VECTOR_MAX_CLUSTER_SESSIONS", 10, 1, 256)
         args += [f"-Daeron.cluster.max.sessions={maximum_sessions}"]
+    if role == "node":
+        for name in ("JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS", "_JAVA_OPTIONS"):
+            if "aeron.nak" in environment.get(name, ""):
+                raise ValueError(f"Hidden Aeron NAK property in {name}; use VECTOR_NAK_UNICAST_DELAY_NS")
+    if role == "node" and NAK_UNICAST_DELAY_ENV in environment:
+        delay = environment[NAK_UNICAST_DELAY_ENV]
+        if not re.fullmatch(r"[1-9][0-9]*", delay) or not 1000 <= int(delay) <= 1000000:
+            raise ValueError("VECTOR_NAK_UNICAST_DELAY_NS must be canonical decimal 1000..1000000")
+        args += [f"-Daeron.nak.unicast.delay={delay}"]
     port = positive_int("VECTOR_PORT_BASE", 19000, 1024, 65000)
     if role == "gateway":
         args += ["-Dvm.backend=cluster", f"-Dvm.runtime={state / 'workbench'}",

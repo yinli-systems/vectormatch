@@ -12,7 +12,43 @@ def write(path, value):
     path.write_text(json.dumps(value, indent=2) + "\n")
 
 
-def load_generator_jvm_arguments(trial, configuration):
+NAK_FIXED_FIELDS = {"nakUnicastDelayNs", "clientNakUnicastDelayNs", "nakUnicastRetryDelayRatio"}
+NAK_CLIENT_FIELDS = {"clientNakUnicastDelayNs", "clientNakUnicastRetryDelayRatio"}
+
+
+def nak_settings(fixed):
+    declared = NAK_FIXED_FIELDS.intersection(fixed)
+    if not declared:
+        return None
+    assert declared == NAK_FIXED_FIELDS, "Incomplete explicit NAK configuration"
+    for name in ("nakUnicastDelayNs", "clientNakUnicastDelayNs"):
+        assert type(fixed[name]) is int and 1000 <= fixed[name] <= 1000000, "Invalid explicit NAK delay: " + name
+    assert type(fixed["nakUnicastRetryDelayRatio"]) is int and fixed["nakUnicastRetryDelayRatio"] == 100, "NAK retry ratio must remain 100"
+    return {name: fixed[name] for name in NAK_FIXED_FIELDS}
+
+
+def verify_nak_jvm_arguments(arguments, fixed, client=False):
+    settings = nak_settings(fixed)
+    actual = [arg for arg in arguments if isinstance(arg, str) and "aeron.nak" in arg]
+    expected = [] if settings is None else ["-Daeron.nak.unicast.delay=" + str(
+        settings["clientNakUnicastDelayNs" if client else "nakUnicastDelayNs"])]
+    assert actual == expected, "NAK JVM property missing, differing, duplicate or hidden"
+    if expected and "-cp" in arguments:
+        assert arguments.index(expected[0]) < arguments.index("-cp"), "NAK property is not a JVM argument"
+
+
+def verify_nak_startup(fixed, startup):
+    settings = nak_settings(fixed)
+    if settings is None:
+        return
+    started = [line for line in startup.splitlines() if line.startswith("VECTOR_CLUSTER_STARTED ")]
+    assert started, "Missing NAK startup evidence"
+    for name in ("nakUnicastDelayNs", "nakUnicastRetryDelayRatio"):
+        pattern = r"(?:^|\s)" + name + r"=([^\s]+)(?=\s|$)"
+        assert all(re.findall(pattern, line) == [str(settings[name])] for line in started), "Missing, duplicate or differing NAK startup evidence: " + name
+
+
+def load_generator_jvm_arguments(trial, configuration, fixed=None):
     """Validate declared runtime mode against the allowlisted recorded JVM flag.
 
     Historical evidence predates runtime mode fields and is accepted only when
@@ -22,7 +58,22 @@ def load_generator_jvm_arguments(trial, configuration):
     permitted = ("-Dvectormatch.capacity.client.driver=isolated",
                  "-Dvectormatch.capacity.client.driver=shared")
     assert isinstance(extra, list), "Load-generator JVM arguments must be a list"
-    assert len(extra) <= 1 and all(value in permitted for value in extra), "Disallowed load-generator JVM argument"
+    settings = nak_settings(fixed or {})
+    nak_flag = "-Daeron.nak.unicast.delay=" + str(settings["clientNakUnicastDelayNs"]) if settings else None
+    assert all(isinstance(value, str) and (value in permitted or value == nak_flag) for value in extra), "Disallowed load-generator JVM argument"
+    driver_flags = [value for value in extra if value in permitted]
+    assert len(driver_flags) <= 1 and len(extra) == len(set(extra)), "Disallowed duplicate load-generator JVM argument"
+    verify_nak_jvm_arguments(extra, fixed or {}, client=True)
+    nak_runtime = NAK_CLIENT_FIELDS.intersection(configuration)
+    if settings is None:
+        if nak_runtime:
+            assert nak_runtime == NAK_CLIENT_FIELDS, "Incomplete client NAK runtime declaration"
+            assert type(configuration["clientNakUnicastDelayNs"]) is int and configuration["clientNakUnicastDelayNs"] == 1000, "Undeclared nondefault client NAK runtime configuration"
+            assert type(configuration["clientNakUnicastRetryDelayRatio"]) is int and configuration["clientNakUnicastRetryDelayRatio"] == 100, "Undeclared nondefault client NAK runtime configuration"
+    else:
+        assert nak_runtime == NAK_CLIENT_FIELDS, "Incomplete client NAK runtime declaration"
+        assert type(configuration["clientNakUnicastDelayNs"]) is int and configuration["clientNakUnicastDelayNs"] == settings["clientNakUnicastDelayNs"], "Client NAK delay differs from effective runtime"
+        assert type(configuration["clientNakUnicastRetryDelayRatio"]) is int and configuration["clientNakUnicastRetryDelayRatio"] == 100, "Client NAK retry ratio differs from effective runtime"
     runtime_fields = {"clientDriverMode", "clientDriverCount", "clientAeronMode"}
     declared = runtime_fields.intersection(configuration)
     if not declared:
@@ -31,7 +82,7 @@ def load_generator_jvm_arguments(trial, configuration):
     assert declared == runtime_fields, "Incomplete client transport runtime declaration"
     mode = configuration["clientDriverMode"]
     assert mode in ("isolated", "shared"), "Unknown client driver mode"
-    expected_mode = extra[0].split("=", 1)[1] if extra else "isolated"
+    expected_mode = driver_flags[0].split("=", 1)[1] if driver_flags else "isolated"
     assert mode == expected_mode, "Declared client driver mode differs from actual JVM argument"
     count = configuration["clientDriverCount"]
     assert type(count) is int and count == (1 if mode == "shared" else trial["workers"]), "Client driver count differs"
@@ -136,6 +187,7 @@ def main(root):
              "socketSendBufferBytes": 131072, "socketReceiveBufferBytes": 131072,
              "aeronVersion": "1.53.3", **campaign["fixed"]}
     maximum_cluster_sessions(fixed)  # Validate without adding/changing historical fingerprint fields.
+    nak_settings(fixed)  # Optional values enter the existing fixed-configuration fingerprint unchanged.
     receive_buffer = socket_receive_buffer_argument(fixed)
     if receive_buffer is not None:
         if "socketReceiveBufferBytes" in campaign["fixed"]:
@@ -182,10 +234,11 @@ def main(root):
             assert "-Xmx" + fixed["nodeHeap"] in args
             assert "-Daeron.cluster.appointed.leader.id=0" in args
             verify_maximum_cluster_sessions(args, fixed)
+            verify_nak_jvm_arguments(args, fixed)
             assert args[args.index("-cp") + 1] == release + "/dist/cluster/lib/*"
             index = args.index("io.vectormatch.cluster.ClusterNodeMain")
             assert args[index + 1:] == node_arguments(trial, fixed, node, hosts)
-            if fixed.get("stateProfile") or receive_buffer is not None or driver_threading is not None:
+            if fixed.get("stateProfile") or receive_buffer is not None or driver_threading is not None or nak_settings(fixed) is not None:
                 startup = (directory / f"node{node}" / "process.log").read_text()
                 if fixed.get("stateProfile"):
                     assert "profile=" + fixed["stateProfile"] in startup, "Missing state profile startup evidence"
@@ -198,12 +251,13 @@ def main(root):
                     verify_requested_receive_buffer_startup(
                         {**fixed, "socketReceiveBufferArgumentBytes": 131072 if receive_buffer is None else receive_buffer}, startup)
                 verify_driver_threading_startup(fixed, startup)
+                verify_nak_startup(fixed, startup)
                 hashes[f"node{node}/process.log"] = hashlib.sha256(startup.encode()).hexdigest()
             hashes[str(path.relative_to(directory))] = hashlib.sha256(path.read_bytes()).hexdigest()
         snapshot = directory / "prepared-snapshot.bin"
         assert hashlib.sha256(snapshot.read_bytes()).hexdigest() == configuration["preparedSnapshotSha256"]
         hashes[snapshot.name] = hashlib.sha256(snapshot.read_bytes()).hexdigest()
-        extra_jvm_arguments = load_generator_jvm_arguments(trial, configuration)
+        extra_jvm_arguments = load_generator_jvm_arguments(trial, configuration, fixed)
         load_arguments = load_generator_arguments(trial, release, extra_jvm_arguments)
         load_record = json.loads((directory / "load-process.json").read_text())
         command_digest = command_sha256(load_arguments)

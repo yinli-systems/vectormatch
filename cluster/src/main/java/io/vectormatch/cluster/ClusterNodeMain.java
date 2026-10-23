@@ -100,12 +100,13 @@ public final class ClusterNodeMain {
                      consensus.terminationHook(barrier::signalAll));
              ClusteredServiceContainer ignoredService = ClusteredServiceContainer.launch(
                      service.terminationHook(barrier::signalAll))) {
-            System.out.printf("VECTOR_CLUSTER_STARTED node=%d pid=%d sync=%d state=%s members=%s mtu=%d profile=%s limits=%s outbox=%d checkpointMaxBytes=%d resultCachePerProducer=%d requestedSocketReceiveBufferBytes=%d driverThreading=%s driverIdleMaxSpins=%d driverIdleMaxYields=%d driverIdleMinParkNs=%d driverIdleMaxParkNs=%d%n",
+            System.out.printf("VECTOR_CLUSTER_STARTED node=%d pid=%d sync=%d state=%s members=%s mtu=%d profile=%s limits=%s outbox=%d checkpointMaxBytes=%d resultCachePerProducer=%d requestedSocketReceiveBufferBytes=%d driverThreading=%s driverIdleMaxSpins=%d driverIdleMaxYields=%d driverIdleMinParkNs=%d driverIdleMaxParkNs=%d nakUnicastDelayNs=%d nakUnicastRetryDelayRatio=%d%n",
                     node, ProcessHandle.current().pid(), sync, base, topology.members(), transport.mtuLength(),
                     configuration.stateProfile().id(), configuration.stateProfile().limits(), outboxCapacity,
                     configuration.stateProfile().snapshotMaxBytes(), configuration.stateProfile().resultCachePerProducer(),
                     configuration.socketReceiveBufferBytes(), configuration.driverThreading(),
-                    DRIVER_IDLE_MAX_SPINS, DRIVER_IDLE_MAX_YIELDS, DRIVER_IDLE_MIN_PARK_NS, DRIVER_IDLE_MAX_PARK_NS);
+                    DRIVER_IDLE_MAX_SPINS, DRIVER_IDLE_MAX_YIELDS, DRIVER_IDLE_MIN_PARK_NS, DRIVER_IDLE_MAX_PARK_NS,
+                    media.nakUnicastDelayNs(), media.nakUnicastRetryDelayRatio());
             barrier.await();
         }
     }

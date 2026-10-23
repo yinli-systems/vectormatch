@@ -106,6 +106,8 @@ public final class RemoteCapacityExperiment {
         Transport open(int worker) throws Exception;
         default String driverMode() { return "test-transport"; }
         default Integer driverCount() { return null; }
+        default Long driverNakUnicastDelayNs() { return null; }
+        default Long driverNakUnicastRetryDelayRatio() { return null; }
     }
 
     static final String CLIENT_DRIVER_PROPERTY = "vectormatch.capacity.client.driver";
@@ -158,6 +160,12 @@ public final class RemoteCapacityExperiment {
         }
         public String driverMode() { return mode.label; }
         public Integer driverCount() { return sharedDriver != null ? 1 : connectedDrivers.get(); }
+        public Long driverNakUnicastDelayNs() {
+            return sharedDriver == null ? null : sharedDriver.context().nakUnicastDelayNs();
+        }
+        public Long driverNakUnicastRetryDelayRatio() {
+            return sharedDriver == null ? null : sharedDriver.context().nakUnicastRetryDelayRatio();
+        }
         public void close() {
             if (activeClients.get() != 0) throw new IllegalStateException("Load clients must terminate before their shared driver owner closes");
             if (sharedDriver != null) sharedDriver.close();
@@ -194,6 +202,7 @@ public final class RemoteCapacityExperiment {
         volatile String scheduledOriginUtc;
         String clientDriverMode = "test-transport";
         Integer clientDriverCount;
+        Long clientNakUnicastDelayNs, clientNakUnicastRetryDelayRatio;
         LoadResult(Options options, Sample[] samples) { this.options = options; this.samples = samples; }
     }
 
@@ -292,6 +301,10 @@ public final class RemoteCapacityExperiment {
             try (LoadTransports transports = new LoadTransports(options, topology, loadEndpoint, loadTransport, clientDriverMode)) {
                 load = runLoad(options, samples, transports);
                 configuration.put("clientDriverCount", load.clientDriverCount);
+                if (load.clientNakUnicastDelayNs != null && load.clientNakUnicastRetryDelayRatio != null) {
+                    configuration.put("clientNakUnicastDelayNs", load.clientNakUnicastDelayNs);
+                    configuration.put("clientNakUnicastRetryDelayRatio", load.clientNakUnicastRetryDelayRatio);
+                }
                 write(directory.resolve("configuration.json"), configuration);
             }
             writeSamples(directory.resolve("arrivals.csv"), load);
@@ -314,6 +327,7 @@ public final class RemoteCapacityExperiment {
                 List<Sample> confirmed = Arrays.stream(samples).filter(Sample::hasReply).filter(s -> s.reply.error().isEmpty()).sorted(
                         Comparator.comparingLong(s -> s.reply.result().commandSeq())).toList();
                 boolean allKnown = Arrays.stream(samples).noneMatch(s -> s.outcome.equals("UNKNOWN_UNRESOLVED"));
+                requireCompleteOutcomeSetForReplay(samples);
                 Set<Long> commandSequences = new HashSet<>();
                 for (Sample sample : confirmed) {
                     require(sample.reply.result() != null, "Missing business result");
@@ -444,6 +458,10 @@ public final class RemoteCapacityExperiment {
         }
         load.clientDriverMode = factory.driverMode();
         load.clientDriverCount = factory.driverCount();
+        // Capture the concluded shared driver's actual values after all connections are ready.
+        // Other factories remain explicitly unavailable rather than assuming library defaults.
+        load.clientNakUnicastDelayNs = factory.driverNakUnicastDelayNs();
+        load.clientNakUnicastRetryDelayRatio = factory.driverNakUnicastRetryDelayRatio();
         load.origin = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(200);
         load.scheduledOriginUtc = Instant.now().plusNanos(load.origin - System.nanoTime()).toString();
         load.windowEnd = load.origin + offsetNanos(options.arrivals(), options.rate());
@@ -527,6 +545,14 @@ public final class RemoteCapacityExperiment {
         }
     }
 
+    /** A missing response can hide an executed command, so confirmed-only replay cannot prove a mismatch. */
+    static void requireCompleteOutcomeSetForReplay(Sample[] samples) {
+        long unresolved = Arrays.stream(samples).filter(s -> s.outcome.equals("UNKNOWN_UNRESOLVED")).count();
+        require(unresolved == 0, "Confirmed-only replay skipped: " + unresolved
+                + " UNKNOWN_UNRESOLVED identities may already have executed; canonical validation is incomplete."
+                + " Preserve the original identities for same-key recovery; no core business mismatch is established.");
+    }
+
     private static void executeResolving(Sample sample, Transport transport, LoadResult load) {
         while (System.nanoTime() < load.drainDeadline) {
             sample.attempts++;
@@ -571,6 +597,8 @@ public final class RemoteCapacityExperiment {
         long elapsed = Math.max(load.windowEnd, maxConfirmation) - load.origin;
         return fields("test", "external-replicated-matching-fixed-arrival-capacity", "profile", load.options.profile().label,
                 "clientDriverMode", load.clientDriverMode, "clientDriverCount", load.clientDriverCount,
+                "clientNakUnicastDelayNs", load.clientNakUnicastDelayNs,
+                "clientNakUnicastRetryDelayRatio", load.clientNakUnicastRetryDelayRatio,
                 "clientAeronMode", "one-independent-Aeron-per-client",
                 "declaredOutboxCapacity", load.options.profile().outboxCapacity,
                 "expectedStateProfile", load.options.profile().stateProfile().id(), "fullCheckpointMaximumBytes", load.options.profile().snapshotMaxBytes(),

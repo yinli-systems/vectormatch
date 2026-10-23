@@ -260,6 +260,125 @@ class CapacityConfigTest(unittest.TestCase):
             digests.add(config.command_sha256(arguments))
         self.assertEqual(3, len(digests))
 
+    def nak_fixed(self, delay=100000):
+        return {"nakUnicastDelayNs": delay, "clientNakUnicastDelayNs": delay,
+                "nakUnicastRetryDelayRatio": 100}
+
+    def test_nak_configuration_is_all_or_none_bounded_integer_and_retains_legacy_absence(self):
+        legacy = {"syncLevel": 2}
+        self.assertIsNone(config.nak_settings(legacy))
+        self.assertEqual({"syncLevel": 2}, legacy)
+        for delay in (1000, 100000, 1000000):
+            self.assertEqual(self.nak_fixed(delay), config.nak_settings(self.nak_fixed(delay)))
+        for missing in self.nak_fixed():
+            fixed = self.nak_fixed()
+            del fixed[missing]
+            with self.subTest(missing=missing), self.assertRaisesRegex(AssertionError, "Incomplete"):
+                config.nak_settings(fixed)
+        for name in ("nakUnicastDelayNs", "clientNakUnicastDelayNs"):
+            for invalid in (None, True, "1000", 1000.0, 999, 1000001):
+                with self.subTest(name=name, invalid=invalid), self.assertRaises(AssertionError):
+                    config.nak_settings({**self.nak_fixed(), name: invalid})
+        for ratio in (None, True, "100", 100.0, 1, 99, 101):
+            with self.subTest(ratio=ratio), self.assertRaisesRegex(AssertionError, "ratio"):
+                config.nak_settings({**self.nak_fixed(), "nakUnicastRetryDelayRatio": ratio})
+
+    def test_nak_properties_are_exactly_once_before_classpath_without_hidden_overrides(self):
+        fixed = self.nak_fixed()
+        flag = "-Daeron.nak.unicast.delay=100000"
+        arguments = ["java", flag, "-cp", "/lib/*", "Main"]
+        config.verify_nak_jvm_arguments(arguments, fixed)
+        config.verify_nak_jvm_arguments(arguments, fixed, client=True)
+        config.verify_nak_jvm_arguments(["java", "Main"], {})
+        for invalid in ([], [flag, flag], [flag, "-Daeron.nak.unicast.delay=1000"],
+                        ["-Daeron.nak.unicast.delay=100000ns"], [flag, "-Daeron.nak.unicast.retry.delay.ratio=100"],
+                        ["-Daeron.nak.unicast.delay"], [flag, "-Daeron.nak.multicast.max.backoff=1"],
+                        ["-Dhidden=-Daeron.nak.unicast.delay=100000"]):
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(AssertionError, "NAK JVM"):
+                config.verify_nak_jvm_arguments(["java", *invalid, "-cp", "/lib/*", "Main"], fixed)
+        with self.assertRaisesRegex(AssertionError, "JVM argument"):
+            config.verify_nak_jvm_arguments(["java", "-cp", "/lib/*", "Main", flag], fixed)
+        with self.assertRaises(AssertionError):
+            config.verify_nak_jvm_arguments(arguments, {})
+
+    def test_nak_started_fields_require_actual_effective_value_and_unchanged_ratio(self):
+        fixed = self.nak_fixed()
+        line = "VECTOR_CLUSTER_STARTED node=0 nakUnicastDelayNs=100000 nakUnicastRetryDelayRatio=100\n"
+        config.verify_nak_startup(fixed, line)
+        config.verify_nak_startup({}, "legacy")
+        for invalid in ("", line.replace("VECTOR_CLUSTER_STARTED", "error"),
+                        line.replace("100000", "1000"), line.replace("Ratio=100", "Ratio=101"),
+                        line.replace("DelayNs=100000", "DelayNs=100000ns"),
+                        line.rstrip() + " nakUnicastDelayNs=100000\n", line + line.replace("100000", "1000")):
+            with self.subTest(invalid=invalid), self.assertRaisesRegex(AssertionError, "NAK startup"):
+                config.verify_nak_startup(fixed, invalid)
+
+    def test_shared_driver_and_nak_load_flags_are_allowlisted_and_attested_together(self):
+        fixed = self.nak_fixed()
+        flag = "-Daeron.nak.unicast.delay=100000"
+        self.trial["loadGeneratorJvmArguments"] = [DRIVER_FLAG + "shared", flag]
+        runtime = self.runtime("shared", clientNakUnicastDelayNs=100000, clientNakUnicastRetryDelayRatio=100)
+        flags = config.load_generator_jvm_arguments(self.trial, runtime, fixed)
+        self.assertEqual(self.trial["loadGeneratorJvmArguments"], flags)
+        args = config.load_generator_arguments(self.trial, self.release, flags)
+        self.assertEqual([DRIVER_FLAG + "shared", flag], args[3:5])
+        wrong = self.trial.copy()
+        wrong["loadGeneratorJvmArguments"] = [DRIVER_FLAG + "shared", "-Daeron.nak.unicast.delay=1000"]
+        with self.assertRaises(AssertionError):
+            config.load_generator_jvm_arguments(wrong, runtime, fixed)
+        for missing in ("clientNakUnicastDelayNs", "clientNakUnicastRetryDelayRatio"):
+            partial = runtime.copy()
+            del partial[missing]
+            with self.subTest(missing=missing), self.assertRaisesRegex(AssertionError, "Incomplete client NAK"):
+                config.load_generator_jvm_arguments(self.trial, partial, fixed)
+        for changes in ({"clientNakUnicastDelayNs": 1000}, {"clientNakUnicastRetryDelayRatio": 99},
+                        {"clientNakUnicastDelayNs": "100000"}, {"clientNakUnicastRetryDelayRatio": 100.0}):
+            with self.subTest(changes=changes), self.assertRaises(AssertionError):
+                config.load_generator_jvm_arguments(self.trial, {**runtime, **changes}, fixed)
+        with self.assertRaises(AssertionError):
+            config.load_generator_jvm_arguments(self.trial, runtime)
+        legacy_trial = {k: v for k, v in self.trial.items() if k != "loadGeneratorJvmArguments"}
+        with self.assertRaisesRegex(AssertionError, "Undeclared nondefault client NAK"):
+            config.load_generator_jvm_arguments(legacy_trial, runtime)
+
+    def test_unflagged_actual_runtime_defaults_are_compatible_without_new_fingerprint_settings(self):
+        self.trial["loadGeneratorJvmArguments"] = [DRIVER_FLAG + "shared"]
+        runtime = self.runtime("shared", clientNakUnicastDelayNs=1000, clientNakUnicastRetryDelayRatio=100)
+        fixed = {"syncLevel": 2}
+        self.assertEqual([DRIVER_FLAG + "shared"], config.load_generator_jvm_arguments(self.trial, runtime, fixed))
+        self.assertEqual({"syncLevel": 2}, fixed)
+        self.assertEqual([DRIVER_FLAG + "shared"], config.load_generator_jvm_arguments(self.trial, self.runtime("shared"), fixed))
+        for missing in ("clientNakUnicastDelayNs", "clientNakUnicastRetryDelayRatio"):
+            partial = runtime.copy()
+            del partial[missing]
+            with self.subTest(missing=missing), self.assertRaisesRegex(AssertionError, "Incomplete client NAK"):
+                config.load_generator_jvm_arguments(self.trial, partial, fixed)
+        for changes in ({"clientNakUnicastDelayNs": 100000}, {"clientNakUnicastRetryDelayRatio": 99},
+                        {"clientNakUnicastDelayNs": "1000"}, {"clientNakUnicastDelayNs": 1000.0},
+                        {"clientNakUnicastRetryDelayRatio": 100.0}, {"clientNakUnicastRetryDelayRatio": True}):
+            with self.subTest(changes=changes), self.assertRaisesRegex(AssertionError, "Undeclared nondefault"):
+                config.load_generator_jvm_arguments(self.trial, {**runtime, **changes}, fixed)
+
+    def test_optional_nak_values_enter_real_comparison_identity_and_command_hashes(self):
+        spec = importlib.util.spec_from_file_location("nak_comparison", ROOT / "scripts/analyze-capacity.py")
+        analyzer = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(analyzer)
+        trial = {"release": self.release, "deploymentRevision": "a" * 40,
+                 "deploymentBundleSha256": "b" * 64, "preparedSnapshotSha256": "c" * 64,
+                 "fixedNodeConfiguration": {"syncLevel": 2}}
+        original, issues = analyzer.comparison_identity({}, trial)
+        self.assertEqual([], issues)
+        identities, commands = {json.dumps(original, sort_keys=True)}, {config.command_sha256(["java", "Main"])}
+        for delay in (1000, 100000):
+            changed = {**trial, "fixedNodeConfiguration": {**trial["fixedNodeConfiguration"], **self.nak_fixed(delay)}}
+            identity, issues = analyzer.comparison_identity({}, changed)
+            self.assertEqual([], issues)
+            self.assertEqual(delay, identity["fixedNodeConfiguration"]["nakUnicastDelayNs"])
+            identities.add(json.dumps(identity, sort_keys=True))
+            commands.add(config.command_sha256(["java", "-Daeron.nak.unicast.delay=" + str(delay), "Main"]))
+        self.assertEqual(3, len(identities))
+        self.assertEqual(3, len(commands))
+
 
 if __name__ == "__main__":
     unittest.main()
