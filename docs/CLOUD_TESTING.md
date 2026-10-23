@@ -24,10 +24,10 @@ See the recorded [UDP summary](../evidence/2026-10-23/runpod-network/summary.jso
 
 The current topology supports explicitly configured, directly routed private IPv4 member addresses and a reachable client egress address. The remote launchers run one member per Pod without systemd, using Java 21 installDist bundles. This campaign uses Aeron MTU **1248**, sync level **2**, port base **19000** and an outbox capacity of **65536**. Refer to [the remote launcher guide](../deploy/REMOTE.md) for configuration, process ownership checks, logs, graceful shutdown and SSH tunnelling.
 
-Version provenance distinguishes the **immutable Java release `2597bc3b849d8e042c8bbe67f0a5142580871a5b`** from the **Python launcher revision `e1972ed1842b8d333163d8313ccfea7fd0f96dcd`** used for the repaired cold restart. The original matching baseline used Java revision `924ecdd`. Updating the Python supervisor did not replace the pinned Java artifacts. Member and client launches for the repaired deployment select the release explicitly:
+Version provenance distinguishes Java artifacts from the **Python launcher revision `e1972ed1842b8d333163d8313ccfea7fd0f96dcd`**. The original matching baseline used Java `924ecdd`; the repaired bootstrap and cold-restart tests used immutable Java release `2597bc3b849d8e042c8bbe67f0a5142580871a5b`. The final egress repair is a further immutable Java release, **`e1db2e755a834234efb60b7a1ed291b31ce33c16`**, while the launcher remains `e1972ed`. Historical reports retain their original revisions. Member and client launches now select the final release explicitly:
 
 ```sh
-export VECTOR_DIST_ROOT=/opt/vectormatch/releases/2597bc3b849d8e042c8bbe67f0a5142580871a5b/dist
+export VECTOR_DIST_ROOT=/opt/vectormatch/releases/e1db2e755a834234efb60b7a1ed291b31ce33c16/dist
 ```
 
 The Pod identities and kernel boot IDs are distinct. Provider self-information requests returned HTTP 403, so provider `machineId` values were unavailable. **Physical anti-affinity, independent power domains and dedicated bare-metal placement remain unverified.** Container-visible CPU affinity is also wider than the actual cgroup quota. Report the measured quota/memory bounds and shared scheduling conditions with every result; do not substitute the host-visible core count for allocated CPU capacity.
@@ -77,6 +77,29 @@ The user explicitly authorized local archival and private-repository pushes of t
 - [Runpod public port exposure](https://docs.runpod.io/pods/configuration/expose-ports) provides TCP/HTTP exposure and documents its UDP restriction. The private UDP results above were collected directly between private addresses.
 - [Global Networking](https://docs.runpod.io/pods/networking) is documented for NVIDIA GPU Pods with a nominal 100 Mbps inter-Pod network. The current low-rate probes do not measure bandwidth saturation or generalize to CPU Pods and other deployments.
 - [Storage options](https://docs.runpod.io/pods/storage/types) distinguish temporary container disks from storage that survives Pod lifecycle operations. Export state and evidence before ending temporary resources.
+
+## Final egress repair and cloud observations
+
+A real embedded MediaDriver/UDP test reproduced the old service dropping the target response when its single offer returned `Publication.ADMIN_ACTION` during a 64 KiB term rotation. Three boundary tests failed against the old implementation; the repaired boundary and bounded-offer suites passed seven tests. The repair offers the identical encoded response **at most three times**, retrying **ADMIN_ACTION only**. Other outcomes return immediately; it adds no unbounded wait, response queue or repeated business apply. See the [RED/GREEN record](../evidence/2026-10-23/runpod-egress/validation/summary.json). Historical cloud samples lack per-offer service return codes, so this reproduction does not directly assign the cause of every recorded 500 ms sample.
+
+The [full local validation](../evidence/2026-10-23/runpod-egress/validation/full-validation-summary.json) passed **79 tests with zero skips, failures or errors**, including real loopback PostgreSQL. Its JUnit, logs and hashes are retained; these are local macOS checks, with the cloud deployment verified separately. The final release's source/artifact manifest and upload records are in [DEPLOYMENT.json](../evidence/2026-10-23/runpod-egress/deployment/DEPLOYMENT.json) and [rollout checksums](../evidence/2026-10-23/runpod-egress/deployment/rollout-checksums.json).
+
+With gateway/projector quiesced, the old release ran one control trial. The final release then passed canonical checkpoint equality at hash `6519aeaa2fe96b75d7160ee13e3c0f0dfb0951f8a5919976b72c5552fc7ae695` before running a new trial:
+
+| Run | Commands / trades | Confirmed commands/s | Execute RTT p50 / p99 / max, ms | Accepted resends / unknown timeouts |
+|---|---:|---:|---|---:|
+| [Old-release control](../evidence/2026-10-23/runpod-cluster/runs/cloud-egress-control/result.json) | 900 / 300 | 122.508728 | 5.962113 / 9.115065 / **521.332590** | 3 / 0 |
+| [ADMIN_ACTION-only repair](../evidence/2026-10-23/runpod-cluster/runs/cloud-egress-admin-retry/result.json) | 900 / 300 | 111.766404 | 9.099175 / 11.268264 / **12.352948** | 0 / 0 |
+
+Each is a single-inflight closed-loop trial, the leaders differ, and the load generator shares a member. The repaired trial observed a 12.352948 ms maximum and no accepted resends; the control has better median, p99 and goodput. These observations do not establish a throughput speedup, a causal improvement of the entire distribution or a tail SLA. The original 526.493987 ms, post-cold 524.124121 ms and control 521.332590 ms reports remain intact.
+
+The final release also passed another externally injected leader SIGKILL: a fresh client verified canonical bytes, same-key replay and conflicting-payload rejection. A [subsequent mini smoke](../evidence/2026-10-23/runpod-cluster/runs/cloud-egress-after-fault/result.json) accepted three measured commands and one measured trade, with setup and warmup recorded separately. After rejoin, the official member list showed all three at **term 9 / logPosition 4408544**. The **34.375435-second** recorded interval includes SSH, signal dispatch, verifier JVM startup, bootstrap and state checks; it is orchestration-inclusive, not an RTO or first-new-write latency.
+
+The [final-release platform observation](../evidence/2026-10-23/runpod-egress/final-release-verification.json) records health UP and paused synthetic flow, mirror **4539 commands / 6106 events**, observed PostgreSQL **cursor 6106 / marketSeq 6086 / trades 1519 / lag 0**, and matching mirror/authoritative hash `4450df5dc1a6662fec3c8addd55452657ee6fd1ccd0aeae92cc6dbb7e18c780b`. This is another observation in time, distinct from the earlier SQL audit, retained-service readiness and offline backups; the old backup copies have not automatically incorporated later business. The six-hour retention and approximately 00:24 UTC reminder remain unchanged.
+
+The subsequent [final-release HTTP smoke](../evidence/2026-10-23/runpod-egress/http-smoke/summary.json) passed place, identical-key retry, payload conflict, cancel, balance restoration and canonical mirror checks. It added **two business commands and zero trades**, observing cumulative **cursor/eventsStored 6108 / marketSeq 6088 / tradesStored 1519 / lag 0**. This later observation preserves the preceding 6106 checkpoint rather than replacing it.
+
+The [final SQL ledger audit](../evidence/2026-10-23/runpod-egress/postgres-ledger.json) examined all rows in one read-only repeatable-read JDBC transaction: **eventSeq 1..6108** and positive **marketSeq 1..6088** were contiguous, with **1519 TRADE rows** agreeing with the durable cursor/counters. The [final WebSocket probe](../evidence/2026-10-23/runpod-egress/websocket.json) received three full-state snapshots, each with health UP, mode `CLUSTER_REPLICATED`, and observed projection **cursor 6108 / trades 1519 / lag 0**. The database-internal audit, cached observations and full-state feed retain their stated limits; these checks do not establish independent payload semantics, per-event delivery, capacity or physical failure isolation. The user's six-hour retention and existing reminder schedule remain unchanged.
 
 ## Next measurement stages
 

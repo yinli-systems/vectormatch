@@ -60,12 +60,12 @@ GPU 不是撮合算法的计算资源。本轮使用这些有货的 NVIDIA GPU P
 
 初始撮合基线使用 **`924ecdd`**；其分发包和源码校验清单保存在 [DEPLOYMENT.json](../evidence/2026-10-23/runpod-cluster/DEPLOYMENT.json)，初始启动记录位于同目录 `startup/`。后续恢复及冷重启采用两个明确分开的版本：**Java 不可变 release `2597bc3b849d8e042c8bbe67f0a5142580871a5b`**，以及根目录下的 **Python launcher `e1972ed1842b8d333163d8313ccfea7fd0f96dcd`**。Java release 修复新客户端 bootstrap，launcher 单独修复启动身份建立窗口；不能把只升级 Python 描述成替换了 Java 构件。部署和升级过程记录在故障时间线中，冷重启后每台 `processRecord.arguments` 记录了实际使用的不可变 release classpath。
 
-三台使用同一有序成员列表、端口 base `19000`、sync level **2**、outbox capacity **65536**、Aeron MTU **1248**。部署根目录为 `/opt/vectormatch`，JDK 位于 `/opt/vectormatch/tools/jdk`，本代状态目录为 `/opt/vectormatch/runtime/cloud-20261023-01`。
+最终 egress 修复又将 Java 构件升级到不可变 release **`e1db2e755a834234efb60b7a1ed291b31ce33c16`**，Python launcher 仍为 **`e1972ed`**；原版本和所有测试报告继续保留，升级实测见本页末节。三台使用同一有序成员列表、端口 base `19000`、sync level **2**、outbox capacity **65536**、Aeron MTU **1248**。部署根目录为 `/opt/vectormatch`，JDK 位于 `/opt/vectormatch/tools/jdk`，本代状态目录为 `/opt/vectormatch/runtime/cloud-20261023-01`。
 
 ```sh
 cd /opt/vectormatch
 export JAVA_HOME=/opt/vectormatch/tools/jdk
-export VECTOR_DIST_ROOT=/opt/vectormatch/releases/2597bc3b849d8e042c8bbe67f0a5142580871a5b/dist
+export VECTOR_DIST_ROOT=/opt/vectormatch/releases/e1db2e755a834234efb60b7a1ed291b31ce33c16/dist
 export VECTOR_STATE_DIR=/opt/vectormatch/runtime/cloud-20261023-01
 export VECTOR_CLUSTER_HOSTS='10.0.212.169,10.1.60.60,10.1.81.207'
 export VECTOR_PORT_BASE=19000
@@ -152,3 +152,26 @@ PostgreSQL 18.6 在 node 2 以非 root OS 用户、loopback 监听方式运行�
 用户随后选择保留运行，停止 Pod 的弹窗已取消，**三个 Pod 没有 Stop，也没有清空临时盘**。集群、PostgreSQL、projector 和网关在原始、未替换的数据目录上恢复服务，离线归档仍代表先前静止时点，并未用备份覆盖线上数据。[保留平台 readiness](../evidence/2026-10-23/runpod-cleanup/retained-platform-readiness.json)记录 health UP、recoveredCommands **2440**；恢复后 mirror 为 **2454 commands / 3327 events**，数据库观察为 **cursor 3327、marketSeq 3313、tradesStored 825、lag 0**，并已将 synthetic flow 暂停。上述新观察不是对旧 3300/819 SQL 审计的重写，也不代表执行过 Pod 重启或备份恢复。
 
 用户已选择**再保留 6 小时**。一次性到期提醒已创建并检查，automation ID 为 `vectormatch`，创建时间 **2026-10-23 18:23:59.656 UTC**；到期约为 **2026-10-24 00:24 UTC / 迪拜 04:24**。它只提醒，不自动 Stop、不清空磁盘，也不执行预算封顶。三台继续按约 $1.56/h 计费，最终停止资源和实际账单结算尚未发生。
+
+## 最终 egress 修复、对照实测与新版本恢复
+
+本地真实 embedded MediaDriver/UDP 测试复现了 64KiB term rotation 返回 `Publication.ADMIN_ACTION` 时，旧服务单次 `offer` 未重试、目标回复未送达的路径。相同边界用例在旧代码下 3 项失败，修复后连同发送次数边界共 7 项通过，见 [RED/GREEN 记录](../evidence/2026-10-23/runpod-egress/validation/summary.json)。修复仅对 `ADMIN_ACTION` 最多发送 **3 次相同编码回复**；其他结果立即结束，不引入无界等待、额外队列或重复业务 apply。旧云样本未记录每次 service offer 的返回码，因此不能逐条断言历史 500ms 尾部的直接原因。
+
+包含真实 loopback PostgreSQL 的完整本地验证为 **79 tests、0 skipped、0 failures、0 errors**，见 [完整验证摘要](../evidence/2026-10-23/runpod-egress/validation/full-validation-summary.json)及同目录 JUnit/log/hash 证据。它是本地 macOS 验证；后续云端记录单独验收。最终 release 的源码、构件校验和各 Pod 上传/部署记录保存在 [egress DEPLOYMENT](../evidence/2026-10-23/runpod-egress/deployment/DEPLOYMENT.json)和 [rollout checksums](../evidence/2026-10-23/runpod-egress/deployment/rollout-checksums.json)。
+
+升级前暂停 gateway/projector，使用旧 release 在现有状态上运行对照；升级到 `e1db2e7` 后，先核对对照结束 checkpoint 的 canonical bytes/hash 仍为 `6519aeaa2fe96b75d7160ee13e3c0f0dfb0951f8a5919976b72c5552fc7ae695`，再运行同规模新测试。
+
+| 运行 | Java 版本 / leader | measured command / trade | goodput | RTT p50 / p99 / max | accepted resend / unknown |
+|---|---|---:|---:|---|---:|
+| [egress 对照](../evidence/2026-10-23/runpod-cluster/runs/cloud-egress-control/result.json) | `2597bc3` / 2 | 900 / 300 | 122.508728 command/s | 5.962113 / 9.115065 / **521.332590 ms** | 3 / 0 |
+| [ADMIN_ACTION 有界重试](../evidence/2026-10-23/runpod-cluster/runs/cloud-egress-admin-retry/result.json) | `e1db2e7` / 0 | 900 / 300 | 111.766404 command/s | 9.099175 / 11.268264 / **12.352948 ms** | 0 / 0 |
+
+两次都是 single-inflight closed-loop、各一次 trial，leader 不同，负载生成器仍共享集群成员。新版本这次观察到零 accepted resend、最大 RTT 12.352948ms；对照的中位数、p99 和 goodput 反而更好，因此不作吞吐提速或完整延迟分布改善的因果结论，也不把单次无 500ms 样本扩展为 tail SLA。初始 526.493987ms、冷重启后 524.124121ms 及新对照 521.332590ms 的原始报告全部保留。
+
+最终 release 又完成一次外部 leader **0 → 2** 的 SIGKILL 验证：同 key 重放、冲突拒绝、canonical bytes 一致；随后 [新业务 smoke](../evidence/2026-10-23/runpod-cluster/runs/cloud-egress-after-fault/result.json)确认 3 个 measured command / 1 笔成交，另有 2 笔 setup deposit 和 90 个预热 command。被终止成员重入后，官方成员列表显示三台 **term 9、logPosition 4408544**。时间线中的 **34.375435 秒**包含 SSH、信号分发、新 verifier JVM、bootstrap 和状态核对，是编排总体耗时，不是纯选举时间、first-new-write latency 或 RTO。
+
+[最终 release 验证](../evidence/2026-10-23/runpod-egress/final-release-verification.json)记录了重新启动 PostgreSQL/projector/gateway 后的一个新时点：网关 health UP、flow 已暂停、mirror **4539 commands / 6106 events**，PostgreSQL 观察 **cursor 6106、marketSeq 6086、tradesStored 1519、lag 0**，mirror 与 authoritative snapshot 的 hash 均为 `4450df5dc1a6662fec3c8addd55452657ee6fd1ccd0aeae92cc6dbb7e18c780b`。这不覆盖之前 SQL 审计的 3300/819、首次保留服务的 3327/825 或离线备份时点；升级后的新业务也没有自动写回原先的离线备份副本。保留 6 小时及 00:24 UTC 的提醒时间不变。
+
+随后在 `e1db2e7` 上重新完成 [最终 HTTP smoke](../evidence/2026-10-23/runpod-egress/http-smoke/summary.json)：**2 个新业务命令、0 笔新成交**，验证 place / 同 key retry / payload conflict / cancel、余额恢复以及 replicated canonical mirror；该次完成时观察到 **cursor / eventsStored 6108、marketSeq 6088、tradesStored 1519、lag 0**。这是发生在前述 6106 时点之后的新观察，不覆盖旧记录。
+
+[最终 SQL 账本审计](../evidence/2026-10-23/runpod-egress/postgres-ledger.json)在一个只读 repeatable-read JDBC 事务中逐行验证 **eventSeq 1..6108、正 marketSeq 1..6088 连续，TRADE 行数 1519 与持久化 cursor/counters 一致**；它仍限于数据库内连续性与计数一致性。[最终 WebSocket 记录](../evidence/2026-10-23/runpod-egress/websocket.json)又收到 **3 帧 full-state snapshot**，各帧 health UP、mode `CLUSTER_REPLICATED`，projection cursor **6108**、trades **1519**、观察 lag **0**。这些功能通过没有扩展为逐事件可靠分发、容量、SQL payload 独立语义或物理故障域证明；六小时保留和原定到期提醒不变。

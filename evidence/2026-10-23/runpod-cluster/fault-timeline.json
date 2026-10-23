@@ -632,5 +632,210 @@
     "action": "egress-comparison-pre-upgrade-snapshot",
     "leader": 2,
     "stdout": "Member [2]: SNAPSHOT applied successfully\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:32:50.606280+00:00",
+    "action": "egress-immutable-release-cutover",
+    "release": "/opt/vectormatch/releases/e1db2e755a834234efb60b7a1ed291b31ce33c16"
+  },
+  {
+    "timestamp": "2026-10-23T18:32:53.683162+00:00",
+    "action": "egress-upgrade-node-stop",
+    "node": 0,
+    "stdout": "node-0 stopped; persistent state preserved\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:32:53.692397+00:00",
+    "action": "egress-upgrade-node-stop",
+    "node": 1,
+    "stdout": "node-1 stopped; persistent state preserved\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:32:53.696419+00:00",
+    "action": "egress-upgrade-node-stop",
+    "node": 2,
+    "stdout": "node-2 stopped; persistent state preserved\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:32:56.907823+00:00",
+    "action": "egress-upgrade-node-start",
+    "node": 0,
+    "stdout": "node-0 launched pid=1686; log=/opt/vectormatch/runtime/cloud-20261023-01/node-0/process.log; launch is not readiness\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:32:56.937587+00:00",
+    "action": "egress-upgrade-node-start",
+    "node": 1,
+    "stdout": "node-1 launched pid=3460; log=/opt/vectormatch/runtime/cloud-20261023-01/node-1/process.log; launch is not readiness\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:32:57.066703+00:00",
+    "action": "egress-upgrade-node-start",
+    "node": 2,
+    "stdout": "node-2 launched pid=17740; log=/opt/vectormatch/runtime/cloud-20261023-01/node-2/process.log; launch is not readiness\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:33:11.024900+00:00",
+    "action": "experiment-verify",
+    "folder": "cloud-egress-control",
+    "stdout": "VECTOR_REMOTE_VERIFY_PASS leader=0 hash=6519aeaa2fe96b75d7160ee13e3c0f0dfb0951f8a5919976b72c5552fc7ae695\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:33:15.294862+00:00",
+    "action": "all-members-caught-up",
+    "leader": 0,
+    "targetLogPosition": 2976000,
+    "members": {
+      "0": {
+        "term": 8,
+        "position": 2976000
+      },
+      "1": {
+        "term": 8,
+        "position": 2976000
+      },
+      "2": {
+        "term": 8,
+        "position": 2976000
+      }
+    },
+    "officialClusterToolOutput": "currentTimeNs=1792780395465000000, leaderMemberId=0, memberId=0, activeMembers=[ClusterMember{id=0, isBallotSent=false, isLeader=true, leadershipTermId=8, logPosition=2976000, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792780395465000000, ingressEndpoint='10.0.212.169:19002', consensusEndpoint='10.0.212.169:19003', logEndpoint='10.0.212.169:19004', catchupEndpoint='10.0.212.169:19005', archiveEndpoint='10.0.212.169:19001', endpoints='10.0.212.169:19002,10.0.212.169:19003,10.0.212.169:19004,10.0.212.169:19005,10.0.212.169:19001', publication=null, vote=null}, ClusterMember{id=1, isBallotSent=false, isLeader=false, leadershipTermId=8, logPosition=2976000, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792780395438000000, ingressEndpoint='10.1.60.60:19102', consensusEndpoint='10.1.60.60:19103', logEndpoint='10.1.60.60:19104', catchupEndpoint='10.1.60.60:19105', archiveEndpoint='10.1.60.60:19101', endpoints='10.1.60.60:19102,10.1.60.60:19103,10.1.60.60:19104,10.1.60.60:19105,10.1.60.60:19101', publication=null, vote=null}, ClusterMember{id=2, isBallotSent=false, isLeader=false, leadershipTermId=8, logPosition=2976000, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792780395435000000, ingressEndpoint='10.1.81.207:19202', consensusEndpoint='10.1.81.207:19203', logEndpoint='10.1.81.207:19204', catchupEndpoint='10.1.81.207:19205', archiveEndpoint='10.1.81.207:19201', endpoints='10.1.81.207:19202,10.1.81.207:19203,10.1.81.207:19204,10.1.81.207:19205,10.1.81.207:19201', publication=null, vote=null}]\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:33:15.299090+00:00",
+    "action": "egress-upgrade-canonical-checkpoint-PASS",
+    "leader": 0,
+    "checkpointFolder": "cloud-egress-control"
+  },
+  {
+    "timestamp": "2026-10-23T18:33:44.630666+00:00",
+    "action": "experiment-run",
+    "folder": "cloud-egress-admin-retry",
+    "stdout": "VECTOR_REMOTE_EXPERIMENT_PASS commands=900 trades=300 goodput=111.766/s p99=11268.264us leader=0 hash=351b6734659726e0b1fdb80ff1ff5e28e86b5e050bff82f1e6de6da716856a5e\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:34:02.584539+00:00",
+    "action": "experiment-verify",
+    "folder": "cloud-egress-admin-retry",
+    "stdout": "VECTOR_REMOTE_VERIFY_PASS leader=0 hash=351b6734659726e0b1fdb80ff1ff5e28e86b5e050bff82f1e6de6da716856a5e\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:34:06.578281+00:00",
+    "action": "SIGKILL-confirmed",
+    "node": 0,
+    "pid": 1686,
+    "startTicks": 33772228,
+    "signal": "SIGKILL",
+    "remoteTimestamp": "2026-10-23T18:34:06.817742+00:00"
+  },
+  {
+    "timestamp": "2026-10-23T18:34:38.701807+00:00",
+    "action": "experiment-verify",
+    "folder": "cloud-egress-admin-retry",
+    "stdout": "VECTOR_REMOTE_VERIFY_PASS leader=2 hash=351b6734659726e0b1fdb80ff1ff5e28e86b5e050bff82f1e6de6da716856a5e\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:34:38.706441+00:00",
+    "action": "egress-final-release-leader-fault-PASS",
+    "oldLeader": 0,
+    "newLeader": 2,
+    "orchestrationInclusiveSeconds": 34.37543545800001,
+    "timeScope": "Root interval includes SSH, SIGKILL, new verifier JVM, bootstrap and canonical/replay/conflict checks; not pure election or first-new-write latency"
+  },
+  {
+    "timestamp": "2026-10-23T18:35:14.134782+00:00",
+    "action": "experiment-run",
+    "folder": "cloud-egress-after-fault",
+    "stdout": "VECTOR_REMOTE_EXPERIMENT_PASS commands=3 trades=1 goodput=68.152/s p99=14473.515us leader=2 hash=12b2e99789069b11f0ffd6182148aef74f14ffc18a7a6a688c318dff6e42b79f\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:35:16.978171+00:00",
+    "action": "egress-final-release-member-rejoin",
+    "node": 0,
+    "stdout": "node-0 launched pid=1773; log=/opt/vectormatch/runtime/cloud-20261023-01/node-0/process.log; launch is not readiness\n\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:35:21.491139+00:00",
+    "action": "all-members-caught-up",
+    "leader": 2,
+    "targetLogPosition": 4408544,
+    "members": {
+      "0": {
+        "term": 9,
+        "position": 4408544
+      },
+      "1": {
+        "term": 9,
+        "position": 4408544
+      },
+      "2": {
+        "term": 9,
+        "position": 4408544
+      }
+    },
+    "officialClusterToolOutput": "currentTimeNs=1792780521691000000, leaderMemberId=2, memberId=2, activeMembers=[ClusterMember{id=0, isBallotSent=false, isLeader=false, leadershipTermId=9, logPosition=4408544, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792780521524000000, ingressEndpoint='10.0.212.169:19002', consensusEndpoint='10.0.212.169:19003', logEndpoint='10.0.212.169:19004', catchupEndpoint='10.0.212.169:19005', archiveEndpoint='10.0.212.169:19001', endpoints='10.0.212.169:19002,10.0.212.169:19003,10.0.212.169:19004,10.0.212.169:19005,10.0.212.169:19001', publication=null, vote=null}, ClusterMember{id=1, isBallotSent=false, isLeader=false, leadershipTermId=9, logPosition=4408544, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792780521544000000, ingressEndpoint='10.1.60.60:19102', consensusEndpoint='10.1.60.60:19103', logEndpoint='10.1.60.60:19104', catchupEndpoint='10.1.60.60:19105', archiveEndpoint='10.1.60.60:19101', endpoints='10.1.60.60:19102,10.1.60.60:19103,10.1.60.60:19104,10.1.60.60:19105,10.1.60.60:19101', publication=null, vote=null}, ClusterMember{id=2, isBallotSent=false, isLeader=true, leadershipTermId=9, logPosition=4408544, candidateTermId=-1, catchupReplaySessionId=-1, correlationId=-1, timeOfLastAppendPositionNs=1792780521691000000, ingressEndpoint='10.1.81.207:19202', consensusEndpoint='10.1.81.207:19203', logEndpoint='10.1.81.207:19204', catchupEndpoint='10.1.81.207:19205', archiveEndpoint='10.1.81.207:19201', endpoints='10.1.81.207:19202,10.1.81.207:19203,10.1.81.207:19204,10.1.81.207:19205,10.1.81.207:19201', publication=null, vote=null}]\n"
+  },
+  {
+    "timestamp": "2026-10-23T18:35:59.481914+00:00",
+    "action": "egress-final-release-platform-PASS",
+    "passed": true,
+    "release": "/opt/vectormatch/releases/e1db2e755a834234efb60b7a1ed291b31ce33c16",
+    "measuredRunLeader": 0,
+    "postFaultLeader": 2,
+    "health": {
+      "status": "UP",
+      "mode": "CLUSTER_REPLICATED",
+      "persistence": "quorum; see node sync configuration",
+      "replicated": true,
+      "recoveredCommands": 4533,
+      "repairedTailBytes": 0,
+      "flowEnabled": false,
+      "flowRate": 8,
+      "build": "0.1.0",
+      "feed": "5 Hz full snapshots; workbench feed, not per-event delivery",
+      "mirrorStatus": "SYNCHRONIZED",
+      "mirrorFresh": true,
+      "mirrorCheckedAt": 1792780558556,
+      "mirrorRefreshedAt": 1792780554017,
+      "mirrorCommandSeq": 4539,
+      "mirrorEventSeq": 6106,
+      "restartRequired": false
+    },
+    "projection": {
+      "status": "OBSERVED",
+      "clusterId": "runpod-cloud-20261023-01",
+      "cursor": 6106,
+      "marketSeq": 6086,
+      "eventsStored": 6106,
+      "tradesStored": 1519,
+      "lag": 0,
+      "updatedAt": "2026-10-23T18:35:59.254972Z",
+      "observationAt": "2026-10-23T18:35:59.352716188Z",
+      "lastSuccessfulObservationAt": "2026-10-23T18:35:59.352716188Z",
+      "statusError": null,
+      "lagScope": "last observed source high-water mark minus durable cursor; not a live source measurement",
+      "sourceLastObservedSeq": 6106
+    },
+    "verification": {
+      "afterHash": "4450df5dc1a6662fec3c8addd55452657ee6fd1ccd0aeae92cc6dbb7e18c780b",
+      "replayedCommands": 4539,
+      "beforeHash": "4450df5dc1a6662fec3c8addd55452657ee6fd1ccd0aeae92cc6dbb7e18c780b",
+      "verifiedAt": 1792780558546,
+      "consistent": true,
+      "durationMs": 3701.008358,
+      "scope": "authoritative cluster snapshot vs gateway mirror + snapshot roundtrip"
+    },
+    "gatewayReadinessRetryErrors": [
+      "ConnectionResetError",
+      "ConnectionResetError",
+      "ConnectionResetError"
+    ],
+    "scope": "Final release: upgrade checkpoint canonical equality, 900 measured commands/300 trades, one external Java leader SIGKILL and fresh-client canonical/retry/conflict check, new commands after fault, member rejoin, PostgreSQL catch-up and gateway mirror. Original running Pod filesystems remain mounted; no Pod stop or physical power-loss test."
+  },
+  {
+    "timestamp": "2026-10-23T18:36:04.970975+00:00",
+    "action": "egress-final-snapshot",
+    "leader": 2,
+    "stdout": "Member [2]: SNAPSHOT applied successfully\n\n"
   }
 ]

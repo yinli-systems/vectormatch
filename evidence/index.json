@@ -265,6 +265,54 @@
       ],
       "artifactPath": "evidence/2026-10-23/runpod-workbench/http-smoke-ready/summary.json",
       "timestamp": "2026-10-23T18:15:15.570656+00:00"
+    },
+    {
+      "id": "runpod-egress-control",
+      "label": "Runpod matching \u00b7 reply retry control",
+      "scope": "execute call only: encode, UDP transport, replication/commit, matching, response, automatic retries",
+      "model": "CLOSED_LOOP_SINGLE_INFLIGHT; one measured trial; load generator shares member 2",
+      "commands": 900,
+      "trades": 300,
+      "throughput": 122.50872779843391,
+      "p50Millis": 5.962113,
+      "p99Millis": 9.115065000000001,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "durability": "3 Runpod Pods; sync level 2; temporary container disks",
+      "limitations": [
+        "Leader 2; p99.9/max 521.332590 ms; client accepted resends 3, unaccepted offers 3, unknown outcomes 0.",
+        "One 900-command single-inflight trial; 2 setup and 90 warmup commands excluded. This is not a capacity or open-loop result.",
+        "Control and patched runs used different leaders (2 and 0), took place at different times and started with different retained-state sizes. Do not attribute throughput or median changes solely to the patch.",
+        "The patch makes at most three response offers, only for ADMIN_ACTION; other failures still use same-key client recovery. Server response-offer retry counts are not instrumented by the client resend counter.",
+        "Canonical bytes, per-command results/sequences, invariants and same-key replay passed; reference uses the same MatchingEngine implementation.",
+        "Shared load host, unverified physical anti-affinity and no Pod-stop or power-loss durability guarantee."
+      ],
+      "artifactPath": "evidence/2026-10-23/runpod-cluster/runs/cloud-egress-control/result.json",
+      "timestamp": "2026-10-23T18:28:51.308912601Z"
+    },
+    {
+      "id": "runpod-egress-admin-retry",
+      "label": "Runpod matching \u00b7 bounded reply retry",
+      "scope": "execute call only: encode, UDP transport, replication/commit, matching, response, automatic retries",
+      "model": "CLOSED_LOOP_SINGLE_INFLIGHT; one measured trial; load generator shares member 2",
+      "commands": 900,
+      "trades": 300,
+      "throughput": 111.76640442562098,
+      "p50Millis": 9.099174999999999,
+      "p99Millis": 11.268263999999999,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "durability": "3 Runpod Pods; sync level 2; temporary container disks",
+      "limitations": [
+        "Leader 0; p99.9/max 12.352948 ms; client accepted resends 0, unaccepted offers 3, unknown outcomes 0.",
+        "One 900-command single-inflight trial; 2 setup and 90 warmup commands excluded. This is not a capacity or open-loop result.",
+        "Control and patched runs used different leaders (2 and 0), took place at different times and started with different retained-state sizes. Do not attribute throughput or median changes solely to the patch.",
+        "The patch makes at most three response offers, only for ADMIN_ACTION; other failures still use same-key client recovery. Server response-offer retry counts are not instrumented by the client resend counter.",
+        "Canonical bytes, per-command results/sequences, invariants and same-key replay passed; reference uses the same MatchingEngine implementation.",
+        "Shared load host, unverified physical anti-affinity and no Pod-stop or power-loss durability guarantee."
+      ],
+      "artifactPath": "evidence/2026-10-23/runpod-cluster/runs/cloud-egress-admin-retry/result.json",
+      "timestamp": "2026-10-23T18:33:44.783427619Z"
     }
   ]
 }

@@ -1,0 +1,83 @@
+{
+  "passed": true,
+  "timestamp": "2026-10-23T18:39:24.323401+00:00",
+  "javaRevision": "e1db2e755a834234efb60b7a1ed291b31ce33c16",
+  "supervisorRevision": "e1972ed1842b8d333163d8313ccfea7fd0f96dcd",
+  "repair": "At most three offers of the identical encoded response; retry only ADMIN_ACTION. Other results return immediately and preserve same-key client recovery. No wait, unbounded queue or additional business apply.",
+  "localMechanismProof": {
+    "realUdpRedFailures": 3,
+    "greenTests": 7,
+    "fullJavaTests": 79,
+    "skipped": 0,
+    "normalFramedReplyBytes": 160,
+    "egressTermBytes": 65536,
+    "wholeNormalRepliesPerTerm": 409,
+    "remainderBytes": 96,
+    "officialReturnCodeSource": "https://github.com/aeron-io/aeron/blob/1.53.3/aeron-client/src/main/java/io/aeron/Publication.java"
+  },
+  "cloudControl": {
+    "folder": "cloud-egress-control",
+    "leader": 2,
+    "commands": 900,
+    "trades": 300,
+    "goodput": 122.50872779843391,
+    "clientRttMicroseconds": {
+      "min": 3791.695,
+      "p50": 5962.113,
+      "p95": 8066.411,
+      "p99": 9115.065,
+      "p999": 521332.59,
+      "max": 521332.59
+    },
+    "clientAcceptedResends": 3,
+    "unknownTimeouts": 0,
+    "replayedSampleIndices": [
+      77,
+      486,
+      895
+    ],
+    "javaRevision": "2597bc3b849d8e042c8bbe67f0a5142580871a5b"
+  },
+  "cloudPatched": {
+    "folder": "cloud-egress-admin-retry",
+    "leader": 0,
+    "commands": 900,
+    "trades": 300,
+    "goodput": 111.76640442562098,
+    "clientRttMicroseconds": {
+      "min": 5803.883,
+      "p50": 9099.175,
+      "p95": 10252.919,
+      "p99": 11268.264,
+      "p999": 12352.948,
+      "max": 12352.948
+    },
+    "clientAcceptedResends": 0,
+    "unknownTimeouts": 0,
+    "replayedSampleIndices": [],
+    "javaRevision": "e1db2e755a834234efb60b7a1ed291b31ce33c16"
+  },
+  "newReleaseLeaderFault": {
+    "passed": true,
+    "oldLeader": 0,
+    "newLeader": 2,
+    "orchestrationInclusiveSeconds": 34.375435458,
+    "pureRtoMeasured": false,
+    "scope": "Includes SSH, signal dispatch, verifier JVM/bootstrap and canonical/retry/conflict checks; first-new-write latency was not measured."
+  },
+  "httpFunctionalSmokePassed": true,
+  "websocketFullStateFrames": 3,
+  "postgresLedger": {
+    "contiguousEventSeqThrough": 6108,
+    "contiguousMarketSeqThrough": 6088,
+    "trades": 1519,
+    "cursor": 6108
+  },
+  "limitations": [
+    "Single 900-command closed-loop trial per measurement, one request in flight; sustainable capacity unmeasured.",
+    "Control leader 2 and patched leader 0 differ. Timing, retained-state size and shared-host scheduling also differ; throughput/median changes cannot be attributed solely to this patch.",
+    "Local regression reproduces the ADMIN_ACTION drop directly. Historical cloud offer return codes were not recorded, so individual old tails have no direct server-side trace.",
+    "Client accepted resends do not count server response-offer retries. Finite zero observed resends do not establish universal zero loss or latency bounds.",
+    "The reference uses the same MatchingEngine implementation. Physical anti-affinity, an independent load host, PostgreSQL HA, Pod-stop/power-loss durability and high connection-count fanout remain unverified."
+  ]
+}

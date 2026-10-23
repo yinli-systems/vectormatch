@@ -1,0 +1,56 @@
+{
+  "passed": true,
+  "timestamp": "2026-10-23T18:35:59.481914+00:00",
+  "release": "/opt/vectormatch/releases/e1db2e755a834234efb60b7a1ed291b31ce33c16",
+  "measuredRunLeader": 0,
+  "postFaultLeader": 2,
+  "health": {
+    "status": "UP",
+    "mode": "CLUSTER_REPLICATED",
+    "persistence": "quorum; see node sync configuration",
+    "replicated": true,
+    "recoveredCommands": 4533,
+    "repairedTailBytes": 0,
+    "flowEnabled": false,
+    "flowRate": 8,
+    "build": "0.1.0",
+    "feed": "5 Hz full snapshots; workbench feed, not per-event delivery",
+    "mirrorStatus": "SYNCHRONIZED",
+    "mirrorFresh": true,
+    "mirrorCheckedAt": 1792780558556,
+    "mirrorRefreshedAt": 1792780554017,
+    "mirrorCommandSeq": 4539,
+    "mirrorEventSeq": 6106,
+    "restartRequired": false
+  },
+  "projection": {
+    "status": "OBSERVED",
+    "clusterId": "runpod-cloud-20261023-01",
+    "cursor": 6106,
+    "marketSeq": 6086,
+    "eventsStored": 6106,
+    "tradesStored": 1519,
+    "lag": 0,
+    "updatedAt": "2026-10-23T18:35:59.254972Z",
+    "observationAt": "2026-10-23T18:35:59.352716188Z",
+    "lastSuccessfulObservationAt": "2026-10-23T18:35:59.352716188Z",
+    "statusError": null,
+    "lagScope": "last observed source high-water mark minus durable cursor; not a live source measurement",
+    "sourceLastObservedSeq": 6106
+  },
+  "verification": {
+    "afterHash": "4450df5dc1a6662fec3c8addd55452657ee6fd1ccd0aeae92cc6dbb7e18c780b",
+    "replayedCommands": 4539,
+    "beforeHash": "4450df5dc1a6662fec3c8addd55452657ee6fd1ccd0aeae92cc6dbb7e18c780b",
+    "verifiedAt": 1792780558546,
+    "consistent": true,
+    "durationMs": 3701.008358,
+    "scope": "authoritative cluster snapshot vs gateway mirror + snapshot roundtrip"
+  },
+  "gatewayReadinessRetryErrors": [
+    "ConnectionResetError",
+    "ConnectionResetError",
+    "ConnectionResetError"
+  ],
+  "scope": "Final release: upgrade checkpoint canonical equality, 900 measured commands/300 trades, one external Java leader SIGKILL and fresh-client canonical/retry/conflict check, new commands after fault, member rejoin, PostgreSQL catch-up and gateway mirror. Original running Pod filesystems remain mounted; no Pod stop or physical power-loss test."
+}

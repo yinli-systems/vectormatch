@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "timestamp": "2026-10-23T18:36:47.763114+00:00",
+  "scope": "HTTP -> Aeron quorum -> gateway mirror -> asynchronous PostgreSQL cursor observation | Caller-supplied layout: Runpod EU-RO-1 three-Pod private UDP cluster; gateway/database share member 2; cluster members=3; gatewaySharesClusterMember=true; postgresSharesClusterMember=true",
+  "independentMachines": null,
+  "deploymentManifest": {
+    "scope": "Runpod EU-RO-1 three-Pod private UDP cluster; gateway/database share member 2",
+    "clusterMemberCount": 3,
+    "clusterPrivateIps": [
+      "10.0.212.169",
+      "10.1.60.60",
+      "10.1.81.207"
+    ],
+    "physicalHostIsolationVerified": false,
+    "gatewaySharesClusterMember": true,
+    "postgresSharesClusterMember": true,
+    "networkEvidencePath": "evidence/2026-10-23/runpod-network/summary.json"
+  },
+  "deploymentMetadataProvenance": "Caller-supplied topology metadata; not independently verified by this HTTP verifier.",
+  "hostIsolationVerification": "NOT_PERFORMED_BY_HTTP_VERIFIER",
+  "limitations": [
+    "Functional smoke, not a latency or capacity benchmark.",
+    "Topology, private IPs and service placement are caller-supplied metadata; this HTTP verifier does not inspect hosts or UDP paths.",
+    "physicalHostIsolationVerified in deploymentManifest is the caller's declaration, not this verifier's conclusion; independentMachines remains unknown.",
+    "networkEvidencePath is a caller-supplied evidence reference; this verifier does not open or validate that artifact.",
+    "PostgreSQL cursor is a cached observation, not an atomic source/database snapshot."
+  ],
+  "commands": 2,
+  "trades": 0,
+  "idempotentReplayVerified": true,
+  "payloadConflictVerified": true,
+  "balancesRestored": true,
+  "replicatedSnapshotVerified": true,
+  "confirmedEventSeq": 6108,
+  "projection": {
+    "status": "OBSERVED",
+    "clusterId": "runpod-cloud-20261023-01",
+    "cursor": 6108,
+    "marketSeq": 6088,
+    "eventsStored": 6108,
+    "tradesStored": 1519,
+    "lag": 0,
+    "updatedAt": "2026-10-23T18:36:47.559489Z",
+    "observationAt": "2026-10-23T18:36:47.674984093Z",
+    "lastSuccessfulObservationAt": "2026-10-23T18:36:47.674984093Z",
+    "statusError": null,
+    "lagScope": "last observed source high-water mark minus durable cursor; not a live source measurement",
+    "sourceLastObservedSeq": 6108
+  }
+}
