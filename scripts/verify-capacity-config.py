@@ -5,6 +5,7 @@ import hashlib
 import json
 import re
 import sys
+import argparse
 from datetime import datetime, timezone
 
 
@@ -14,6 +15,30 @@ def write(path, value):
 
 NAK_FIXED_FIELDS = {"nakUnicastDelayNs", "clientNakUnicastDelayNs", "nakUnicastRetryDelayRatio"}
 NAK_CLIENT_FIELDS = {"clientNakUnicastDelayNs", "clientNakUnicastRetryDelayRatio"}
+UNKNOWN_GUARD = ("Confirmed-only replay skipped: {count} UNKNOWN_UNRESOLVED identities may already have executed; canonical validation is incomplete. "
+                 "Preserve the original identities for same-key recovery; no core business mismatch is established.")
+
+
+def failed_unknown_configuration_only(directory, enabled):
+    """Opt in only to launch-configuration attestation; never manufacture a business result."""
+    if not enabled or (directory / "result.json").exists():
+        return False
+    trial_path = directory / "trial.json"
+    if not trial_path.exists():
+        return None
+    trial = json.loads(trial_path.read_text())
+    if not isinstance(trial.get("completedAt"), str) or not trial["completedAt"]:
+        return None  # Still in progress; do not annotate its mutable evidence.
+    receipt = json.loads((directory / "receipt.json").read_text())
+    failure = json.loads((directory / "failure.json").read_text())
+    load = json.loads((directory / "load-result.json").read_text())
+    count = load.get("unresolvedFinal")
+    assert type(receipt.get("exitCode")) is int and receipt["exitCode"] != 0, "Failed UNKNOWN run requires nonzero terminal receipt"
+    assert type(count) is int and count > 0, "Failed UNKNOWN run requires positive unresolved count"
+    assert failure.get("passed") is False and failure.get("errorType") == "java.lang.IllegalStateException", "Unexpected failed-run type"
+    assert failure.get("error") == UNKNOWN_GUARD.format(count=count), "Unexpected failed-run signature"
+    assert failure.get("loadSummary") == load, "Failed-run load summaries differ"
+    return True
 
 
 def nak_settings(fixed):
@@ -178,7 +203,7 @@ def verify_driver_threading_startup(fixed, startup):
         assert all(len(re.findall(pattern, line)) == 1 for line in started), "Missing or differing driver threading/idle startup evidence: " + name
 
 
-def main(root):
+def main(root, include_failed_unknown=False):
     campaign = json.loads((root / "campaign.json").read_text())
     deployment = json.loads((root / "deployment.json").read_text())
     fixed = {"outboxCapacity": 65536,
@@ -203,8 +228,11 @@ def main(root):
         fixed.update(expected)
     checked = []
     for directory in sorted((root / "runs").iterdir()):
+        configuration_only = False
         if not (directory / "result.json").exists():
-            continue  # An in-progress run must not be rewritten.
+            configuration_only = failed_unknown_configuration_only(directory, include_failed_unknown)
+            if configuration_only is not True:
+                continue  # Historical default and in-progress runs must not be rewritten.
         trial = json.loads((directory / "trial.json").read_text())
         configuration = json.loads((directory / "configuration.json").read_text())
         release = trial["release"]
@@ -227,6 +255,9 @@ def main(root):
             assert configuration[name] == fixed[name], name
         hosts = ",".join(configuration["memberHosts"])
         hashes = {}
+        if configuration_only:
+            for name in ("failure.json", "load-result.json", "receipt.json", "configuration.json"):
+                hashes[name] = hashlib.sha256((directory / name).read_bytes()).hexdigest()
         for node in range(3):
             path = directory / f"node{node}" / "process.json"
             record = json.loads(path.read_text())
@@ -267,15 +298,19 @@ def main(root):
                       "deploymentBundleSha256": deployment["bundleSha256"],
                       "fixedNodeConfiguration": fixed})
         write(directory / "trial.json", trial)
+        verification_scope = ({"configurationOnly": True, "businessCorrectnessVerified": False,
+                               "includeFailedUnknownOptIn": True,
+                               "failedRunScope": "Only recorded configuration/argv/runtime/startup/prepared-byte evidence is verified. Original UNKNOWN outcomes and nonzero failure remain; no business correctness, capacity eligibility or result.json is created."}
+                              if configuration_only else {})
         write(directory / "configuration-verification.json", {
             "passed": True, "verifiedAtUtc": datetime.now(timezone.utc).isoformat(),
             "recordedArgumentsVerified": True, "preparedSnapshotDigestVerified": True,
             "loadGeneratorArgumentsVerified": True,
-            "rawSha256": hashes,
-            "scope": ("Recorded supervisor arguments and deployment-transfer hash receipts; not a hardware, kernel fsync or independent provider durability attestation. Idle/socket settings are pinned source constants."
+            "rawSha256": hashes, **verification_scope,
+            "scope": ("CONFIGURATION ONLY for a terminal unresolved-UNKNOWN failure; no business correctness or capacity validation. " if configuration_only else "") + ("Recorded supervisor arguments and deployment-transfer hash receipts; not a hardware, kernel fsync or independent provider durability attestation. Idle/socket settings are pinned source constants."
                       if receive_buffer is None else
                       "Recorded supervisor arguments, startup requested receive buffer, and deployment-transfer hash receipts; actual kernel effective SO_RCVBUF, hardware/fsync and provider durability are not attested. Other idle/socket settings are pinned source constants.")})
-        checked.append({"id": directory.name, "preparedSnapshotSha256": configuration["preparedSnapshotSha256"]})
+        checked.append({"id": directory.name, "preparedSnapshotSha256": configuration["preparedSnapshotSha256"], **verification_scope})
     assert len({row["preparedSnapshotSha256"] for row in checked}) <= 1, "Initial logical state changed"
     write(root / "configuration-verification.json", {"passed": True, "runs": checked,
                                                     "preparedStateIdentical": True, "fixed": fixed})
@@ -283,4 +318,9 @@ def main(root):
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1] if len(sys.argv) > 1 else "evidence/2026-10-23/runpod-capacity"))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("root", nargs="?", type=Path, default=Path("evidence/2026-10-23/runpod-capacity"))
+    parser.add_argument("--include-failed-unknown", action="store_true",
+                        help="Verify configuration only for an exact terminal unresolved-UNKNOWN guard; preserve invalid business outcome")
+    options = parser.parse_args()
+    main(options.root, options.include_failed_unknown)

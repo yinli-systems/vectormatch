@@ -4,6 +4,7 @@ import importlib.util
 import json
 from pathlib import Path
 import unittest
+import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -358,6 +359,86 @@ class CapacityConfigTest(unittest.TestCase):
                         {"clientNakUnicastRetryDelayRatio": 100.0}, {"clientNakUnicastRetryDelayRatio": True}):
             with self.subTest(changes=changes), self.assertRaisesRegex(AssertionError, "Undeclared nondefault"):
                 config.load_generator_jvm_arguments(self.trial, {**runtime, **changes}, fixed)
+
+    def terminal_unknown_fixture(self, root):
+        source_root = ROOT / "evidence/2026-10-23/runpod-optimization/window350k/pilot"
+        source = source_root / "runs/w-pilot-10000-w128"
+        directory = root / "runs/w-pilot-10000-w128"
+        directory.mkdir(parents=True)
+        for name in ("campaign.json", "deployment.json"):
+            (root / name).write_bytes((source_root / name).read_bytes())
+        for name in ("trial.json", "configuration.json", "load-process.json"):
+            (directory / name).write_bytes((source / name).read_bytes())
+        for node in range(3):
+            (directory / f"node{node}").mkdir()
+            for name in ("process.json", "process.log"):
+                (directory / f"node{node}" / name).write_bytes((source / f"node{node}" / name).read_bytes())
+        snapshot = b"test-prepared-bytes"
+        (directory / "prepared-snapshot.bin").write_bytes(snapshot)
+        runtime = json.loads((directory / "configuration.json").read_text())
+        runtime["preparedSnapshotSha256"] = hashlib.sha256(snapshot).hexdigest()
+        (directory / "configuration.json").write_text(json.dumps(runtime))
+        load = {"unresolvedFinal": 1, "unknownAtInitialDeadline": 1, "scheduledArrivals": 350000}
+        failure = {"passed": False, "errorType": "java.lang.IllegalStateException",
+                   "error": config.UNKNOWN_GUARD.format(count=1), "loadSummary": load}
+        for name, value in (("load-result.json", load), ("failure.json", failure), ("receipt.json", {"exitCode": 1})):
+            (directory / name).write_text(json.dumps(value))
+        return directory
+
+    def test_exact_terminal_unknown_can_verify_configuration_without_creating_business_result(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = self.terminal_unknown_fixture(root)
+            original_failure = (directory / "failure.json").read_bytes()
+            config.main(root)
+            self.assertFalse((directory / "configuration-verification.json").exists(), "Default must still skip failed runs")
+            config.main(root, include_failed_unknown=True)
+            receipt = json.loads((directory / "configuration-verification.json").read_text())
+            self.assertTrue(receipt["passed"])
+            self.assertTrue(receipt["configurationOnly"])
+            self.assertFalse(receipt["businessCorrectnessVerified"])
+            self.assertFalse((directory / "result.json").exists())
+            self.assertEqual(original_failure, (directory / "failure.json").read_bytes())
+            trial = json.loads((directory / "trial.json").read_text())
+            self.assertIn("fixedNodeConfiguration", trial)
+            self.assertIn("deploymentBundleSha256", trial)
+
+    def test_terminal_unknown_flag_rejects_other_failures_missing_receipt_and_snapshot_without_annotation(self):
+        for damage in ("wrong-guard", "missing-receipt", "wrong-count", "mismatched-summary", "missing-snapshot"):
+            with self.subTest(damage=damage), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                directory = self.terminal_unknown_fixture(root)
+                before = (directory / "trial.json").read_bytes()
+                if damage == "missing-receipt":
+                    (directory / "receipt.json").unlink()
+                elif damage == "missing-snapshot":
+                    (directory / "prepared-snapshot.bin").unlink()
+                else:
+                    failure = json.loads((directory / "failure.json").read_text())
+                    if damage == "wrong-guard":
+                        failure["error"] = "Per-reply business result differs at arrival 2245"
+                    elif damage == "wrong-count":
+                        failure["error"] = config.UNKNOWN_GUARD.format(count=2)
+                    else:
+                        failure["loadSummary"]["scheduledArrivals"] = 1
+                    (directory / "failure.json").write_text(json.dumps(failure))
+                with self.assertRaises((AssertionError, FileNotFoundError)):
+                    config.main(root, include_failed_unknown=True)
+                self.assertEqual(before, (directory / "trial.json").read_bytes())
+                self.assertFalse((directory / "configuration-verification.json").exists())
+                self.assertFalse((directory / "result.json").exists())
+
+    def test_in_progress_unknown_is_skipped_even_with_failed_run_opt_in(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = self.terminal_unknown_fixture(root)
+            trial = json.loads((directory / "trial.json").read_text())
+            del trial["completedAt"]
+            (directory / "trial.json").write_text(json.dumps(trial))
+            before = (directory / "trial.json").read_bytes()
+            config.main(root, include_failed_unknown=True)
+            self.assertEqual(before, (directory / "trial.json").read_bytes())
+            self.assertFalse((directory / "configuration-verification.json").exists())
 
     def test_optional_nak_values_enter_real_comparison_identity_and_command_hashes(self):
         spec = importlib.util.spec_from_file_location("nak_comparison", ROOT / "scripts/analyze-capacity.py")

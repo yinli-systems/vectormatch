@@ -1,0 +1,85 @@
+{
+  "commands": [
+    {
+      "command": [
+        "python3",
+        "-B",
+        "runtime/cloud/optimization-20261024/nak/campaign.py",
+        "--self-test"
+      ],
+      "exitCode": 0,
+      "stderr": "test_business_mismatch_never_allowed (__main__.self_test.<locals>.Guards) ... ok\ntest_create_new (__main__.self_test.<locals>.Guards) ... ok\ntest_embedded_remote_source_compiles (__main__.self_test.<locals>.Guards) ... ok\ntest_exact_unknown_guard (__main__.self_test.<locals>.Guards) ... ok\ntest_factor_node_and_client_exact (__main__.self_test.<locals>.Guards) ... ok\ntest_full_summary_difference_rejected_even_when_unknown_count_matches (__main__.self_test.<locals>.Guards) ... ok\ntest_guard_count_mismatch (__main__.self_test.<locals>.Guards) ... ok\ntest_owned_stop_source_bounded_and_receipt (__main__.self_test.<locals>.Guards) ... ok\ntest_terminal_failed_unknown_config_only_without_result (__main__.self_test.<locals>.Guards) ... ok\ntest_zero_or_missing_unknown_not_allowed (__main__.self_test.<locals>.Guards) ... ok\n\n----------------------------------------------------------------------\nRan 10 tests in 0.242s\n\nOK\n",
+      "stdout": ""
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "runtime/cloud/optimization-20261024/nak/register.py"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": "{\n  \"draftOnly\": true,\n  \"noRegistrationOrLaunch\": true,\n  \"kind\": \"matrix\",\n  \"trials\": [\n    {\n      \"id\": \"k-nak1000-26000-w256-r1\",\n      \"cohort\": \"delay1000\",\n      \"rate\": 26000,\n      \"arrivals\": 350000,\n      \"workers\": 256,\n      \"nakDelayNs\": 1000,\n      \"phase\": \"nak-delay-node-and-client-control\",\n      \"repetition\": 1\n    },\n    {\n      \"id\": \"k-nak100000-26000-w256-r1\",\n      \"cohort\": \"delay100000\",\n      \"rate\": 26000,\n      \"arrivals\": 350000,\n      \"workers\": 256,\n      \"nakDelayNs\": 100000,\n      \"phase\": \"nak-delay-node-and-client-control\",\n      \"repetition\": 1\n    },\n    {\n      \"id\": \"k-nak1000-26000-w256-r2\",\n      \"cohort\": \"delay1000\",\n      \"rate\": 26000,\n      \"arrivals\": 350000,\n      \"workers\": 256,\n      \"nakDelayNs\": 1000,\n      \"phase\": \"nak-delay-node-and-client-control\",\n      \"repetition\": 2\n    },\n    {\n      \"id\": \"k-nak100000-26000-w256-r2\",\n      \"cohort\": \"delay100000\",\n      \"rate\": 26000,\n      \"arrivals\": 350000,\n      \"workers\": 256,\n      \"nakDelayNs\": 100000,\n      \"phase\": \"nak-delay-node-and-client-control\",\n      \"repetition\": 2\n    }\n  ],\n  \"writeRequires\": [\n    \"new committed source-pinned build and 3-node immutable upload\",\n    \"explicit root-selected pilot policy\",\n    \"budget including 2 USD recovery reserve\",\n    \"unchanged historical prerequisite SHA inputs\"\n  ]\n}\n"
+    },
+    {
+      "command": [
+        "python3",
+        "-B",
+        "runtime/cloud/optimization-20261024/nak/register.py",
+        "--kind",
+        "pilot"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": "{\n  \"draftOnly\": true,\n  \"noRegistrationOrLaunch\": true,\n  \"kind\": \"pilot\",\n  \"trials\": [\n    {\n      \"id\": \"k-pilot-100000ns-10000-w256\",\n      \"cohort\": \"pilot100us\",\n      \"rate\": 10000,\n      \"arrivals\": 350000,\n      \"workers\": 256,\n      \"nakDelayNs\": 100000,\n      \"phase\": \"nak-delay-full350k-canonical-pilot\",\n      \"repetition\": 1\n    }\n  ],\n  \"writeRequires\": [\n    \"new committed source-pinned build and 3-node immutable upload\",\n    \"explicit root-selected pilot policy\",\n    \"budget including 2 USD recovery reserve\",\n    \"unchanged historical prerequisite SHA inputs\"\n  ]\n}\n"
+    }
+  ],
+  "controllerSha256": {
+    "build.py": "a85847798055914e5ec5c4633b618b577a59522978c5ad38c2c6c6b2965ee74d",
+    "bundle-node.py": "7277b75d83277741f07fadd4f833b61256747347e6f8da025ce4164427d9fc43",
+    "campaign.py": "d7328ac283462fb6732dae589cb78ee361b27799cffc7034e6f8c7c16083e38d",
+    "deploy-node.py": "e4b6193fe5c0af62bf4195da5d06a48a763aeec7bb02cd82ac8be515daeb12af",
+    "matrix.py": "201f93578d3fbe56189c388679e12e0e77b4946ffcac3c8244a2e955f81c5f8c",
+    "register.py": "49c0d21fff7098b7ef19df69d0ba998977ef076d39f3562327d46507a6a9b351"
+  },
+  "createdAtUtc": "2026-10-23T23:08:16.251622+00:00",
+  "limitations": "Offline guard, embedded source compilation, factor propagation, owned-stop mock, CREATE_NEW, real verifier temporary terminal-fixture and draft checks only. New source Java tests/build, immutable upload, Linux lifecycle and cloud results remain root actions. No performance or deployment claim.",
+  "noRemoteCallsExecuted": true,
+  "registeredPlansCreated": false,
+  "selfTests": 10,
+  "sourceArchiveSha256": "198cc782a3d80963c35465a3f4efee6924420734d00210aae5ceab2a1fe153d1",
+  "sourceInputsForTerminalFixtureTest": {
+    "scripts/tests/test_capacity_config.py": {
+      "bytes": 30794,
+      "sha256": "c3358a6df569aa00e5d5a6a0c0947c048c3c9af611e51c1d802d063636fa7356"
+    },
+    "scripts/verify-capacity-config.py": {
+      "bytes": 20536,
+      "sha256": "764484ae23f2535c247391e1081356d7b60d6b34be76d09452ae12ab45992d68"
+    }
+  },
+  "syntaxParsedFiles": [
+    "build.py",
+    "bundle-node.py",
+    "campaign.py",
+    "deploy-node.py",
+    "matrix.py",
+    "register.py"
+  ],
+  "terminalFailedUnknownFixture": {
+    "businessCorrectnessVerified": false,
+    "configurationOnlyReceiptVerified": true,
+    "guardInputSha256Verified": [
+      "failure.json",
+      "load-result.json",
+      "receipt.json",
+      "configuration.json"
+    ],
+    "historicalSourceInputsSha256Unchanged": true,
+    "includeFailedUnknownOptIn": true,
+    "resultJsonCreated": false,
+    "scope": "Synthetic terminal fixture uses bounded copied project receipts with explicit synthetic NAK fields; real verifier CLI invoked. It proves configuration verification behavior only, not cloud deployment or business correctness.",
+    "temporaryDirectoryOnly": true,
+    "wrongCountRejectedBeforeReceipt": true
+  }
+}
