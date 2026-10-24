@@ -35,7 +35,7 @@ class RetentionReplyAndSnapshotV3Test {
         var decoded = (Chunk) RetentionReplyV3.decode(encoded).payload();
         assertArrayEquals(chunk.data(), decoded.data()); assertEquals(9, decoded.data()[0]);
         byte[] escaped = decoded.data(); escaped[0] = 0; assertEquals(9, decoded.data()[0]);
-        assertThrows(IllegalArgumentException.class, () -> new Chunk(ack, 3073, 0, new byte[3073]));
+        assertThrows(IllegalArgumentException.class, () -> new Chunk(ack, RetentionWireV3.MAX_SUPPORTED_ARCHIVE_CHUNK+1, 0, new byte[RetentionWireV3.MAX_SUPPORTED_ARCHIVE_CHUNK+1]));
         var event = new Event(1, 1, EventType.ORDER_ACCEPTED, 1, 1, 0, 0, Side.SELL, 10, 1, "x".repeat(129));
         assertThrows(IllegalArgumentException.class, () -> new Events(new EventBatch(0, 20, List.of(event))));
     }

@@ -29,7 +29,10 @@ public final class RetentionWireV3 {
     private static final int BUSINESS = 1, ARCHIVE_COMMIT = 2, EVENT_ACK = 3, POSITION = 4,
             FETCH_EVENTS = 5, PREPARE_ARCHIVE = 6, ARCHIVE_CHUNK = 7, BUSINESS_BATCH = 8;
     public static final int MAX_BUSINESS_BATCH = 4;
-    public static final int MAX_ARCHIVE_CHUNK = 3072;
+    public static final int DEFAULT_ARCHIVE_CHUNK = 3072;
+    public static final int MAX_ARCHIVE_CHUNK = 3072; // legacy/default requested chunk, retained for API compatibility
+    public static final int MAX_SUPPORTED_ARCHIVE_CHUNK = 6144;
+    public static int requireArchiveChunkBytes(int bytes) { if(bytes!=DEFAULT_ARCHIVE_CHUNK && bytes!=MAX_SUPPORTED_ARCHIVE_CHUNK)throw new IllegalArgumentException("archive chunk must be3072 or6144 bytes"); return bytes; }
     private static final Pattern HASH = Pattern.compile("[0-9a-f]{64}");
     private static final Pattern LINEAGE = Pattern.compile("[A-Za-z0-9_.-]{1,64}");
     private static final Pattern PRODUCER = Pattern.compile("[A-Za-z0-9_.-]{1,48}");
@@ -136,7 +139,7 @@ public final class RetentionWireV3 {
         public ArchiveChunk {
             requireNonNull(acknowledgement, "archive descriptor");
             if (totalBytes < 1 || totalBytes > io.vectormatch.core.RetentionEngineV3.MAX_SNAPSHOT_BYTES
-                    || offset < 0 || offset >= totalBytes || count < 1 || count > MAX_ARCHIVE_CHUNK)
+                    || offset < 0 || offset >= totalBytes || count < 1 || count > MAX_SUPPORTED_ARCHIVE_CHUNK)
                 throw new IllegalArgumentException("invalid archive chunk bounds");
         }
     }

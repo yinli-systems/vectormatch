@@ -14,6 +14,11 @@ import static io.vectormatch.cluster.RetentionWireV3.*;
 public final class RetentionReplyV3 {
     private static final int MAGIC = 0x564d5233, VERSION = 3;
     public static final int MAX_REPLY_BYTES = 8192;
+    /** Entire attainable Chunk envelope: max scope/hash/error fields, Ack and all fixed headers. */
+    public static int maxEncodedArchiveChunkReplyBytes(int chunkBytes) {
+        if(chunkBytes<1 || chunkBytes>MAX_SUPPORTED_ARCHIVE_CHUNK)throw new IllegalArgumentException("invalid complete chunk reply bound");
+        return 4+2+2*(4+64)+8+7*8+(4+64)+(4+128)+1+5*(4+64)+2*8+3*4+chunkBytes;
+    }
     public record Counters(long applicationMutation, long businessSeq, long eventSeq, long marketSeq,
                            long coreMaintenanceSeq, long acceptedPlaceCount, long exportedEventSeq, String stateHash) {
         public Counters {
@@ -150,7 +155,7 @@ public final class RetentionReplyV3 {
         public Chunk {
             Objects.requireNonNull(acknowledgement); Objects.requireNonNull(data);
             if (totalBytes < 1 || totalBytes > RetentionEngineV3.MAX_SNAPSHOT_BYTES || offset < 0 || offset >= totalBytes
-                    || data.length < 1 || data.length > MAX_ARCHIVE_CHUNK || data.length > totalBytes - offset)
+                    || data.length < 1 || data.length > MAX_SUPPORTED_ARCHIVE_CHUNK || data.length > totalBytes - offset)
                 throw new IllegalArgumentException("invalid V3 archive chunk");
             data = data.clone();
         }
@@ -250,7 +255,7 @@ public final class RetentionReplyV3 {
                 }
                 case 3 -> payload = new Descriptor(RetentionWireV3.readAck(in), in.readInt());
                 case 4 -> { var ack = RetentionWireV3.readAck(in); int total = in.readInt(), offset = in.readInt(), count = in.readInt();
-                    if (count < 1 || count > MAX_ARCHIVE_CHUNK || count > in.available()) throw new IOException("bad archive chunk count");
+                    if (count < 1 || count > MAX_SUPPORTED_ARCHIVE_CHUNK || count > in.available()) throw new IOException("bad archive chunk count");
                     payload = new Chunk(ack, total, offset, in.readNBytes(count)); }
                 case 5 -> {
                     int count = in.readInt();

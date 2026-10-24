@@ -86,7 +86,7 @@ class RetentionAeronAdapterV3Test {
             Request r = request(op); assertEquals(r, RetentionWireV3.decode(RetentionWireV3.encode(r)));
         }
         assertThrows(IllegalArgumentException.class, () -> new FetchEvents(1, 17));
-        assertThrows(IllegalArgumentException.class, () -> new ArchiveChunk(descriptor.acknowledgement(), descriptor.totalBytes(), 0, 3073));
+        assertThrows(IllegalArgumentException.class, () -> new ArchiveChunk(descriptor.acknowledgement(), descriptor.totalBytes(), 0, MAX_SUPPORTED_ARCHIVE_CHUNK+1));
         assertEquals(1, call(a, new Position()).counters().applicationMutation());
     }
 }

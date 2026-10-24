@@ -22,6 +22,7 @@ public final class RetentionCapacityPlanV3 {
     public static final int ARRIVAL_CSV_BYTES = 640, ATTEMPT_CSV_BYTES = 128, INDEX_CSV_BYTES = 128;
     public static final int RAW_FRAME_PREFIX_BYTES = 12;
     public static final long FIXED_TRACE_BYTES = 384L*1024;
+    public static final long EGRESS_ATTESTATION_TRACE_BYTES = 2L*1024*1024; // <=1MiB sample JSON plus bounded terminal/owner metadata
 
     public record Plan(int arrivals, int batchCap, int maximumMaintenanceCycles, long maximumEvents,
                        long maximumLogicalMaintenanceRpcs, long maximumBusinessFrames,
@@ -33,7 +34,9 @@ public final class RetentionCapacityPlanV3 {
                        int maximumArchiveEntryBytes, int archiveHeaderBytes,
                        long maximumArchivePayloadBytes, long maximumEventPayloadBytes,
                        long maximumArchiveChunkRpcs, long maximumEventFetchRpcs,
-                       int largestReplyBytes, List<String> admissionRejections) {
+                       int largestReplyBytes, int archiveChunkBytes, boolean commonChunkEnvelope,
+                       long selectedMaximumLogicalMaintenanceRpcs, long selectedMaximumArchiveChunkRpcs,
+                       List<String> admissionRejections) {
         public Plan { admissionRejections = List.copyOf(admissionRejections); }
         public boolean admitted() { return admissionRejections.isEmpty(); }
         public int maximumPhysicalOffersPerRpc() { return MAXIMUM_OFFERS_PER_RPC; }
@@ -43,6 +46,9 @@ public final class RetentionCapacityPlanV3 {
         }
         public Map<String,Object> observation() {
             var out = new LinkedHashMap<String,Object>();
+            out.put("archiveChunkBytes",archiveChunkBytes);out.put("eventFetchCount",16);out.put("commonChunkEnvelope",commonChunkEnvelope);
+            out.put("selectedMaximumLogicalMaintenanceRpcs",selectedMaximumLogicalMaintenanceRpcs);out.put("selectedMaximumArchiveChunkRpcs",selectedMaximumArchiveChunkRpcs);
+            out.put("maximumSupportedArchiveChunkBytes",MAX_SUPPORTED_ARCHIVE_CHUNK);out.put("maximumEncodedChunkReplyBytes",maxEncodedArchiveChunkReplyBytes(MAX_SUPPORTED_ARCHIVE_CHUNK));
             out.put("arrivals",arrivals); out.put("batchCap",batchCap); out.put("maximumMaintenanceCycles",maximumMaintenanceCycles);
             out.put("maximumEvents",maximumEvents); out.put("maximumLogicalMaintenanceRpcs",maximumLogicalMaintenanceRpcs);
             out.put("maximumBusinessFrames",maximumBusinessFrames); out.put("maximumPhysicalOffersPerRpc",MAXIMUM_OFFERS_PER_RPC);
@@ -56,7 +62,7 @@ public final class RetentionCapacityPlanV3 {
             out.put("maximumArchiveEntryBytes",maximumArchiveEntryBytes); out.put("archiveHeaderBytes",archiveHeaderBytes);
             out.put("maximumArchivePayloadBytes",maximumArchivePayloadBytes); out.put("maximumEventPayloadBytes",maximumEventPayloadBytes);
             out.put("maximumArchiveChunkRpcs",maximumArchiveChunkRpcs); out.put("maximumEventFetchRpcs",maximumEventFetchRpcs);
-            out.put("largestReplyBytes",largestReplyBytes); out.put("admitted",admitted()); out.put("admissionRejections",admissionRejections);
+            out.put("egressAttestationTraceReserveBytes",EGRESS_ATTESTATION_TRACE_BYTES);out.put("largestReplyBytes",largestReplyBytes); out.put("admitted",admitted()); out.put("admissionRejections",admissionRejections);
             out.put("witness", "5 real reference commands; 19-digit structured request sequence, longest load-w127 producer; 64-byte lineage; fixed-width numeric codec");
             out.put("scope", "prospective finite storage/RPC bounds with enforced trace/offer/allocated caps; native reserve is a stop threshold, not a proof all arrivals complete under arbitrary packet loss");
             return Collections.unmodifiableMap(out);
@@ -71,35 +77,51 @@ public final class RetentionCapacityPlanV3 {
 
     /** Full four-offer envelope. Rejected plans retain their arithmetic for inspection. */
     public static Plan plan(int arrivals,int batchCap,RetentionServiceV3.Profile profile) {
-        return calculate(arrivals,batchCap,profile,-1,-1);
+        return calculate(arrivals,batchCap,profile,-1,-1,DEFAULT_ARCHIVE_CHUNK);
     }
     /** Explicit global retry/negative-offer budgets; exhaustion must abort the sample before the next physical offer. */
     public static Plan planWithOfferBudget(int arrivals,int batchCap,RetentionServiceV3.Profile profile,
                                           long maximumExtraPositiveOffers,long maximumNegativeOfferAttempts) {
         if(maximumExtraPositiveOffers<0||maximumNegativeOfferAttempts<0)
             throw new IllegalArgumentException("explicit nonnegative global offer budgets required");
-        return calculate(arrivals,batchCap,profile,maximumExtraPositiveOffers,maximumNegativeOfferAttempts);
+        return calculate(arrivals,batchCap,profile,maximumExtraPositiveOffers,maximumNegativeOfferAttempts,DEFAULT_ARCHIVE_CHUNK);
     }
-    private static Plan calculate(int arrivals,int batchCap,RetentionServiceV3.Profile profile,long extras,long negatives) {
+    /** Both arms use identical runtime caps derived from the union of the two finite codec inventories. */
+    public static Plan commonChunkPlan(int arrivals,int batchCap,RetentionServiceV3.Profile profile,int archiveChunkBytes,long extras,long negatives) {
+        requireArchiveChunkBytes(archiveChunkBytes);
+        if(extras<0||negatives<0)throw new IllegalArgumentException("explicit common offer budgets required");
+        Plan a=calculate(arrivals,batchCap,profile,extras,negatives,DEFAULT_ARCHIVE_CHUNK);
+        Plan b=calculate(arrivals,batchCap,profile,extras,negatives,MAX_SUPPORTED_ARCHIVE_CHUNK);
+        Plan selected=archiveChunkBytes==DEFAULT_ARCHIVE_CHUNK?a:b;
+        var rejected=new ArrayList<String>();for(String error:a.admissionRejections())if(!rejected.contains(error))rejected.add(error);for(String error:b.admissionRejections())if(!rejected.contains(error))rejected.add(error);
+        return new Plan(arrivals,batchCap,a.maximumMaintenanceCycles(),a.maximumEvents(),Math.max(a.maximumLogicalMaintenanceRpcs(),b.maximumLogicalMaintenanceRpcs()),a.maximumBusinessFrames(),extras,negatives,
+                Math.max(a.maximumWriterPayloadBytes(),b.maximumWriterPayloadBytes()),Math.max(a.maximumWriterPayloadFiles(),b.maximumWriterPayloadFiles()),
+                Math.max(a.noRetryRawTraceBytes(),b.noRetryRawTraceBytes()),Math.max(a.worstFourOfferRawTraceBytes(),b.worstFourOfferRawTraceBytes()),
+                Math.max(a.maximumRawTraceBytes(),b.maximumRawTraceBytes()),Math.max(a.maximumAllocatedGrowthBytes(),b.maximumAllocatedGrowthBytes()),a.minimumFreeRuntimeBytes(),a.maximumJournalRecords(),a.maximumJournalBytes(),
+                Math.max(a.maximumArchiveEntryBytes(),b.maximumArchiveEntryBytes()),a.archiveHeaderBytes(),Math.max(a.maximumArchivePayloadBytes(),b.maximumArchivePayloadBytes()),Math.max(a.maximumEventPayloadBytes(),b.maximumEventPayloadBytes()),
+                Math.max(a.maximumArchiveChunkRpcs(),b.maximumArchiveChunkRpcs()),a.maximumEventFetchRpcs(),Math.max(a.largestReplyBytes(),b.largestReplyBytes()),archiveChunkBytes,true,selected.maximumLogicalMaintenanceRpcs(),selected.maximumArchiveChunkRpcs(),rejected);
+    }
+    private static Plan calculate(int arrivals,int batchCap,RetentionServiceV3.Profile profile,long extras,long negatives,int archiveChunkBytes) {
+        requireArchiveChunkBytes(archiveChunkBytes);
         Objects.requireNonNull(profile);
         if(arrivals<1||arrivals>MAX_ARRIVALS||(batchCap!=1&&batchCap!=4))
             throw new IllegalArgumentException("finite workload requires 1..350000 arrivals and cap1 or cap4");
-        Probe p=probe(profile,batchCap); int loadCycles=ceil(arrivals,COMMANDS_PER_CYCLE),cycles=1+loadCycles;
-        long totalEvents=2L*arrivals+3,archiveBytes=p.header+p.setupFrames,eventBytes=0,chunkRpcs=ceil(archiveBytes,MAX_ARCHIVE_CHUNK),fetchRpcs=1;
+        Probe p=probe(profile,batchCap,archiveChunkBytes); int loadCycles=ceil(arrivals,COMMANDS_PER_CYCLE),cycles=1+loadCycles;
+        long totalEvents=2L*arrivals+3,archiveBytes=p.header+p.setupFrames,eventBytes=0,chunkRpcs=ceil(archiveBytes,archiveChunkBytes),fetchRpcs=1;
         // Setup is exported separately. Each load prefix has <=3072 commands and exactly two events per successful buy.
         eventBytes=eventFrameBytes(3,p); long physicalRequestBytes=p.archiveRequest;
         long physicalReplyBytes=p.descriptorReply;
         long setupArchive=archiveBytes;
-        physicalRequestBytes+=ceil(setupArchive,MAX_ARCHIVE_CHUNK)*(long)p.chunkRequest;
-        physicalReplyBytes+=chunkReplyBytes(setupArchive,p);
+        physicalRequestBytes+=ceil(setupArchive,archiveChunkBytes)*(long)p.chunkRequest;
+        physicalReplyBytes+=chunkReplyBytes(setupArchive,p,archiveChunkBytes);
         physicalRequestBytes+=p.fetchRequest;
         physicalReplyBytes+=eventBytes-4; // framed writer stores int32 lengths; physical tape has its own 12-byte prefix
         for(int cycle=0,remaining=arrivals;cycle<loadCycles;cycle++) {
             int count=Math.min(COMMANDS_PER_CYCLE,remaining);remaining-=count;
             long bytes=p.header+(long)count*p.normalFrame+(remaining==0?p.finalExtra:0);
-            archiveBytes+=bytes; long chunks=ceil(bytes,MAX_ARCHIVE_CHUNK);chunkRpcs+=chunks;
+            archiveBytes+=bytes; long chunks=ceil(bytes,archiveChunkBytes);chunkRpcs+=chunks;
             physicalRequestBytes+=p.archiveRequest+chunks*p.chunkRequest;
-            physicalReplyBytes+=p.descriptorReply+chunkReplyBytes(bytes,p);
+            physicalReplyBytes+=p.descriptorReply+chunkReplyBytes(bytes,p,archiveChunkBytes);
             long events=2L*count,fetches=ceil(events,16);fetchRpcs+=fetches;
             long framedEvents=eventFrameBytes(events,p);eventBytes+=framedEvents;
             physicalRequestBytes+=fetches*p.fetchRequest;
@@ -122,7 +144,7 @@ public final class RetentionCapacityPlanV3 {
         long helperLogicalCopy=physicalRequestBytes+physicalReplyBytes+8L*logicalRpcs;
         long base=uniqueBusinessRequests+businessReplies+maintenanceRequests+maintenanceReplies+helperLogicalCopy
                 +frames*(ATTEMPT_CSV_BYTES+INDEX_CSV_BYTES)+(long)arrivals*ARRIVAL_CSV_BYTES+FIXED_TRACE_BYTES
-                +p.setupTrace+cycles*2048L+256L*logicalRpcs; // enforced maintenance timing row cap, plus header in fixed reserve
+                +p.setupTrace+cycles*2048L+256L*logicalRpcs+EGRESS_ATTESTATION_TRACE_BYTES; // enforced maintenance timing row cap, plus header in fixed reserve
         long allFour=base+3L*(businessReplies+maintenanceReplies)+3L*frames*ATTEMPT_CSV_BYTES
                 +frames*ATTEMPT_CSV_BYTES;
         long extraReplies=Math.min(extras*(largestReply+RAW_FRAME_PREFIX_BYTES),3L*(businessReplies+maintenanceReplies));
@@ -144,18 +166,18 @@ public final class RetentionCapacityPlanV3 {
         if(allocation>ALLOCATED_GROWTH_LIMIT)rejected.add("derived payload/trace/native-reserve allocation exceeds 2.5GiB growth cap");
         return new Plan(arrivals,batchCap,cycles,totalEvents,logicalRpcs,arrivals,extras,negatives,payload,(int)writerJobs,
                 base,allFour,raw,allocation,RUNTIME_FREE_FLOOR,records,journalBytes,p.normalFrame+p.finalExtra,p.header,
-                archiveBytes,eventBytes,chunkRpcs,fetchRpcs,largestReply,rejected);
+                archiveBytes,eventBytes,chunkRpcs,fetchRpcs,largestReply,archiveChunkBytes,false,logicalRpcs,chunkRpcs,rejected);
     }
     private static long eventFrameBytes(long count,Probe p) {
         long full=count/16,rest=count%16;
         return full*(4L+p.eventReplyOverhead+16L*p.maxEventWire)+(rest==0?0:4L+p.eventReplyOverhead+rest*p.maxEventWire);
     }
-    private static long chunkReplyBytes(long archiveBytes,Probe p) {
-        long count=ceil(archiveBytes,MAX_ARCHIVE_CHUNK);
-        return count*(p.fullChunkReply-MAX_ARCHIVE_CHUNK)+archiveBytes;
+    private static long chunkReplyBytes(long archiveBytes,Probe p,int archiveChunkBytes) {
+        long count=ceil(archiveBytes,archiveChunkBytes);
+        return count*(p.fullChunkReply-archiveChunkBytes)+archiveBytes;
     }
     private static int ceil(long count,int unit) { return Math.toIntExact((count+unit-1)/unit); }
-    private static Probe probe(RetentionServiceV3.Profile profile,int batchCap) {
+    private static Probe probe(RetentionServiceV3.Profile profile,int batchCap,int archiveChunkBytes) {
         String lineage="p".repeat(64);Scope scope=new Scope(profile.fingerprint(),lineage);
         var engine=new RetentionEngineV3(profile.core(),lineage);
         List<Command> commands=List.of(new Deposit(1,"fund",1,Asset.BASE,2),new Deposit(2,"fund",1,Asset.QUOTE,20),
@@ -184,8 +206,8 @@ public final class RetentionCapacityPlanV3 {
         var ack=archive.acknowledgementAfterExternalVerification();
         int prepareRequest=RetentionWireV3.encode(new Request(scope,1,new PrepareArchive(5))).length;
         int descriptor=RetentionReplyV3.encode(new Reply(scope,1,counters,new Descriptor(ack,4096),"")).length;
-        int chunkRequest=RetentionWireV3.encode(new Request(scope,1,new ArchiveChunk(ack,4096,0,MAX_ARCHIVE_CHUNK))).length;
-        int chunkReply=RetentionReplyV3.encode(new Reply(scope,1,counters,new Chunk(ack,4096,0,new byte[MAX_ARCHIVE_CHUNK]),"")).length;
+        int chunkRequest=RetentionWireV3.encode(new Request(scope,1,new ArchiveChunk(ack,MAX_SUPPORTED_ARCHIVE_CHUNK+1024,0,archiveChunkBytes))).length;
+        int chunkReply=RetentionReplyV3.encode(new Reply(scope,1,counters,new Chunk(ack,MAX_SUPPORTED_ARCHIVE_CHUNK+1024,0,new byte[archiveChunkBytes]),"")).length;
         int fetchRequest=RetentionWireV3.encode(new Request(scope,1,new FetchEvents(1,16))).length;
         int eventOverhead=RetentionReplyV3.encode(new Reply(scope,1,counters,new Events(new EventBatch(0,100,List.of())),"")).length;
         int maxEvent=0;for(var entry:history)for(Event event:entry.execution().events())maxEvent=Math.max(maxEvent,

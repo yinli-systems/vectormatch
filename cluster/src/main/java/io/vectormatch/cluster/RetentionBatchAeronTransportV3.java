@@ -1,6 +1,7 @@
 package io.vectormatch.cluster;
 
 import io.aeron.cluster.client.AeronCluster;
+import io.aeron.Image;
 import io.aeron.cluster.client.EgressListener;
 import io.aeron.driver.MediaDriver;
 import io.aeron.logbuffer.Header;
@@ -27,6 +28,8 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
     private long nextKeepAlive;
     private boolean closed;
     private final boolean maintenanceEnabled;
+    private final int archiveChunkBytes;
+    private final RetentionEgressBoundsV3 egressBounds;
 
     public RetentionBatchAeronTransportV3(Path driverDirectory, int portBase,
                                           RetentionServiceV3.Profile profile, String lineage) {
@@ -34,7 +37,14 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
     }
     public RetentionBatchAeronTransportV3(Path driverDirectory, int portBase,
                                           RetentionServiceV3.Profile profile, String lineage, boolean maintenanceEnabled) {
+        this(driverDirectory,portBase,profile,lineage,maintenanceEnabled,DEFAULT_ARCHIVE_CHUNK);
+    }
+    public RetentionBatchAeronTransportV3(Path driverDirectory,int portBase,
+                                          RetentionServiceV3.Profile profile,String lineage,boolean maintenanceEnabled,int archiveChunkBytes){
         this.maintenanceEnabled = maintenanceEnabled;
+        this.archiveChunkBytes=requireArchiveChunkBytes(archiveChunkBytes);
+        // Both arms attest the SAME supported complete reply bound, regardless of requested chunk size.
+        egressBounds=new RetentionEgressBoundsV3(RetentionReplyV3.maxEncodedArchiveChunkReplyBytes(MAX_SUPPORTED_ARCHIVE_CHUNK));
         // All validation precedes driver creation or a filesystem/network side effect.
         if (driverDirectory == null || profile == null) throw new IllegalArgumentException("V3 batch transport path/profile required");
         scope = new Scope(profile.fingerprint(), lineage);
@@ -51,6 +61,7 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
                     .ingressChannel(transport.withMtu("aeron:udp?term-length=64k"))
                     .ingressEndpoints(topology.ingressEndpoints());
             openedCluster = AeronCluster.connect(context);
+            observeImages(openedCluster);
         } catch (RuntimeException | Error failed) {
             try {
                 if (openedCluster != null) openedCluster.close();
@@ -65,7 +76,7 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
 
     @Override public long offer(byte[] completeRequestBytes) {
         requireOpen();
-        byte[] bytes = validatedRequestBytes(completeRequestBytes, scope, maintenanceEnabled);
+        byte[] bytes = validatedRequestBytes(completeRequestBytes, scope, maintenanceEnabled,archiveChunkBytes);
         // Original Aeron offer code is returned; owner alone decides retry/deadline/UNKNOWN policy.
         return cluster.offer(new UnsafeBuffer(bytes), 0, bytes.length);
     }
@@ -84,6 +95,7 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
 
     @Override public Map<String, Object> observation() {
         requireOpen();
+        observeImages(cluster);
         var context = driver.context();
         var idle = Objects.requireNonNull(context.sharedIdleStrategy(), "actual shared idle strategy");
         Map<String, Object> actual = new LinkedHashMap<>();
@@ -103,16 +115,32 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
         actual.put("keepAliveIntervalNs", KEEP_ALIVE_INTERVAL_NS);
         actual.put("ingressChannel", cluster.context().ingressChannel());
         actual.put("egressChannel", cluster.context().egressChannel());
+        actual.put("archiveChunkBytes",archiveChunkBytes);
+        actual.put("actualEgressBounds",egressBounds.snapshot());
         return Map.copyOf(actual);
     }
 
     @Override public void onMessage(long sessionId, long timestamp, DirectBuffer buffer, int offset, int length, Header header) {
         requireOpen();
         if (length < 1 || length > RetentionReplyV3.MAX_REPLY_BYTES) throw new IllegalStateException("invalid bounded V3 batch reply length");
+        if(!(header.context() instanceof Image image)||image.subscription()!=cluster.egressSubscription()||image.isClosed())
+            throw new IllegalStateException("reply Header lacks its live actual egress Image");
+        if(!egressBounds.isActive(image.correlationId()))observeImages(cluster);
+        egressBounds.reply(image.correlationId(),header.sessionId(),header.streamId(),image.termBufferLength(),image.mtuLength(),length);
         byte[] bytes = new byte[length]; buffer.getBytes(offset, bytes);
         var reply = RetentionReplyV3.decode(bytes);
         if (!scope.equals(reply.scope())) throw new IllegalStateException("V3 batch transport reply scope differs");
         dispatcher.accept(reply);
+    }
+
+    private void observeImages(AeronCluster actual){
+        dispatcher.requireOwner();var images=actual.egressSubscription().images();
+        var metadata=new java.util.ArrayList<RetentionEgressBoundsV3.ImageMetadata>();
+        for(Image image:images){
+            if(image.isClosed())throw new IllegalStateException("actual egress Image closed before controlled transport observation");
+            metadata.add(new RetentionEgressBoundsV3.ImageMetadata(image.correlationId(),image.sessionId(),image.subscription().streamId(),image.termBufferLength(),image.mtuLength()));
+        }
+        egressBounds.observe(metadata);
     }
 
     @Override public void onNewLeader(long sessionId,long leadershipTermId,int leaderMemberId,String memberEndpoints){
@@ -133,7 +161,9 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
     }
 
     static byte[] validatedRequestBytes(byte[] input, Scope expected) { return validatedRequestBytes(input, expected, false); }
-    static byte[] validatedRequestBytes(byte[] input, Scope expected, boolean maintenanceEnabled) {
+    static byte[] validatedRequestBytes(byte[] input, Scope expected, boolean maintenanceEnabled) {return validatedRequestBytes(input,expected,maintenanceEnabled,DEFAULT_ARCHIVE_CHUNK);}
+    static byte[] validatedRequestBytes(byte[] input,Scope expected,boolean maintenanceEnabled,int archiveChunkBytes) {
+        requireArchiveChunkBytes(archiveChunkBytes);
         if (input == null || input.length < 1 || input.length > MAX_REQUEST_BYTES)
             throw new IllegalArgumentException("invalid V3 batch transport request length");
         byte[] bytes = input.clone();
@@ -141,6 +171,7 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
         if (!Objects.requireNonNull(expected).equals(request.scope())) throw new IllegalArgumentException("V3 batch transport request scope differs");
         if (request.operation() instanceof Business || (!maintenanceEnabled && !(request.operation() instanceof BusinessBatch) && !(request.operation() instanceof Position)))
             throw new IllegalArgumentException("V3 owner transport requires producer-bound BusinessBatch or explicitly enabled maintenance");
+        if(request.operation() instanceof ArchiveChunk chunk && chunk.count()>archiveChunkBytes)throw new IllegalArgumentException("requested archive chunk exceeds declared transport policy");
         if (request.operation() instanceof BusinessBatch) RetentionReplyV3.validateBatchReplyBudget(request);
         return bytes;
     }

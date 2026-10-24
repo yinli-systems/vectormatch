@@ -51,6 +51,7 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
     private final Path rawRoot;
     private final DataOutputStream requests,replies,timings;
     private final long maximumLogicalRpcs;
+    private final int archiveChunkBytes;
     private final Map<String,long[]> rpcKinds=new LinkedHashMap<>();
     private long rpcCount,cycleCount;
     private byte[] latestOriginalWire;
@@ -68,6 +69,11 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
     }
     public RetentionBatchMaintenanceV3(RetentionBatchOwnerV3 owner,RetentionDurableWriterV3 writer,
                                       RetentionServiceV3.Profile profile,String lineage,Path newRawDir,RunBudget budget,long maximumLogicalRpcs)throws IOException{
+        this(owner,writer,profile,lineage,newRawDir,budget,maximumLogicalRpcs,DEFAULT_ARCHIVE_CHUNK);
+    }
+    public RetentionBatchMaintenanceV3(RetentionBatchOwnerV3 owner,RetentionDurableWriterV3 writer,
+                                      RetentionServiceV3.Profile profile,String lineage,Path newRawDir,RunBudget budget,long maximumLogicalRpcs,int archiveChunkBytes)throws IOException{
+        this.archiveChunkBytes=requireArchiveChunkBytes(archiveChunkBytes);
         if(maximumLogicalRpcs<1||maximumLogicalRpcs>250000)throw new IllegalArgumentException("explicit finite logical RPC cap1..250000 required");this.maximumLogicalRpcs=maximumLogicalRpcs;
         this.owner=Objects.requireNonNull(owner);this.writer=Objects.requireNonNull(writer);this.profile=Objects.requireNonNull(profile);
         this.lineage=lineage;scope=new Scope(profile.fingerprint(),lineage);this.budget=Objects.requireNonNull(budget);
@@ -77,7 +83,7 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
         try{replies=new DataOutputStream(Files.newOutputStream(rawRoot.resolve("logical-rpc-replies.bin"),StandardOpenOption.CREATE_NEW));}
         catch(IOException error){try{openedRequests.close();}catch(IOException cleanup){error.addSuppressed(cleanup);}throw error;}
         requests=openedRequests;
-        try{timings=new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(rawRoot.resolve("logical-rpc-timings.csv"),StandardOpenOption.CREATE_NEW),65536));timings.writeBytes("rpc,kind,correlation_id,start_monotonic_ns,end_monotonic_ns,elapsed_ns,completed\n");}
+        try{timings=new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(rawRoot.resolve("logical-rpc-timings.csv"),StandardOpenOption.CREATE_NEW),65536));timings.writeBytes("rpc,kind,correlation_id,start_monotonic_ns,end_monotonic_ns,elapsed_ns,completed,archive_chunk_requested_bytes,event_fetch_requested_count\n");}
         catch(IOException error){try{requests.close();}finally{replies.close();}throw error;}
     }
     private void affinity(){if(Thread.currentThread()!=caller)throw new IllegalStateException("one maintenance coordinator caller required");}
@@ -94,7 +100,7 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
         if(!reply.error().isEmpty())throw new IOException("maintenance reply error, no ACK success: "+reply.error());completed=true;return reply;
         }finally{
             long ended=System.nanoTime(),elapsed=ended-rpcStart;long[] values=rpcKinds.computeIfAbsent(kind,k->new long[4]);values[0]++;values[1]+=elapsed;values[2]=Math.max(values[2],elapsed);if(!completed)values[3]++;
-            String timingRow=rpcCount+","+kind+","+correlation+","+rpcStart+","+ended+","+elapsed+","+completed+"\n";
+            String timingRow=rpcCount+","+kind+","+correlation+","+rpcStart+","+ended+","+elapsed+","+completed+","+(operation instanceof ArchiveChunk chunk?chunk.count():"")+","+(operation instanceof FetchEvents fetch?fetch.count():"")+"\n";
             if(timingRow.length()>256)throw new IOException("bounded logical maintenance timing row exceeds256bytes");timings.writeBytes(timingRow);timings.flush();
         }
     }
@@ -122,7 +128,7 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
         if(descriptor.totalBytes()>fileLimit)throw new IOException("archive exceeds explicit per-prefix allocation cap");
         byte[] payload=new byte[descriptor.totalBytes()];
         for(int offset=0;offset<payload.length;){
-            Reply reply=exchange(new ArchiveChunk(ack,payload.length,offset,Math.min(MAX_ARCHIVE_CHUNK,payload.length-offset)));
+            Reply reply=exchange(new ArchiveChunk(ack,payload.length,offset,Math.min(archiveChunkBytes,payload.length-offset)));
             if(!(reply.payload() instanceof Chunk chunk)||chunk.offset()!=offset)throw new IOException("archive chunk prefix gap");
             byte[] part=chunk.data();System.arraycopy(part,0,payload,offset,part.length);offset+=part.length;
         }
@@ -154,10 +160,10 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
                     ||eventState.maintenance().exportedEventSeq()!=throughEvent)throw new IOException("event ACK not exactly applied; retain unresolved original identity");
         }
         budget.lastArchive=ack;budget.lastEvent=throughEvent;cycleCount++;
-        String receipt="cycle="+cycleCount+"\ncycleStartedMonotonicNs="+cycleStarted+"\ncycleEndedMonotonicNs="+System.nanoTime()+"\nlogicalRpcCountAtStart="+rpcAtStart+"\nlogicalRpcCountAtEnd="+rpcCount+"\nfirstCommandSeq="+from+"\nthroughCommandSeq="+through+"\nthroughEventSeq="+throughEvent+"\narchiveFile="+archiveFile.path()+"\narchiveSha256="+archiveFile.sha256()+"\neventFile="+eventFile+"\nforceAndReadbackBeforeBothAcks=true\nreservedJournalRecords="+budget.reservedJournalRecords+"\nreservedJournalBytes="+budget.reservedJournalBytes+"\ncapacityClaim=false\n";
+        String receipt="cycle="+cycleCount+"\ncycleStartedMonotonicNs="+cycleStarted+"\ncycleEndedMonotonicNs="+System.nanoTime()+"\nlogicalRpcCountAtStart="+rpcAtStart+"\nlogicalRpcCountAtEnd="+rpcCount+"\narchiveChunkBytes="+archiveChunkBytes+"\neventFetchCount=16\nfirstCommandSeq="+from+"\nthroughCommandSeq="+through+"\nthroughEventSeq="+throughEvent+"\narchiveFile="+archiveFile.path()+"\narchiveSha256="+archiveFile.sha256()+"\neventFile="+eventFile+"\nforceAndReadbackBeforeBothAcks=true\nreservedJournalRecords="+budget.reservedJournalRecords+"\nreservedJournalBytes="+budget.reservedJournalBytes+"\ncapacityClaim=false\n";
         Files.writeString(rawRoot.resolve("cycle-"+cycleCount+".verified.txt"),receipt,StandardOpenOption.CREATE_NEW);
         return new Cycle(ack,archiveFile.path(),eventFile,verified.entries(),throughEvent);
     }
-    public Map<String,Object> snapshot(){affinity();var result=new LinkedHashMap<String,Object>(budget.snapshot());result.put("logicalRpcCount",rpcCount);result.put("maximumLogicalRpcs",maximumLogicalRpcs);var kinds=new LinkedHashMap<String,Object>();for(var entry:rpcKinds.entrySet()){long[] v=entry.getValue();kinds.put(entry.getKey(),Map.of("count",v[0],"totalElapsedNs",v[1],"maxElapsedNs",v[2],"failed",v[3]));}result.put("rpcKinds",kinds);result.put("completedCycles",cycleCount);result.put("failed",failed);return Collections.unmodifiableMap(result);}
+    public Map<String,Object> snapshot(){affinity();var result=new LinkedHashMap<String,Object>(budget.snapshot());result.put("archiveChunkBytes",archiveChunkBytes);result.put("eventFetchCount",16);result.put("logicalRpcCount",rpcCount);result.put("maximumLogicalRpcs",maximumLogicalRpcs);var kinds=new LinkedHashMap<String,Object>();for(var entry:rpcKinds.entrySet()){long[] v=entry.getValue();kinds.put(entry.getKey(),Map.of("count",v[0],"totalElapsedNs",v[1],"maxElapsedNs",v[2],"failed",v[3]));}result.put("rpcKinds",kinds);result.put("completedCycles",cycleCount);result.put("failed",failed);return Collections.unmodifiableMap(result);}
     @Override public void close()throws IOException{affinity();closed=true;try{requests.close();}finally{try{replies.close();}finally{timings.close();}}}
 }

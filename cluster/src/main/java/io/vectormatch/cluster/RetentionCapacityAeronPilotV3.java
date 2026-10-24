@@ -24,7 +24,7 @@ public final class RetentionCapacityAeronPilotV3 {
     private static final int ARRIVALS=6400,RATE=500;
     private record Owned(Process process,Instant started,String command,List<String> arguments,int member,Path log){}
     private final Path root;
-    private final int cap,ports;
+    private final int cap,ports,archiveChunkBytes;
     private final String lineage="capacity-pilot-"+UUID.randomUUID();
     private final RetentionServiceV3.Profile profile=RetentionBatchProfilesV3.finiteLoadProfile();
     private final String code=RetentionNodeMainV3.codeFingerprint();
@@ -35,17 +35,21 @@ public final class RetentionCapacityAeronPilotV3 {
     private boolean allOwnedStopped=true;
 
     private RetentionCapacityAeronPilotV3(Path freshRoot,int cap,int ports)throws Exception{
-        this.cap=cap;this.ports=ports;root=freshRoot.toAbsolutePath().normalize();Files.createDirectory(root);
+        this(freshRoot,cap,ports,DEFAULT_ARCHIVE_CHUNK,false);
+    }
+    private RetentionCapacityAeronPilotV3(Path freshRoot,int cap,int ports,int archiveChunkBytes,boolean commonEnvelope)throws Exception{
+        this.archiveChunkBytes=requireArchiveChunkBytes(archiveChunkBytes);this.cap=cap;this.ports=ports;root=freshRoot.toAbsolutePath().normalize();Files.createDirectory(root);
         var base=RetentionCapacityPlanV3.plan(ARRIVALS,cap,profile);
-        plan=RetentionCapacityPlanV3.planWithOfferBudget(ARRIVALS,cap,profile,ARRIVALS/4L,
-                ARRIVALS+base.maximumLogicalMaintenanceRpcs());plan.requireAdmitted();
+        plan=commonEnvelope?RetentionCapacityExperimentV3.boundedPlan(new RetentionCapacityExperimentV3.Config(ARRIVALS,RATE,cap,archiveChunkBytes),profile):
+                RetentionCapacityPlanV3.planWithOfferBudget(ARRIVALS,cap,profile,ARRIVALS/4L,ARRIVALS+base.maximumLogicalMaintenanceRpcs());plan.requireAdmitted();
         // Must precede the very first registration, node log, artifact receipt or load file.
         disk=RetentionCapacityDiskGuardV3.openFresh(root,plan);
         reference=new RetentionClusteredServiceV3(profile,lineage,true);reference.onStart(null,null);
-        write("registration.json",Map.of("scope","LOCAL_THREE_JVM_CONTINUOUS_ARRIVAL_FUNCTIONAL_PILOT",
+        var registration=new LinkedHashMap<String,Object>(Map.of("scope","LOCAL_THREE_JVM_CONTINUOUS_ARRIVAL_FUNCTIONAL_PILOT",
                 "arrivals",ARRIVALS,"rate",RATE,"batchCap",cap,"appointedLeader",0,"sync",2,
                 "profileSha256",profile.fingerprint(),"codeSha256",code,"lineage",lineage,"ports",ports));
-        writeArtifactInventory();
+        registration.put("archiveChunkBytes",archiveChunkBytes);registration.put("eventFetchCount",16);registration.put("commonChunkEnvelope",commonEnvelope);
+        write("registration.json",registration);writeArtifactInventory();
     }
     public static Path run(Path newPairRoot)throws Exception{
         Path pair=newPairRoot.toAbsolutePath().normalize();Files.createDirectory(pair);int ports=ports();
@@ -64,9 +68,24 @@ public final class RetentionCapacityAeronPilotV3 {
                 "scope","Functional source/correctness pilot only; distinct fresh lineages are not cumulative endurance"));
         return pair;
     }
+    /** Single factor: both arms cap4, all operational caps from the same union envelope. */
+    public static Path runArchiveChunks(Path newPairRoot)throws Exception{return runArchiveChunks(newPairRoot,ports());}
+    public static Path runArchiveChunks(Path newPairRoot,int ports)throws Exception{
+        verifyChunkPorts(ports); // Explicit occupied port fails before any registration/business; no fallback.
+        Path pair=newPairRoot.toAbsolutePath().normalize();Files.createDirectory(pair);
+        for(int chunk:List.of(DEFAULT_ARCHIVE_CHUNK,MAX_SUPPORTED_ARCHIVE_CHUNK)){
+            var pilot=new RetentionCapacityAeronPilotV3(pair.resolve("chunk-"+chunk),4,ports,chunk,true);
+            Throwable failure=null;boolean passed=false;
+            try{pilot.exercise();passed=true;}catch(Throwable error){failure=error;pilot.failure(error);throw error;}
+            finally{try{pilot.stopOwned();}catch(Throwable cleanup){if(failure!=null)failure.addSuppressed(cleanup);else throw cleanup;}
+                finally{pilot.write("completion.json",Map.of("passed",passed&&pilot.allOwnedStopped,"allOwnedStopped",pilot.allOwnedStopped,"independentHosts",false,"capacityOrEnduranceProven",false,"fixedLeader",0,"archiveChunkBytes",chunk));}}
+        }
+        RetentionCapacityJsonV3.writeNew(pair.resolve("pair-completion.json"),Map.of("passed",true,"archiveChunkBytes",List.of(DEFAULT_ARCHIVE_CHUNK,MAX_SUPPORTED_ARCHIVE_CHUNK),"fixedBusinessBatchCap",4,"scope","Single-factor local functional chunk comparison; not a capacity or speedup proof"));return pair;
+    }
     public static void main(String[] args)throws Exception{
-        if(args.length!=1)throw new IllegalArgumentException("RetentionCapacityAeronPilotV3 <new-pair-directory>");
-        System.out.println("VECTOR_V3_CAPACITY_SOURCE_PILOT_PASS evidence="+run(Path.of(args[0])));
+        if(args.length!=1 && !((args.length==2||args.length==3)&&args[1].equals("archive-chunks")))throw new IllegalArgumentException("RetentionCapacityAeronPilotV3 <new-pair-directory> [archive-chunks [fixed-port-base]]");
+        if(args.length==3&&!args[2].matches("[1-9][0-9]{3,4}"))throw new IllegalArgumentException("canonical fixed UDP port base required");
+        System.out.println("VECTOR_V3_CAPACITY_SOURCE_PILOT_PASS evidence="+(args.length==1?run(Path.of(args[0])):args.length==2?runArchiveChunks(Path.of(args[0])):runArchiveChunks(Path.of(args[0]),Integer.parseInt(args[2]))));
     }
     private Scope scope(){return new Scope(profile.fingerprint(),lineage);}
     private RetentionClientV3 client(String label){return new RetentionClientV3(root.resolve("control-"+label),ports,profile,lineage);}
@@ -87,10 +106,12 @@ public final class RetentionCapacityAeronPilotV3 {
             require(client.leaderMemberId()==0,"appointed leader0 required before arrivals");verifyPosition(client,"setup");
         }
         disk.check();
-        var result=RetentionCapacityExperimentV3.run(root.resolve("load"),root,new RetentionCapacityExperimentV3.Config(ARRIVALS,RATE,cap),
-                profile,lineage,()->new RetentionBatchAeronTransportV3(root.resolve("owner-driver"),ports,profile,lineage,true),plan,disk);
+        var result=RetentionCapacityExperimentV3.run(root.resolve("load"),root,new RetentionCapacityExperimentV3.Config(ARRIVALS,RATE,cap,archiveChunkBytes),
+                profile,lineage,()->new RetentionBatchAeronTransportV3(root.resolve("owner-driver"),ports,profile,lineage,true,archiveChunkBytes),plan,disk);
+        require(((Number)result.summary().get("confirmedAcceptedUniqueOrders")).longValue()==ARRIVALS && ((Number)result.summary().get("notSent")).longValue()==0,"functional pilot must preserve all original planned orders");
         require(((Number)result.summary().get("unknownFinal")).longValue()==0,"functional pilot has final UNKNOWN; retained raw evidence");
         require(((Number)result.summary().get("maintenanceCycles")).longValue()>=2,"must cross at least two maintenance cycles");
+        Map<String,Object> actualEgress=verifiedEgress(result.summary());
         reconcilePhysicalTape(root.resolve("load"));
         try(var client=client("final")){
             require(client.leaderMemberId()==0,"appointed leader0 required after arrivals");Reply position=verifyPosition(client,"final");
@@ -100,9 +121,20 @@ public final class RetentionCapacityAeronPilotV3 {
             snapshot(0,position.counters().stateHash());
             write("functional-result.json",Map.of("passed",true,"businessSeq",position.counters().businessSeq(),"eventSeq",position.counters().eventSeq(),
                     "acceptedPlaceCount",position.counters().acceptedPlaceCount(),"finalCombinedSha256",position.counters().stateHash(),
-                    "allThreeSnapshotLogsMatched",true,"noCapacityPromotion",true,"actualSourceSummary",result.summary()));
+                    "allThreeSnapshotLogsMatched",true,"noCapacityPromotion",true,"actualSourceSummary",result.summary(),"actualEgressBounds",actualEgress,"archiveChunkBytes",archiveChunkBytes));
         }
         disk.check();write("disk-after-functional.json",disk.snapshot());
+    }
+    static Map<String,Object> verifiedEgress(Map<String,Object> summary){
+        if(!(summary.get("physicalOfferTape") instanceof Map<?,?> tape)||!(tape.get("lastActualTransportObservation") instanceof Map<?,?> actual)||!(actual.get("actualEgressBounds") instanceof Map<?,?> bounds))throw new IllegalStateException("terminal proof lacks actual egress evidence");
+        if(!(bounds.get("replyHeaderImageAssociations") instanceof Number associations)||!(tape.get("recordedReplies") instanceof Number replies)||associations.longValue()!=replies.longValue()||replies.longValue()<1
+                ||!(bounds.get("actualImageObservations") instanceof Number samples)||samples.longValue()<2
+                ||!(bounds.get("requiredApplicationReplyBytes") instanceof Number app)||app.intValue()!=RetentionReplyV3.maxEncodedArchiveChunkReplyBytes(MAX_SUPPORTED_ARCHIVE_CHUNK)
+                ||!(bounds.get("requiredCompleteMessageBytes") instanceof Number complete)||complete.intValue()!=app.intValue()+32
+                ||!(bounds.get("minimumActualDerivedMaxMessageLength") instanceof Number limit)||limit.longValue()<complete.longValue()
+                ||!(bounds.get("activeImageCorrelations") instanceof List<?> active)||active.isEmpty()
+                ||!Boolean.FALSE.equals(bounds.get("defaultMetadataSubstituted")))throw new IllegalStateException("terminal egress geometry/header association proof differs");
+        var copied=new LinkedHashMap<String,Object>();for(var entry:bounds.entrySet()){if(!(entry.getKey() instanceof String key))throw new IllegalStateException("invalid egress evidence key");copied.put(key,entry.getValue());}return Collections.unmodifiableMap(copied);
     }
     private Reply verifyPosition(RetentionClientV3 client,String label)throws Exception{
         Reply actual=client.exchange(new Position(),TIMEOUT);require(actual.error().isEmpty(),"position reply failed");
@@ -196,6 +228,11 @@ public final class RetentionCapacityAeronPilotV3 {
     private void write(String name,Object value)throws IOException{RetentionCapacityJsonV3.writeNew(root.resolve(name),value);}
     private static void record(DataOutputStream out,byte[] bytes)throws IOException{out.writeInt(bytes.length);out.write(bytes);out.flush();}
     private static String sha(byte[] bytes){return HexFormat.of().formatHex(ClusterStateSnapshot.digest(bytes));}
+    static void verifyChunkPorts(int ports)throws IOException{
+        ClusterTopology.local(ports);var sockets=new ArrayList<DatagramSocket>();
+        try{for(int member=0;member<3;member++)for(int offset=1;offset<=5;offset++)sockets.add(new DatagramSocket(ports+member*100+offset,InetAddress.getByName("127.0.0.1")));}
+        finally{sockets.forEach(DatagramSocket::close);}
+    }
     private static int ports()throws IOException{
         for(int attempt=0;attempt<30;attempt++){int base=java.util.concurrent.ThreadLocalRandom.current().nextInt(35000,55000);var sockets=new ArrayList<DatagramSocket>();
             try{for(int member=0;member<3;member++)for(int offset=1;offset<=5;offset++)sockets.add(new DatagramSocket(base+member*100+offset,InetAddress.getByName("127.0.0.1")));return base;}
