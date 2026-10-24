@@ -1,0 +1,13 @@
+# Closed local Event Fetch16/32 source/unit candidate
+
+Tests ran on base8993bee plus the exact captured12path diff. Root subsequently recorded the same12 unchangedsource/doc bytes as sourcecommitd92301d3058acc83cb85d5bc5b4fd2e3f0ed4df8; the original SOURCE_FROZEN noCommit flag describes its earlier generation time and is not rewritten. This archive performed noGit action.
+
+Historicalcodec-r1 has111source inputs/311artifacts and4tests; finalunits-r1 has112source inputs/335artifacts and9XMLclasses/47tests,0failures/0skip, plus forcedinstallDist. Initial4 are included in final47, not51 distinct tests. Each ZIP is verified against its own immutablemanifest. Five later source changes are expected between historicalcodec and finalintegration. Both originalsource/artifactZIPs, rawXML and materializedXML, exactarguments/runner/init/JDK/classpath/logs and allcurrent12source/doc bytes are retained.
+
+Actualmaximum合法32item128UTF8-byte detail codec replies are6763B/6795B includingAeronheader; no truncation. V3service returns contiguous32 while legacy16prefix matches; page32coordinator preserves eightoriginals/fencesACK onfailure. CommonPlan admits4225vs2113prospectivefetches with identical185514924raw/757122377growth budgets. These are unit/codec/admissionfacts, not measuredthroughput/latency/capacity/speedup. Defaultpage16 andowner1ms remain.
+
+Four real installedJARs are preserved. Their cluster177/core41class entries exactly match finalcompiledcapture. The4JAR-derivedfingerprint87a7ccd0 is prospective; no actualLinuxclassorigin/constructorconsumption/newmetadata/native/cloud/strictLONGparser/performance certification occurred. Every17classpathfilepin perattempt is retained; core/Aeron/Agrona fullbodies alreadycaptured are mapped explicitly. The other14testdependencies perattempt remain hash-only, not silently downloaded or called self-contained. JDKrelease body is copied; fullJDK/runtime binaries are hash-only.
+
+Allpeerreview files and its two preparatory diagnosticerrors are retained; those were reviewer parse/assumption failures, not candidate/test failures. The final executed read-only verifier source is included. The first failedinline draft was only retained as its available diagnostic, not a fabricated standalone source. Rootindependentreview and its fullsource are also copied.
+
+Archiveonly: completecopy SHA/size/mode/uid/gid/emptydirectory closure, ZIPmember SHA/mode/CRC and knownmarker nestedJAR review. ZIPmemberuid/gid were not originallycaptured and are not invented; materializedXML ownership is local. No tests/reviewer/Java/JVM/Gradle/metadata/native/rawaudit/cloud/SSH/network/Git rerun, no source edits/deletion. INVENTORY excludes onlyitself andCLOSED; CLOSED bindsit.

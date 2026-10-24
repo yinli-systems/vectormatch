@@ -1,0 +1,15 @@
+{
+  "scope": "REVIEWER_ASSUMPTION_ERROR_NOT_CANDIDATE_FAILURE",
+  "error": "AssertionError while comparing first codec snapshot against later final source state",
+  "reason": "codec-r1 is111 historical inputs; five later Plan/coordinator/pilot/window-test inputs differ; final units-r1 has112 current inputs. Each attempt must bind its own recorded snapshot.",
+  "actualCandidateTestFailure": false,
+  "sourceOrArtifactMutation": false,
+  "fiveExpectedLaterDifferences": [
+    "RetentionCapacityExperimentV3.java",
+    "RetentionCapacityPlanV3.java",
+    "RetentionMaintenanceReadWindowV3Test.java",
+    "RetentionCapacityAeronPilotV3.java",
+    "RetentionBatchMaintenanceV3.java"
+  ],
+  "correction": "Verify each recorded ZIP/manifest; require current112 finalinputs exact and codec-test/Reply/Wire/Service/Outbox unchanged across snapshots. Read historical codec coreJAR from its capturedZIP rather than newer currentJAR."
+}

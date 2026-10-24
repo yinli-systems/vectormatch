@@ -1,0 +1,2 @@
+import groovy.json.JsonOutput
+gradle.projectsEvaluated { allprojects { p -> p.tasks.withType(Test).configureEach { t -> doFirst { def f = new File("/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/event-fetch-page-v3-worktree/runtime/event-fetch-local-validation/codec-r1/actual-test-inputs.json"); f.text=JsonOutput.prettyPrint(JsonOutput.toJson([task:t.path,javaExecutable:t.javaLauncher.get().executablePath.asFile.absolutePath,jvmArgs:t.allJvmArgs,classpath:t.classpath.files.collect{it.absolutePath}])) } } } }

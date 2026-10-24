@@ -1,0 +1,282 @@
+{
+  "all112FinalRegisteredSourceInputsMatchCurrentAndZIP": true,
+  "all12FrozenSourceDocPinsUnchangedBeforeAfter": true,
+  "baseCommit": "8993bee4723f89012a033a0a243c09feeb1c74c5",
+  "branch": "codex/event-fetch-page-v3",
+  "javaGradleNativeSshGitOrActualRawRun": false,
+  "nonBlockingLimitations": [
+    {
+      "details": "Events construction now allocates a UTF8Encoder and encodedByteBuffer for each event; decode also reconstructs and canonically re-encodes. This changes legacy16 CPU/allocation cost while preserving validwirebehavior. It prevents unpaired Java surrogates from becoming replacementbytes via legacygetBytes. No measured allocation or speedup evidence exists. A future performance comparison must use this same NEWartifact in both16 and32 arms; never compare against old235artifact as a page-only speedup.",
+      "topic": "New per-event allocation in both valid16 and32 paths"
+    },
+    {
+      "details": "Existing128byteFFcorruption test rejects correctly, and sourcecanonicalbytegate also rejects shortmalformed payloads. A short1byteFF test would document that distinct mechanism more directly but is not a blocking correctness gap and was not added or run by this reviewer.",
+      "topic": "Optional targeted malformedUTF8 guard"
+    },
+    {
+      "details": "This approves reviewedsource/localunitartifact coherence only. Actual newLinuxclassorigin/constructor/owner observations, nativepair, homogeneousJARsource release/controller/strictLONGrawparser, fullarchives and cloudtiming remain separate future gates. No performance/capacity/hardRealtime/rawparser or deployment approval is implied.",
+      "topic": "Scope of acceptance"
+    }
+  ],
+  "passed": true,
+  "performanceOrNativeCloudRawParserCertification": false,
+  "reviewedAtUtc": "2026-10-24T10:36:46.778531+00:00",
+  "reviewedSourceOrTestsEdited": false,
+  "reviewedSourceOrTestsExecuted": false,
+  "reviewerPreparatoryFailuresPreserved": [
+    {
+      "file": "VERIFICATION_PREPARATION_FAILURE_R1.json",
+      "meaning": "Reviewer inline verification script parse error before execution; not candidate failure"
+    },
+    {
+      "file": "VERIFICATION_ASSUMPTION_FAILURE_R2.json",
+      "meaning": "Reviewer initially compared historicalcodec111 to final112 as if same source state; corrected independent own-snapshot check, no candidate failure"
+    }
+  ],
+  "schemaVersion": 1,
+  "scope": "INDEPENDENT_EVENT_FETCH_V3_SOURCE_AND_EXISTING_LOCAL_UNIT_ARTIFACT_REVIEW_ONLY",
+  "sourceCorrectnessBlockers": [],
+  "sourceDiff": {
+    "bytes": 83953,
+    "mode": 420,
+    "sha256": "ddc4cbb92b529b6fbda29403c52bc52960fe8cbde8f58cbb9025c46028dd37de"
+  },
+  "sourceFindings": [
+    {
+      "anchors": [
+        "ReplicatedOutbox.java:41-68",
+        "RetentionWireV3.java:32-36,137-140",
+        "RetentionCapacityExperimentV3.java:21-35"
+      ],
+      "conclusion": "CommandCodec remains16 and legacy ReplicatedOutbox.fetch retains16clamp; V3 fetchV3 returns exact requested1..32prefix. OldConfig/Plan/coordinator constructors select16 and do not emit commonEventFetchEnvelope. Valid16wireversion/tag/layout unchanged; V3 now rejects malformed/over128byte Java event details before encoding.",
+      "topic": "Default and legacy16"
+    },
+    {
+      "anchors": [
+        "RetentionReplyV3.java:16-28,142-160,247-299",
+        "CommandCodec.java:170-182,200-211"
+      ],
+      "conclusion": "Actual32events with128-byte valid Chinese/accent and astral details encode6763B/6795B complete; bounds8192/6919/6951 unchanged. Events validates valid UTF8 and128encodedbytes without truncation. CommandCodec.readEvent is permissive internally, but existing V3decode canonical re-encode equality rejects malformed short bytes as well as maxwidth corruption. No broader legacy CommandCodec decoder certification is claimed.",
+      "topic": "Reply byte and UTF8 safety"
+    },
+    {
+      "anchors": [
+        "RetentionBatchMaintenanceV3.java:145-178,216-265",
+        "RetentionMaintenanceReadWindowV3Test.java"
+      ],
+      "conclusion": "Only page selection and per-wave page counts change. Same readbank retains completed-unconsumed credit; original wires flush before arm; exact requested event count and equality to verified archive prefix are required; both payloads force/readback before archive and eventACK. Owner/IO/writer, fixed read8, original permits/deadlines, UNKNOWN retention and ACK identities are unchanged by the registered diff. Page32semantic failure tests retain eight originals and fence bothACKs.",
+      "topic": "No ACK/UNKNOWN/read-credit/deadline relaxation"
+    },
+    {
+      "anchors": [
+        "RetentionCapacityPlanV3.java:157-210,218-291",
+        "RetentionEventFetchPlanV3Test.java:11-33"
+      ],
+      "conclusion": "Both selected pages compute actual codec-backed inventories then take conservative union. Operational maxima, raw/growth/journal/staging/offer/reply/writer bounds stay equal; only selectedpage and selectedRPCcounts differ. Tested LONGeventRPCbound4225versus2113; raw185514924/growth757122377 and hard2GiB/2.5GiB/floor1GiB unchanged. These are admission arithmetic, not measured savings.",
+      "topic": "Common same-artifact16/32Plan"
+    },
+    {
+      "anchors": [
+        "RetentionCapacityAeronPilotV3.java:62-86,135-159,183-191,233-237",
+        "RetentionCapacityExperimentV3.java:67-96,119-123"
+      ],
+      "conclusion": "CLI accepts only event-fetch-page-long-cuts16|32/42000, checks explicit driver100us and effective owner1ms before ports/FS, creates fixed LONG/cap4/chunk6144/read8 plan/config, passes eventFetchCount to actual coordinator and emits registration/config/summary/maintenance/functional selectedpage. Invalid choices cannot create an arm root. Sourcepath examined only; no native invocation certified.",
+      "topic": "Explicit actual runtime configuration path"
+    }
+  ],
+  "sourceFreeze": {
+    "bytes": 3820,
+    "mode": 420,
+    "sha256": "59905e9287f862d6169077fa481c7ee94259d2244b3b556cc6c84e155c329187"
+  },
+  "sourcePinsAfter": {
+    "cluster/RETENTION_EVENT_FETCH_V3.md": {
+      "bytes": 3969,
+      "mode": 420,
+      "sha256": "8a87bfeda15d638a1257da3698942170b9888b033093bb33585714ba2ff847c6"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/ReplicatedOutbox.java": {
+      "bytes": 4354,
+      "mode": 420,
+      "sha256": "f230c415266088a177214a0a5bb4748a019ee4b309aa46ad9a655445a4904834"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionBatchMaintenanceV3.java": {
+      "bytes": 24905,
+      "mode": 420,
+      "sha256": "886a72b2a0b8ede5df2fd7b93c624a400d823367d945373971fd20e4ed5e257f"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityAeronPilotV3.java": {
+      "bytes": 35558,
+      "mode": 420,
+      "sha256": "39aafd862ff968b6a9b76b5849e6499dcc8cc2ea1ee867dad8614fa08f5db40a"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityExperimentV3.java": {
+      "bytes": 37383,
+      "mode": 420,
+      "sha256": "b90310b68a10442c56f830bbaf9afe54c8a10f7236899afb056b3a60e831a61a"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityPlanV3.java": {
+      "bytes": 36357,
+      "mode": 420,
+      "sha256": "881a94050dffa035cd14d8071b7b47196229256c99cac65d69bcc321810f1e75"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionReplyV3.java": {
+      "bytes": 24761,
+      "mode": 420,
+      "sha256": "57dd3274ba1bda5bdc6bf639e7995b9f13160ae6a8b491474aa29f69c6cf1f10"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionServiceV3.java": {
+      "bytes": 34212,
+      "mode": 420,
+      "sha256": "b2199ca52aacb997500cd09eb8a5161869f00b219745c408a809acec1684db60"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionWireV3.java": {
+      "bytes": 19832,
+      "mode": 420,
+      "sha256": "62cc92394eb4c4482ff5bb9077bcdae5772d8df2c4c54dfe5ddfbb546901adb5"
+    },
+    "cluster/src/test/java/io/vectormatch/cluster/RetentionEventFetchPageV3Test.java": {
+      "bytes": 6620,
+      "mode": 420,
+      "sha256": "96103de1724a565580d72f7f12692a86bd6a6adca8100b82454c6f74c699ea58"
+    },
+    "cluster/src/test/java/io/vectormatch/cluster/RetentionEventFetchPlanV3Test.java": {
+      "bytes": 5499,
+      "mode": 420,
+      "sha256": "b7d4ca37ed6dc4a4000fbb1370980cc446890065844628f4be3a63f3e315e9b2"
+    },
+    "cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java": {
+      "bytes": 19459,
+      "mode": 420,
+      "sha256": "497faa3619ae620deeb1beab00deddac423c6240c908eb0e07b5b177986fe0d3"
+    }
+  },
+  "sourcePinsBefore": {
+    "cluster/RETENTION_EVENT_FETCH_V3.md": {
+      "bytes": 3969,
+      "mode": 420,
+      "sha256": "8a87bfeda15d638a1257da3698942170b9888b033093bb33585714ba2ff847c6"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/ReplicatedOutbox.java": {
+      "bytes": 4354,
+      "mode": 420,
+      "sha256": "f230c415266088a177214a0a5bb4748a019ee4b309aa46ad9a655445a4904834"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionBatchMaintenanceV3.java": {
+      "bytes": 24905,
+      "mode": 420,
+      "sha256": "886a72b2a0b8ede5df2fd7b93c624a400d823367d945373971fd20e4ed5e257f"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityAeronPilotV3.java": {
+      "bytes": 35558,
+      "mode": 420,
+      "sha256": "39aafd862ff968b6a9b76b5849e6499dcc8cc2ea1ee867dad8614fa08f5db40a"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityExperimentV3.java": {
+      "bytes": 37383,
+      "mode": 420,
+      "sha256": "b90310b68a10442c56f830bbaf9afe54c8a10f7236899afb056b3a60e831a61a"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityPlanV3.java": {
+      "bytes": 36357,
+      "mode": 420,
+      "sha256": "881a94050dffa035cd14d8071b7b47196229256c99cac65d69bcc321810f1e75"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionReplyV3.java": {
+      "bytes": 24761,
+      "mode": 420,
+      "sha256": "57dd3274ba1bda5bdc6bf639e7995b9f13160ae6a8b491474aa29f69c6cf1f10"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionServiceV3.java": {
+      "bytes": 34212,
+      "mode": 420,
+      "sha256": "b2199ca52aacb997500cd09eb8a5161869f00b219745c408a809acec1684db60"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionWireV3.java": {
+      "bytes": 19832,
+      "mode": 420,
+      "sha256": "62cc92394eb4c4482ff5bb9077bcdae5772d8df2c4c54dfe5ddfbb546901adb5"
+    },
+    "cluster/src/test/java/io/vectormatch/cluster/RetentionEventFetchPageV3Test.java": {
+      "bytes": 6620,
+      "mode": 420,
+      "sha256": "96103de1724a565580d72f7f12692a86bd6a6adca8100b82454c6f74c699ea58"
+    },
+    "cluster/src/test/java/io/vectormatch/cluster/RetentionEventFetchPlanV3Test.java": {
+      "bytes": 5499,
+      "mode": 420,
+      "sha256": "b7d4ca37ed6dc4a4000fbb1370980cc446890065844628f4be3a63f3e315e9b2"
+    },
+    "cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java": {
+      "bytes": 19459,
+      "mode": 420,
+      "sha256": "497faa3619ae620deeb1beab00deddac423c6240c908eb0e07b5b177986fe0d3"
+    }
+  },
+  "validationEvidence": {
+    "actualRuntimeClassOriginsOrConstructorConsumptionObserved": false,
+    "codecCapturedArtifactsAllMembersRehashed": 311,
+    "codecCompletion": {
+      "bytes": 477,
+      "mode": 420,
+      "sha256": "b743c196f6c0e750dcb479dad3e226f8f84f7d7c850ca75aee8564e5c184d9e0"
+    },
+    "codecHistoricalExpectedLaterSourceDifferences": [
+      "cluster/src/main/java/io/vectormatch/cluster/RetentionBatchMaintenanceV3.java",
+      "cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityAeronPilotV3.java",
+      "cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityExperimentV3.java",
+      "cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityPlanV3.java",
+      "cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java"
+    ],
+    "codecHistoricalSourceInputs": 111,
+    "codecTestsAlreadyIncludedInFinal47": 4,
+    "existingArtifactVerification": {
+      "bytes": 13432,
+      "mode": 420,
+      "sha256": "f01a03092b9499e274765c3da0132c1abb42a68a3c03686256f9783e44931913"
+    },
+    "finalCapturedArtifactsAllMembersRehashed": 335,
+    "finalClasspathFilePinsRehashed": 17,
+    "finalCompletion": {
+      "bytes": 476,
+      "mode": 420,
+      "sha256": "6d03ee607f24203cadac9a9c81d4019294c99735cd3b8418d2a6926a84576ed3"
+    },
+    "finalErrors": 0,
+    "finalFailures": 0,
+    "finalSkipped": 0,
+    "finalTests": 47,
+    "finalXmlClasses": 9,
+    "forcedInstallDistTaskObserved": true,
+    "installedClusterMainClassesExactlyMatchCompileCapture": 177,
+    "installedCompiledClassBindings": {
+      "bytes": 403,
+      "mode": 420,
+      "sha256": "6eed29a3a5cc1c8705404bade55bfd2d3c0703a3d399b1aecb0408fb7b609852"
+    },
+    "installedCoreMainClassesExactlyMatchCompileCapture": 41,
+    "installedFourJarPins": {
+      "aeron-all-1.53.3.jar": {
+        "bytes": 3544128,
+        "mode": 420,
+        "sha256": "4c6c8a5014a2b67424051170392a005daa9a998ac963302d2819d0f3db749ef2"
+      },
+      "agrona-2.6.1.jar": {
+        "bytes": 491990,
+        "mode": 420,
+        "sha256": "84c07eb02695c06bfda3d6c3a20c1984e3ff1bbd617b2f8e678140baf973fa28"
+      },
+      "cluster-0.1.0-SNAPSHOT.jar": {
+        "bytes": 576393,
+        "mode": 420,
+        "sha256": "d69b2441c5809af714e65a55b00d968a9e88170c440da76818c78e3052e644dc"
+      },
+      "core-0.1.0-SNAPSHOT.jar": {
+        "bytes": 81916,
+        "mode": 420,
+        "sha256": "3355c405ae4ee7fc9797607ec4301f21767de70b74812f4f54f12888652846b1"
+      }
+    },
+    "prospectiveFingerprintIndependentlyRecomputed": "87a7ccd092f4d3c890bf8cc8bd7c6ffcd18900838699cd2b873fd1931cddb6aa"
+  }
+}
