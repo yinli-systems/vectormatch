@@ -1,0 +1,284 @@
+"""Ownership and configuration regression tests; no cloud or Java process required."""
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import Mock, patch
+
+SPEC = importlib.util.spec_from_file_location("remote_service", Path(__file__).with_name("remote_service.py"))
+remote = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(remote)
+
+
+class RemoteServiceTest(unittest.TestCase):
+    @staticmethod
+    def command_hash(args):
+        return hashlib.sha256(b"\0".join(os.fsencode(arg) for arg in args) + b"\0").hexdigest()
+
+    def test_proc_stat_accepts_parentheses_and_spaces_in_process_name(self):
+        fields = ["S"] + ["0"] * 18 + ["123456"] + ["0"] * 5
+        command = b"/usr/bin/java\0Main\0"
+        def fake_read_text(path):
+            self.assertEqual(str(path), "/proc/42/stat")
+            return "42 (java worker) test) " + " ".join(fields)
+        with patch.object(Path, "read_text", fake_read_text), patch.object(Path, "read_bytes", return_value=command):
+            self.assertEqual(remote.proc_identity(42), {
+                "startTicks": 123456, "commandSha256": hashlib.sha256(command).hexdigest()})
+
+    def test_zombie_is_stopped(self):
+        with patch.object(Path, "read_text", return_value="42 (java) Z " + "0 " * 25):
+            self.assertIsNone(remote.proc_identity(42))
+
+    def test_start_time_prevents_pid_reuse(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            record = Path(temporary) / "process.json"
+            remote.write_json(record, {"version": 1, "pid": 42, "startTicks": 1, "commandSha256": "abc"})
+            with patch.object(remote, "proc_identity", return_value={"startTicks": 2, "commandSha256": "abc"}):
+                self.assertEqual(remote.record_state(record)[0], "identity-mismatch")
+
+    def test_stop_refuses_mismatched_process(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            state = Path(temporary)
+            with patch.object(remote, "record_state", return_value=("identity-mismatch", {"pid": 42})), \
+                    patch.object(remote.os, "pidfd_open", create=True) as opened:
+                with self.assertRaisesRegex(ValueError, "unrelated process"):
+                    remote.stop(state, state / "process.json")
+                opened.assert_not_called()
+
+    def test_pidfd_stop_rechecks_identity_before_signal(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            record = {"pid": 42}
+            with patch.object(remote, "record_state", side_effect=[("running", record), ("identity-mismatch", record)]), \
+                    patch.object(remote.os, "pidfd_open", return_value=999, create=True), \
+                    patch.object(remote.os, "close") as closed, \
+                    patch.object(remote.signal, "pidfd_send_signal", create=True) as send:
+                with self.assertRaisesRegex(ValueError, "no signal sent"):
+                    remote.stop(Path(temporary), Path(temporary) / "process.json")
+                send.assert_not_called()
+                closed.assert_called_once_with(999)
+
+    def test_network_rejects_duplicate_nodes_and_requires_client_address(self):
+        with patch.dict(os.environ, {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.2,10.0.0.4"}, clear=True):
+            with self.assertRaisesRegex(ValueError, "distinct"):
+                remote.network_environment("node")
+        with patch.dict(os.environ, {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4"}, clear=True):
+            with self.assertRaisesRegex(ValueError, "EGRESS"):
+                remote.network_environment("gateway")
+
+    def test_node_command_uses_sync_two_and_conservative_mtu(self):
+        with patch.dict(os.environ, {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4"}, clear=True), \
+                patch.object(remote, "distribution", return_value=Path("/bundle/dist/cluster")), \
+                patch.object(remote, "java", return_value="/jdk/bin/java"):
+            args, environment = remote.command("node", 1, Path("/state/node-1"), "start")
+            self.assertEqual(args[-6:], ["1", "/state", "19000", "2", "65536", "10.0.0.2,10.0.0.3,10.0.0.4"])
+            self.assertEqual(environment["VECTOR_AERON_MTU_LENGTH"], "1248")
+            self.assertIn("-Xmx1g", args)
+
+    def test_database_secrets_are_not_command_arguments(self):
+        configuration = {"VM_PG_URL": "jdbc:postgresql://127.0.0.1/test", "VM_CLUSTER_ID": "generation-42",
+                         "VM_PG_PASSWORD": "secret-value"}
+        with patch.dict(os.environ, configuration, clear=True), \
+                patch.object(remote, "distribution", return_value=Path("/bundle/dist/projector")), \
+                patch.object(remote, "java", return_value="/jdk/bin/java"):
+            args, environment = remote.command("projector", None, Path("/state/projector"), "init")
+            self.assertNotIn("secret-value", json.dumps(args))
+            self.assertNotIn(configuration["VM_PG_URL"], json.dumps(args))
+            self.assertEqual(environment["VM_PG_PASSWORD"], "secret-value")
+            self.assertEqual(args[-1], "init")
+
+    def test_changed_mtu_repeated_start_refuses_the_existing_process(self):
+        configuration = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4",
+                         "VECTOR_AERON_MTU_LENGTH": "1248"}
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.dict(os.environ, configuration, clear=True), \
+                patch.object(remote, "distribution", return_value=Path("/bundle/dist/cluster")), \
+                patch.object(remote, "java", return_value="/jdk/bin/java"):
+            state = Path(temporary)
+            args, environment = remote.command("node", 1, state, "start")
+            existing = {"pid": 42, "commandSha256": self.command_hash(args),
+                        "configurationVersion": remote.CONFIGURATION_VERSION,
+                        "configurationSha256": remote.configuration_fingerprint("node", environment)}
+            os.environ["VECTOR_AERON_MTU_LENGTH"] = "1216"
+            self.assertEqual(args, remote.command("node", 1, state, "start")[0], "MTU is not an argv setting")
+            with patch.object(remote, "record_state", return_value=("running", existing)), \
+                    patch.object(remote.subprocess, "Popen") as launch:
+                with self.assertRaisesRegex(ValueError, "different non-secret configuration"):
+                    remote.start("node", 1, state, state / "process.json")
+                launch.assert_not_called()
+
+    def test_existing_process_without_configuration_fingerprint_requires_explicit_stop(self):
+        args, environment = ["/jdk/bin/java", "Main"], {"VECTOR_AERON_MTU_LENGTH": "1248"}
+        existing = {"pid": 42, "commandSha256": self.command_hash(args)}
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(remote, "command", return_value=(args, environment)), \
+                patch.object(remote, "record_state", return_value=("running", existing)), \
+                patch.object(remote.subprocess, "Popen") as launch:
+            state = Path(temporary)
+            with self.assertRaisesRegex(ValueError, "no recognized configuration fingerprint"):
+                remote.start("node", 0, state, state / "process.json")
+            launch.assert_not_called()
+
+    def test_matching_configuration_keeps_repeated_start_idempotent(self):
+        args, environment = ["/jdk/bin/java", "Main"], {"VECTOR_AERON_MTU_LENGTH": "1248"}
+        existing = {"pid": 42, "commandSha256": self.command_hash(args),
+                    "configurationVersion": remote.CONFIGURATION_VERSION,
+                    "configurationSha256": remote.configuration_fingerprint("node", environment)}
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(remote, "command", return_value=(args, environment)), \
+                patch.object(remote, "record_state", return_value=("running", existing)), \
+                patch.object(remote.subprocess, "Popen") as launch:
+            state = Path(temporary)
+            remote.start("node", 0, state, state / "process.json")
+            launch.assert_not_called()
+
+    def test_configuration_fingerprint_excludes_credentials_and_jdbc_urls(self):
+        environment = {"VECTOR_CLUSTER_HOSTS": "10.0.0.2,10.0.0.3,10.0.0.4", "VM_CLUSTER_ID": "lineage-one",
+                       "VM_PG_URL": "jdbc:postgresql://user:short-password@host/db?password=1234",
+                       "VM_PG_PASSWORD": "1234", "VM_PG_USER": "database-user", "OTHER_API_TOKEN": "short-token"}
+        real_sha = hashlib.sha256
+        with patch.object(remote.hashlib, "sha256", wraps=real_sha) as hashed:
+            original = remote.configuration_fingerprint("projector", environment)
+            encoded = hashed.call_args.args[0]
+            for excluded in ("VM_PG_URL", "VM_PG_PASSWORD", "VM_PG_USER", "OTHER_API_TOKEN",
+                             "short-password", "1234", "database-user", "short-token", "jdbc:"):
+                self.assertNotIn(excluded.encode(), encoded)
+        changed_secrets = {**environment, "VM_PG_URL": "jdbc:postgresql://another-host/other-db?password=other",
+                           "VM_PG_PASSWORD": "5678", "VM_PG_USER": "another-user", "OTHER_API_TOKEN": "other"}
+        self.assertEqual(original, remote.configuration_fingerprint("projector", changed_secrets))
+        self.assertNotEqual(original, remote.configuration_fingerprint("projector", {**environment, "VM_CLUSTER_ID": "lineage-two"}))
+
+    def test_stop_uses_recorded_identity_even_after_environment_has_changed(self):
+        legacy_record = {"pid": 42, "startTicks": 100, "commandSha256": "recorded-command"}
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.dict(os.environ, {"VECTOR_AERON_MTU_LENGTH": "bad-new-setting", "VECTOR_CLUSTER_HOSTS": "bad-hosts"}, clear=True), \
+                patch.object(remote, "record_state", side_effect=[("running", legacy_record),
+                             ("running", legacy_record), ("stopped", legacy_record)]), \
+                patch.object(remote, "command") as command, \
+                patch.object(remote, "configuration_fingerprint") as fingerprint, \
+                patch.object(remote.os, "pidfd_open", return_value=999, create=True), \
+                patch.object(remote.signal, "pidfd_send_signal", create=True) as send, \
+                patch.object(remote.os, "close"):
+            state = Path(temporary)
+            remote.stop(state, state / "process.json")
+            send.assert_called_once_with(999, remote.signal.SIGTERM)
+            command.assert_not_called()
+            fingerprint.assert_not_called()
+
+    def test_start_waits_for_missing_then_pre_exec_command_then_exact_identity(self):
+        args, environment = ["/jdk/bin/java", "Main"], {"VECTOR_AERON_MTU_LENGTH": "1248"}
+        expected = {"startTicks": 100, "commandSha256": self.command_hash(args)}
+        child = Mock(pid=42, returncode=None)
+        child.poll.return_value = None
+        clock = [0.0]
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(remote, "command", return_value=(args, environment)), \
+                patch.object(remote, "record_state", return_value=("stopped", None)), \
+                patch.object(remote.subprocess, "Popen", return_value=child), \
+                patch.object(remote, "proc_identity", side_effect=[None,
+                    {"startTicks": 100, "commandSha256": "pre-exec-command"}, expected]) as identity, \
+                patch.object(remote.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(remote.time, "sleep", side_effect=lambda seconds: clock.__setitem__(0, clock[0] + seconds)):
+            state = Path(temporary)
+            record_path = state / "process.json"
+            remote.start("node", 0, state, record_path)
+            record = json.loads(record_path.read_text())
+            self.assertEqual(record["pid"], 42)
+            self.assertEqual(record["startTicks"], expected["startTicks"])
+            self.assertEqual(record["commandSha256"], expected["commandSha256"])
+            self.assertEqual(identity.call_count, 3)
+            child.terminate.assert_not_called()
+            self.assertLessEqual(clock[0], 2.3)
+
+    def test_start_identity_timeout_preserves_previous_record_and_stops_only_its_child(self):
+        args, environment = ["/jdk/bin/java", "Main"], {"VECTOR_AERON_MTU_LENGTH": "1248"}
+        child = Mock(pid=42, returncode=None)
+        child.poll.return_value = None
+        child.wait.return_value = 0
+        clock = [0.0]
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(remote, "command", return_value=(args, environment)), \
+                patch.object(remote, "record_state", return_value=("stopped", None)), \
+                patch.object(remote.subprocess, "Popen", return_value=child), \
+                patch.object(remote, "proc_identity", return_value={"startTicks": 100, "commandSha256": "wrong-command"}), \
+                patch.object(remote, "write_json") as write, \
+                patch.object(remote.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(remote.time, "sleep", side_effect=lambda seconds: clock.__setitem__(0, clock[0] + seconds)):
+            state = Path(temporary)
+            record_path = state / "process.json"
+            record_path.write_text("preserve previous stopped record\n")
+            with self.assertRaisesRegex(RuntimeError, "identity was not established"):
+                remote.start("node", 0, state, record_path)
+            self.assertEqual(record_path.read_text(), "preserve previous stopped record\n")
+            write.assert_not_called()
+            child.terminate.assert_called_once_with()
+            child.wait.assert_called_once_with(timeout=10)
+            self.assertAlmostEqual(clock[0], 2.0)
+
+    def test_start_child_exit_during_identity_wait_fails_fast_without_a_pid_record(self):
+        args, environment = ["/jdk/bin/java", "Main"], {"VECTOR_AERON_MTU_LENGTH": "1248"}
+        child = Mock(pid=42, returncode=7)
+        child.poll.side_effect = [None, 7, 7]
+        clock = [0.0]
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(remote, "command", return_value=(args, environment)), \
+                patch.object(remote, "record_state", return_value=("stopped", None)), \
+                patch.object(remote.subprocess, "Popen", return_value=child), \
+                patch.object(remote, "proc_identity", return_value=None) as identity, \
+                patch.object(remote, "write_json") as write, \
+                patch.object(remote.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(remote.time, "sleep", side_effect=lambda seconds: clock.__setitem__(0, clock[0] + seconds)):
+            state = Path(temporary)
+            with self.assertRaisesRegex(RuntimeError, "exited with code 7"):
+                remote.start("node", 0, state, state / "process.json")
+            self.assertFalse((state / "process.json").exists())
+            self.assertEqual(identity.call_count, 1)
+            write.assert_not_called()
+            child.terminate.assert_not_called()
+            child.wait.assert_not_called()
+            self.assertLess(clock[0], 0.02)
+
+    def test_start_refuses_changed_start_ticks_even_if_command_later_matches(self):
+        args, environment = ["/jdk/bin/java", "Main"], {"VECTOR_AERON_MTU_LENGTH": "1248"}
+        child = Mock(pid=42, returncode=None)
+        child.poll.return_value = None
+        clock = [0.0]
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(remote, "command", return_value=(args, environment)), \
+                patch.object(remote, "record_state", return_value=("stopped", None)), \
+                patch.object(remote.subprocess, "Popen", return_value=child), \
+                patch.object(remote, "proc_identity", side_effect=[
+                    {"startTicks": 100, "commandSha256": "pre-exec-command"},
+                    {"startTicks": 101, "commandSha256": self.command_hash(args)}]), \
+                patch.object(remote, "write_json") as write, \
+                patch.object(remote.time, "monotonic", side_effect=lambda: clock[0]), \
+                patch.object(remote.time, "sleep", side_effect=lambda seconds: clock.__setitem__(0, clock[0] + seconds)):
+            state = Path(temporary)
+            with self.assertRaisesRegex(RuntimeError, "start time changed"):
+                remote.start("node", 0, state, state / "process.json")
+            write.assert_not_called()
+            self.assertFalse((state / "process.json").exists())
+
+    def test_start_child_exit_after_matching_sample_does_not_write_record(self):
+        args, environment = ["/jdk/bin/java", "Main"], {"VECTOR_AERON_MTU_LENGTH": "1248"}
+        child = Mock(pid=42, returncode=3)
+        child.poll.side_effect = [None, 3, 3]
+        with tempfile.TemporaryDirectory() as temporary, \
+                patch.object(remote, "command", return_value=(args, environment)), \
+                patch.object(remote, "record_state", return_value=("stopped", None)), \
+                patch.object(remote.subprocess, "Popen", return_value=child), \
+                patch.object(remote, "proc_identity", return_value={"startTicks": 100, "commandSha256": self.command_hash(args)}), \
+                patch.object(remote, "write_json") as write:
+            state = Path(temporary)
+            with self.assertRaisesRegex(RuntimeError, "exited with code 3"):
+                remote.start("node", 0, state, state / "process.json")
+            self.assertFalse((state / "process.json").exists())
+            write.assert_not_called()
+            child.terminate.assert_not_called()
+            child.wait.assert_not_called()
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1,0 +1,25 @@
+import groovy.json.JsonOutput
+import java.security.MessageDigest
+
+gradle.projectsEvaluated {
+    allprojects { project ->
+        project.tasks.withType(Test).configureEach { test ->
+            doFirst {
+                long free = rootProject.projectDir.usableSpace
+                if (free < 1073741824L) throw new GradleException('Integration free-space floor before test task')
+                def manifest = [:]
+                test.classpath.files.sort { it.absolutePath }.each { input ->
+                    if (input.isFile()) manifest[input.absolutePath] = [bytes: input.length(), sha256: MessageDigest.getInstance('SHA-256').digest(input.bytes).encodeHex().toString()]
+                    else if (input.isDirectory()) {
+                        def files = [:]
+                        input.eachFileRecurse { file -> if (file.isFile()) files[input.toPath().relativize(file.toPath()).toString()] = [bytes: file.length(), sha256: MessageDigest.getInstance('SHA-256').digest(file.bytes).encodeHex().toString()] }
+                        manifest[input.absolutePath] = [files: files]
+                    }
+                }
+                File output = new File(rootProject.projectDir, "build/integration-validation/r1/${project.name}-${test.name}-classpath.json")
+                if (!output.createNewFile()) throw new GradleException('Refusing to overwrite test input capture')
+                output.text = JsonOutput.prettyPrint(JsonOutput.toJson([task: test.path, javaExecutable: test.javaLauncher.get().executablePath.asFile.absolutePath, jvmArguments: test.allJvmArgs, freeBytesBeforeTask: free, actualClasspath: manifest])) + '\n'
+            }
+        }
+    }
+}

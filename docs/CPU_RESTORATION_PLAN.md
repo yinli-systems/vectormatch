@@ -1,6 +1,8 @@
 # 原应用迁移至 CPU：进展与恢复计划（业务恢复尚未验收）
 
-最新完成：[三副本当前快照R3](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-current-checkpoint-r3/README.md)在CPU上触发一次维护快照后清停，分别解码实际service9/consensus10记录（term12，position7630592）。三份完整engine与combined core/outbox字节均相同，command4609/event6214/market6194/export6214/pending0；combined SHA `457ca2b28e1c47a3d7a860813b87409dcde94ae7212b2ebc748504d4fe3ffe8c`。全部原生文件、所选完整段及零尾部已独立逐字节核验，PG基线未变。尚未从这个新快照再次冷启动，gateway/projector/HTTP/WS及完整历史对应仍待验收。
+最新完成：[完整历史离线对应证明](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-full-ledger-offline-r1/README.md)使用原 e1db 的固定 JAR，在新建的本地内存引擎中按序执行拷贝的全部4609条缓存命令。每条结果与原缓存一致，派生6214条事件逐条对应已归档PG载荷、类型、序号和SHA，包含6194条行情事件及1551笔成交；最终engine与原canonical逐字节相等。另由独立Python解析器核验原缓存、派生结果及全部事件。没有向原集群或数据库发送业务命令；这证明拷贝的历史一致性，不是新的业务压测或崩溃恢复证明。
+
+[三副本当前快照R3](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-current-checkpoint-r3/README.md)在CPU上触发一次维护快照后清停，分别解码实际service9/consensus10记录（term12，position7630592）。三份完整engine与combined core/outbox字节均相同，command4609/event6214/market6194/export6214/pending0；combined SHA `457ca2b28e1c47a3d7a860813b87409dcde94ae7212b2ebc748504d4fe3ffe8c`。全部原生文件、所选完整段及零尾部已独立逐字节核验，PG基线未变。尚未从这个新快照再次冷启动，gateway/projector/HTTP/WS仍待验收。
 
 准备进展：原e1db源的85路径应用包已同源重建；固定Linux PostgreSQL18.6制品已在CPU上通过file/readelf/ldd及`postgres --version`。收据在[恢复准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/root-scope.json)和[实际加载探针](../evidence/2026-10-24/runpod-cpu/restoration-preparation/loader-probe-r1/receipt.json)。此减缩PG制品没有`pg_controldata`/`pg_config`，已另行原生构建两工具。数据库已完成两次实际启动及正常关闭，第二次通过6214条事件的内部ledger审计。原三节点已实际启动、重放尾部并完成leader只读探针，随后全部清停；gateway与projector仍未启动，业务恢复尚未完成。
 
@@ -12,7 +14,7 @@
 
 第二次独立PG-only探针已通过：6214 events、6194 market events、1551 trades，cursor、逐条payload SHA、序号、公开view及记录的collation版本检查均通过；root独立解析所有原始事件并复现ledger摘要。实际会话/事务只读及fsync、synchronous_commit、full_page_writes均验证为on；正常关闭和完整停止态归档完成。[第二次探针及独立读回](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg-readonly-r2/README.md)。这仅证明PG内部一致性。**PG实际比旧checkpoint多108事件**，此前r1在线probe的固定6106/hash断言已不适用于最终tip，从未执行；实际执行的是另行冻结的尾部感知R2探针，已验证leader到6214，没有强置cursor或把旧checkpoint当最终恢复结果。
 
-另已完整离线解码三份原备份的最新service checkpoint，canonical及outbox字节全相等：command4539/event6106/market6086/exported6106/pending0。[离线证明及原在线恢复计划](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-cluster-probe-preparation-r1/RESTORATION_PROBE_PLAN.md)区分了checkpoint、尾部重放和leader回复；该原准备的固定tip预期已过时，不能用于新的最终状态。三节点当前canonical、完整source历史与PG逐条对应、HTTP及WS仍未验收。
+此前已完整离线解码三份原备份的最新service checkpoint，canonical及outbox字节全相等：command4539/event6106/market6086/exported6106/pending0。[离线证明及原在线恢复计划](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-cluster-probe-preparation-r1/RESTORATION_PROBE_PLAN.md)区分了checkpoint、尾部重放和leader回复；该原准备的固定tip预期已过时，不能用于新的最终状态。三节点当前canonical及完整source历史与PG逐条对应已由后续证据覆盖；HTTP及WS仍未验收。
 
 新增准备：固定官方18.6源码的两个工具已在CPU原生构建成功，20项离线守卫及每个原生命令/输出版本/格式宏检查通过；[r3证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg18-native-tools-r3/README.md)保留源码/二进制SHA、全部日志和前两次失败的原因。`pg_config`描述此次工具构建，不描述原Zonky服务器。依赖安装没有升级/移除既有包，未启动数据库。源码来源在[工具准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg18-tools-source/README.md)。无损稀疏解包器此前已在空闲CPU通过10项微型合成文件测试，含实际Linux稀疏分配与完整字节读回；[Linux守卫](../evidence/2026-10-24/runpod-cpu/restoration-preparation/sparse-native-guards-r1/receipt.json)和本次完整副本检查分开保留。它们不是运行中数据库或业务恢复证明。
 
@@ -78,4 +80,4 @@ GPU 主机虽是 Ubuntu 24，**实际 PG 并不是 Ubuntu 24 编译件**。`runp
 
 可参考最后已验证历史 checkpoint（`runpod-egress/final-release-verification.json`，2026-10-23 18:35）：core command4539/event6106/market6086，PG6106 events/1519 trades/lag0，state hash `4450df5dc1a6662fec3c8addd55452657ee6fd1ccd0aeae92cc6dbb7e18c780b`。**这不是 fresh物理备份 tip 的独立证明**；最终必须以实际恢复的原始 canonical 与 PG 状态核验，不能硬套旧的2896events/722trades等过期数字。
 
-当前native恢复、PG内部ledger及三节点当前canonical均已有新收据；完整source历史对应、被动gateway/projector、HTTP幂等和WS验收仍需完成，之后才能声明 CPU 应用恢复完成。
+当前native恢复、PG内部ledger、三节点当前canonical及完整source历史与PG对应均已有收据；R3快照冷启动、被动gateway/projector、HTTP幂等和WS验收仍需完成，之后才能声明 CPU 应用恢复完成。

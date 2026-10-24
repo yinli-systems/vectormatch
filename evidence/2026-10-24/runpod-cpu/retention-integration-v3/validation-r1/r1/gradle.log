@@ -1,0 +1,112 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :check UP-TO-DATE
+> Task :core:compileJava
+> Task :bench:compileJava
+> Task :bench:processResources NO-SOURCE
+> Task :bench:classes
+> Task :bench:compileJmhJava
+> Task :bench:processJmhResources NO-SOURCE
+> Task :bench:jmhClasses
+> Task :bench:compileTestJava
+> Task :bench:processTestResources NO-SOURCE
+> Task :bench:testClasses
+> Task :core:processResources NO-SOURCE
+> Task :core:classes
+> Task :core:jar
+> Task :bench:test
+> Task :bench:check
+
+> Task :cluster:compileJava
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-integration-worktree/cluster/src/main/java/io/vectormatch/cluster/MultiplexedLoadTransports.java:32: warning: [serial] serializable class OwnerFailure has no definition of serialVersionUID
+    static final class OwnerFailure extends Error {
+                 ^
+1 warning
+
+> Task :cluster:processResources NO-SOURCE
+> Task :cluster:classes
+> Task :cluster:jar
+> Task :cluster:compileTestJava
+> Task :cluster:processTestResources NO-SOURCE
+> Task :cluster:testClasses
+> Task :cluster:test
+
+RetentionBatchMaintenanceThreeJvmV3Test > tenThousandOrdersArchiveEveryPrefixLoseOneAckReplyThenColdContinue() FAILED
+    io.vectormatch.cluster.RetentionBatchOwnerV3$OwnerFailure: V3 batch network owner failed; retain all identities and evidence
+        at app//io.vectormatch.cluster.RetentionBatchOwnerV3.own(RetentionBatchOwnerV3.java:515)
+        at app//io.vectormatch.cluster.RetentionBatchOwnerV3.lambda$new$0(RetentionBatchOwnerV3.java:310)
+        at java.base@21.0.13/java.lang.Thread.run(Thread.java:1583)
+
+        Caused by:
+        java.io.UncheckedIOException: java.nio.file.FileAlreadyExistsException: /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-integration-worktree/cluster/build/retention-maintenance-native-attempts/attempt-3ca74812-92fc-4587-bdbf-678125a3f7b4/owner-g1-actual-observation-open.json
+            at io.vectormatch.cluster.RetentionBatchMaintenanceAeronSmokeV3$RecordingIO.observation(RetentionBatchMaintenanceAeronSmokeV3.java:409)
+            at io.vectormatch.cluster.RetentionBatchOwnerV3.captureTransport(RetentionBatchOwnerV3.java:525)
+            at io.vectormatch.cluster.RetentionBatchOwnerV3.own(RetentionBatchOwnerV3.java:495)
+            ... 2 more
+
+            Caused by:
+            java.nio.file.FileAlreadyExistsException: /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-integration-worktree/cluster/build/retention-maintenance-native-attempts/attempt-3ca74812-92fc-4587-bdbf-678125a3f7b4/owner-g1-actual-observation-open.json
+                at java.base/sun.nio.fs.UnixException.translateToIOException(UnixException.java:94)
+                at java.base/sun.nio.fs.UnixException.rethrowAsIOException(UnixException.java:106)
+                at java.base/sun.nio.fs.UnixException.rethrowAsIOException(UnixException.java:111)
+                at java.base/sun.nio.fs.UnixFileSystemProvider.newByteChannel(UnixFileSystemProvider.java:261)
+                at java.base/java.nio.file.spi.FileSystemProvider.newOutputStream(FileSystemProvider.java:482)
+                at java.base/java.nio.file.Files.newOutputStream(Files.java:228)
+                at java.base/java.nio.file.Files.write(Files.java:3505)
+                at java.base/java.nio.file.Files.writeString(Files.java:3727)
+                at java.base/java.nio.file.Files.writeString(Files.java:3667)
+                at io.vectormatch.cluster.RetentionBatchMaintenanceAeronSmokeV3.writeNew(RetentionBatchMaintenanceAeronSmokeV3.java:537)
+                at io.vectormatch.cluster.RetentionBatchMaintenanceAeronSmokeV3.writeJson(RetentionBatchMaintenanceAeronSmokeV3.java:423)
+                at io.vectormatch.cluster.RetentionBatchMaintenanceAeronSmokeV3$RecordingIO.observation(RetentionBatchMaintenanceAeronSmokeV3.java:408)
+                ... 4 more
+
+RetentionBatchOwnerThreeJvmV3Test > freshBatchOneAndFourUse128SlotsOneRealOwnerThenColdCheckpointContinuation() FAILED
+    io.vectormatch.cluster.RetentionBatchOwnerV3$OwnerFailure: V3 batch network owner failed; retain all identities and evidence
+        at app//io.vectormatch.cluster.RetentionBatchOwnerV3.healthy(RetentionBatchOwnerV3.java:349)
+        at app//io.vectormatch.cluster.RetentionBatchOwnerV3.close(RetentionBatchOwnerV3.java:569)
+        at app//io.vectormatch.cluster.RetentionBatchOwnerAeronSmokeV3.runOwnerRound(RetentionBatchOwnerAeronSmokeV3.java:178)
+        at app//io.vectormatch.cluster.RetentionBatchOwnerAeronSmokeV3.exercise(RetentionBatchOwnerAeronSmokeV3.java:89)
+        at app//io.vectormatch.cluster.RetentionBatchOwnerAeronSmokeV3.run(RetentionBatchOwnerAeronSmokeV3.java:53)
+        at app//io.vectormatch.cluster.RetentionBatchOwnerThreeJvmV3Test.freshBatchOneAndFourUse128SlotsOneRealOwnerThenColdCheckpointContinuation(RetentionBatchOwnerThreeJvmV3Test.java:19)
+
+        Caused by:
+        java.io.UncheckedIOException: java.nio.file.FileAlreadyExistsException: /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-integration-worktree/cluster/build/retention-batch-native-attempts/attempt-owner-cap1-db259368-176c-48d7-9624-5fb2e2ff6b85/owner-round-1-actual-observation-open.json
+            at io.vectormatch.cluster.RetentionBatchOwnerAeronSmokeV3$RecordingIO.observation(RetentionBatchOwnerAeronSmokeV3.java:256)
+            at io.vectormatch.cluster.RetentionBatchOwnerV3.captureTransport(RetentionBatchOwnerV3.java:525)
+            at io.vectormatch.cluster.RetentionBatchOwnerV3.own(RetentionBatchOwnerV3.java:518)
+            at io.vectormatch.cluster.RetentionBatchOwnerV3.lambda$new$0(RetentionBatchOwnerV3.java:310)
+            at java.base/java.lang.Thread.run(Thread.java:1583)
+
+            Caused by:
+            java.nio.file.FileAlreadyExistsException: /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-integration-worktree/cluster/build/retention-batch-native-attempts/attempt-owner-cap1-db259368-176c-48d7-9624-5fb2e2ff6b85/owner-round-1-actual-observation-open.json
+                at java.base/sun.nio.fs.UnixException.translateToIOException(UnixException.java:94)
+                at java.base/sun.nio.fs.UnixException.rethrowAsIOException(UnixException.java:106)
+                at java.base/sun.nio.fs.UnixException.rethrowAsIOException(UnixException.java:111)
+                at java.base/sun.nio.fs.UnixFileSystemProvider.newByteChannel(UnixFileSystemProvider.java:261)
+                at java.base/java.nio.file.spi.FileSystemProvider.newOutputStream(FileSystemProvider.java:482)
+                at java.base/java.nio.file.Files.newOutputStream(Files.java:228)
+                at java.base/java.nio.file.Files.write(Files.java:3505)
+                at java.base/java.nio.file.Files.writeString(Files.java:3727)
+                at java.base/java.nio.file.Files.writeString(Files.java:3667)
+                at io.vectormatch.cluster.RetentionBatchOwnerAeronSmokeV3.writeNew(RetentionBatchOwnerAeronSmokeV3.java:385)
+                at io.vectormatch.cluster.RetentionBatchOwnerAeronSmokeV3.writeJson(RetentionBatchOwnerAeronSmokeV3.java:272)
+                at io.vectormatch.cluster.RetentionBatchOwnerAeronSmokeV3$RecordingIO.observation(RetentionBatchOwnerAeronSmokeV3.java:255)
+                ... 4 more
+
+208 tests completed, 2 failed
+
+> Task :cluster:test FAILED
+
+[Incubating] Problems report is available at: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/retention-integration-worktree/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':cluster:test'.
+> There were failing tests. See the report at: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/retention-integration-worktree/cluster/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 3m 57s
+10 actionable tasks: 10 executed

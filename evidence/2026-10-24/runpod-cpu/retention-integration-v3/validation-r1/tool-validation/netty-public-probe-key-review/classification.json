@@ -1,0 +1,78 @@
+{
+  "reviewedAtUTC": "2026-10-24T06:47:33.507012+00:00",
+  "pinnedNettyVersion": "4.2.19.Final",
+  "jarSha256": "8b469cf23ddf21ba84291f4dff470d2277a28deac95e7084b0ff2ce853e58276",
+  "sources": {
+    "SslUtils": {
+      "url": "https://raw.githubusercontent.com/netty/netty/netty-4.2.19.Final/handler/src/main/java/io/netty/handler/ssl/SslUtils.java",
+      "sha256": "8b3f36cf8a1c583b5d6bb6373bf80cf110135703d345db29bededf073f94fe0e",
+      "bytes": 23678
+    },
+    "JdkSslServerContext": {
+      "url": "https://raw.githubusercontent.com/netty/netty/netty-4.2.19.Final/handler/src/main/java/io/netty/handler/ssl/JdkSslServerContext.java",
+      "sha256": "9b16fa61bd2e6d82204db8ceb4b3812c450e1532709b512b9be4883f68d2c245",
+      "bytes": 20584
+    },
+    "OpenSsl": {
+      "url": "https://raw.githubusercontent.com/netty/netty/netty-4.2.19.Final/handler/src/main/java/io/netty/handler/ssl/OpenSsl.java",
+      "sha256": "f4c75a850545856b14297bd11bd5404a812990943a8acec0cae0e02b56118712",
+      "bytes": 41004
+    }
+  },
+  "entries": [
+    {
+      "entry": "io/netty/handler/ssl/SslUtils.class",
+      "entrySha256": "ac727f21b9e766055e84ea47e6ba1ba4ff3493499e28094613e0c5c68fe6a1a0",
+      "publicProbingKeyExactBytesPresent": true,
+      "keySha256Only": "67153216753676a99069a64f0986ef7015efed5eca8d545261c6c1aa9e9117c8",
+      "sourceUses": [
+        {
+          "line": 117,
+          "sourceLine": "// self-signed certificate for netty.io and the matching private-key"
+        },
+        {
+          "line": 133,
+          "sourceLine": "static final String PROBING_KEY = \"-----BEGIN PRIVATE KEY-----\\n\" +"
+        }
+      ]
+    },
+    {
+      "entry": "io/netty/handler/ssl/JdkSslServerContext.class",
+      "entrySha256": "df7257ef515c2ad574a4059a973375429f26976515339c23ecbdbe0962f12de1",
+      "publicProbingKeyExactBytesPresent": true,
+      "keySha256Only": "67153216753676a99069a64f0986ef7015efed5eca8d545261c6c1aa9e9117c8",
+      "sourceUses": [
+        {
+          "line": 47,
+          "sourceLine": "import static io.netty.handler.ssl.SslUtils.PROBING_KEY;"
+        },
+        {
+          "line": 78,
+          "sourceLine": "PROBING_KEY.getBytes(CharsetUtil.UTF_8)), null);"
+        }
+      ]
+    },
+    {
+      "entry": "io/netty/handler/ssl/OpenSsl.class",
+      "entrySha256": "37dffa8a07f8788799ce6cb4ebfe6ff29cb66247146717b1d09212c126630048",
+      "publicProbingKeyExactBytesPresent": true,
+      "keySha256Only": "67153216753676a99069a64f0986ef7015efed5eca8d545261c6c1aa9e9117c8",
+      "sourceUses": [
+        {
+          "line": 54,
+          "sourceLine": "import static io.netty.handler.ssl.SslUtils.PROBING_KEY;"
+        },
+        {
+          "line": 281,
+          "sourceLine": "PemEncoded privateKey = PemPrivateKey.valueOf(PROBING_KEY.getBytes(CharsetUtil.US_ASCII));"
+        }
+      ]
+    }
+  ],
+  "publicProbingKeyBytes": 1699,
+  "publicProbingKeySha256": "67153216753676a99069a64f0986ef7015efed5eca8d545261c6c1aa9e9117c8",
+  "sourceConstant": "SslUtils.PROBING_KEY",
+  "classification": "All3 PEM hits are the byte-exact publicly published Netty TLS capability probing fixture, inlined into three pinned library classes; not user credentials",
+  "rawKeyValueCopiedToReceipt": false,
+  "originalMarkerReviewMustRetain3Hits": true
+}
