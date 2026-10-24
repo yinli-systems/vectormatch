@@ -1,0 +1,13 @@
+# Draft: within-price maker iteration experiment
+
+This is a prospective protocol, not a submitted job or a performance claim. Freeze sourceB, both full distribution manifests and the controller in an immutable registration before running.
+
+A uses core source987f6526b8a0b3c3516ee668a239990cc79fbd8f (business entries equal cluster433). B may change only the place matching loop to choose a price once and consume its makers with one iterator. Global order index, snapshotV2, business identity, replies, events, settlement and self-trade semantics stay the same. Compare all JAR entry bytes and preserve baseline golden prefix snapshots/results plus independent reference traces.
+
+Use the same authorized CPU Pod, Temurin21.0.13+9,1thread,2GiB fixed fork heap,3forks,500warmup/10measurement iterations,64freshcommands per normalized batch and batchSize1. JMH fixture and generated code/dependency entries must match in A and B. Keep every outlier, full console, per-fork raw JSON, commands, artifact SHA and process records. Fixed order:A1/B1/A2/B2; all four rounds use fresh JVM forks and the same entire15-case matrix. Earlier same-code warmup trials cannot substitute for an A round. No concurrent capacity workload.
+
+Prospective mechanism: repeated firstEntry()/maker iterator operations can be shared across fills at the same price. Largest benefit is expected for1/100initial levels with10/100trades per command. At10000levels each maker occupies a separate price, so price traversal remains; this is a less favorable mechanism control. PLACE/CANCEL are separate negative controls. Do not assert physical allocation savings before measuring them; JIT can remove allocations.
+
+Eligibility requires existing full tests and new semantic edges:BUY/SELL,IOC/GTC,partial maker,exact price exhaustion,FIFO after cancellation,noncrossing residual,and self-trade at head/middle without skipping that maker. Every checked prefix must match baseline canonical bytes, results/event order, balances, independent reference and restore continuation. Correctness failure stops the experiment; no performance promotion.
+
+Report all15parameter combinations and all four rounds, per-fork means, pooled means and uncertainty. A repeatable benefit needs both paired B rounds to improve the declared target cases; disclose negative controls and regressions. Wide intervals or inconsistent repetitions remain inconclusive; never remove an outlier or select only the fastest fork. These finite observations do not prove single-order p99, sustained fresh-command rate, replicated-system speed,100M capacity or absolute real-time behavior. Replicated-path promotion needs its own same-load comparison.
