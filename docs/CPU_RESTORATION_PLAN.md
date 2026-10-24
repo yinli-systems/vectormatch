@@ -1,5 +1,7 @@
 # 原应用迁移至 CPU 的恢复计划（尚未执行）
 
+准备进展：原e1db源的85路径应用包已同源重建；固定Linux PostgreSQL18.6制品已在CPU上通过file/readelf/ldd及`postgres --version`，未启动数据库。收据在[恢复准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/root-scope.json)和[实际加载探针](../evidence/2026-10-24/runpod-cpu/restoration-preparation/loader-probe-r1/receipt.json)。此减缩PG制品没有`pg_controldata`/`pg_config`；原PGDATA、locale、lineage及应用恢复仍待验收，不能将二进制加载成功视为恢复完成。
+
 此文是已核验备份和源码后的执行计划，不是恢复成功收据。**只能在 CPU 上所有 benchmark、容量负载及其采集/归档作业结束并确认进程停止后执行**。恢复另登记唯一 job、配置、源版本和制品 SHA；不复用容量试验目录或控制器，不修改原始备份与既有证据。CPU 仍是同一台主机上的三个 JVM，不能称为三台独立机器或跨机网络恢复。
 
 ## 备份与版本基线
