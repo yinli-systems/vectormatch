@@ -265,7 +265,7 @@ public final class RetentionServiceV3 {
     public MatchingEngine.AccountView account(long account) { return core.account(account); }
     public MatchingEngine.BookView book(int depth) { return core.book(depth); }
     public Optional<MatchingEngine.OrderView> hotOrder(long orderId) { return core.hotOrder(orderId); }
-    public EventBatch fetchEvents(long fromSeq, int count) { requireWriter(); return outbox.fetch(fromSeq, count); }
+    public EventBatch fetchEvents(long fromSeq, int count) { requireWriter(); return outbox.fetchV3(fromSeq, count); }
     public byte[] coreSnapshot() { requireWriter(); return core.snapshot(); }
 
     public byte[] snapshot() {

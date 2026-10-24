@@ -37,7 +37,8 @@ public final class RetentionCapacityAeronPilotV3 {
     }
     private record Owned(Process process,Instant started,String command,List<String> arguments,int member,Path log){}
     private final Path root;
-    private final int cap,ports,archiveChunkBytes,readWindow;
+    private final int cap,ports,archiveChunkBytes,readWindow,eventFetchCount;
+    private final boolean eventFetchExperiment;
     private final boolean readWindowExperiment;
     private final Workload workload;
     private final String lineage="capacity-pilot-"+UUID.randomUUID();
@@ -61,6 +62,11 @@ public final class RetentionCapacityAeronPilotV3 {
         this(freshRoot,cap,ports,archiveChunkBytes,commonEnvelope,readWindow,readWindowExperiment,Workload.SHORT);
     }
     private RetentionCapacityAeronPilotV3(Path freshRoot,int cap,int ports,int archiveChunkBytes,boolean commonEnvelope,int readWindow,boolean readWindowExperiment,Workload workload)throws Exception{
+        this(freshRoot,cap,ports,archiveChunkBytes,commonEnvelope,readWindow,readWindowExperiment,workload,DEFAULT_EVENT_FETCH_COUNT,false);
+    }
+    private RetentionCapacityAeronPilotV3(Path freshRoot,int cap,int ports,int archiveChunkBytes,boolean commonEnvelope,int readWindow,boolean readWindowExperiment,Workload workload,int eventFetchCount,boolean eventFetchExperiment)throws Exception{
+        this.eventFetchCount=requireEventFetchCount(eventFetchCount);this.eventFetchExperiment=eventFetchExperiment;
+        if(eventFetchExperiment&&(cap!=4||archiveChunkBytes!=MAX_SUPPORTED_ARCHIVE_CHUNK||readWindow!=8||!readWindowExperiment||workload!=Workload.LONG_CUTS))throw new IllegalArgumentException("event page experiment requires fixed long/cap4/chunk6144/read8");
         this.workload=Objects.requireNonNull(workload);
         this.readWindow=RetentionCapacityPlanV3.requireReadWindow(readWindow);this.readWindowExperiment=readWindowExperiment;
         this.archiveChunkBytes=requireArchiveChunkBytes(archiveChunkBytes);this.cap=cap;this.ports=ports;root=freshRoot.toAbsolutePath().normalize();Files.createDirectory(root);
@@ -73,7 +79,7 @@ public final class RetentionCapacityAeronPilotV3 {
         var registration=new LinkedHashMap<String,Object>(Map.of("scope","LOCAL_THREE_JVM_CONTINUOUS_ARRIVAL_FUNCTIONAL_PILOT",
                 "arrivals",workload.arrivals,"rate",workload.rate,"batchCap",cap,"appointedLeader",0,"sync",2,
                 "profileSha256",profile.fingerprint(),"codeSha256",code,"lineage",lineage,"ports",ports));
-        registration.put("archiveChunkBytes",archiveChunkBytes);registration.put("eventFetchCount",16);registration.put("commonChunkEnvelope",commonEnvelope);registration.put("readWindow",readWindow);registration.put("commonReadWindowEnvelope",readWindowExperiment);
+        registration.put("archiveChunkBytes",archiveChunkBytes);registration.put("eventFetchCount",eventFetchCount);if(eventFetchExperiment)registration.put("commonEventFetchEnvelope",true);registration.put("commonChunkEnvelope",commonEnvelope);registration.put("readWindow",readWindow);registration.put("commonReadWindowEnvelope",readWindowExperiment);
         if(workload==Workload.LONG_CUTS){registration.put("workloadPreset","long-cuts-33792-v1");registration.put("expectedFullCommandCuts",workload.fullCommandCuts());registration.put("expectedTrailingCommands",workload.trailingCommands());registration.put("equivalentFullLoadCutNumbers",List.of(2,3,4,5,6,7,8,9,10,11));}
         if(idleSelection.explicit())registration.put("retentionIdleSelection",idleSelection.observation());
         if(ownerPollSelection.explicit())registration.put("ownerPollSelection",ownerPollSelection.observation());
@@ -126,8 +132,28 @@ public final class RetentionCapacityAeronPilotV3 {
         }
         RetentionCapacityJsonV3.writeNew(pair.resolve("pair-completion.json"),Map.of("passed",true,"readWindows",List.of(1,8),"archiveChunkBytes",MAX_SUPPORTED_ARCHIVE_CHUNK,"fixedBusinessBatchCap",4,"scope","Local functional exclusive read-window comparison; no capacity or speedup claim"));return pair;
     }
-    private RetentionCapacityExperimentV3.Config experimentConfig(){return readWindowExperiment?
+    private RetentionCapacityExperimentV3.Config experimentConfig(){if(eventFetchExperiment)return eventFetchPageConfig(eventFetchCount);return readWindowExperiment?
             new RetentionCapacityExperimentV3.Config(workload.arrivals,workload.rate,cap,archiveChunkBytes,readWindow):new RetentionCapacityExperimentV3.Config(workload.arrivals,workload.rate,cap,archiveChunkBytes);}
+    static RetentionCapacityExperimentV3.Config eventFetchPageConfig(int count){
+        return new RetentionCapacityExperimentV3.Config(Workload.LONG_CUTS.arrivals,500,4,MAX_SUPPORTED_ARCHIVE_CHUNK,8,requireEventFetchCount(count));
+    }
+    /** Explicit one-arm page-size candidate; the only changed factor is16 versus32 events per fetch. */
+    public static Path runEventFetchPageLongCuts(Path newArmRoot,int ports,int count)throws Exception{
+        requireEventFetchCount(count);
+        var idle=RetentionIdlePolicyV3.systemSelection();var owner=RetentionOwnerPollPolicyV3.systemSelection();
+        if(!idle.explicit()||idle.maximumParkNs()!=100000L||owner.effectiveMaximumParkNs()!=1000000L)
+            throw new IllegalArgumentException("event page experiment requires explicit server/driver100us and unchanged owner1ms");
+        if(ports!=42000)throw new IllegalArgumentException("event page experiment requires fixed42000 ports");
+        verifyChunkPorts(ports); // Selection and invariant checks precede port access and every filesystem write.
+        var pilot=new RetentionCapacityAeronPilotV3(newArmRoot,4,ports,MAX_SUPPORTED_ARCHIVE_CHUNK,false,8,true,Workload.LONG_CUTS,count,true);
+        Throwable failure=null;boolean passed=false;
+        try{pilot.exercise();passed=true;}catch(Throwable error){failure=error;pilot.failure(error);throw error;}
+        finally{try{pilot.stopOwned();}catch(Throwable cleanup){if(failure!=null)failure.addSuppressed(cleanup);else throw cleanup;}
+            finally{pilot.write("completion.json",Map.of("passed",passed&&pilot.allOwnedStopped,"allOwnedStopped",pilot.allOwnedStopped,
+                    "independentHosts",false,"capacityOrEnduranceProven",false,"fixedLeader",0,"archiveChunkBytes",MAX_SUPPORTED_ARCHIVE_CHUNK,
+                    "readWindow",8,"eventFetchCount",count,"commonEventFetchEnvelope",true));}}
+        return pilot.root;
+    }
     /** One explicit idle arm; a future controller compares both parks using this SAME artifact. */
     public static Path runIdleWindow8(Path newArmRoot,int ports)throws Exception{
         return runIdleWindow8(newArmRoot,ports,Workload.SHORT);
@@ -157,6 +183,11 @@ public final class RetentionCapacityAeronPilotV3 {
     }
     public static void main(String[] args)throws Exception{
         RetentionOwnerPollPolicyV3.systemSelection();
+        if(args.length>=2 && args[1].equals("event-fetch-page-long-cuts")){
+            if(args.length!=4||(!args[2].equals("16")&&!args[2].equals("32"))||!args[3].equals("42000"))throw new IllegalArgumentException("event-fetch-page-long-cuts requires explicit16|32 and42000");
+            Path result=runEventFetchPageLongCuts(Path.of(args[0]),Integer.parseInt(args[3]),Integer.parseInt(args[2]));
+            System.out.println("VECTOR_V3_CAPACITY_SOURCE_PILOT_PASS evidence="+result);return;
+        }
         if(args.length!=1&&!((args.length==2||args.length==3)&&(args[1].equals("archive-chunks")||args[1].equals("read-windows")||args[1].equals("idle-window8")||args[1].equals("idle-window8-long-cuts"))))throw new IllegalArgumentException("RetentionCapacityAeronPilotV3 <new-directory> [archive-chunks|read-windows|idle-window8|idle-window8-long-cuts [fixed-port-base]]");
         if(args.length==3&&!args[2].matches("[1-9][0-9]{3,4}"))throw new IllegalArgumentException("canonical fixed UDP port base required");
         if(args.length>=2&&(args[1].equals("idle-window8")||args[1].equals("idle-window8-long-cuts"))){
@@ -202,7 +233,7 @@ public final class RetentionCapacityAeronPilotV3 {
             var functional=new LinkedHashMap<String,Object>(Map.of("passed",true,"businessSeq",position.counters().businessSeq(),"eventSeq",position.counters().eventSeq(),
                     "acceptedPlaceCount",position.counters().acceptedPlaceCount(),"finalCombinedSha256",position.counters().stateHash(),
                     "allThreeSnapshotLogsMatched",true,"noCapacityPromotion",true,"actualSourceSummary",result.summary(),"actualEgressBounds",actualEgress,"archiveChunkBytes",archiveChunkBytes));
-            functional.put("readWindow",readWindow);functional.put("commonReadWindowEnvelope",readWindowExperiment);write("functional-result.json",functional);
+            functional.put("eventFetchCount",eventFetchCount);if(eventFetchExperiment)functional.put("commonEventFetchEnvelope",true);functional.put("readWindow",readWindow);functional.put("commonReadWindowEnvelope",readWindowExperiment);write("functional-result.json",functional);
         }
         disk.check();write("disk-after-functional.json",disk.snapshot());
     }
