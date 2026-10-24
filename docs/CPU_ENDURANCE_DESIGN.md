@@ -1,6 +1,8 @@
 # 单一 lineage 的一亿笔新订单：实现前置条件
 
-这是当前源码审查后的设计与验收计划，尚未实现或压测通过。目标计数为同一个连续状态中，首次 `ACCEPTED Place` 的唯一订单数；重试、拒绝、充值、取消和重建后的独立试验均不增加此计数。累计一亿笔、一亿笔/秒、一亿连接是三项独立目标，均未被当前证据证明。
+这是当前源码审查后的设计与验收计划，整体Cluster/持久归档/流式harness尚未实现或压测通过。目标计数为同一个连续状态中，首次 `ACCEPTED Place` 的唯一订单数；重试、拒绝、充值、取消和重建后的独立试验均不增加此计数。累计一亿笔、一亿笔/秒、一亿连接是三项独立目标，均未被当前证据证明。
+
+核心基础已有独立候选：[codex/core-retention-v3@109ae](https://github.com/yinli-systems/vectormatch/tree/109ae1800f0b76620af344a3dd7543849ffffd69)提供显式V3身份、有界完整历史、精确前缀ACK后的终态回收与64MiB独立快照。Root完整检查140项通过、11项PG集成测试因无DBfixture跳过；14项V3专项测试覆盖cap4连续100笔、归档/恢复、FIFO/资产、永久producer高水位与各类背压。完整源码/fixture SHA与验证记录在[核心候选证据](../evidence/2026-10-24/runpod-cpu/core-retention-v3/source-validation/README.md)。它未部署到当前CPU测量集群，不是百万/一亿、持久性或新增性能证明。下一阶段的[独立Cluster接入设计](CLUSTER_RETENTION_V3_DESIGN.md)明确区分业务、维护、历史归档、PG事件ACK与Aeron日志位置。
 
 ## 当前实现的硬边界
 

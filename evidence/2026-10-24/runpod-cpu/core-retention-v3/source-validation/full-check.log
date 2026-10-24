@@ -1,0 +1,75 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :check UP-TO-DATE
+> Task :bench:processResources NO-SOURCE
+> Task :bench:processTestResources NO-SOURCE
+> Task :cluster:processResources NO-SOURCE
+> Task :cluster:processTestResources NO-SOURCE
+> Task :projector:processResources UP-TO-DATE
+> Task :core:compileJava UP-TO-DATE
+> Task :projector:processTestResources NO-SOURCE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar
+> Task :bench:compileJava UP-TO-DATE
+> Task :bench:classes UP-TO-DATE
+> Task :cluster:compileJava UP-TO-DATE
+> Task :cluster:classes UP-TO-DATE
+> Task :cluster:jar
+> Task :bench:compileTestJava
+> Task :bench:testClasses
+> Task :cluster:compileTestJava
+> Task :cluster:testClasses
+> Task :bench:test
+> Task :bench:check
+> Task :core:compileTestJava UP-TO-DATE
+> Task :core:processTestResources UP-TO-DATE
+> Task :core:testClasses UP-TO-DATE
+> Task :core:test UP-TO-DATE
+> Task :core:check UP-TO-DATE
+> Task :projector:compileJava UP-TO-DATE
+> Task :projector:classes UP-TO-DATE
+> Task :projector:jar UP-TO-DATE
+> Task :projector:compileTestJava
+> Task :projector:testClasses
+
+> Task :projector:test
+
+PostgresProjectorIntegrationTest > publicMarketGapRollsBackAndNoAckIsSent() SKIPPED
+
+PostgresProjectorIntegrationTest > sourceResetBetweenDatabaseCommitAndAckIsTerminalWithoutRetry() SKIPPED
+
+PostgresProjectorIntegrationTest > commitThenLostAckRecoversFromDatabaseCursorWithoutDuplicateEffects() SKIPPED
+
+PostgresProjectorIntegrationTest > identicalBatchIsDeduplicatedButConflictingPayloadIsTerminal() SKIPPED
+
+PostgresProjectorIntegrationTest > commitIsVisibleBeforeAckAndCountersAreDurable() SKIPPED
+
+PostgresProjectorIntegrationTest > publicViewOmitsDepositsAndAllAccountOrderIdentityAndDetail() SKIPPED
+
+PostgresProjectorIntegrationTest > sourceRollbackUnderReusedClusterIdIsTerminal() SKIPPED
+
+PostgresProjectorIntegrationTest > eventGapRollsBackEarlierRowsAndCursorInSameTransaction() SKIPPED
+
+PostgresProjectorIntegrationTest > acknowledgementRaceRereadsAdvancedDatabaseCursorBeforeRetry() SKIPPED
+
+PostgresProjectorIntegrationTest > concurrentProjectorsSerializeAtCursorAndVerifyDuplicates() SKIPPED
+
+PostgresProjectorIntegrationTest > sourceReclaimedBeforeDatabaseCommitIsDetectedAsGap() SKIPPED
+
+> Task :projector:check
+> Task :server:compileJava UP-TO-DATE
+> Task :server:processResources NO-SOURCE
+> Task :server:classes UP-TO-DATE
+> Task :server:compileTestJava
+> Task :server:processTestResources NO-SOURCE
+> Task :server:testClasses
+> Task :server:test
+> Task :server:check
+> Task :cluster:test
+> Task :cluster:check
+> Task :cluster:startScripts
+> Task :cluster:installDist
+
+BUILD SUCCESSFUL in 59s
+22 actionable tasks: 12 executed, 10 up-to-date
