@@ -21,6 +21,7 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
     private static final long KEEP_ALIVE_INTERVAL_NS = TimeUnit.MILLISECONDS.toNanos(100);
     private final ReplyDispatcher dispatcher = new ReplyDispatcher();
     private final Scope scope;
+    private final java.util.List<Map<String,Object>> leaderEvents=new java.util.ArrayList<>();
     private final MediaDriver driver;
     private final AeronCluster cluster;
     private long nextKeepAlive;
@@ -95,6 +96,7 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
         actual.put("nakUnicastDelayNs", context.nakUnicastDelayNs());
         actual.put("nakUnicastRetryDelayRatio", context.nakUnicastRetryDelayRatio());
         actual.put("clusterSessionId", cluster.clusterSessionId()); actual.put("leaderMemberId", cluster.leaderMemberId());
+        actual.put("leadershipTermId",cluster.leadershipTermId());actual.put("newLeaderEvents",java.util.List.copyOf(leaderEvents));
         actual.put("aeronClientId", cluster.context().aeron().clientId());
         actual.put("profileSha256", scope.profileHash()); actual.put("lineageId", scope.lineageId());
         actual.put("ownerThreadId", Thread.currentThread().threadId()); actual.put("ownerThreadName", Thread.currentThread().getName());
@@ -113,6 +115,10 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
         dispatcher.accept(reply);
     }
 
+    @Override public void onNewLeader(long sessionId,long leadershipTermId,int leaderMemberId,String memberEndpoints){
+        dispatcher.requireOwner();if(leaderEvents.size()>=256)throw new IllegalStateException("bounded leader event inventory exhausted");
+        leaderEvents.add(Map.of("observedAtMonotonicNs",System.nanoTime(),"clusterSessionId",sessionId,"leadershipTermId",leadershipTermId,"leaderMemberId",leaderMemberId));
+    }
     @Override public void close() {
         dispatcher.requireOwner();
         if (dispatcher.polling()) throw new IllegalStateException("cannot close V3 batch transport from its poll callback");

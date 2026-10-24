@@ -49,7 +49,9 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
     private final RunBudget budget;
     private final Thread caller=Thread.currentThread();
     private final Path rawRoot;
-    private final DataOutputStream requests,replies;
+    private final DataOutputStream requests,replies,timings;
+    private final long maximumLogicalRpcs;
+    private final Map<String,long[]> rpcKinds=new LinkedHashMap<>();
     private long rpcCount,cycleCount;
     private byte[] latestOriginalWire;
     private boolean latestRawFlushed;
@@ -62,6 +64,11 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
     private boolean failed,closed;
     public RetentionBatchMaintenanceV3(RetentionBatchOwnerV3 owner,RetentionDurableWriterV3 writer,
                                       RetentionServiceV3.Profile profile,String lineage,Path newRawDir,RunBudget budget)throws IOException{
+        this(owner,writer,profile,lineage,newRawDir,budget,50000);
+    }
+    public RetentionBatchMaintenanceV3(RetentionBatchOwnerV3 owner,RetentionDurableWriterV3 writer,
+                                      RetentionServiceV3.Profile profile,String lineage,Path newRawDir,RunBudget budget,long maximumLogicalRpcs)throws IOException{
+        if(maximumLogicalRpcs<1||maximumLogicalRpcs>250000)throw new IllegalArgumentException("explicit finite logical RPC cap1..250000 required");this.maximumLogicalRpcs=maximumLogicalRpcs;
         this.owner=Objects.requireNonNull(owner);this.writer=Objects.requireNonNull(writer);this.profile=Objects.requireNonNull(profile);
         this.lineage=lineage;scope=new Scope(profile.fingerprint(),lineage);this.budget=Objects.requireNonNull(budget);
         if(!budget.profile.equals(profile))throw new IllegalArgumentException("run journal budget profile mismatch");
@@ -70,17 +77,26 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
         try{replies=new DataOutputStream(Files.newOutputStream(rawRoot.resolve("logical-rpc-replies.bin"),StandardOpenOption.CREATE_NEW));}
         catch(IOException error){try{openedRequests.close();}catch(IOException cleanup){error.addSuppressed(cleanup);}throw error;}
         requests=openedRequests;
+        try{timings=new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(rawRoot.resolve("logical-rpc-timings.csv"),StandardOpenOption.CREATE_NEW),65536));timings.writeBytes("rpc,kind,correlation_id,start_monotonic_ns,end_monotonic_ns,elapsed_ns,completed\n");}
+        catch(IOException error){try{requests.close();}finally{replies.close();}throw error;}
     }
     private void affinity(){if(Thread.currentThread()!=caller)throw new IllegalStateException("one maintenance coordinator caller required");}
     private Reply exchange(Operation operation)throws IOException{
-        if(++rpcCount>50000)throw new IllegalStateException("bounded logical maintenance RPC inventory exceeded");
+        if(++rpcCount>maximumLogicalRpcs)throw new IllegalStateException("bounded logical maintenance RPC inventory exceeded");
+        long rpcStart=System.nanoTime();String kind=operation.getClass().getSimpleName();boolean completed=false;long correlation=Long.MIN_VALUE;
+        try{
         var ticket=owner.submitMaintenance(operation,System.nanoTime()+RPC_TIMEOUT.toNanos());byte[] original=ticket.originalWire();
-        latestOriginalWire=original.clone();latestRawFlushed=false;
+        latestOriginalWire=original.clone();latestRawFlushed=false;correlation=RetentionWireV3.decode(original).correlationId();
         try{requests.writeInt(original.length);requests.write(original);requests.flush();latestRawFlushed=true;}
         catch(IOException writeError){throw new EvidenceWriteException(original,writeError);}
         Reply reply=ticket.await(RPC_TIMEOUT);byte[] raw=RetentionReplyV3.encode(reply);
         try{replies.writeInt(raw.length);replies.write(raw);replies.flush();}catch(IOException writeError){throw new EvidenceWriteException(original,writeError);}
-        if(!reply.error().isEmpty())throw new IOException("maintenance reply error, no ACK success: "+reply.error());return reply;
+        if(!reply.error().isEmpty())throw new IOException("maintenance reply error, no ACK success: "+reply.error());completed=true;return reply;
+        }finally{
+            long ended=System.nanoTime(),elapsed=ended-rpcStart;long[] values=rpcKinds.computeIfAbsent(kind,k->new long[4]);values[0]++;values[1]+=elapsed;values[2]=Math.max(values[2],elapsed);if(!completed)values[3]++;
+            String timingRow=rpcCount+","+kind+","+correlation+","+rpcStart+","+ended+","+elapsed+","+completed+"\n";
+            if(timingRow.length()>256)throw new IOException("bounded logical maintenance timing row exceeds256bytes");timings.writeBytes(timingRow);timings.flush();
+        }
     }
     public Cycle exportThrough(long throughBusinessSeq)throws IOException{
         affinity();if(failed||closed)throw new IllegalStateException("maintenance coordinator terminal; no new attempt or fresh identity reissue");
@@ -93,6 +109,7 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
         }
     }
     private Cycle export(long through)throws IOException{
+        long cycleStarted=System.nanoTime(),rpcAtStart=rpcCount;
         long from=budget.archivedThrough()+1,count=through-from+1;
         if(count<1||count>COMMAND_CUT)throw new IllegalArgumentException("nonempty prefix cut must be <=3072 business commands");
         if(((Number)owner.snapshot().get("pendingLogicalCommands")).longValue()!=0)
@@ -137,10 +154,10 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
                     ||eventState.maintenance().exportedEventSeq()!=throughEvent)throw new IOException("event ACK not exactly applied; retain unresolved original identity");
         }
         budget.lastArchive=ack;budget.lastEvent=throughEvent;cycleCount++;
-        String receipt="cycle="+cycleCount+"\nfirstCommandSeq="+from+"\nthroughCommandSeq="+through+"\nthroughEventSeq="+throughEvent+"\narchiveFile="+archiveFile.path()+"\narchiveSha256="+archiveFile.sha256()+"\neventFile="+eventFile+"\nforceAndReadbackBeforeBothAcks=true\nreservedJournalRecords="+budget.reservedJournalRecords+"\nreservedJournalBytes="+budget.reservedJournalBytes+"\ncapacityClaim=false\n";
+        String receipt="cycle="+cycleCount+"\ncycleStartedMonotonicNs="+cycleStarted+"\ncycleEndedMonotonicNs="+System.nanoTime()+"\nlogicalRpcCountAtStart="+rpcAtStart+"\nlogicalRpcCountAtEnd="+rpcCount+"\nfirstCommandSeq="+from+"\nthroughCommandSeq="+through+"\nthroughEventSeq="+throughEvent+"\narchiveFile="+archiveFile.path()+"\narchiveSha256="+archiveFile.sha256()+"\neventFile="+eventFile+"\nforceAndReadbackBeforeBothAcks=true\nreservedJournalRecords="+budget.reservedJournalRecords+"\nreservedJournalBytes="+budget.reservedJournalBytes+"\ncapacityClaim=false\n";
         Files.writeString(rawRoot.resolve("cycle-"+cycleCount+".verified.txt"),receipt,StandardOpenOption.CREATE_NEW);
         return new Cycle(ack,archiveFile.path(),eventFile,verified.entries(),throughEvent);
     }
-    public Map<String,Object> snapshot(){affinity();var result=new LinkedHashMap<String,Object>(budget.snapshot());result.put("logicalRpcCount",rpcCount);result.put("completedCycles",cycleCount);result.put("failed",failed);return Collections.unmodifiableMap(result);}
-    @Override public void close()throws IOException{affinity();closed=true;try{requests.close();}finally{replies.close();}}
+    public Map<String,Object> snapshot(){affinity();var result=new LinkedHashMap<String,Object>(budget.snapshot());result.put("logicalRpcCount",rpcCount);result.put("maximumLogicalRpcs",maximumLogicalRpcs);var kinds=new LinkedHashMap<String,Object>();for(var entry:rpcKinds.entrySet()){long[] v=entry.getValue();kinds.put(entry.getKey(),Map.of("count",v[0],"totalElapsedNs",v[1],"maxElapsedNs",v[2],"failed",v[3]));}result.put("rpcKinds",kinds);result.put("completedCycles",cycleCount);result.put("failed",failed);return Collections.unmodifiableMap(result);}
+    @Override public void close()throws IOException{affinity();closed=true;try{requests.close();}finally{try{replies.close();}finally{timings.close();}}}
 }

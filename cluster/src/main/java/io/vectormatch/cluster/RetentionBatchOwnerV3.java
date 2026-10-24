@@ -92,6 +92,19 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
         public BusinessIdentity identity() { return slot.identity; }
         public String commandSha256() { return slot.commandSha; }
         public boolean admissionObserved() { synchronized (lock) { return slot.admissionObserved; } }
+        /** Owner-clock observations; missing events are null, not a fabricated zero latency. */
+        public Map<String,Object> observation() { synchronized(lock) {
+            var value=new LinkedHashMap<String,Object>();
+            value.put("correlationId",slot.frame==null?null:slot.frame.correlation);
+            value.put("batchIndex",slot.frame==null?null:slot.frame.slots.indexOf(slot));
+            value.put("firstWireOfferCallNs",slot.firstOfferNs==Long.MIN_VALUE?null:slot.firstOfferNs);
+            value.put("firstPhysicalAdmissionNs",slot.firstAcceptedOfferNs==Long.MIN_VALUE?null:slot.firstAcceptedOfferNs);
+            value.put("replyCompletionNs",slot.completionNs==Long.MIN_VALUE?null:slot.completionNs);
+            value.put("admittedPhysicalOfferCount",slot.acceptedPhysicalOfferCount);
+            value.put("wireSha256",slot.frame==null?null:slot.frame.wireSha);
+            value.put("initialAdmissionStatus",slot.initialAdmissionStatus==null?null:slot.initialAdmissionStatus.name());
+            return Collections.unmodifiableMap(value);
+        }}
     }
     /** Exactly one bounded maintenance RPC shares this owner's session and correlation space. */
     public final class MaintenanceTicket {
@@ -239,7 +252,9 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
         final long readyNs, permitDeadline;
         final CompletableFuture<Outcome> completion = new CompletableFuture<>();
         boolean revoked, admissionObserved;
+        BatchStatus initialAdmissionStatus;
         long ordinal;
+        long firstOfferNs=Long.MIN_VALUE,firstAcceptedOfferNs=Long.MIN_VALUE,completionNs=Long.MIN_VALUE,acceptedPhysicalOfferCount;
         Frame frame;
         Outcome terminal;
         Slot(int worker, Command command, long ready, long deadline) {
@@ -281,6 +296,8 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
     private long maintenanceMutationOffers, maintenanceMutationReserveBytes, maintenanceAcceptedOffers, maintenanceNegativeOffers, maintenanceReplies;
     private Throwable failure;
     private Map<String, Object> transportObservation = Map.of("available", false, "reason", "not_ready");
+    private long transportObservedAtNs;
+    private final List<Map<String,Object>> transportSamples=new ArrayList<>();
     private long nextCorrelation, lastOrdinal, acceptedLogical, acceptedPhysical, resends, unaccepted,
             applied, notSent, creditBlocked, lateReplies, admissionReplies, retiredFrames;
     private int pendingHighWater, frameHighWater;
@@ -359,7 +376,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
     }
     private void terminal(Slot slot, Outcome outcome) {
         if (slot.terminal != null) return;
-        slot.terminal = outcome;
+        slot.completionNs=clock.getAsLong(); slot.terminal = outcome;
         if (slot.ordinal != 0) unresolvedOrdinals.remove(slot.ordinal);
         if (slots[slot.worker] != slot) throw new IllegalStateException("logical slot ownership changed");
         slots[slot.worker] = null; slot.completion.complete(outcome);
@@ -394,7 +411,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
                 if (entry.status() == BatchStatus.APPLIED) {
                     terminal(slot, new Outcome(slot.identity, slot.commandSha, Terminal.APPLIED, entry.result(), entry.replayed(), entry.frontier(), "")); applied++;
                 } else {
-                    slot.admissionObserved = true; admissionStopped = true; frame.disabled = true;
+                    slot.admissionObserved = true; if(slot.initialAdmissionStatus==null)slot.initialAdmissionStatus=entry.status(); admissionStopped = true; frame.disabled = true;
                 }
             }
             if (admissionStopped) { admissionReplies++; for (Frame pending : frames.values()) pending.disabled = true; }
@@ -439,8 +456,11 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
                 if (first) abortUnaccepted(frame, "FRAME_PERMIT_EXPIRED_BEFORE_OFFER_CALL");
                 continue;
             }
+            for(Slot slot:frame.slots)if(slot.firstOfferNs==Long.MIN_VALUE)slot.firstOfferNs=now;
             long offered = io.offer(offerBytes); // Throwable keeps the pre-reserved credit as possibly executed.
             if (offered >= 0) {
+                long returnedAt=clock.getAsLong();
+                for(Slot slot:frame.slots){if(slot.firstAcceptedOfferNs==Long.MIN_VALUE)slot.firstAcceptedOfferNs=returnedAt;slot.acceptedPhysicalOfferCount++;}
                 if (first) acceptedLogical += frame.slots.size();
                 else resends++;
                 acceptedPhysical++; frame.acceptedOffers++; frame.nextOffer = now + RESEND_NS; work++;
@@ -468,11 +488,11 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
     private void own(IOFactory factory) {
         RetentionBatchOwnerIOV3 io = null;
         try {
-            io = factory.open(); synchronized (lock) { transportObservation = Map.copyOf(io.observation()); }
-            started.complete(null);
+            io = factory.open(); captureTransport(io);started.complete(null);
             while (true) {
                 synchronized (lock) { if (closing) break; }
                 int work = io.poll(this::receive); long pause;
+                if(clock.getAsLong()-transportObservedAtNs>=TimeUnit.SECONDS.toNanos(1))captureTransport(io);
                 synchronized (lock) {
                     long now = clock.getAsLong(); build(now); work += offerMaintenance(io, now); work += offerFrames(io);
                     for (var iterator = frames.entrySet().iterator(); iterator.hasNext();) {
@@ -495,11 +515,17 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
                     else slot.completion.completeExceptionally(failure == null ? unresolved(slot, null) : new OwnerFailure(failure));
                 }
             }
+            if(io!=null)try{captureTransport(io);}catch(Throwable finalObservationError){synchronized(lock){if(failure==null)failure=finalObservationError;else failure.addSuppressed(finalObservationError);}}
             if (io != null) try { io.close(); } catch (Throwable closeError) {
                 synchronized (lock) { if (failure == null) failure = closeError; else failure.addSuppressed(closeError); }
             }
         }
     }
+    private void captureTransport(RetentionBatchOwnerIOV3 io){
+        Map<String,Object> actual=Map.copyOf(io.observation());long now=clock.getAsLong();
+        synchronized(lock){if(transportSamples.size()>=256)throw new IllegalStateException("bounded transport observation inventory exhausted");transportObservation=actual;transportObservedAtNs=now;var sample=new LinkedHashMap<String,Object>(actual);sample.put("observedAtMonotonicNs",now);transportSamples.add(Collections.unmodifiableMap(sample));}
+    }
+    public List<Map<String,Object>> transportSamples(){synchronized(lock){return List.copyOf(transportSamples);}}
     void wake() { LockSupport.unpark(owner); }
     public Map<String, Object> snapshot() {
         synchronized (lock) {
@@ -519,7 +545,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
             out.put("creditBlockedOfferChecks", creditBlocked); out.put("ignoredLateReplies", lateReplies); out.put("admissionReplyObservations", admissionReplies);
             out.put("retiredFrames", retiredFrames); out.put("pendingHighWater", pendingHighWater); out.put("frameHighWater", frameHighWater);
             out.put("newBusinessAdmissionStopped", admissionStopped); out.put("closed", closing); out.put("ownerThreadAlive", owner.isAlive());
-            out.put("failureType", failure == null ? null : failure.getClass().getName()); out.put("transportObservation", transportObservation);
+            out.put("failureType", failure == null ? null : failure.getClass().getName()); out.put("transportObservation", transportObservation);out.put("transportObservedAtMonotonicNs",transportObservedAtNs);
             out.put("maintenanceRpcCapacity", 1); out.put("maintenancePending", maintenance != null);
             out.put("maintenanceStopped", maintenanceStopped); out.put("maintenanceAcceptedOffers", maintenanceAcceptedOffers);
             out.put("maintenanceNegativeOffers", maintenanceNegativeOffers); out.put("maintenanceReplies", maintenanceReplies);
