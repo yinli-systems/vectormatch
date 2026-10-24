@@ -1,0 +1,3769 @@
+{
+  "passed": true,
+  "mode": "formal",
+  "formalFourArmComparisonComplete": true,
+  "arms": [
+    {
+      "arm": 1,
+      "maximumParkNs": 1000000,
+      "lineage": "capacity-pilot-496876c0-f8d6-4324-8cf8-4da43248a9b8",
+      "config": {
+        "schema": "retention-v3-openloop-capacity-v1",
+        "arrivals": 6400,
+        "ratePerSecond": 500,
+        "windowSeconds": 12.8,
+        "batchCap": 4,
+        "archiveChunkBytes": 6144,
+        "eventFetchCount": 16,
+        "commonChunkEnvelope": false,
+        "readWindow": 8,
+        "commonReadWindowEnvelope": true,
+        "maintenanceTimingSchema": "13cols-correlation-phase-window-v1",
+        "readCreditPolicy": "reserve+flush before arm; completed-unconsumed holds credit; consume after reply/timing flush",
+        "logicalWorkers": 128,
+        "taskQueueCapacityPerWorker": 64,
+        "externalQueuePositions": 8192,
+        "internalPendingCapacity": 128,
+        "physicalSessions": 1,
+        "sharedMediaDrivers": 1,
+        "producerIdentityRule": "worker=index%128;sequence=1+index/128;queue rejection leaves a legal gap",
+        "taskLifetimeNs": 90000000000,
+        "physicalOfferPermitNsFromDispatch": 2000000000,
+        "physicalAdmissionTimestampSemantics": "monotonic return observation after the first nonnegative publication.offer; not an exact internal Aeron admission instant",
+        "drainAdmissionNs": 90000000000,
+        "batchFlushNs": 50000,
+        "profileSha256": "732201775469861083f9dd0798a465dec1d0ed6bff39ed281dbef58c28b9fc68",
+        "actualCodeSha256": "f78025f91f9e43ad634840b400ab04ed4ae422597c35800984e434dbd1844c8f",
+        "lineage": "capacity-pilot-496876c0-f8d6-4324-8cf8-4da43248a9b8",
+        "scheduledOriginUTC": "2026-10-24T08:21:40.492789271Z",
+        "scheduledOriginMonotonicNs": 38615120927533,
+        "primitiveArrivalColumnBytes": 774400,
+        "arrivalClockPausesForMaintenance": false,
+        "maintenanceDispatchPolicy": "drain pending while arrivals keep enqueuing/rejecting; exactprefix force/readback thenACK",
+        "scope": "Finite openloop source; external canonical/leader/config proof required before any stability or capacity claim",
+        "retentionIdleSelection": {
+          "schema": "retention-idle-selection-v1",
+          "factor": "maximum requested park only",
+          "maximumParkNs": 1000000,
+          "property": "vectormatch.retention.idleMaxParkNs"
+        }
+      },
+      "registration": {
+        "appointedLeader": 0,
+        "codeSha256": "f78025f91f9e43ad634840b400ab04ed4ae422597c35800984e434dbd1844c8f",
+        "rate": 500,
+        "scope": "LOCAL_THREE_JVM_CONTINUOUS_ARRIVAL_FUNCTIONAL_PILOT",
+        "lineage": "capacity-pilot-496876c0-f8d6-4324-8cf8-4da43248a9b8",
+        "profileSha256": "732201775469861083f9dd0798a465dec1d0ed6bff39ed281dbef58c28b9fc68",
+        "arrivals": 6400,
+        "ports": 42000,
+        "batchCap": 4,
+        "sync": 2,
+        "archiveChunkBytes": 6144,
+        "eventFetchCount": 16,
+        "commonChunkEnvelope": false,
+        "readWindow": 8,
+        "commonReadWindowEnvelope": true,
+        "retentionIdleSelection": {
+          "schema": "retention-idle-selection-v1",
+          "factor": "maximum requested park only",
+          "maximumParkNs": 1000000,
+          "property": "vectormatch.retention.idleMaxParkNs"
+        }
+      },
+      "jars": {
+        "aeron-all-1.53.3.jar": {
+          "bytes": 3544128,
+          "sha256": "4c6c8a5014a2b67424051170392a005daa9a998ac963302d2819d0f3db749ef2"
+        },
+        "agrona-2.6.1.jar": {
+          "bytes": 491990,
+          "sha256": "84c07eb02695c06bfda3d6c3a20c1984e3ff1bbd617b2f8e678140baf973fa28"
+        },
+        "cluster-0.1.0-SNAPSHOT.jar": {
+          "bytes": 566333,
+          "sha256": "e7ec1a57aa1495fa98834a03f08b3028c711835d46fefe7229420699960f3258"
+        },
+        "core-0.1.0-SNAPSHOT.jar": {
+          "bytes": 81916,
+          "sha256": "ba9644585ede2b30b68afc783b15128507d1567105d70d7d8edc36f91b58fb47"
+        }
+      },
+      "releaseSha256": "c2df0427bea0cdd8575ee3130adf4ff4aa43c65fca0a5458ed0c7c8c1eea4676",
+      "metrics": {
+        "arrivals": 6400,
+        "confirmedAcceptedUniqueOrders": 6400,
+        "completedReplies": 6400,
+        "notSent": 0,
+        "unknownObservedOrFinal": 0,
+        "serverRejected": 0,
+        "acceptedWithinArrivalWindow": 6141,
+        "arrivalWindowGoodputPerSecond": 479.765625,
+        "allArrivalAcceptedOrderP99Ns": 899508607,
+        "acceptedConditionalLatency": {
+          "count": 6400,
+          "minNs": 4115555,
+          "p50Ns": 8129413,
+          "p99Ns": 899508607,
+          "maxNs": 1025642397
+        },
+        "completedReplyConditionalLatency": {
+          "count": 6400,
+          "minNs": 4115555,
+          "p50Ns": 8129413,
+          "p99Ns": 899508607,
+          "maxNs": 1025642397
+        },
+        "scheduledToDispatch": {
+          "count": 6400,
+          "minNs": 24168,
+          "p50Ns": 82799,
+          "p99Ns": 889311362,
+          "maxNs": 1014511068
+        },
+        "dispatchToSuccessfulOfferReturn": {
+          "count": 6400,
+          "minNs": 50959,
+          "p50Ns": 149028,
+          "p99Ns": 1093587,
+          "maxNs": 11031080
+        },
+        "successfulOfferReturnToReply": {
+          "count": 6400,
+          "minNs": 3866205,
+          "p50Ns": 7877408,
+          "p99Ns": 13126106,
+          "maxNs": 17910349
+        },
+        "schedulerLateness": {
+          "count": 6400,
+          "minNs": 9090,
+          "p50Ns": 57517,
+          "p99Ns": 69647,
+          "maxNs": 2378622
+        },
+        "schedulerLatenessOver20ms": 0,
+        "schedulerTimingValid": true,
+        "allArrivalP99Policy": "Finite distinct ACCEPTED order for every planned arrival; null on any notSent/unknown/reject/unreleased",
+        "percentileMethod": "nearest rank ceil(p*N), scheduled arrival to reply completion; not batch-normalized"
+      },
+      "cycles": [
+        {
+          "cycle": 1,
+          "startMonotonicNs": 38621266866777,
+          "endMonotonicNs": 38622263999261,
+          "wallNs": 997132484,
+          "logicalRpcCount": 621
+        },
+        {
+          "cycle": 2,
+          "startMonotonicNs": 38627408718987,
+          "endMonotonicNs": 38628290829033,
+          "wallNs": 882110046,
+          "logicalRpcCount": 621
+        },
+        {
+          "cycle": 3,
+          "startMonotonicNs": 38628321460073,
+          "endMonotonicNs": 38628430989896,
+          "wallNs": 109529823,
+          "logicalRpcCount": 56
+        }
+      ],
+      "maintenanceCycleWallNs": 1988772353,
+      "readPhases": [
+        {
+          "generation": 1,
+          "kind": "ArchiveChunk",
+          "logicalRpcs": 234,
+          "reservationToCoordinatorRecordedEndWallNs": 286700471,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 2,
+          "kind": "FetchEvents",
+          "logicalRpcs": 384,
+          "reservationToCoordinatorRecordedEndWallNs": 422230919,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 3,
+          "kind": "ArchiveChunk",
+          "logicalRpcs": 234,
+          "reservationToCoordinatorRecordedEndWallNs": 249034494,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 4,
+          "kind": "FetchEvents",
+          "logicalRpcs": 384,
+          "reservationToCoordinatorRecordedEndWallNs": 401925188,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 5,
+          "kind": "ArchiveChunk",
+          "logicalRpcs": 20,
+          "reservationToCoordinatorRecordedEndWallNs": 22868332,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 6,
+          "kind": "FetchEvents",
+          "logicalRpcs": 33,
+          "reservationToCoordinatorRecordedEndWallNs": 43247811,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        }
+      ],
+      "overlappingLogicalRpcElapsedSumNsNotWallTime": 11019399261,
+      "physicalFrames": {
+        "uniqueRequests": 7118,
+        "businessFrames": 5820,
+        "maintenanceFrames": 1298,
+        "businessBatchSizeCounts": {
+          "1": 5616,
+          "2": 13,
+          "3": 6,
+          "4": 185
+        },
+        "meanCommandsPerBusinessFrame": 1.0996563573883162,
+        "classification": "Disjoint original arrival and logical-maintenance correlation sets; members=1 alone is not a business discriminator",
+        "sourcePhysicalOfferTapeCounts": {
+          "physicalOfferAttempts": 7154,
+          "successfulPhysicalAdmissions": 7118,
+          "negativePhysicalOffers": 36,
+          "recordedReplies": 7118
+        }
+      },
+      "idleFactoryCreationObservations": [
+        {
+          "node": 0,
+          "pid": 63961,
+          "factoryCreations": 7,
+          "perRoleCreations": {
+            "driver-shared": 1,
+            "archive-shared": 2,
+            "consensus": 2,
+            "service": 2
+          },
+          "configuredMaximumParkNs": 1000000,
+          "actualSleepOrThreadAssignmentMeasured": false
+        },
+        {
+          "node": 1,
+          "pid": 63964,
+          "factoryCreations": 7,
+          "perRoleCreations": {
+            "driver-shared": 1,
+            "archive-shared": 2,
+            "consensus": 2,
+            "service": 2
+          },
+          "configuredMaximumParkNs": 1000000,
+          "actualSleepOrThreadAssignmentMeasured": false
+        },
+        {
+          "node": 2,
+          "pid": 63970,
+          "factoryCreations": 7,
+          "perRoleCreations": {
+            "driver-shared": 1,
+            "archive-shared": 2,
+            "consensus": 2,
+            "service": 2
+          },
+          "configuredMaximumParkNs": 1000000,
+          "actualSleepOrThreadAssignmentMeasured": false
+        },
+        {
+          "node": -1,
+          "pid": 63937,
+          "factoryCreations": 1,
+          "perRoleCreations": {
+            "owner-driver-shared": 1
+          },
+          "configuredMaximumParkNs": 1000000,
+          "actualSleepOrThreadAssignmentMeasured": false
+        }
+      ],
+      "uniqueActualFactoryCreations": 22,
+      "warningReports": [
+        {
+          "afterSigtermWallTimeProven": false,
+          "allLogLinesClassifiedAndRetained": true,
+          "candidateClassification": "NO_LOG_WARNINGS",
+          "lineCount": 5,
+          "logBytes": 10309,
+          "logSha256": "d3a612a6a170c0c7507e6d5a8587b8ac746d6c5f56644e9a0534f789190c6022",
+          "matchingFinalCheckpointLine1Based": 5,
+          "nextRunAuthorized": false,
+          "node": 0,
+          "originalStrictWrapperResultChanged": false,
+          "pid": 63961,
+          "rawFunctionalGatePerformedHere": false,
+          "warningPairCount": 0,
+          "warningPairs": []
+        },
+        {
+          "afterSigtermWallTimeProven": false,
+          "allLogLinesClassifiedAndRetained": true,
+          "candidateClassification": "NO_LOG_WARNINGS",
+          "lineCount": 4,
+          "logBytes": 10282,
+          "logSha256": "fd64caa828b7373f410140a4f06c16418881bdf37acd0ddfa8d8b043c4a42e80",
+          "matchingFinalCheckpointLine1Based": 4,
+          "nextRunAuthorized": false,
+          "node": 1,
+          "originalStrictWrapperResultChanged": false,
+          "pid": 63964,
+          "rawFunctionalGatePerformedHere": false,
+          "warningPairCount": 0,
+          "warningPairs": []
+        },
+        {
+          "afterSigtermWallTimeProven": false,
+          "allLogLinesClassifiedAndRetained": true,
+          "candidateClassification": "NO_LOG_WARNINGS",
+          "lineCount": 4,
+          "logBytes": 10282,
+          "logSha256": "dd04322ee3dac56e3a0f2fd290d7d19d4a0370208955e4ec21bc0a3117d6571a",
+          "matchingFinalCheckpointLine1Based": 4,
+          "nextRunAuthorized": false,
+          "node": 2,
+          "originalStrictWrapperResultChanged": false,
+          "pid": 63970,
+          "rawFunctionalGatePerformedHere": false,
+          "warningPairCount": 0,
+          "warningPairs": []
+        }
+      ],
+      "warningsRetained": 0,
+      "cpuSamplingClockAlignment": {
+        "passed": true,
+        "maximumUtcVersusMonotonicOffsetDifferenceNs": 24436,
+        "thresholdNs": 100000000,
+        "samples": 18,
+        "scope": "Coarse same-host clock-domain consistency check; separate sample field reads, not exact capture-time calibration. CPU uses monotonic adjacent intervals."
+      },
+      "cpuOverArrivalExposure": [
+        {
+          "role": "window-8-node-0",
+          "requestedStartMonotonicNs": 38615120927533,
+          "requestedEndMonotonicNs": 38627920927533,
+          "requestedSeconds": 12.8,
+          "coveredSeconds": 11.48367763,
+          "coverageFraction": 0.89716231484375,
+          "cpuSeconds": 7.35,
+          "meanOccupiedCoresOverCoveredIntervals": 0.6400388653194891,
+          "intervals": [
+            {
+              "startMonotonicNs": 38615742161186,
+              "endMonotonicNs": 38616772944985,
+              "cpuSeconds": 0.96
+            },
+            {
+              "startMonotonicNs": 38616772944985,
+              "endMonotonicNs": 38617817670381,
+              "cpuSeconds": 0.72
+            },
+            {
+              "startMonotonicNs": 38617817670381,
+              "endMonotonicNs": 38618870745698,
+              "cpuSeconds": 0.59
+            },
+            {
+              "startMonotonicNs": 38618870745698,
+              "endMonotonicNs": 38619918583777,
+              "cpuSeconds": 0.6
+            },
+            {
+              "startMonotonicNs": 38619918583777,
+              "endMonotonicNs": 38620962490893,
+              "cpuSeconds": 0.64
+            },
+            {
+              "startMonotonicNs": 38620962490893,
+              "endMonotonicNs": 38622010271982,
+              "cpuSeconds": 0.58
+            },
+            {
+              "startMonotonicNs": 38622010271982,
+              "endMonotonicNs": 38623055331574,
+              "cpuSeconds": 0.91
+            },
+            {
+              "startMonotonicNs": 38623055331574,
+              "endMonotonicNs": 38624089195868,
+              "cpuSeconds": 0.63
+            },
+            {
+              "startMonotonicNs": 38624089195868,
+              "endMonotonicNs": 38625138454800,
+              "cpuSeconds": 0.51
+            },
+            {
+              "startMonotonicNs": 38625138454800,
+              "endMonotonicNs": 38626178519190,
+              "cpuSeconds": 0.71
+            },
+            {
+              "startMonotonicNs": 38626178519190,
+              "endMonotonicNs": 38627225838816,
+              "cpuSeconds": 0.5
+            }
+          ],
+          "rejectedInteriorAdjacentIntervals": 0,
+          "maxSampledRssBytes": 392232960,
+          "maxSampledThreads": 37,
+          "kernelWriteBytesDelta": 24137728,
+          "kernelWriteIntervals": 11,
+          "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+        },
+        {
+          "role": "window-8-node-1",
+          "requestedStartMonotonicNs": 38615120927533,
+          "requestedEndMonotonicNs": 38627920927533,
+          "requestedSeconds": 12.8,
+          "coveredSeconds": 11.48367763,
+          "coverageFraction": 0.89716231484375,
+          "cpuSeconds": 5.5,
+          "meanOccupiedCoresOverCoveredIntervals": 0.47894064751798504,
+          "intervals": [
+            {
+              "startMonotonicNs": 38615742161186,
+              "endMonotonicNs": 38616772944985,
+              "cpuSeconds": 0.85
+            },
+            {
+              "startMonotonicNs": 38616772944985,
+              "endMonotonicNs": 38617817670381,
+              "cpuSeconds": 0.56
+            },
+            {
+              "startMonotonicNs": 38617817670381,
+              "endMonotonicNs": 38618870745698,
+              "cpuSeconds": 0.39
+            },
+            {
+              "startMonotonicNs": 38618870745698,
+              "endMonotonicNs": 38619918583777,
+              "cpuSeconds": 0.31
+            },
+            {
+              "startMonotonicNs": 38619918583777,
+              "endMonotonicNs": 38620962490893,
+              "cpuSeconds": 0.46
+            },
+            {
+              "startMonotonicNs": 38620962490893,
+              "endMonotonicNs": 38622010271982,
+              "cpuSeconds": 0.45
+            },
+            {
+              "startMonotonicNs": 38622010271982,
+              "endMonotonicNs": 38623055331574,
+              "cpuSeconds": 0.67
+            },
+            {
+              "startMonotonicNs": 38623055331574,
+              "endMonotonicNs": 38624089195868,
+              "cpuSeconds": 0.57
+            },
+            {
+              "startMonotonicNs": 38624089195868,
+              "endMonotonicNs": 38625138454800,
+              "cpuSeconds": 0.35
+            },
+            {
+              "startMonotonicNs": 38625138454800,
+              "endMonotonicNs": 38626178519190,
+              "cpuSeconds": 0.51
+            },
+            {
+              "startMonotonicNs": 38626178519190,
+              "endMonotonicNs": 38627225838816,
+              "cpuSeconds": 0.38
+            }
+          ],
+          "rejectedInteriorAdjacentIntervals": 0,
+          "maxSampledRssBytes": 370704384,
+          "maxSampledThreads": 38,
+          "kernelWriteBytesDelta": 18534400,
+          "kernelWriteIntervals": 11,
+          "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+        },
+        {
+          "role": "window-8-node-2",
+          "requestedStartMonotonicNs": 38615120927533,
+          "requestedEndMonotonicNs": 38627920927533,
+          "requestedSeconds": 12.8,
+          "coveredSeconds": 11.48367763,
+          "coverageFraction": 0.89716231484375,
+          "cpuSeconds": 5.32,
+          "meanOccupiedCoresOverCoveredIntervals": 0.46326622632648734,
+          "intervals": [
+            {
+              "startMonotonicNs": 38615742161186,
+              "endMonotonicNs": 38616772944985,
+              "cpuSeconds": 0.79
+            },
+            {
+              "startMonotonicNs": 38616772944985,
+              "endMonotonicNs": 38617817670381,
+              "cpuSeconds": 0.5
+            },
+            {
+              "startMonotonicNs": 38617817670381,
+              "endMonotonicNs": 38618870745698,
+              "cpuSeconds": 0.34
+            },
+            {
+              "startMonotonicNs": 38618870745698,
+              "endMonotonicNs": 38619918583777,
+              "cpuSeconds": 0.3
+            },
+            {
+              "startMonotonicNs": 38619918583777,
+              "endMonotonicNs": 38620962490893,
+              "cpuSeconds": 0.46
+            },
+            {
+              "startMonotonicNs": 38620962490893,
+              "endMonotonicNs": 38622010271982,
+              "cpuSeconds": 0.45
+            },
+            {
+              "startMonotonicNs": 38622010271982,
+              "endMonotonicNs": 38623055331574,
+              "cpuSeconds": 0.81
+            },
+            {
+              "startMonotonicNs": 38623055331574,
+              "endMonotonicNs": 38624089195868,
+              "cpuSeconds": 0.41
+            },
+            {
+              "startMonotonicNs": 38624089195868,
+              "endMonotonicNs": 38625138454800,
+              "cpuSeconds": 0.34
+            },
+            {
+              "startMonotonicNs": 38625138454800,
+              "endMonotonicNs": 38626178519190,
+              "cpuSeconds": 0.6
+            },
+            {
+              "startMonotonicNs": 38626178519190,
+              "endMonotonicNs": 38627225838816,
+              "cpuSeconds": 0.32
+            }
+          ],
+          "rejectedInteriorAdjacentIntervals": 0,
+          "maxSampledRssBytes": 378445824,
+          "maxSampledThreads": 38,
+          "kernelWriteBytesDelta": 18518016,
+          "kernelWriteIntervals": 11,
+          "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+        },
+        {
+          "role": "pilot-parent",
+          "requestedStartMonotonicNs": 38615120927533,
+          "requestedEndMonotonicNs": 38627920927533,
+          "requestedSeconds": 12.8,
+          "coveredSeconds": 11.48367763,
+          "coverageFraction": 0.89716231484375,
+          "cpuSeconds": 7.89,
+          "meanOccupiedCoresOverCoveredIntervals": 0.6870621288939821,
+          "intervals": [
+            {
+              "startMonotonicNs": 38615742161186,
+              "endMonotonicNs": 38616772944985,
+              "cpuSeconds": 0.94
+            },
+            {
+              "startMonotonicNs": 38616772944985,
+              "endMonotonicNs": 38617817670381,
+              "cpuSeconds": 0.86
+            },
+            {
+              "startMonotonicNs": 38617817670381,
+              "endMonotonicNs": 38618870745698,
+              "cpuSeconds": 0.37
+            },
+            {
+              "startMonotonicNs": 38618870745698,
+              "endMonotonicNs": 38619918583777,
+              "cpuSeconds": 0.31
+            },
+            {
+              "startMonotonicNs": 38619918583777,
+              "endMonotonicNs": 38620962490893,
+              "cpuSeconds": 0.49
+            },
+            {
+              "startMonotonicNs": 38620962490893,
+              "endMonotonicNs": 38622010271982,
+              "cpuSeconds": 1.86
+            },
+            {
+              "startMonotonicNs": 38622010271982,
+              "endMonotonicNs": 38623055331574,
+              "cpuSeconds": 0.95
+            },
+            {
+              "startMonotonicNs": 38623055331574,
+              "endMonotonicNs": 38624089195868,
+              "cpuSeconds": 0.42
+            },
+            {
+              "startMonotonicNs": 38624089195868,
+              "endMonotonicNs": 38625138454800,
+              "cpuSeconds": 0.43
+            },
+            {
+              "startMonotonicNs": 38625138454800,
+              "endMonotonicNs": 38626178519190,
+              "cpuSeconds": 0.92
+            },
+            {
+              "startMonotonicNs": 38626178519190,
+              "endMonotonicNs": 38627225838816,
+              "cpuSeconds": 0.34
+            }
+          ],
+          "rejectedInteriorAdjacentIntervals": 0,
+          "maxSampledRssBytes": 487616512,
+          "maxSampledThreads": 50,
+          "kernelWriteBytesDelta": 15753216,
+          "kernelWriteIntervals": 11,
+          "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+        }
+      ],
+      "parentEntireObservedSpanIncludingSetupDrainAndClose": {
+        "role": "pilot-parent",
+        "requestedStartMonotonicNs": 38612633818805,
+        "requestedEndMonotonicNs": 38628273282119,
+        "requestedSeconds": 15.639463314,
+        "coveredSeconds": 15.639463314,
+        "coverageFraction": 1.0,
+        "cpuSeconds": 10.93,
+        "meanOccupiedCoresOverCoveredIntervals": 0.6988730866624928,
+        "intervals": [
+          {
+            "startMonotonicNs": 38612633818805,
+            "endMonotonicNs": 38613670040451,
+            "cpuSeconds": 0.62
+          },
+          {
+            "startMonotonicNs": 38613670040451,
+            "endMonotonicNs": 38614716941631,
+            "cpuSeconds": 0.56
+          },
+          {
+            "startMonotonicNs": 38614716941631,
+            "endMonotonicNs": 38615742161186,
+            "cpuSeconds": 1.12
+          },
+          {
+            "startMonotonicNs": 38615742161186,
+            "endMonotonicNs": 38616772944985,
+            "cpuSeconds": 0.94
+          },
+          {
+            "startMonotonicNs": 38616772944985,
+            "endMonotonicNs": 38617817670381,
+            "cpuSeconds": 0.86
+          },
+          {
+            "startMonotonicNs": 38617817670381,
+            "endMonotonicNs": 38618870745698,
+            "cpuSeconds": 0.37
+          },
+          {
+            "startMonotonicNs": 38618870745698,
+            "endMonotonicNs": 38619918583777,
+            "cpuSeconds": 0.31
+          },
+          {
+            "startMonotonicNs": 38619918583777,
+            "endMonotonicNs": 38620962490893,
+            "cpuSeconds": 0.49
+          },
+          {
+            "startMonotonicNs": 38620962490893,
+            "endMonotonicNs": 38622010271982,
+            "cpuSeconds": 1.86
+          },
+          {
+            "startMonotonicNs": 38622010271982,
+            "endMonotonicNs": 38623055331574,
+            "cpuSeconds": 0.95
+          },
+          {
+            "startMonotonicNs": 38623055331574,
+            "endMonotonicNs": 38624089195868,
+            "cpuSeconds": 0.42
+          },
+          {
+            "startMonotonicNs": 38624089195868,
+            "endMonotonicNs": 38625138454800,
+            "cpuSeconds": 0.43
+          },
+          {
+            "startMonotonicNs": 38625138454800,
+            "endMonotonicNs": 38626178519190,
+            "cpuSeconds": 0.92
+          },
+          {
+            "startMonotonicNs": 38626178519190,
+            "endMonotonicNs": 38627225838816,
+            "cpuSeconds": 0.34
+          },
+          {
+            "startMonotonicNs": 38627225838816,
+            "endMonotonicNs": 38628273282119,
+            "cpuSeconds": 0.74
+          }
+        ],
+        "rejectedInteriorAdjacentIntervals": 0,
+        "maxSampledRssBytes": 487616512,
+        "maxSampledThreads": 50,
+        "kernelWriteBytesDelta": 122757120,
+        "kernelWriteIntervals": 15,
+        "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+      },
+      "rawFiniteClassificationPreserved": "VALID_FINITE_WINDOW_WITH_OUTSTANDING_REPLIES",
+      "rootReviewSha256": "1e4f3333d3fd39494d668a326deae8376dc46e2527f531f3b90e41d399a45929"
+    },
+    {
+      "arm": 2,
+      "maximumParkNs": 100000,
+      "lineage": "capacity-pilot-bbd8ebae-343e-4bad-880a-d99a59de9fa4",
+      "config": {
+        "schema": "retention-v3-openloop-capacity-v1",
+        "arrivals": 6400,
+        "ratePerSecond": 500,
+        "windowSeconds": 12.8,
+        "batchCap": 4,
+        "archiveChunkBytes": 6144,
+        "eventFetchCount": 16,
+        "commonChunkEnvelope": false,
+        "readWindow": 8,
+        "commonReadWindowEnvelope": true,
+        "maintenanceTimingSchema": "13cols-correlation-phase-window-v1",
+        "readCreditPolicy": "reserve+flush before arm; completed-unconsumed holds credit; consume after reply/timing flush",
+        "logicalWorkers": 128,
+        "taskQueueCapacityPerWorker": 64,
+        "externalQueuePositions": 8192,
+        "internalPendingCapacity": 128,
+        "physicalSessions": 1,
+        "sharedMediaDrivers": 1,
+        "producerIdentityRule": "worker=index%128;sequence=1+index/128;queue rejection leaves a legal gap",
+        "taskLifetimeNs": 90000000000,
+        "physicalOfferPermitNsFromDispatch": 2000000000,
+        "physicalAdmissionTimestampSemantics": "monotonic return observation after the first nonnegative publication.offer; not an exact internal Aeron admission instant",
+        "drainAdmissionNs": 90000000000,
+        "batchFlushNs": 50000,
+        "profileSha256": "732201775469861083f9dd0798a465dec1d0ed6bff39ed281dbef58c28b9fc68",
+        "actualCodeSha256": "f78025f91f9e43ad634840b400ab04ed4ae422597c35800984e434dbd1844c8f",
+        "lineage": "capacity-pilot-bbd8ebae-343e-4bad-880a-d99a59de9fa4",
+        "scheduledOriginUTC": "2026-10-24T08:25:16.680624515Z",
+        "scheduledOriginMonotonicNs": 38831308764747,
+        "primitiveArrivalColumnBytes": 774400,
+        "arrivalClockPausesForMaintenance": false,
+        "maintenanceDispatchPolicy": "drain pending while arrivals keep enqueuing/rejecting; exactprefix force/readback thenACK",
+        "scope": "Finite openloop source; external canonical/leader/config proof required before any stability or capacity claim",
+        "retentionIdleSelection": {
+          "property": "vectormatch.retention.idleMaxParkNs",
+          "maximumParkNs": 100000,
+          "factor": "maximum requested park only",
+          "schema": "retention-idle-selection-v1"
+        }
+      },
+      "registration": {
+        "codeSha256": "f78025f91f9e43ad634840b400ab04ed4ae422597c35800984e434dbd1844c8f",
+        "appointedLeader": 0,
+        "sync": 2,
+        "batchCap": 4,
+        "ports": 42000,
+        "arrivals": 6400,
+        "profileSha256": "732201775469861083f9dd0798a465dec1d0ed6bff39ed281dbef58c28b9fc68",
+        "lineage": "capacity-pilot-bbd8ebae-343e-4bad-880a-d99a59de9fa4",
+        "scope": "LOCAL_THREE_JVM_CONTINUOUS_ARRIVAL_FUNCTIONAL_PILOT",
+        "rate": 500,
+        "archiveChunkBytes": 6144,
+        "eventFetchCount": 16,
+        "commonChunkEnvelope": false,
+        "readWindow": 8,
+        "commonReadWindowEnvelope": true,
+        "retentionIdleSelection": {
+          "property": "vectormatch.retention.idleMaxParkNs",
+          "maximumParkNs": 100000,
+          "factor": "maximum requested park only",
+          "schema": "retention-idle-selection-v1"
+        }
+      },
+      "jars": {
+        "aeron-all-1.53.3.jar": {
+          "bytes": 3544128,
+          "sha256": "4c6c8a5014a2b67424051170392a005daa9a998ac963302d2819d0f3db749ef2"
+        },
+        "agrona-2.6.1.jar": {
+          "bytes": 491990,
+          "sha256": "84c07eb02695c06bfda3d6c3a20c1984e3ff1bbd617b2f8e678140baf973fa28"
+        },
+        "cluster-0.1.0-SNAPSHOT.jar": {
+          "bytes": 566333,
+          "sha256": "e7ec1a57aa1495fa98834a03f08b3028c711835d46fefe7229420699960f3258"
+        },
+        "core-0.1.0-SNAPSHOT.jar": {
+          "bytes": 81916,
+          "sha256": "ba9644585ede2b30b68afc783b15128507d1567105d70d7d8edc36f91b58fb47"
+        }
+      },
+      "releaseSha256": "c2df0427bea0cdd8575ee3130adf4ff4aa43c65fca0a5458ed0c7c8c1eea4676",
+      "metrics": {
+        "arrivals": 6400,
+        "confirmedAcceptedUniqueOrders": 6400,
+        "completedReplies": 6400,
+        "notSent": 0,
+        "unknownObservedOrFinal": 0,
+        "serverRejected": 0,
+        "acceptedWithinArrivalWindow": 6141,
+        "arrivalWindowGoodputPerSecond": 479.765625,
+        "allArrivalAcceptedOrderP99Ns": 562917877,
+        "acceptedConditionalLatency": {
+          "count": 6400,
+          "minNs": 4090816,
+          "p50Ns": 6172067,
+          "p99Ns": 562917877,
+          "maxNs": 684908799
+        },
+        "completedReplyConditionalLatency": {
+          "count": 6400,
+          "minNs": 4090816,
+          "p50Ns": 6172067,
+          "p99Ns": 562917877,
+          "maxNs": 684908799
+        },
+        "scheduledToDispatch": {
+          "count": 6400,
+          "minNs": 8229,
+          "p50Ns": 118470,
+          "p99Ns": 556902664,
+          "maxNs": 673651522
+        },
+        "dispatchToSuccessfulOfferReturn": {
+          "count": 6400,
+          "minNs": 66719,
+          "p50Ns": 147198,
+          "p99Ns": 2347312,
+          "maxNs": 13367623
+        },
+        "successfulOfferReturnToReply": {
+          "count": 6400,
+          "minNs": 2822807,
+          "p50Ns": 5909521,
+          "p99Ns": 11233968,
+          "maxNs": 18550032
+        },
+        "schedulerLateness": {
+          "count": 6400,
+          "minNs": 4791,
+          "p50Ns": 57429,
+          "p99Ns": 66945,
+          "maxNs": 2989047
+        },
+        "schedulerLatenessOver20ms": 0,
+        "schedulerTimingValid": true,
+        "allArrivalP99Policy": "Finite distinct ACCEPTED order for every planned arrival; null on any notSent/unknown/reject/unreleased",
+        "percentileMethod": "nearest rank ceil(p*N), scheduled arrival to reply completion; not batch-normalized"
+      },
+      "cycles": [
+        {
+          "cycle": 1,
+          "startMonotonicNs": 38837450703157,
+          "endMonotonicNs": 38838111488793,
+          "wallNs": 660785636,
+          "logicalRpcCount": 621
+        },
+        {
+          "cycle": 2,
+          "startMonotonicNs": 38843595343864,
+          "endMonotonicNs": 38844161127777,
+          "wallNs": 565783913,
+          "logicalRpcCount": 621
+        },
+        {
+          "cycle": 3,
+          "startMonotonicNs": 38844185162565,
+          "endMonotonicNs": 38844250872393,
+          "wallNs": 65709828,
+          "logicalRpcCount": 56
+        }
+      ],
+      "maintenanceCycleWallNs": 1292279377,
+      "readPhases": [
+        {
+          "generation": 1,
+          "kind": "ArchiveChunk",
+          "logicalRpcs": 234,
+          "reservationToCoordinatorRecordedEndWallNs": 168293313,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 2,
+          "kind": "FetchEvents",
+          "logicalRpcs": 384,
+          "reservationToCoordinatorRecordedEndWallNs": 247463533,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 3,
+          "kind": "ArchiveChunk",
+          "logicalRpcs": 234,
+          "reservationToCoordinatorRecordedEndWallNs": 144717120,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 4,
+          "kind": "FetchEvents",
+          "logicalRpcs": 384,
+          "reservationToCoordinatorRecordedEndWallNs": 227335979,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 5,
+          "kind": "ArchiveChunk",
+          "logicalRpcs": 20,
+          "reservationToCoordinatorRecordedEndWallNs": 15488759,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 6,
+          "kind": "FetchEvents",
+          "logicalRpcs": 33,
+          "reservationToCoordinatorRecordedEndWallNs": 19319393,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        }
+      ],
+      "overlappingLogicalRpcElapsedSumNsNotWallTime": 6152089132,
+      "physicalFrames": {
+        "uniqueRequests": 7239,
+        "businessFrames": 5941,
+        "maintenanceFrames": 1298,
+        "businessBatchSizeCounts": {
+          "1": 5782,
+          "2": 7,
+          "3": 4,
+          "4": 148
+        },
+        "meanCommandsPerBusinessFrame": 1.07725972058576,
+        "classification": "Disjoint original arrival and logical-maintenance correlation sets; members=1 alone is not a business discriminator",
+        "sourcePhysicalOfferTapeCounts": {
+          "physicalOfferAttempts": 7275,
+          "successfulPhysicalAdmissions": 7239,
+          "negativePhysicalOffers": 36,
+          "recordedReplies": 7239
+        }
+      },
+      "idleFactoryCreationObservations": [
+        {
+          "node": 0,
+          "pid": 64293,
+          "factoryCreations": 7,
+          "perRoleCreations": {
+            "driver-shared": 1,
+            "archive-shared": 2,
+            "consensus": 2,
+            "service": 2
+          },
+          "configuredMaximumParkNs": 100000,
+          "actualSleepOrThreadAssignmentMeasured": false
+        },
+        {
+          "node": 1,
+          "pid": 64296,
+          "factoryCreations": 7,
+          "perRoleCreations": {
+            "driver-shared": 1,
+            "archive-shared": 2,
+            "consensus": 2,
+            "service": 2
+          },
+          "configuredMaximumParkNs": 100000,
+          "actualSleepOrThreadAssignmentMeasured": false
+        },
+        {
+          "node": 2,
+          "pid": 64302,
+          "factoryCreations": 7,
+          "perRoleCreations": {
+            "driver-shared": 1,
+            "archive-shared": 2,
+            "consensus": 2,
+            "service": 2
+          },
+          "configuredMaximumParkNs": 100000,
+          "actualSleepOrThreadAssignmentMeasured": false
+        },
+        {
+          "node": -1,
+          "pid": 64268,
+          "factoryCreations": 1,
+          "perRoleCreations": {
+            "owner-driver-shared": 1
+          },
+          "configuredMaximumParkNs": 100000,
+          "actualSleepOrThreadAssignmentMeasured": false
+        }
+      ],
+      "uniqueActualFactoryCreations": 22,
+      "warningReports": [
+        {
+          "afterSigtermWallTimeProven": false,
+          "allLogLinesClassifiedAndRetained": true,
+          "candidateClassification": "NO_LOG_WARNINGS",
+          "lineCount": 5,
+          "logBytes": 10294,
+          "logSha256": "c0e7166c2ed253966a26ef49543acc366bf106906f750a45eb60a390f18e80f4",
+          "matchingFinalCheckpointLine1Based": 5,
+          "nextRunAuthorized": false,
+          "node": 0,
+          "originalStrictWrapperResultChanged": false,
+          "pid": 64293,
+          "rawFunctionalGatePerformedHere": false,
+          "warningPairCount": 0,
+          "warningPairs": []
+        },
+        {
+          "afterSigtermWallTimeProven": false,
+          "allLogLinesClassifiedAndRetained": true,
+          "candidateClassification": "NO_LOG_WARNINGS",
+          "lineCount": 4,
+          "logBytes": 10267,
+          "logSha256": "64cab78a9356b6753d638ff0341b67c69ff14f376e5da2952ad43f34c8cd3a29",
+          "matchingFinalCheckpointLine1Based": 4,
+          "nextRunAuthorized": false,
+          "node": 1,
+          "originalStrictWrapperResultChanged": false,
+          "pid": 64296,
+          "rawFunctionalGatePerformedHere": false,
+          "warningPairCount": 0,
+          "warningPairs": []
+        },
+        {
+          "afterSigtermWallTimeProven": false,
+          "allLogLinesClassifiedAndRetained": true,
+          "candidateClassification": "NO_LOG_WARNINGS",
+          "lineCount": 4,
+          "logBytes": 10267,
+          "logSha256": "b1d7b2c814acb918af46764964820018acea987697e415839862115f09a1032a",
+          "matchingFinalCheckpointLine1Based": 4,
+          "nextRunAuthorized": false,
+          "node": 2,
+          "originalStrictWrapperResultChanged": false,
+          "pid": 64302,
+          "rawFunctionalGatePerformedHere": false,
+          "warningPairCount": 0,
+          "warningPairs": []
+        }
+      ],
+      "warningsRetained": 0,
+      "cpuSamplingClockAlignment": {
+        "passed": true,
+        "maximumUtcVersusMonotonicOffsetDifferenceNs": 26148,
+        "thresholdNs": 100000000,
+        "samples": 17,
+        "scope": "Coarse same-host clock-domain consistency check; separate sample field reads, not exact capture-time calibration. CPU uses monotonic adjacent intervals."
+      },
+      "cpuOverArrivalExposure": [
+        {
+          "role": "window-8-node-0",
+          "requestedStartMonotonicNs": 38831308764747,
+          "requestedEndMonotonicNs": 38844108764747,
+          "requestedSeconds": 12.8,
+          "coveredSeconds": 11.526580916,
+          "coverageFraction": 0.9005141340625,
+          "cpuSeconds": 8.080000000000002,
+          "meanOccupiedCoresOverCoveredIntervals": 0.7009884421827279,
+          "intervals": [
+            {
+              "startMonotonicNs": 38832286207124,
+              "endMonotonicNs": 38833335176570,
+              "cpuSeconds": 0.87
+            },
+            {
+              "startMonotonicNs": 38833335176570,
+              "endMonotonicNs": 38834387859292,
+              "cpuSeconds": 0.81
+            },
+            {
+              "startMonotonicNs": 38834387859292,
+              "endMonotonicNs": 38835446013380,
+              "cpuSeconds": 0.69
+            },
+            {
+              "startMonotonicNs": 38835446013380,
+              "endMonotonicNs": 38836492794311,
+              "cpuSeconds": 0.69
+            },
+            {
+              "startMonotonicNs": 38836492794311,
+              "endMonotonicNs": 38837521081280,
+              "cpuSeconds": 0.76
+            },
+            {
+              "startMonotonicNs": 38837521081280,
+              "endMonotonicNs": 38838553867126,
+              "cpuSeconds": 0.81
+            },
+            {
+              "startMonotonicNs": 38838553867126,
+              "endMonotonicNs": 38839615809120,
+              "cpuSeconds": 0.63
+            },
+            {
+              "startMonotonicNs": 38839615809120,
+              "endMonotonicNs": 38840654255389,
+              "cpuSeconds": 0.77
+            },
+            {
+              "startMonotonicNs": 38840654255389,
+              "endMonotonicNs": 38841714455013,
+              "cpuSeconds": 0.8
+            },
+            {
+              "startMonotonicNs": 38841714455013,
+              "endMonotonicNs": 38842771984368,
+              "cpuSeconds": 0.62
+            },
+            {
+              "startMonotonicNs": 38842771984368,
+              "endMonotonicNs": 38843812788040,
+              "cpuSeconds": 0.63
+            }
+          ],
+          "rejectedInteriorAdjacentIntervals": 0,
+          "maxSampledRssBytes": 405090304,
+          "maxSampledThreads": 36,
+          "kernelWriteBytesDelta": 26456064,
+          "kernelWriteIntervals": 11,
+          "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+        },
+        {
+          "role": "window-8-node-1",
+          "requestedStartMonotonicNs": 38831308764747,
+          "requestedEndMonotonicNs": 38844108764747,
+          "requestedSeconds": 12.8,
+          "coveredSeconds": 11.526580916,
+          "coverageFraction": 0.9005141340625,
+          "cpuSeconds": 6.039999999999999,
+          "meanOccupiedCoresOverCoveredIntervals": 0.5240062117306529,
+          "intervals": [
+            {
+              "startMonotonicNs": 38832286207124,
+              "endMonotonicNs": 38833335176570,
+              "cpuSeconds": 0.67
+            },
+            {
+              "startMonotonicNs": 38833335176570,
+              "endMonotonicNs": 38834387859292,
+              "cpuSeconds": 0.64
+            },
+            {
+              "startMonotonicNs": 38834387859292,
+              "endMonotonicNs": 38835446013380,
+              "cpuSeconds": 0.44
+            },
+            {
+              "startMonotonicNs": 38835446013380,
+              "endMonotonicNs": 38836492794311,
+              "cpuSeconds": 0.47
+            },
+            {
+              "startMonotonicNs": 38836492794311,
+              "endMonotonicNs": 38837521081280,
+              "cpuSeconds": 0.51
+            },
+            {
+              "startMonotonicNs": 38837521081280,
+              "endMonotonicNs": 38838553867126,
+              "cpuSeconds": 0.75
+            },
+            {
+              "startMonotonicNs": 38838553867126,
+              "endMonotonicNs": 38839615809120,
+              "cpuSeconds": 0.44
+            },
+            {
+              "startMonotonicNs": 38839615809120,
+              "endMonotonicNs": 38840654255389,
+              "cpuSeconds": 0.53
+            },
+            {
+              "startMonotonicNs": 38840654255389,
+              "endMonotonicNs": 38841714455013,
+              "cpuSeconds": 0.55
+            },
+            {
+              "startMonotonicNs": 38841714455013,
+              "endMonotonicNs": 38842771984368,
+              "cpuSeconds": 0.51
+            },
+            {
+              "startMonotonicNs": 38842771984368,
+              "endMonotonicNs": 38843812788040,
+              "cpuSeconds": 0.53
+            }
+          ],
+          "rejectedInteriorAdjacentIntervals": 0,
+          "maxSampledRssBytes": 376029184,
+          "maxSampledThreads": 38,
+          "kernelWriteBytesDelta": 19742720,
+          "kernelWriteIntervals": 11,
+          "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+        },
+        {
+          "role": "window-8-node-2",
+          "requestedStartMonotonicNs": 38831308764747,
+          "requestedEndMonotonicNs": 38844108764747,
+          "requestedSeconds": 12.8,
+          "coveredSeconds": 11.526580916,
+          "coverageFraction": 0.9005141340625,
+          "cpuSeconds": 6.370000000000001,
+          "meanOccupiedCoresOverCoveredIntervals": 0.5526356901861358,
+          "intervals": [
+            {
+              "startMonotonicNs": 38832286207124,
+              "endMonotonicNs": 38833335176570,
+              "cpuSeconds": 0.78
+            },
+            {
+              "startMonotonicNs": 38833335176570,
+              "endMonotonicNs": 38834387859292,
+              "cpuSeconds": 0.64
+            },
+            {
+              "startMonotonicNs": 38834387859292,
+              "endMonotonicNs": 38835446013380,
+              "cpuSeconds": 0.47
+            },
+            {
+              "startMonotonicNs": 38835446013380,
+              "endMonotonicNs": 38836492794311,
+              "cpuSeconds": 0.46
+            },
+            {
+              "startMonotonicNs": 38836492794311,
+              "endMonotonicNs": 38837521081280,
+              "cpuSeconds": 0.56
+            },
+            {
+              "startMonotonicNs": 38837521081280,
+              "endMonotonicNs": 38838553867126,
+              "cpuSeconds": 0.85
+            },
+            {
+              "startMonotonicNs": 38838553867126,
+              "endMonotonicNs": 38839615809120,
+              "cpuSeconds": 0.37
+            },
+            {
+              "startMonotonicNs": 38839615809120,
+              "endMonotonicNs": 38840654255389,
+              "cpuSeconds": 0.65
+            },
+            {
+              "startMonotonicNs": 38840654255389,
+              "endMonotonicNs": 38841714455013,
+              "cpuSeconds": 0.52
+            },
+            {
+              "startMonotonicNs": 38841714455013,
+              "endMonotonicNs": 38842771984368,
+              "cpuSeconds": 0.57
+            },
+            {
+              "startMonotonicNs": 38842771984368,
+              "endMonotonicNs": 38843812788040,
+              "cpuSeconds": 0.5
+            }
+          ],
+          "rejectedInteriorAdjacentIntervals": 0,
+          "maxSampledRssBytes": 374464512,
+          "maxSampledThreads": 39,
+          "kernelWriteBytesDelta": 19734528,
+          "kernelWriteIntervals": 11,
+          "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+        },
+        {
+          "role": "pilot-parent",
+          "requestedStartMonotonicNs": 38831308764747,
+          "requestedEndMonotonicNs": 38844108764747,
+          "requestedSeconds": 12.8,
+          "coveredSeconds": 11.526580916,
+          "coverageFraction": 0.9005141340625,
+          "cpuSeconds": 7.58,
+          "meanOccupiedCoresOverCoveredIntervals": 0.6576104445229055,
+          "intervals": [
+            {
+              "startMonotonicNs": 38832286207124,
+              "endMonotonicNs": 38833335176570,
+              "cpuSeconds": 0.77
+            },
+            {
+              "startMonotonicNs": 38833335176570,
+              "endMonotonicNs": 38834387859292,
+              "cpuSeconds": 0.49
+            },
+            {
+              "startMonotonicNs": 38834387859292,
+              "endMonotonicNs": 38835446013380,
+              "cpuSeconds": 0.39
+            },
+            {
+              "startMonotonicNs": 38835446013380,
+              "endMonotonicNs": 38836492794311,
+              "cpuSeconds": 0.36
+            },
+            {
+              "startMonotonicNs": 38836492794311,
+              "endMonotonicNs": 38837521081280,
+              "cpuSeconds": 0.53
+            },
+            {
+              "startMonotonicNs": 38837521081280,
+              "endMonotonicNs": 38838553867126,
+              "cpuSeconds": 2.62
+            },
+            {
+              "startMonotonicNs": 38838553867126,
+              "endMonotonicNs": 38839615809120,
+              "cpuSeconds": 0.42
+            },
+            {
+              "startMonotonicNs": 38839615809120,
+              "endMonotonicNs": 38840654255389,
+              "cpuSeconds": 0.34
+            },
+            {
+              "startMonotonicNs": 38840654255389,
+              "endMonotonicNs": 38841714455013,
+              "cpuSeconds": 0.55
+            },
+            {
+              "startMonotonicNs": 38841714455013,
+              "endMonotonicNs": 38842771984368,
+              "cpuSeconds": 0.45
+            },
+            {
+              "startMonotonicNs": 38842771984368,
+              "endMonotonicNs": 38843812788040,
+              "cpuSeconds": 0.66
+            }
+          ],
+          "rejectedInteriorAdjacentIntervals": 0,
+          "maxSampledRssBytes": 472473600,
+          "maxSampledThreads": 48,
+          "kernelWriteBytesDelta": 20783104,
+          "kernelWriteIntervals": 11,
+          "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+        }
+      ],
+      "parentEntireObservedSpanIncludingSetupDrainAndClose": {
+        "role": "pilot-parent",
+        "requestedStartMonotonicNs": 38829174711780,
+        "requestedEndMonotonicNs": 38844844525228,
+        "requestedSeconds": 15.669813448,
+        "coveredSeconds": 15.669813448,
+        "coverageFraction": 1.0,
+        "cpuSeconds": 12.53,
+        "meanOccupiedCoresOverCoveredIntervals": 0.7996266223322048,
+        "intervals": [
+          {
+            "startMonotonicNs": 38829174711780,
+            "endMonotonicNs": 38830207739974,
+            "cpuSeconds": 0.65
+          },
+          {
+            "startMonotonicNs": 38830207739974,
+            "endMonotonicNs": 38831258338230,
+            "cpuSeconds": 0.56
+          },
+          {
+            "startMonotonicNs": 38831258338230,
+            "endMonotonicNs": 38832286207124,
+            "cpuSeconds": 1.46
+          },
+          {
+            "startMonotonicNs": 38832286207124,
+            "endMonotonicNs": 38833335176570,
+            "cpuSeconds": 0.77
+          },
+          {
+            "startMonotonicNs": 38833335176570,
+            "endMonotonicNs": 38834387859292,
+            "cpuSeconds": 0.49
+          },
+          {
+            "startMonotonicNs": 38834387859292,
+            "endMonotonicNs": 38835446013380,
+            "cpuSeconds": 0.39
+          },
+          {
+            "startMonotonicNs": 38835446013380,
+            "endMonotonicNs": 38836492794311,
+            "cpuSeconds": 0.36
+          },
+          {
+            "startMonotonicNs": 38836492794311,
+            "endMonotonicNs": 38837521081280,
+            "cpuSeconds": 0.53
+          },
+          {
+            "startMonotonicNs": 38837521081280,
+            "endMonotonicNs": 38838553867126,
+            "cpuSeconds": 2.62
+          },
+          {
+            "startMonotonicNs": 38838553867126,
+            "endMonotonicNs": 38839615809120,
+            "cpuSeconds": 0.42
+          },
+          {
+            "startMonotonicNs": 38839615809120,
+            "endMonotonicNs": 38840654255389,
+            "cpuSeconds": 0.34
+          },
+          {
+            "startMonotonicNs": 38840654255389,
+            "endMonotonicNs": 38841714455013,
+            "cpuSeconds": 0.55
+          },
+          {
+            "startMonotonicNs": 38841714455013,
+            "endMonotonicNs": 38842771984368,
+            "cpuSeconds": 0.45
+          },
+          {
+            "startMonotonicNs": 38842771984368,
+            "endMonotonicNs": 38843812788040,
+            "cpuSeconds": 0.66
+          },
+          {
+            "startMonotonicNs": 38843812788040,
+            "endMonotonicNs": 38844844525228,
+            "cpuSeconds": 2.28
+          }
+        ],
+        "rejectedInteriorAdjacentIntervals": 0,
+        "maxSampledRssBytes": 472473600,
+        "maxSampledThreads": 48,
+        "kernelWriteBytesDelta": 174297088,
+        "kernelWriteIntervals": 15,
+        "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+      },
+      "rawFiniteClassificationPreserved": "VALID_FINITE_WINDOW_WITH_OUTSTANDING_REPLIES",
+      "rootReviewSha256": "07ac600d5f3fed54883b24f1f22b20fe23faef5dd0e99838c8c0f03d9f067f1c"
+    },
+    {
+      "arm": 3,
+      "maximumParkNs": 1000000,
+      "lineage": "capacity-pilot-f6df4ec1-57a2-4892-b6c3-f15da22df330",
+      "config": {
+        "schema": "retention-v3-openloop-capacity-v1",
+        "arrivals": 6400,
+        "ratePerSecond": 500,
+        "windowSeconds": 12.8,
+        "batchCap": 4,
+        "archiveChunkBytes": 6144,
+        "eventFetchCount": 16,
+        "commonChunkEnvelope": false,
+        "readWindow": 8,
+        "commonReadWindowEnvelope": true,
+        "maintenanceTimingSchema": "13cols-correlation-phase-window-v1",
+        "readCreditPolicy": "reserve+flush before arm; completed-unconsumed holds credit; consume after reply/timing flush",
+        "logicalWorkers": 128,
+        "taskQueueCapacityPerWorker": 64,
+        "externalQueuePositions": 8192,
+        "internalPendingCapacity": 128,
+        "physicalSessions": 1,
+        "sharedMediaDrivers": 1,
+        "producerIdentityRule": "worker=index%128;sequence=1+index/128;queue rejection leaves a legal gap",
+        "taskLifetimeNs": 90000000000,
+        "physicalOfferPermitNsFromDispatch": 2000000000,
+        "physicalAdmissionTimestampSemantics": "monotonic return observation after the first nonnegative publication.offer; not an exact internal Aeron admission instant",
+        "drainAdmissionNs": 90000000000,
+        "batchFlushNs": 50000,
+        "profileSha256": "732201775469861083f9dd0798a465dec1d0ed6bff39ed281dbef58c28b9fc68",
+        "actualCodeSha256": "f78025f91f9e43ad634840b400ab04ed4ae422597c35800984e434dbd1844c8f",
+        "lineage": "capacity-pilot-f6df4ec1-57a2-4892-b6c3-f15da22df330",
+        "scheduledOriginUTC": "2026-10-24T08:29:01.220294479Z",
+        "scheduledOriginMonotonicNs": 39055848434531,
+        "primitiveArrivalColumnBytes": 774400,
+        "arrivalClockPausesForMaintenance": false,
+        "maintenanceDispatchPolicy": "drain pending while arrivals keep enqueuing/rejecting; exactprefix force/readback thenACK",
+        "scope": "Finite openloop source; external canonical/leader/config proof required before any stability or capacity claim",
+        "retentionIdleSelection": {
+          "maximumParkNs": 1000000,
+          "factor": "maximum requested park only",
+          "schema": "retention-idle-selection-v1",
+          "property": "vectormatch.retention.idleMaxParkNs"
+        }
+      },
+      "registration": {
+        "sync": 2,
+        "batchCap": 4,
+        "ports": 42000,
+        "arrivals": 6400,
+        "profileSha256": "732201775469861083f9dd0798a465dec1d0ed6bff39ed281dbef58c28b9fc68",
+        "lineage": "capacity-pilot-f6df4ec1-57a2-4892-b6c3-f15da22df330",
+        "scope": "LOCAL_THREE_JVM_CONTINUOUS_ARRIVAL_FUNCTIONAL_PILOT",
+        "rate": 500,
+        "codeSha256": "f78025f91f9e43ad634840b400ab04ed4ae422597c35800984e434dbd1844c8f",
+        "appointedLeader": 0,
+        "archiveChunkBytes": 6144,
+        "eventFetchCount": 16,
+        "commonChunkEnvelope": false,
+        "readWindow": 8,
+        "commonReadWindowEnvelope": true,
+        "retentionIdleSelection": {
+          "maximumParkNs": 1000000,
+          "factor": "maximum requested park only",
+          "schema": "retention-idle-selection-v1",
+          "property": "vectormatch.retention.idleMaxParkNs"
+        }
+      },
+      "jars": {
+        "aeron-all-1.53.3.jar": {
+          "bytes": 3544128,
+          "sha256": "4c6c8a5014a2b67424051170392a005daa9a998ac963302d2819d0f3db749ef2"
+        },
+        "agrona-2.6.1.jar": {
+          "bytes": 491990,
+          "sha256": "84c07eb02695c06bfda3d6c3a20c1984e3ff1bbd617b2f8e678140baf973fa28"
+        },
+        "cluster-0.1.0-SNAPSHOT.jar": {
+          "bytes": 566333,
+          "sha256": "e7ec1a57aa1495fa98834a03f08b3028c711835d46fefe7229420699960f3258"
+        },
+        "core-0.1.0-SNAPSHOT.jar": {
+          "bytes": 81916,
+          "sha256": "ba9644585ede2b30b68afc783b15128507d1567105d70d7d8edc36f91b58fb47"
+        }
+      },
+      "releaseSha256": "c2df0427bea0cdd8575ee3130adf4ff4aa43c65fca0a5458ed0c7c8c1eea4676",
+      "metrics": {
+        "arrivals": 6400,
+        "confirmedAcceptedUniqueOrders": 6400,
+        "completedReplies": 6400,
+        "notSent": 0,
+        "unknownObservedOrFinal": 0,
+        "serverRejected": 0,
+        "acceptedWithinArrivalWindow": 6141,
+        "arrivalWindowGoodputPerSecond": 479.765625,
+        "allArrivalAcceptedOrderP99Ns": 916236996,
+        "acceptedConditionalLatency": {
+          "count": 6400,
+          "minNs": 4109673,
+          "p50Ns": 8152098,
+          "p99Ns": 916236996,
+          "maxNs": 1047460298
+        },
+        "completedReplyConditionalLatency": {
+          "count": 6400,
+          "minNs": 4109673,
+          "p50Ns": 8152098,
+          "p99Ns": 916236996,
+          "maxNs": 1047460298
+        },
+        "scheduledToDispatch": {
+          "count": 6400,
+          "minNs": 8052,
+          "p50Ns": 120169,
+          "p99Ns": 902049842,
+          "maxNs": 1030305049
+        },
+        "dispatchToSuccessfulOfferReturn": {
+          "count": 6400,
+          "minNs": 52839,
+          "p50Ns": 150478,
+          "p99Ns": 1312714,
+          "maxNs": 11388786
+        },
+        "successfulOfferReturnToReply": {
+          "count": 6400,
+          "minNs": 3835685,
+          "p50Ns": 7378244,
+          "p99Ns": 13561791,
+          "maxNs": 27787224
+        },
+        "schedulerLateness": {
+          "count": 6400,
+          "minNs": 6144,
+          "p50Ns": 57585,
+          "p99Ns": 67187,
+          "maxNs": 3145851
+        },
+        "schedulerLatenessOver20ms": 0,
+        "schedulerTimingValid": true,
+        "allArrivalP99Policy": "Finite distinct ACCEPTED order for every planned arrival; null on any notSent/unknown/reject/unreleased",
+        "percentileMethod": "nearest rank ceil(p*N), scheduled arrival to reply completion; not batch-normalized"
+      },
+      "cycles": [
+        {
+          "cycle": 1,
+          "startMonotonicNs": 39061992377973,
+          "endMonotonicNs": 39063011305294,
+          "wallNs": 1018927321,
+          "logicalRpcCount": 621
+        },
+        {
+          "cycle": 2,
+          "startMonotonicNs": 39068135156616,
+          "endMonotonicNs": 39068990255078,
+          "wallNs": 855098462,
+          "logicalRpcCount": 621
+        },
+        {
+          "cycle": 3,
+          "startMonotonicNs": 39069016883175,
+          "endMonotonicNs": 39069128091621,
+          "wallNs": 111208446,
+          "logicalRpcCount": 56
+        }
+      ],
+      "maintenanceCycleWallNs": 1985234229,
+      "readPhases": [
+        {
+          "generation": 1,
+          "kind": "ArchiveChunk",
+          "logicalRpcs": 234,
+          "reservationToCoordinatorRecordedEndWallNs": 276772854,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 2,
+          "kind": "FetchEvents",
+          "logicalRpcs": 384,
+          "reservationToCoordinatorRecordedEndWallNs": 437400591,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 3,
+          "kind": "ArchiveChunk",
+          "logicalRpcs": 234,
+          "reservationToCoordinatorRecordedEndWallNs": 248341388,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 4,
+          "kind": "FetchEvents",
+          "logicalRpcs": 384,
+          "reservationToCoordinatorRecordedEndWallNs": 422032790,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 5,
+          "kind": "ArchiveChunk",
+          "logicalRpcs": 20,
+          "reservationToCoordinatorRecordedEndWallNs": 23905909,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 6,
+          "kind": "FetchEvents",
+          "logicalRpcs": 33,
+          "reservationToCoordinatorRecordedEndWallNs": 41200627,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        }
+      ],
+      "overlappingLogicalRpcElapsedSumNsNotWallTime": 11191009385,
+      "physicalFrames": {
+        "uniqueRequests": 7108,
+        "businessFrames": 5810,
+        "maintenanceFrames": 1298,
+        "businessBatchSizeCounts": {
+          "1": 5606,
+          "2": 8,
+          "3": 6,
+          "4": 190
+        },
+        "meanCommandsPerBusinessFrame": 1.1015490533562822,
+        "classification": "Disjoint original arrival and logical-maintenance correlation sets; members=1 alone is not a business discriminator",
+        "sourcePhysicalOfferTapeCounts": {
+          "physicalOfferAttempts": 7144,
+          "successfulPhysicalAdmissions": 7108,
+          "negativePhysicalOffers": 36,
+          "recordedReplies": 7108
+        }
+      },
+      "idleFactoryCreationObservations": [
+        {
+          "node": 0,
+          "pid": 64620,
+          "factoryCreations": 7,
+          "perRoleCreations": {
+            "driver-shared": 1,
+            "archive-shared": 2,
+            "consensus": 2,
+            "service": 2
+          },
+          "configuredMaximumParkNs": 1000000,
+          "actualSleepOrThreadAssignmentMeasured": false
+        },
+        {
+          "node": 1,
+          "pid": 64622,
+          "factoryCreations": 7,
+          "perRoleCreations": {
+            "driver-shared": 1,
+            "archive-shared": 2,
+            "consensus": 2,
+            "service": 2
+          },
+          "configuredMaximumParkNs": 1000000,
+          "actualSleepOrThreadAssignmentMeasured": false
+        },
+        {
+          "node": 2,
+          "pid": 64629,
+          "factoryCreations": 7,
+          "perRoleCreations": {
+            "driver-shared": 1,
+            "archive-shared": 2,
+            "consensus": 2,
+            "service": 2
+          },
+          "configuredMaximumParkNs": 1000000,
+          "actualSleepOrThreadAssignmentMeasured": false
+        },
+        {
+          "node": -1,
+          "pid": 64595,
+          "factoryCreations": 1,
+          "perRoleCreations": {
+            "owner-driver-shared": 1
+          },
+          "configuredMaximumParkNs": 1000000,
+          "actualSleepOrThreadAssignmentMeasured": false
+        }
+      ],
+      "uniqueActualFactoryCreations": 22,
+      "warningReports": [
+        {
+          "afterSigtermWallTimeProven": false,
+          "allLogLinesClassifiedAndRetained": true,
+          "candidateClassification": "NO_LOG_WARNINGS",
+          "lineCount": 5,
+          "logBytes": 10309,
+          "logSha256": "10a6a4579b0ad4431f59934e0098980ec977eb8d56c502393437a61015186cf4",
+          "matchingFinalCheckpointLine1Based": 5,
+          "nextRunAuthorized": false,
+          "node": 0,
+          "originalStrictWrapperResultChanged": false,
+          "pid": 64620,
+          "rawFunctionalGatePerformedHere": false,
+          "warningPairCount": 0,
+          "warningPairs": []
+        },
+        {
+          "afterSigtermWallTimeProven": false,
+          "allLogLinesClassifiedAndRetained": true,
+          "candidateClassification": "NO_LOG_WARNINGS",
+          "lineCount": 4,
+          "logBytes": 10282,
+          "logSha256": "daf77bf9348eb092b6e462c501292a46648a972a9dc399cf723b3ed279de88ec",
+          "matchingFinalCheckpointLine1Based": 4,
+          "nextRunAuthorized": false,
+          "node": 1,
+          "originalStrictWrapperResultChanged": false,
+          "pid": 64622,
+          "rawFunctionalGatePerformedHere": false,
+          "warningPairCount": 0,
+          "warningPairs": []
+        },
+        {
+          "afterSigtermWallTimeProven": false,
+          "allLogLinesClassifiedAndRetained": true,
+          "candidateClassification": "NO_LOG_WARNINGS",
+          "lineCount": 4,
+          "logBytes": 10282,
+          "logSha256": "7a3179a41b8f17cd116bf59874a3656fda676c949f799a63661d1aea88ad0058",
+          "matchingFinalCheckpointLine1Based": 4,
+          "nextRunAuthorized": false,
+          "node": 2,
+          "originalStrictWrapperResultChanged": false,
+          "pid": 64629,
+          "rawFunctionalGatePerformedHere": false,
+          "warningPairCount": 0,
+          "warningPairs": []
+        }
+      ],
+      "warningsRetained": 0,
+      "cpuSamplingClockAlignment": {
+        "passed": true,
+        "maximumUtcVersusMonotonicOffsetDifferenceNs": 26146,
+        "thresholdNs": 100000000,
+        "samples": 18,
+        "scope": "Coarse same-host clock-domain consistency check; separate sample field reads, not exact capture-time calibration. CPU uses monotonic adjacent intervals."
+      },
+      "cpuOverArrivalExposure": [
+        {
+          "role": "window-8-node-0",
+          "requestedStartMonotonicNs": 39055848434531,
+          "requestedEndMonotonicNs": 39068648434531,
+          "requestedSeconds": 12.8,
+          "coveredSeconds": 11.54751153,
+          "coverageFraction": 0.90214933828125,
+          "cpuSeconds": 7.97,
+          "meanOccupiedCoresOverCoveredIntervals": 0.6901919932527663,
+          "intervals": [
+            {
+              "startMonotonicNs": 39056594960360,
+              "endMonotonicNs": 39057642879750,
+              "cpuSeconds": 1.11
+            },
+            {
+              "startMonotonicNs": 39057642879750,
+              "endMonotonicNs": 39058690434786,
+              "cpuSeconds": 0.94
+            },
+            {
+              "startMonotonicNs": 39058690434786,
+              "endMonotonicNs": 39059735628138,
+              "cpuSeconds": 0.58
+            },
+            {
+              "startMonotonicNs": 39059735628138,
+              "endMonotonicNs": 39060781498383,
+              "cpuSeconds": 0.6
+            },
+            {
+              "startMonotonicNs": 39060781498383,
+              "endMonotonicNs": 39061833184320,
+              "cpuSeconds": 0.7
+            },
+            {
+              "startMonotonicNs": 39061833184320,
+              "endMonotonicNs": 39062885053104,
+              "cpuSeconds": 0.64
+            },
+            {
+              "startMonotonicNs": 39062885053104,
+              "endMonotonicNs": 39063933878675,
+              "cpuSeconds": 0.92
+            },
+            {
+              "startMonotonicNs": 39063933878675,
+              "endMonotonicNs": 39064985807379,
+              "cpuSeconds": 0.71
+            },
+            {
+              "startMonotonicNs": 39064985807379,
+              "endMonotonicNs": 39066038170577,
+              "cpuSeconds": 0.58
+            },
+            {
+              "startMonotonicNs": 39066038170577,
+              "endMonotonicNs": 39067090403198,
+              "cpuSeconds": 0.65
+            },
+            {
+              "startMonotonicNs": 39067090403198,
+              "endMonotonicNs": 39068142471890,
+              "cpuSeconds": 0.54
+            }
+          ],
+          "rejectedInteriorAdjacentIntervals": 0,
+          "maxSampledRssBytes": 379281408,
+          "maxSampledThreads": 39,
+          "kernelWriteBytesDelta": 24080384,
+          "kernelWriteIntervals": 11,
+          "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+        },
+        {
+          "role": "window-8-node-1",
+          "requestedStartMonotonicNs": 39055848434531,
+          "requestedEndMonotonicNs": 39068648434531,
+          "requestedSeconds": 12.8,
+          "coveredSeconds": 11.54751153,
+          "coverageFraction": 0.90214933828125,
+          "cpuSeconds": 5.3,
+          "meanOccupiedCoresOverCoveredIntervals": 0.4589733455758671,
+          "intervals": [
+            {
+              "startMonotonicNs": 39056594960360,
+              "endMonotonicNs": 39057642879750,
+              "cpuSeconds": 0.76
+            },
+            {
+              "startMonotonicNs": 39057642879750,
+              "endMonotonicNs": 39058690434786,
+              "cpuSeconds": 0.6
+            },
+            {
+              "startMonotonicNs": 39058690434786,
+              "endMonotonicNs": 39059735628138,
+              "cpuSeconds": 0.34
+            },
+            {
+              "startMonotonicNs": 39059735628138,
+              "endMonotonicNs": 39060781498383,
+              "cpuSeconds": 0.33
+            },
+            {
+              "startMonotonicNs": 39060781498383,
+              "endMonotonicNs": 39061833184320,
+              "cpuSeconds": 0.52
+            },
+            {
+              "startMonotonicNs": 39061833184320,
+              "endMonotonicNs": 39062885053104,
+              "cpuSeconds": 0.4
+            },
+            {
+              "startMonotonicNs": 39062885053104,
+              "endMonotonicNs": 39063933878675,
+              "cpuSeconds": 0.61
+            },
+            {
+              "startMonotonicNs": 39063933878675,
+              "endMonotonicNs": 39064985807379,
+              "cpuSeconds": 0.53
+            },
+            {
+              "startMonotonicNs": 39064985807379,
+              "endMonotonicNs": 39066038170577,
+              "cpuSeconds": 0.32
+            },
+            {
+              "startMonotonicNs": 39066038170577,
+              "endMonotonicNs": 39067090403198,
+              "cpuSeconds": 0.54
+            },
+            {
+              "startMonotonicNs": 39067090403198,
+              "endMonotonicNs": 39068142471890,
+              "cpuSeconds": 0.35
+            }
+          ],
+          "rejectedInteriorAdjacentIntervals": 0,
+          "maxSampledRssBytes": 364101632,
+          "maxSampledThreads": 36,
+          "kernelWriteBytesDelta": 18923520,
+          "kernelWriteIntervals": 11,
+          "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+        },
+        {
+          "role": "window-8-node-2",
+          "requestedStartMonotonicNs": 39055848434531,
+          "requestedEndMonotonicNs": 39068648434531,
+          "requestedSeconds": 12.8,
+          "coveredSeconds": 11.54751153,
+          "coverageFraction": 0.90214933828125,
+          "cpuSeconds": 5.16,
+          "meanOccupiedCoresOverCoveredIntervals": 0.4468495213531084,
+          "intervals": [
+            {
+              "startMonotonicNs": 39056594960360,
+              "endMonotonicNs": 39057642879750,
+              "cpuSeconds": 0.75
+            },
+            {
+              "startMonotonicNs": 39057642879750,
+              "endMonotonicNs": 39058690434786,
+              "cpuSeconds": 0.54
+            },
+            {
+              "startMonotonicNs": 39058690434786,
+              "endMonotonicNs": 39059735628138,
+              "cpuSeconds": 0.3
+            },
+            {
+              "startMonotonicNs": 39059735628138,
+              "endMonotonicNs": 39060781498383,
+              "cpuSeconds": 0.3
+            },
+            {
+              "startMonotonicNs": 39060781498383,
+              "endMonotonicNs": 39061833184320,
+              "cpuSeconds": 0.47
+            },
+            {
+              "startMonotonicNs": 39061833184320,
+              "endMonotonicNs": 39062885053104,
+              "cpuSeconds": 0.39
+            },
+            {
+              "startMonotonicNs": 39062885053104,
+              "endMonotonicNs": 39063933878675,
+              "cpuSeconds": 0.73
+            },
+            {
+              "startMonotonicNs": 39063933878675,
+              "endMonotonicNs": 39064985807379,
+              "cpuSeconds": 0.43
+            },
+            {
+              "startMonotonicNs": 39064985807379,
+              "endMonotonicNs": 39066038170577,
+              "cpuSeconds": 0.33
+            },
+            {
+              "startMonotonicNs": 39066038170577,
+              "endMonotonicNs": 39067090403198,
+              "cpuSeconds": 0.57
+            },
+            {
+              "startMonotonicNs": 39067090403198,
+              "endMonotonicNs": 39068142471890,
+              "cpuSeconds": 0.35
+            }
+          ],
+          "rejectedInteriorAdjacentIntervals": 0,
+          "maxSampledRssBytes": 375902208,
+          "maxSampledThreads": 38,
+          "kernelWriteBytesDelta": 18800640,
+          "kernelWriteIntervals": 11,
+          "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+        },
+        {
+          "role": "pilot-parent",
+          "requestedStartMonotonicNs": 39055848434531,
+          "requestedEndMonotonicNs": 39068648434531,
+          "requestedSeconds": 12.8,
+          "coveredSeconds": 11.54751153,
+          "coverageFraction": 0.90214933828125,
+          "cpuSeconds": 7.069999999999999,
+          "meanOccupiedCoresOverCoveredIntervals": 0.612253123249317,
+          "intervals": [
+            {
+              "startMonotonicNs": 39056594960360,
+              "endMonotonicNs": 39057642879750,
+              "cpuSeconds": 0.89
+            },
+            {
+              "startMonotonicNs": 39057642879750,
+              "endMonotonicNs": 39058690434786,
+              "cpuSeconds": 0.55
+            },
+            {
+              "startMonotonicNs": 39058690434786,
+              "endMonotonicNs": 39059735628138,
+              "cpuSeconds": 0.33
+            },
+            {
+              "startMonotonicNs": 39059735628138,
+              "endMonotonicNs": 39060781498383,
+              "cpuSeconds": 0.33
+            },
+            {
+              "startMonotonicNs": 39060781498383,
+              "endMonotonicNs": 39061833184320,
+              "cpuSeconds": 0.48
+            },
+            {
+              "startMonotonicNs": 39061833184320,
+              "endMonotonicNs": 39062885053104,
+              "cpuSeconds": 2.03
+            },
+            {
+              "startMonotonicNs": 39062885053104,
+              "endMonotonicNs": 39063933878675,
+              "cpuSeconds": 0.83
+            },
+            {
+              "startMonotonicNs": 39063933878675,
+              "endMonotonicNs": 39064985807379,
+              "cpuSeconds": 0.36
+            },
+            {
+              "startMonotonicNs": 39064985807379,
+              "endMonotonicNs": 39066038170577,
+              "cpuSeconds": 0.41
+            },
+            {
+              "startMonotonicNs": 39066038170577,
+              "endMonotonicNs": 39067090403198,
+              "cpuSeconds": 0.55
+            },
+            {
+              "startMonotonicNs": 39067090403198,
+              "endMonotonicNs": 39068142471890,
+              "cpuSeconds": 0.31
+            }
+          ],
+          "rejectedInteriorAdjacentIntervals": 0,
+          "maxSampledRssBytes": 426385408,
+          "maxSampledThreads": 45,
+          "kernelWriteBytesDelta": 15826944,
+          "kernelWriteIntervals": 11,
+          "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+        }
+      ],
+      "parentEntireObservedSpanIncludingSetupDrainAndClose": {
+        "role": "pilot-parent",
+        "requestedStartMonotonicNs": 39053470372762,
+        "requestedEndMonotonicNs": 39069194842499,
+        "requestedSeconds": 15.724469737,
+        "coveredSeconds": 15.724469737,
+        "coverageFraction": 1.0,
+        "cpuSeconds": 10.43,
+        "meanOccupiedCoresOverCoveredIntervals": 0.6632974068090828,
+        "intervals": [
+          {
+            "startMonotonicNs": 39053470372762,
+            "endMonotonicNs": 39054498357987,
+            "cpuSeconds": 0.6
+          },
+          {
+            "startMonotonicNs": 39054498357987,
+            "endMonotonicNs": 39055547186247,
+            "cpuSeconds": 0.48
+          },
+          {
+            "startMonotonicNs": 39055547186247,
+            "endMonotonicNs": 39056594960360,
+            "cpuSeconds": 1.15
+          },
+          {
+            "startMonotonicNs": 39056594960360,
+            "endMonotonicNs": 39057642879750,
+            "cpuSeconds": 0.89
+          },
+          {
+            "startMonotonicNs": 39057642879750,
+            "endMonotonicNs": 39058690434786,
+            "cpuSeconds": 0.55
+          },
+          {
+            "startMonotonicNs": 39058690434786,
+            "endMonotonicNs": 39059735628138,
+            "cpuSeconds": 0.33
+          },
+          {
+            "startMonotonicNs": 39059735628138,
+            "endMonotonicNs": 39060781498383,
+            "cpuSeconds": 0.33
+          },
+          {
+            "startMonotonicNs": 39060781498383,
+            "endMonotonicNs": 39061833184320,
+            "cpuSeconds": 0.48
+          },
+          {
+            "startMonotonicNs": 39061833184320,
+            "endMonotonicNs": 39062885053104,
+            "cpuSeconds": 2.03
+          },
+          {
+            "startMonotonicNs": 39062885053104,
+            "endMonotonicNs": 39063933878675,
+            "cpuSeconds": 0.83
+          },
+          {
+            "startMonotonicNs": 39063933878675,
+            "endMonotonicNs": 39064985807379,
+            "cpuSeconds": 0.36
+          },
+          {
+            "startMonotonicNs": 39064985807379,
+            "endMonotonicNs": 39066038170577,
+            "cpuSeconds": 0.41
+          },
+          {
+            "startMonotonicNs": 39066038170577,
+            "endMonotonicNs": 39067090403198,
+            "cpuSeconds": 0.55
+          },
+          {
+            "startMonotonicNs": 39067090403198,
+            "endMonotonicNs": 39068142471890,
+            "cpuSeconds": 0.31
+          },
+          {
+            "startMonotonicNs": 39068142471890,
+            "endMonotonicNs": 39069194842499,
+            "cpuSeconds": 1.13
+          }
+        ],
+        "rejectedInteriorAdjacentIntervals": 0,
+        "maxSampledRssBytes": 426385408,
+        "maxSampledThreads": 45,
+        "kernelWriteBytesDelta": 124149760,
+        "kernelWriteIntervals": 15,
+        "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+      },
+      "rawFiniteClassificationPreserved": "VALID_FINITE_WINDOW_WITH_OUTSTANDING_REPLIES",
+      "rootReviewSha256": "b840322c62f6d0238f171df807f328781c056a8b35f9386326f0b2a7cdcde378"
+    },
+    {
+      "arm": 4,
+      "maximumParkNs": 100000,
+      "lineage": "capacity-pilot-66906fea-701c-4384-a499-0f299ea5e2cf",
+      "config": {
+        "schema": "retention-v3-openloop-capacity-v1",
+        "arrivals": 6400,
+        "ratePerSecond": 500,
+        "windowSeconds": 12.8,
+        "batchCap": 4,
+        "archiveChunkBytes": 6144,
+        "eventFetchCount": 16,
+        "commonChunkEnvelope": false,
+        "readWindow": 8,
+        "commonReadWindowEnvelope": true,
+        "maintenanceTimingSchema": "13cols-correlation-phase-window-v1",
+        "readCreditPolicy": "reserve+flush before arm; completed-unconsumed holds credit; consume after reply/timing flush",
+        "logicalWorkers": 128,
+        "taskQueueCapacityPerWorker": 64,
+        "externalQueuePositions": 8192,
+        "internalPendingCapacity": 128,
+        "physicalSessions": 1,
+        "sharedMediaDrivers": 1,
+        "producerIdentityRule": "worker=index%128;sequence=1+index/128;queue rejection leaves a legal gap",
+        "taskLifetimeNs": 90000000000,
+        "physicalOfferPermitNsFromDispatch": 2000000000,
+        "physicalAdmissionTimestampSemantics": "monotonic return observation after the first nonnegative publication.offer; not an exact internal Aeron admission instant",
+        "drainAdmissionNs": 90000000000,
+        "batchFlushNs": 50000,
+        "profileSha256": "732201775469861083f9dd0798a465dec1d0ed6bff39ed281dbef58c28b9fc68",
+        "actualCodeSha256": "f78025f91f9e43ad634840b400ab04ed4ae422597c35800984e434dbd1844c8f",
+        "lineage": "capacity-pilot-66906fea-701c-4384-a499-0f299ea5e2cf",
+        "scheduledOriginUTC": "2026-10-24T08:32:10.283484051Z",
+        "scheduledOriginMonotonicNs": 39244911623213,
+        "primitiveArrivalColumnBytes": 774400,
+        "arrivalClockPausesForMaintenance": false,
+        "maintenanceDispatchPolicy": "drain pending while arrivals keep enqueuing/rejecting; exactprefix force/readback thenACK",
+        "scope": "Finite openloop source; external canonical/leader/config proof required before any stability or capacity claim",
+        "retentionIdleSelection": {
+          "maximumParkNs": 100000,
+          "property": "vectormatch.retention.idleMaxParkNs",
+          "schema": "retention-idle-selection-v1",
+          "factor": "maximum requested park only"
+        }
+      },
+      "registration": {
+        "ports": 42000,
+        "batchCap": 4,
+        "sync": 2,
+        "appointedLeader": 0,
+        "codeSha256": "f78025f91f9e43ad634840b400ab04ed4ae422597c35800984e434dbd1844c8f",
+        "rate": 500,
+        "scope": "LOCAL_THREE_JVM_CONTINUOUS_ARRIVAL_FUNCTIONAL_PILOT",
+        "lineage": "capacity-pilot-66906fea-701c-4384-a499-0f299ea5e2cf",
+        "profileSha256": "732201775469861083f9dd0798a465dec1d0ed6bff39ed281dbef58c28b9fc68",
+        "arrivals": 6400,
+        "archiveChunkBytes": 6144,
+        "eventFetchCount": 16,
+        "commonChunkEnvelope": false,
+        "readWindow": 8,
+        "commonReadWindowEnvelope": true,
+        "retentionIdleSelection": {
+          "maximumParkNs": 100000,
+          "property": "vectormatch.retention.idleMaxParkNs",
+          "schema": "retention-idle-selection-v1",
+          "factor": "maximum requested park only"
+        }
+      },
+      "jars": {
+        "aeron-all-1.53.3.jar": {
+          "bytes": 3544128,
+          "sha256": "4c6c8a5014a2b67424051170392a005daa9a998ac963302d2819d0f3db749ef2"
+        },
+        "agrona-2.6.1.jar": {
+          "bytes": 491990,
+          "sha256": "84c07eb02695c06bfda3d6c3a20c1984e3ff1bbd617b2f8e678140baf973fa28"
+        },
+        "cluster-0.1.0-SNAPSHOT.jar": {
+          "bytes": 566333,
+          "sha256": "e7ec1a57aa1495fa98834a03f08b3028c711835d46fefe7229420699960f3258"
+        },
+        "core-0.1.0-SNAPSHOT.jar": {
+          "bytes": 81916,
+          "sha256": "ba9644585ede2b30b68afc783b15128507d1567105d70d7d8edc36f91b58fb47"
+        }
+      },
+      "releaseSha256": "c2df0427bea0cdd8575ee3130adf4ff4aa43c65fca0a5458ed0c7c8c1eea4676",
+      "metrics": {
+        "arrivals": 6400,
+        "confirmedAcceptedUniqueOrders": 6400,
+        "completedReplies": 6400,
+        "notSent": 0,
+        "unknownObservedOrFinal": 0,
+        "serverRejected": 0,
+        "acceptedWithinArrivalWindow": 6141,
+        "arrivalWindowGoodputPerSecond": 479.765625,
+        "allArrivalAcceptedOrderP99Ns": 558369463,
+        "acceptedConditionalLatency": {
+          "count": 6400,
+          "minNs": 4101612,
+          "p50Ns": 6208981,
+          "p99Ns": 558369463,
+          "maxNs": 672239998
+        },
+        "completedReplyConditionalLatency": {
+          "count": 6400,
+          "minNs": 4101612,
+          "p50Ns": 6208981,
+          "p99Ns": 558369463,
+          "maxNs": 672239998
+        },
+        "scheduledToDispatch": {
+          "count": 6400,
+          "minNs": 8519,
+          "p50Ns": 134820,
+          "p99Ns": 551609439,
+          "maxNs": 656746809
+        },
+        "dispatchToSuccessfulOfferReturn": {
+          "count": 6400,
+          "minNs": 36899,
+          "p50Ns": 145418,
+          "p99Ns": 2459461,
+          "maxNs": 14048116
+        },
+        "successfulOfferReturnToReply": {
+          "count": 6400,
+          "minNs": 2859427,
+          "p50Ns": 5942270,
+          "p99Ns": 14842196,
+          "maxNs": 25072106
+        },
+        "schedulerLateness": {
+          "count": 6400,
+          "minNs": 5036,
+          "p50Ns": 55070,
+          "p99Ns": 62066,
+          "maxNs": 7385640
+        },
+        "schedulerLatenessOver20ms": 0,
+        "schedulerTimingValid": true,
+        "allArrivalP99Policy": "Finite distinct ACCEPTED order for every planned arrival; null on any notSent/unknown/reject/unreleased",
+        "percentileMethod": "nearest rank ceil(p*N), scheduled arrival to reply completion; not batch-normalized"
+      },
+      "cycles": [
+        {
+          "cycle": 1,
+          "startMonotonicNs": 39251054540726,
+          "endMonotonicNs": 39251698277327,
+          "wallNs": 643736601,
+          "logicalRpcCount": 621
+        },
+        {
+          "cycle": 2,
+          "startMonotonicNs": 39257197265750,
+          "endMonotonicNs": 39257768625759,
+          "wallNs": 571360009,
+          "logicalRpcCount": 621
+        },
+        {
+          "cycle": 3,
+          "startMonotonicNs": 39257794392457,
+          "endMonotonicNs": 39257865837959,
+          "wallNs": 71445502,
+          "logicalRpcCount": 56
+        }
+      ],
+      "maintenanceCycleWallNs": 1286542112,
+      "readPhases": [
+        {
+          "generation": 1,
+          "kind": "ArchiveChunk",
+          "logicalRpcs": 234,
+          "reservationToCoordinatorRecordedEndWallNs": 173750283,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 2,
+          "kind": "FetchEvents",
+          "logicalRpcs": 384,
+          "reservationToCoordinatorRecordedEndWallNs": 234556079,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 3,
+          "kind": "ArchiveChunk",
+          "logicalRpcs": 234,
+          "reservationToCoordinatorRecordedEndWallNs": 146166786,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 4,
+          "kind": "FetchEvents",
+          "logicalRpcs": 384,
+          "reservationToCoordinatorRecordedEndWallNs": 222381032,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 5,
+          "kind": "ArchiveChunk",
+          "logicalRpcs": 20,
+          "reservationToCoordinatorRecordedEndWallNs": 14542650,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        },
+        {
+          "generation": 6,
+          "kind": "FetchEvents",
+          "logicalRpcs": 33,
+          "reservationToCoordinatorRecordedEndWallNs": 22708904,
+          "observedLowerBoundNotExactLeaseLifetime": true
+        }
+      ],
+      "overlappingLogicalRpcElapsedSumNsNotWallTime": 6190585799,
+      "physicalFrames": {
+        "uniqueRequests": 7249,
+        "businessFrames": 5951,
+        "maintenanceFrames": 1298,
+        "businessBatchSizeCounts": {
+          "1": 5792,
+          "2": 7,
+          "3": 14,
+          "4": 138
+        },
+        "meanCommandsPerBusinessFrame": 1.075449504284994,
+        "classification": "Disjoint original arrival and logical-maintenance correlation sets; members=1 alone is not a business discriminator",
+        "sourcePhysicalOfferTapeCounts": {
+          "physicalOfferAttempts": 7285,
+          "successfulPhysicalAdmissions": 7249,
+          "negativePhysicalOffers": 36,
+          "recordedReplies": 7249
+        }
+      },
+      "idleFactoryCreationObservations": [
+        {
+          "node": 0,
+          "pid": 64948,
+          "factoryCreations": 7,
+          "perRoleCreations": {
+            "driver-shared": 1,
+            "archive-shared": 2,
+            "consensus": 2,
+            "service": 2
+          },
+          "configuredMaximumParkNs": 100000,
+          "actualSleepOrThreadAssignmentMeasured": false
+        },
+        {
+          "node": 1,
+          "pid": 64950,
+          "factoryCreations": 7,
+          "perRoleCreations": {
+            "driver-shared": 1,
+            "archive-shared": 2,
+            "consensus": 2,
+            "service": 2
+          },
+          "configuredMaximumParkNs": 100000,
+          "actualSleepOrThreadAssignmentMeasured": false
+        },
+        {
+          "node": 2,
+          "pid": 64955,
+          "factoryCreations": 7,
+          "perRoleCreations": {
+            "driver-shared": 1,
+            "archive-shared": 2,
+            "consensus": 2,
+            "service": 2
+          },
+          "configuredMaximumParkNs": 100000,
+          "actualSleepOrThreadAssignmentMeasured": false
+        },
+        {
+          "node": -1,
+          "pid": 64924,
+          "factoryCreations": 1,
+          "perRoleCreations": {
+            "owner-driver-shared": 1
+          },
+          "configuredMaximumParkNs": 100000,
+          "actualSleepOrThreadAssignmentMeasured": false
+        }
+      ],
+      "uniqueActualFactoryCreations": 22,
+      "warningReports": [
+        {
+          "afterSigtermWallTimeProven": false,
+          "allLogLinesClassifiedAndRetained": true,
+          "candidateClassification": "NO_LOG_WARNINGS",
+          "lineCount": 5,
+          "logBytes": 10294,
+          "logSha256": "35bd1bea1e47f1b37531e06c03dc4dc4e2ca5d4ec9ddfcce7683038feda0c108",
+          "matchingFinalCheckpointLine1Based": 5,
+          "nextRunAuthorized": false,
+          "node": 0,
+          "originalStrictWrapperResultChanged": false,
+          "pid": 64948,
+          "rawFunctionalGatePerformedHere": false,
+          "warningPairCount": 0,
+          "warningPairs": []
+        },
+        {
+          "afterSigtermWallTimeProven": false,
+          "allLogLinesClassifiedAndRetained": true,
+          "candidateClassification": "NO_LOG_WARNINGS",
+          "lineCount": 4,
+          "logBytes": 10267,
+          "logSha256": "51010c31d72ef70df06e1c9f07b538739aff0d2ab05eb0bc520874a0c14b1d0d",
+          "matchingFinalCheckpointLine1Based": 4,
+          "nextRunAuthorized": false,
+          "node": 1,
+          "originalStrictWrapperResultChanged": false,
+          "pid": 64950,
+          "rawFunctionalGatePerformedHere": false,
+          "warningPairCount": 0,
+          "warningPairs": []
+        },
+        {
+          "afterSigtermWallTimeProven": false,
+          "allLogLinesClassifiedAndRetained": true,
+          "candidateClassification": "NO_LOG_WARNINGS",
+          "lineCount": 4,
+          "logBytes": 10267,
+          "logSha256": "1ebb07cc96fc5d55a1a5152d9f04052176e0f3e9ad707e2e95ade09050b3d462",
+          "matchingFinalCheckpointLine1Based": 4,
+          "nextRunAuthorized": false,
+          "node": 2,
+          "originalStrictWrapperResultChanged": false,
+          "pid": 64955,
+          "rawFunctionalGatePerformedHere": false,
+          "warningPairCount": 0,
+          "warningPairs": []
+        }
+      ],
+      "warningsRetained": 0,
+      "cpuSamplingClockAlignment": {
+        "passed": true,
+        "maximumUtcVersusMonotonicOffsetDifferenceNs": 24229,
+        "thresholdNs": 100000000,
+        "samples": 17,
+        "scope": "Coarse same-host clock-domain consistency check; separate sample field reads, not exact capture-time calibration. CPU uses monotonic adjacent intervals."
+      },
+      "cpuOverArrivalExposure": [
+        {
+          "role": "window-8-node-0",
+          "requestedStartMonotonicNs": 39244911623213,
+          "requestedEndMonotonicNs": 39257711623213,
+          "requestedSeconds": 12.8,
+          "coveredSeconds": 12.54007729,
+          "coverageFraction": 0.97969353828125,
+          "cpuSeconds": 8.98,
+          "meanOccupiedCoresOverCoveredIntervals": 0.716104039259873,
+          "intervals": [
+            {
+              "startMonotonicNs": 39244998885482,
+              "endMonotonicNs": 39246038300283,
+              "cpuSeconds": 1.38
+            },
+            {
+              "startMonotonicNs": 39246038300283,
+              "endMonotonicNs": 39247081562438,
+              "cpuSeconds": 0.76
+            },
+            {
+              "startMonotonicNs": 39247081562438,
+              "endMonotonicNs": 39248136225980,
+              "cpuSeconds": 0.69
+            },
+            {
+              "startMonotonicNs": 39248136225980,
+              "endMonotonicNs": 39249184089442,
+              "cpuSeconds": 0.59
+            },
+            {
+              "startMonotonicNs": 39249184089442,
+              "endMonotonicNs": 39250232550246,
+              "cpuSeconds": 0.58
+            },
+            {
+              "startMonotonicNs": 39250232550246,
+              "endMonotonicNs": 39251275624274,
+              "cpuSeconds": 0.75
+            },
+            {
+              "startMonotonicNs": 39251275624274,
+              "endMonotonicNs": 39252308662099,
+              "cpuSeconds": 0.89
+            },
+            {
+              "startMonotonicNs": 39252308662099,
+              "endMonotonicNs": 39253358622336,
+              "cpuSeconds": 0.65
+            },
+            {
+              "startMonotonicNs": 39253358622336,
+              "endMonotonicNs": 39254405649897,
+              "cpuSeconds": 0.67
+            },
+            {
+              "startMonotonicNs": 39254405649897,
+              "endMonotonicNs": 39255454587796,
+              "cpuSeconds": 0.77
+            },
+            {
+              "startMonotonicNs": 39255454587796,
+              "endMonotonicNs": 39256502155391,
+              "cpuSeconds": 0.63
+            },
+            {
+              "startMonotonicNs": 39256502155391,
+              "endMonotonicNs": 39257538962772,
+              "cpuSeconds": 0.62
+            }
+          ],
+          "rejectedInteriorAdjacentIntervals": 0,
+          "maxSampledRssBytes": 369954816,
+          "maxSampledThreads": 37,
+          "kernelWriteBytesDelta": 28545024,
+          "kernelWriteIntervals": 12,
+          "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+        },
+        {
+          "role": "window-8-node-1",
+          "requestedStartMonotonicNs": 39244911623213,
+          "requestedEndMonotonicNs": 39257711623213,
+          "requestedSeconds": 12.8,
+          "coveredSeconds": 12.54007729,
+          "coverageFraction": 0.97969353828125,
+          "cpuSeconds": 7.02,
+          "meanOccupiedCoresOverCoveredIntervals": 0.5598051620940209,
+          "intervals": [
+            {
+              "startMonotonicNs": 39244998885482,
+              "endMonotonicNs": 39246038300283,
+              "cpuSeconds": 1.39
+            },
+            {
+              "startMonotonicNs": 39246038300283,
+              "endMonotonicNs": 39247081562438,
+              "cpuSeconds": 0.59
+            },
+            {
+              "startMonotonicNs": 39247081562438,
+              "endMonotonicNs": 39248136225980,
+              "cpuSeconds": 0.53
+            },
+            {
+              "startMonotonicNs": 39248136225980,
+              "endMonotonicNs": 39249184089442,
+              "cpuSeconds": 0.35
+            },
+            {
+              "startMonotonicNs": 39249184089442,
+              "endMonotonicNs": 39250232550246,
+              "cpuSeconds": 0.39
+            },
+            {
+              "startMonotonicNs": 39250232550246,
+              "endMonotonicNs": 39251275624274,
+              "cpuSeconds": 0.59
+            },
+            {
+              "startMonotonicNs": 39251275624274,
+              "endMonotonicNs": 39252308662099,
+              "cpuSeconds": 0.78
+            },
+            {
+              "startMonotonicNs": 39252308662099,
+              "endMonotonicNs": 39253358622336,
+              "cpuSeconds": 0.51
+            },
+            {
+              "startMonotonicNs": 39253358622336,
+              "endMonotonicNs": 39254405649897,
+              "cpuSeconds": 0.39
+            },
+            {
+              "startMonotonicNs": 39254405649897,
+              "endMonotonicNs": 39255454587796,
+              "cpuSeconds": 0.5
+            },
+            {
+              "startMonotonicNs": 39255454587796,
+              "endMonotonicNs": 39256502155391,
+              "cpuSeconds": 0.48
+            },
+            {
+              "startMonotonicNs": 39256502155391,
+              "endMonotonicNs": 39257538962772,
+              "cpuSeconds": 0.52
+            }
+          ],
+          "rejectedInteriorAdjacentIntervals": 0,
+          "maxSampledRssBytes": 327827456,
+          "maxSampledThreads": 38,
+          "kernelWriteBytesDelta": 21282816,
+          "kernelWriteIntervals": 12,
+          "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+        },
+        {
+          "role": "window-8-node-2",
+          "requestedStartMonotonicNs": 39244911623213,
+          "requestedEndMonotonicNs": 39257711623213,
+          "requestedSeconds": 12.8,
+          "coveredSeconds": 12.54007729,
+          "coverageFraction": 0.97969353828125,
+          "cpuSeconds": 6.960000000000001,
+          "meanOccupiedCoresOverCoveredIntervals": 0.5550205025889439,
+          "intervals": [
+            {
+              "startMonotonicNs": 39244998885482,
+              "endMonotonicNs": 39246038300283,
+              "cpuSeconds": 1.37
+            },
+            {
+              "startMonotonicNs": 39246038300283,
+              "endMonotonicNs": 39247081562438,
+              "cpuSeconds": 0.55
+            },
+            {
+              "startMonotonicNs": 39247081562438,
+              "endMonotonicNs": 39248136225980,
+              "cpuSeconds": 0.47
+            },
+            {
+              "startMonotonicNs": 39248136225980,
+              "endMonotonicNs": 39249184089442,
+              "cpuSeconds": 0.37
+            },
+            {
+              "startMonotonicNs": 39249184089442,
+              "endMonotonicNs": 39250232550246,
+              "cpuSeconds": 0.36
+            },
+            {
+              "startMonotonicNs": 39250232550246,
+              "endMonotonicNs": 39251275624274,
+              "cpuSeconds": 0.54
+            },
+            {
+              "startMonotonicNs": 39251275624274,
+              "endMonotonicNs": 39252308662099,
+              "cpuSeconds": 0.73
+            },
+            {
+              "startMonotonicNs": 39252308662099,
+              "endMonotonicNs": 39253358622336,
+              "cpuSeconds": 0.44
+            },
+            {
+              "startMonotonicNs": 39253358622336,
+              "endMonotonicNs": 39254405649897,
+              "cpuSeconds": 0.5
+            },
+            {
+              "startMonotonicNs": 39254405649897,
+              "endMonotonicNs": 39255454587796,
+              "cpuSeconds": 0.57
+            },
+            {
+              "startMonotonicNs": 39255454587796,
+              "endMonotonicNs": 39256502155391,
+              "cpuSeconds": 0.54
+            },
+            {
+              "startMonotonicNs": 39256502155391,
+              "endMonotonicNs": 39257538962772,
+              "cpuSeconds": 0.52
+            }
+          ],
+          "rejectedInteriorAdjacentIntervals": 0,
+          "maxSampledRssBytes": 348401664,
+          "maxSampledThreads": 37,
+          "kernelWriteBytesDelta": 21073920,
+          "kernelWriteIntervals": 12,
+          "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+        },
+        {
+          "role": "pilot-parent",
+          "requestedStartMonotonicNs": 39244911623213,
+          "requestedEndMonotonicNs": 39257711623213,
+          "requestedSeconds": 12.8,
+          "coveredSeconds": 12.54007729,
+          "coverageFraction": 0.97969353828125,
+          "cpuSeconds": 9.13,
+          "meanOccupiedCoresOverCoveredIntervals": 0.7280656880225657,
+          "intervals": [
+            {
+              "startMonotonicNs": 39244998885482,
+              "endMonotonicNs": 39246038300283,
+              "cpuSeconds": 1.48
+            },
+            {
+              "startMonotonicNs": 39246038300283,
+              "endMonotonicNs": 39247081562438,
+              "cpuSeconds": 0.82
+            },
+            {
+              "startMonotonicNs": 39247081562438,
+              "endMonotonicNs": 39248136225980,
+              "cpuSeconds": 0.45
+            },
+            {
+              "startMonotonicNs": 39248136225980,
+              "endMonotonicNs": 39249184089442,
+              "cpuSeconds": 0.34
+            },
+            {
+              "startMonotonicNs": 39249184089442,
+              "endMonotonicNs": 39250232550246,
+              "cpuSeconds": 0.38
+            },
+            {
+              "startMonotonicNs": 39250232550246,
+              "endMonotonicNs": 39251275624274,
+              "cpuSeconds": 0.71
+            },
+            {
+              "startMonotonicNs": 39251275624274,
+              "endMonotonicNs": 39252308662099,
+              "cpuSeconds": 2.31
+            },
+            {
+              "startMonotonicNs": 39252308662099,
+              "endMonotonicNs": 39253358622336,
+              "cpuSeconds": 0.39
+            },
+            {
+              "startMonotonicNs": 39253358622336,
+              "endMonotonicNs": 39254405649897,
+              "cpuSeconds": 0.33
+            },
+            {
+              "startMonotonicNs": 39254405649897,
+              "endMonotonicNs": 39255454587796,
+              "cpuSeconds": 0.69
+            },
+            {
+              "startMonotonicNs": 39255454587796,
+              "endMonotonicNs": 39256502155391,
+              "cpuSeconds": 0.5
+            },
+            {
+              "startMonotonicNs": 39256502155391,
+              "endMonotonicNs": 39257538962772,
+              "cpuSeconds": 0.73
+            }
+          ],
+          "rejectedInteriorAdjacentIntervals": 0,
+          "maxSampledRssBytes": 478601216,
+          "maxSampledThreads": 45,
+          "kernelWriteBytesDelta": 23044096,
+          "kernelWriteIntervals": 12,
+          "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+        }
+      ],
+      "parentEntireObservedSpanIncludingSetupDrainAndClose": {
+        "role": "pilot-parent",
+        "requestedStartMonotonicNs": 39242932897690,
+        "requestedEndMonotonicNs": 39257538962772,
+        "requestedSeconds": 14.606065082,
+        "coveredSeconds": 14.606065082,
+        "coverageFraction": 1.0,
+        "cpuSeconds": 10.71,
+        "meanOccupiedCoresOverCoveredIntervals": 0.7332570367085812,
+        "intervals": [
+          {
+            "startMonotonicNs": 39242932897690,
+            "endMonotonicNs": 39243962603425,
+            "cpuSeconds": 0.9
+          },
+          {
+            "startMonotonicNs": 39243962603425,
+            "endMonotonicNs": 39244998885482,
+            "cpuSeconds": 0.68
+          },
+          {
+            "startMonotonicNs": 39244998885482,
+            "endMonotonicNs": 39246038300283,
+            "cpuSeconds": 1.48
+          },
+          {
+            "startMonotonicNs": 39246038300283,
+            "endMonotonicNs": 39247081562438,
+            "cpuSeconds": 0.82
+          },
+          {
+            "startMonotonicNs": 39247081562438,
+            "endMonotonicNs": 39248136225980,
+            "cpuSeconds": 0.45
+          },
+          {
+            "startMonotonicNs": 39248136225980,
+            "endMonotonicNs": 39249184089442,
+            "cpuSeconds": 0.34
+          },
+          {
+            "startMonotonicNs": 39249184089442,
+            "endMonotonicNs": 39250232550246,
+            "cpuSeconds": 0.38
+          },
+          {
+            "startMonotonicNs": 39250232550246,
+            "endMonotonicNs": 39251275624274,
+            "cpuSeconds": 0.71
+          },
+          {
+            "startMonotonicNs": 39251275624274,
+            "endMonotonicNs": 39252308662099,
+            "cpuSeconds": 2.31
+          },
+          {
+            "startMonotonicNs": 39252308662099,
+            "endMonotonicNs": 39253358622336,
+            "cpuSeconds": 0.39
+          },
+          {
+            "startMonotonicNs": 39253358622336,
+            "endMonotonicNs": 39254405649897,
+            "cpuSeconds": 0.33
+          },
+          {
+            "startMonotonicNs": 39254405649897,
+            "endMonotonicNs": 39255454587796,
+            "cpuSeconds": 0.69
+          },
+          {
+            "startMonotonicNs": 39255454587796,
+            "endMonotonicNs": 39256502155391,
+            "cpuSeconds": 0.5
+          },
+          {
+            "startMonotonicNs": 39256502155391,
+            "endMonotonicNs": 39257538962772,
+            "cpuSeconds": 0.73
+          }
+        ],
+        "rejectedInteriorAdjacentIntervals": 0,
+        "maxSampledRssBytes": 478601216,
+        "maxSampledThreads": 45,
+        "kernelWriteBytesDelta": 120561664,
+        "kernelWriteIntervals": 14,
+        "scope": "Per-process cumulative CPU tick deltas on adjacent complete interior samples, not per-thread/exclusive CPU or pure fsync; missing is null; no quota normalization"
+      },
+      "rawFiniteClassificationPreserved": "VALID_FINITE_WINDOW_WITH_OUTSTANDING_REPLIES",
+      "rootReviewSha256": "6bbb8f16a88feb58f3d0c0274e87ee233fd13ebb3437c736ccaa5a2939735197"
+    }
+  ],
+  "pairedDescriptiveRatios": [
+    {
+      "arms": [
+        1,
+        2
+      ],
+      "p99Ratio100usOver1ms": 0.6258059929825663,
+      "maintenanceWallRatio100usOver1ms": 0.6497874807293241,
+      "scope": "Finite paired descriptive ratio; not statistical significance, sustained capacity or unique causal attribution"
+    },
+    {
+      "arms": [
+        3,
+        4
+      ],
+      "p99Ratio100usOver1ms": 0.6094159758202997,
+      "maintenanceWallRatio100usOver1ms": 0.6480555761161018,
+      "scope": "Finite paired descriptive ratio; not statistical significance, sustained capacity or unique causal attribution"
+    }
+  ],
+  "limitations": [
+    "6400 arrivals/12.8s and three maintenance cycles per arm; no sustained capacity or SLA claim.",
+    "All-arrival scheduled-to-accepted p99 differs from conditional accepted/completed-reply p99; undefined when any arrival is missing/rejected/unknown.",
+    "Overlapping per-RPC elapsed sums are not maintenance wall time. Phase spans are lower-bound observations of lease lifetime.",
+    "Idle factory creations/tuples are observed; sleep duration and private runner-thread assignment are not measured.",
+    "CPU tick counters are coarse sampled process aggregates. Each role keeps its own covered intervals; parent entire-span includes setup/drain/close. No uniform CPU sum, pure fsync claim, quota normalization or unique cause.",
+    "Qualified warnings and existing failed source/native wrapper attempts remain retained; this derived comparison never changes original gates."
+  ],
+  "inputs": {
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-comparison-preparation-r1/formal-config.template.json": {
+      "bytes": 647,
+      "sha256": "265298773a25439d4362bd7f603d0071f297662f51c393be2d6176c66ec17899"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/SUCCESS.json": {
+      "bytes": 4730,
+      "sha256": "bd5368796328dce9437598ade1b994b411ff38519728ae34aec7be6f18bd04f7"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/idle-root-arm-1-review-r1/ROOT_REVIEW.json": {
+      "bytes": 3073,
+      "sha256": "1e4f3333d3fd39494d668a326deae8376dc46e2527f531f3b90e41d399a45929"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/raw/result.json": {
+      "bytes": 360811,
+      "sha256": "5b000b8e090e15d1d2aa1b568c7f380ce6c289a86c3ed9cf744988eee52f7ec6"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/native/result.json": {
+      "bytes": 404456,
+      "sha256": "b6cc866b32962934039d722959098b2549ab768afbb9ff4a42061727128a4178"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/finalized/LOCAL_COLLECTION_COMPLETE.json": {
+      "bytes": 1772,
+      "sha256": "4247bf823f620db350b729a28ea7821a2c916034e163a21907aaa406ef0a69cc"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/root-controller-closed.json": {
+      "bytes": 797,
+      "sha256": "8cfbaa2df1d3dd2f221e29269d677576edcab3dc385a749e8e84a5a1ad6f51f4"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/final-position.json": {
+      "bytes": 184,
+      "sha256": "6f812a1467255582074aa9952aaa0ded14ed8e18cae150e4e0bee307209088b4"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/functional-result.json": {
+      "bytes": 10629,
+      "sha256": "0d0672936736b6ef15abbdf0e7fa2158e952e66122bbc6e39e75a86920881848"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/admission-plan.json": {
+      "bytes": 1654,
+      "sha256": "3b21533a729bc010113bc6fbe57ec2d08a8324e8646641a76694479220390eb1"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/arrivals.csv": {
+      "bytes": 1359408,
+      "sha256": "45747ba4033dc3793b39ce91d419ccb80c4353259e066455911dd02f477612d3"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/backlog.csv": {
+      "bytes": 877,
+      "sha256": "25e28bd5a92e0d2965dee8b7e5c970bdd841f4f31e0e1dd4ffccc38552823846"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/configuration.json": {
+      "bytes": 1789,
+      "sha256": "6f982a16dc64705ddae625c5b5764836498ea4ebab78f5c603597db10bfacdce"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/load-result.json": {
+      "bytes": 8742,
+      "sha256": "feb163db54ae87552f4d2a9ff7e5201c51b5f9b7dec0e91bdcc0f6bc40411373"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/cycle-1.verified.txt": {
+      "bytes": 658,
+      "sha256": "f4f5a0dd1a61c61fb2f8fe667ad6281d23c03b92f30904a89caa4e37713940c7"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/cycle-2.verified.txt": {
+      "bytes": 667,
+      "sha256": "a3c9d248bef48761aef58a7ad8a8d7af1169ebfc3580c7fa317e84895eb5b37b"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/cycle-3.verified.txt": {
+      "bytes": 668,
+      "sha256": "354056d2fe3e4b8a4a76c164d2495a31e811c667a8ba879304aa8afe6b351389"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/logical-rpc-replies.bin": {
+      "bytes": 4434995,
+      "sha256": "37c8293f6951597e69506d7a12686405c2e0820f2bea6e843e5d0249c5e052ee"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/logical-rpc-requests.bin": {
+      "bytes": 368365,
+      "sha256": "64d731548bc2feef3f9bfa76778e238ac165c4467b99e1f96fe4c3361976c927"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/logical-rpc-timings.csv": {
+      "bytes": 134144,
+      "sha256": "0a38e37077435ac01da43e50b56ad64b00c14473c7c80149215d8e5abd9d1f91"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/owner-after-close.json": {
+      "bytes": 6641,
+      "sha256": "f794882ad1f794e40eec2d9f784333e24c9494f765c24c40e08384539b0f63e8"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/owner-before-close.json": {
+      "bytes": 6641,
+      "sha256": "c79b71bb5be10cb4b5efe6ef30a63ce0277cbff044a551d8a7a71a1c0c7200f9"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/physical-offer-codes.csv": {
+      "bytes": 255867,
+      "sha256": "b44ec296d75c8cd0bb705cf6feb2ec38b5ea422d55aecdf43089b7cc2f8d1d2d"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/physical-replies.bin": {
+      "bytes": 6841439,
+      "sha256": "a67c0970bd969b1f6e9aacd3eaf1a3b1327da89252370e82a5cc0324d8f3af70"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/physical-request-index.csv": {
+      "bytes": 706631,
+      "sha256": "d40d5d85f42c3daaa04698e0863db1e76cd4279086526c12b33140171f1985f1"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/physical-requests.bin": {
+      "bytes": 1819677,
+      "sha256": "71b052712a3dc57ca4f783b0c52c5d492e8375894b85e522a9913cd80a29bf04"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/transport-observations.json": {
+      "bytes": 75176,
+      "sha256": "c7f18d019e8c17a0578d50817e2b5a9c90aa404a3e560a248c24ecd71d8550c4"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/writer/0001-archive.bin": {
+      "bytes": 1432233,
+      "sha256": "a919447df46782639ad884448693a7c1ad9c1308f305544f8a58c6e163ab99de"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/writer/0002-events.bin": {
+      "bytes": 559632,
+      "sha256": "c0000e27941280cb8425ab121c2a99e24bd97c213bb4a88a97a0270c2bd7df2c"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/writer/0003-archive.bin": {
+      "bytes": 1437510,
+      "sha256": "0ea097a40f345dfb21620eef83f189040c5609ef74aad76c69e5f84a702347a3"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/writer/0004-events.bin": {
+      "bytes": 559872,
+      "sha256": "7e2e8013743c3463ab185b9ea31e998ad81ef6d6e0af77517fe4d99119bd0f81"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/writer/0005-archive.bin": {
+      "bytes": 121558,
+      "sha256": "3fb961cbeea7253637ca169b06fd8eaac64a3fbaa2b323d4cd6d58f3dba83e20"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/load/writer/0006-events.bin": {
+      "bytes": 47344,
+      "sha256": "bf0c413617f590ad062b2f6309e0e1eba503ddac8b95d08f317190c7e59499d8"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/node-0-identity.json": {
+      "bytes": 1101,
+      "sha256": "a33addbac9d40f0e376fa1a0039c3a6a7e286cfa7202924a4f8448192b88d582"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/node-0.log": {
+      "bytes": 10309,
+      "sha256": "d3a612a6a170c0c7507e6d5a8587b8ac746d6c5f56644e9a0534f789190c6022"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/node-0/idle-observations/idle-000.actual.json": {
+      "bytes": 9227,
+      "sha256": "01ba3c44b59c186a14af71c0be58281265ed8f32e1d9bc1c27fca9d8cd472cf5"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/node-1-identity.json": {
+      "bytes": 1101,
+      "sha256": "b88007218f1a743143ee5d9ba16e2773e9d72d0cf6b5b878f2dc4f1ae0594782"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/node-1.log": {
+      "bytes": 10282,
+      "sha256": "fd64caa828b7373f410140a4f06c16418881bdf37acd0ddfa8d8b043c4a42e80"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/node-1/idle-observations/idle-000.actual.json": {
+      "bytes": 9227,
+      "sha256": "faf337e6e6f34c5cf821caa835497aa79877c24fe50b1dc3b42edb75b5789093"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/node-2-identity.json": {
+      "bytes": 1101,
+      "sha256": "2e70845058eae4fde664a8c120469abc6685ead57b80f851298964bd41683adf"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/node-2.log": {
+      "bytes": 10282,
+      "sha256": "dd04322ee3dac56e3a0f2fd290d7d19d4a0370208955e4ec21bc0a3117d6571a"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/node-2/idle-observations/idle-000.actual.json": {
+      "bytes": 9227,
+      "sha256": "e36619b111dca2586323e44be0ed6a57c5292f9e4e6ee647e453caedf054fb88"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/owned-cpu-rss-io-1hz.jsonl": {
+      "bytes": 40754,
+      "sha256": "5fca506d81c11cecf59b36903d77ec524e5d0e6e388791819e168cf4bd03d600"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/release.json": {
+      "bytes": 9508,
+      "sha256": "c2df0427bea0cdd8575ee3130adf4ff4aa43c65fca0a5458ed0c7c8c1eea4676"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/telemetry-receipt.json": {
+      "bytes": 466,
+      "sha256": "9a906693502d7d4951cfdd736eaff5e3a4c9a9fb9cb0bc5218aa4ad550d16e4b"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/native/actual-runtime-artifacts/aeron-all-1.53.3.jar": {
+      "bytes": 3544128,
+      "sha256": "4c6c8a5014a2b67424051170392a005daa9a998ac963302d2819d0f3db749ef2"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/native/actual-runtime-artifacts/agrona-2.6.1.jar": {
+      "bytes": 491990,
+      "sha256": "84c07eb02695c06bfda3d6c3a20c1984e3ff1bbd617b2f8e678140baf973fa28"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/native/actual-runtime-artifacts/cluster-0.1.0-SNAPSHOT.jar": {
+      "bytes": 566333,
+      "sha256": "e7ec1a57aa1495fa98834a03f08b3028c711835d46fefe7229420699960f3258"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/native/actual-runtime-artifacts/core-0.1.0-SNAPSHOT.jar": {
+      "bytes": 81916,
+      "sha256": "ba9644585ede2b30b68afc783b15128507d1567105d70d7d8edc36f91b58fb47"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-1-collection-r1/collection/raw-files/job/idle-arm/registration.json": {
+      "bytes": 673,
+      "sha256": "12b7d9fcd26c1f94823efe565f21abf31459c7e781ef73769c2062fdd96b8afc"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/SUCCESS.json": {
+      "bytes": 4653,
+      "sha256": "b422745c7f1114c5b5f152b4228802186667ccc4c5a26dba0b516d98759a4d9d"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/idle-root-arm-2-review-r1/ROOT_REVIEW.json": {
+      "bytes": 3072,
+      "sha256": "07ac600d5f3fed54883b24f1f22b20fe23faef5dd0e99838c8c0f03d9f067f1c"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/raw/result.json": {
+      "bytes": 360668,
+      "sha256": "7c49b247e52855d688000f52485ba72b1914e9c10f64a796424e2d21432097b4"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/native/result.json": {
+      "bytes": 404045,
+      "sha256": "14d35949b16daa091737063c060e0c92cc437c70ab86447fd360b29c859bd913"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/finalized/LOCAL_COLLECTION_COMPLETE.json": {
+      "bytes": 1772,
+      "sha256": "742980406c0ecab275ace59f6ceef1579b9212b8218528cec0d8e4a39b145de1"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/root-controller-closed.json": {
+      "bytes": 798,
+      "sha256": "7e4b68211c3288ff0457a321fee99c555f46a0843ab4a8d3370f45a4eb318053"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/final-position.json": {
+      "bytes": 184,
+      "sha256": "90d56090d875764401a3579bf43d58065fe34994e5973e99ecf8591b8e47ea31"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/functional-result.json": {
+      "bytes": 10618,
+      "sha256": "4127c87c6c8fb3b6af693daadd2f634681c9030e7db9b0b94dd87949d0591bcf"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/admission-plan.json": {
+      "bytes": 1654,
+      "sha256": "3b21533a729bc010113bc6fbe57ec2d08a8324e8646641a76694479220390eb1"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/arrivals.csv": {
+      "bytes": 1359392,
+      "sha256": "050fff117bd875885c17ef77563fa4dc9f49ca6530d4026144c95f6e2400b860"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/backlog.csv": {
+      "bytes": 822,
+      "sha256": "ed0f457d7ead9718f1778bed77320a8de6915d98f56b05f92d29919130f7276e"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/configuration.json": {
+      "bytes": 1788,
+      "sha256": "df8eb3812bfacb6c6506b53517b6772cd2e8b49f3b222d420f8fbdcbea0ce231"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/load-result.json": {
+      "bytes": 8732,
+      "sha256": "aa527184c62f7d0e4c8c1f7ccc8c1a0f50df48b351934edb3725bac54eb8053a"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/cycle-1.verified.txt": {
+      "bytes": 658,
+      "sha256": "1de776b06ac27448fee2dc64955a9948d9acba80d6d7e82c03e224f4102320f9"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/cycle-2.verified.txt": {
+      "bytes": 667,
+      "sha256": "68a52c2f13522823180cedfe7c083d312a477edda28cda63d16e71c6905b11bd"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/cycle-3.verified.txt": {
+      "bytes": 668,
+      "sha256": "4208ec803360c52e74dc36750f2cb57d5ddef0ca7c6295a59dce41904f07ce7c"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/logical-rpc-replies.bin": {
+      "bytes": 4434995,
+      "sha256": "d232754e43516312d660a1a319c91a8f57536087d8a7aaf94e99bcb5c8b5f801"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/logical-rpc-requests.bin": {
+      "bytes": 368365,
+      "sha256": "dd261bb819fc970c7e67f9ec1e965df18914a59d3defbfe7a4497ad7f2b5418d"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/logical-rpc-timings.csv": {
+      "bytes": 134013,
+      "sha256": "baec7f1444894688328b60ba344a56df6e792ac00c51ac824592988479b77085"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/owner-after-close.json": {
+      "bytes": 6636,
+      "sha256": "5d252ef0127cdeb780608e8f8cf14e2e7c68666770069fdf56ceae665d596ad2"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/owner-before-close.json": {
+      "bytes": 6636,
+      "sha256": "fff85577977b804985887b0a0fb9b83da9d56769fb1885079ba9bf2fc0b8ea7b"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/physical-offer-codes.csv": {
+      "bytes": 260321,
+      "sha256": "0a382e387fc171c8b591990e4a46fe804db10a85cd444824ead4262b90bbf649"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/physical-replies.bin": {
+      "bytes": 6867817,
+      "sha256": "0dcc1baa0dc7ddd01a55f752eae9cdd957c7671c1f2969a3df68d7c0a5147fe2"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/physical-request-index.csv": {
+      "bytes": 718701,
+      "sha256": "98554f22c277c226110509c0e30f29a4b8aae41ec8bb1a9eb192778d5b3dea6d"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/physical-requests.bin": {
+      "bytes": 1838311,
+      "sha256": "afd64fe8658e4941ad47391cb63a8a04b2132ba6922416f0729db48c630676d1"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/transport-observations.json": {
+      "bytes": 70380,
+      "sha256": "86f6b05c3e32fde61c34de58fcf173ac9153abaa6fe8542f45e74d1c10a83e02"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/writer/0001-archive.bin": {
+      "bytes": 1432233,
+      "sha256": "b74cb635751f74a3c6f84bd617049418fe15652f6cbde53768ea96d472d33455"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/writer/0002-events.bin": {
+      "bytes": 559632,
+      "sha256": "b3a7b89c57cc17c74e698bb1211117e04878733e5381e766660bd22972ada315"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/writer/0003-archive.bin": {
+      "bytes": 1437510,
+      "sha256": "94978206dbac7abd9f6364d4134630e2e9280a7763c22f1a94005964c88f9ae9"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/writer/0004-events.bin": {
+      "bytes": 559872,
+      "sha256": "d322ffb351be9d049cb3302776ed4e964d6d614583e60840f6b6191b6958383d"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/writer/0005-archive.bin": {
+      "bytes": 121558,
+      "sha256": "0612c8daf79d1b067759d90b6838ff85726ff31b1dd7377fd5af4102c01c0dad"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/load/writer/0006-events.bin": {
+      "bytes": 47344,
+      "sha256": "595c00ca9ec4a1ed13e9604d4d6a12dff39dd10107dcbba81c37ea3a612507fe"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/node-0-identity.json": {
+      "bytes": 1100,
+      "sha256": "59ee39ab9674b5052cfcb0b485b1ddd0e597af3b287660cdbbb09729c5eb1338"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/node-0.log": {
+      "bytes": 10294,
+      "sha256": "c0e7166c2ed253966a26ef49543acc366bf106906f750a45eb60a390f18e80f4"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/node-0/idle-observations/idle-000.actual.json": {
+      "bytes": 9212,
+      "sha256": "d19dd59a004abbfee399085fe29d2855c0a963478311af33a2fcb1cb8131790c"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/node-1-identity.json": {
+      "bytes": 1100,
+      "sha256": "e609e2fe21c426a2317a25a640b56635d735f60f9dd1d2b453729632a609539d"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/node-1.log": {
+      "bytes": 10267,
+      "sha256": "64cab78a9356b6753d638ff0341b67c69ff14f376e5da2952ad43f34c8cd3a29"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/node-1/idle-observations/idle-000.actual.json": {
+      "bytes": 9212,
+      "sha256": "a2d27feca0727f985498baa02792ce3ae015c3bb2c903b438faa3404f9afac23"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/node-2-identity.json": {
+      "bytes": 1100,
+      "sha256": "ac31b11101a6a99f5f6a016a526655ab9a97b453fcbff7449e8e467d0373f0e5"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/node-2.log": {
+      "bytes": 10267,
+      "sha256": "b1d7b2c814acb918af46764964820018acea987697e415839862115f09a1032a"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/node-2/idle-observations/idle-000.actual.json": {
+      "bytes": 9212,
+      "sha256": "06a09124542f96d1e869daa36b90c1fb22beb494cf9ea6afa229d5999281a5f8"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/owned-cpu-rss-io-1hz.jsonl": {
+      "bytes": 39118,
+      "sha256": "cc1c9b1cc4f1a1f0149aefdb5c1904dd11cfba2ac0157a3ff2c6b516887c8319"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/release.json": {
+      "bytes": 9508,
+      "sha256": "c2df0427bea0cdd8575ee3130adf4ff4aa43c65fca0a5458ed0c7c8c1eea4676"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/telemetry-receipt.json": {
+      "bytes": 466,
+      "sha256": "84a9004bc9882642b8b679b1c0ad952a5706d5335ca2a8f66a8b155f1169be9c"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/native/actual-runtime-artifacts/aeron-all-1.53.3.jar": {
+      "bytes": 3544128,
+      "sha256": "4c6c8a5014a2b67424051170392a005daa9a998ac963302d2819d0f3db749ef2"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/native/actual-runtime-artifacts/agrona-2.6.1.jar": {
+      "bytes": 491990,
+      "sha256": "84c07eb02695c06bfda3d6c3a20c1984e3ff1bbd617b2f8e678140baf973fa28"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/native/actual-runtime-artifacts/cluster-0.1.0-SNAPSHOT.jar": {
+      "bytes": 566333,
+      "sha256": "e7ec1a57aa1495fa98834a03f08b3028c711835d46fefe7229420699960f3258"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/native/actual-runtime-artifacts/core-0.1.0-SNAPSHOT.jar": {
+      "bytes": 81916,
+      "sha256": "ba9644585ede2b30b68afc783b15128507d1567105d70d7d8edc36f91b58fb47"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-2-collection-r1/collection/raw-files/job/idle-arm/registration.json": {
+      "bytes": 672,
+      "sha256": "df916e1b4551441fb0d2b45cfb46c8b699849b5ec8a2f585fc701bf0ea1889d2"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/SUCCESS.json": {
+      "bytes": 4654,
+      "sha256": "2c94f951fe19ede999c4d09b6c4ec0ef0e8dc0d3b55cad62133d4c13e7e7fb22"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/idle-root-arm-3-review-r1/ROOT_REVIEW.json": {
+      "bytes": 3073,
+      "sha256": "b840322c62f6d0238f171df807f328781c056a8b35f9386326f0b2a7cdcde378"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/raw/result.json": {
+      "bytes": 360797,
+      "sha256": "04103db6dd2ed15fd51765d7231c3c068fffe2d0b96c4fbf38af3015fd9fabd8"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/native/result.json": {
+      "bytes": 404456,
+      "sha256": "891ad49195527b4f00e0c33d661739b28034edf011b36eceebc3d66e473f643d"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/finalized/LOCAL_COLLECTION_COMPLETE.json": {
+      "bytes": 1772,
+      "sha256": "be65ce8f4cb4966954557e1f031229d7acb499d8592433e1091640784ba4869f"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/root-controller-closed.json": {
+      "bytes": 799,
+      "sha256": "327cb156ef0d97ca59c0e1e6ca4b5f8eef55cd57b7cbd35fd7484724d85fb705"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/final-position.json": {
+      "bytes": 184,
+      "sha256": "051028f4931d79d0f89101b427bcefb725945dc7dfb993dc05dde99022fc0e64"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/functional-result.json": {
+      "bytes": 10623,
+      "sha256": "8772e15cc2a5eb5c91e89c976a1e5fff9e1072976c5861eced59ca83201df15c"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/admission-plan.json": {
+      "bytes": 1654,
+      "sha256": "3b21533a729bc010113bc6fbe57ec2d08a8324e8646641a76694479220390eb1"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/arrivals.csv": {
+      "bytes": 1359408,
+      "sha256": "589769f1d2adaa550728c91380a9e2746bd37f9106409603fc8201b7e2ec898d"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/backlog.csv": {
+      "bytes": 878,
+      "sha256": "0b614c6e189f29cc77a76a2db7c6feb35b13475d14b94c9cb6a651f9cc231211"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/configuration.json": {
+      "bytes": 1789,
+      "sha256": "d750eb379b8a4f2f12290526c3373539b531324c54a5806ac465d7b67481bc1b"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/load-result.json": {
+      "bytes": 8739,
+      "sha256": "0bda5b437bab94113a0e608d07bc1665de0b314d515f7b07fad994fc2ecb4df2"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/cycle-1.verified.txt": {
+      "bytes": 658,
+      "sha256": "092a576fde1b7b63fb560320f936976115db99786992bcb2a574f6ee8620f2cb"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/cycle-2.verified.txt": {
+      "bytes": 667,
+      "sha256": "22fdbc546eb2e1b0368d98d886c53911cc103c0deced087ba6e746087ac13980"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/cycle-3.verified.txt": {
+      "bytes": 668,
+      "sha256": "f55cc1d3e2fd1c17314f5c5b461a125f6f9e563b2ca29e7d1a1945f7e5284d00"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/logical-rpc-replies.bin": {
+      "bytes": 4434995,
+      "sha256": "5cc50f1ef77cdcbb22f5ac29eba3dae98655591d6cc806ccec819764b500b7b0"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/logical-rpc-requests.bin": {
+      "bytes": 368365,
+      "sha256": "a903c68bf76365b0b14bfef9a7f23301f2b3ffcb763779ae5a227a11c2a00939"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/logical-rpc-timings.csv": {
+      "bytes": 134134,
+      "sha256": "dd02bdbfbafc71962a6a375229f4e4c9d5baed3df66256f68d2fe4a5a01f0300"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/owner-after-close.json": {
+      "bytes": 6638,
+      "sha256": "10fe5562634162f4fcff0b7bc14ca6801c53d11ceb521d74b8cf242bf870cc7d"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/owner-before-close.json": {
+      "bytes": 6638,
+      "sha256": "6d8962dbec5b9ed9972b17311b71c36a5329af5e2afb7fdd25b4adbb2c6df508"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/physical-offer-codes.csv": {
+      "bytes": 255495,
+      "sha256": "449f2bbc29bb6eea13cdb67c8523ce8f5828a12b7d79a6badbf78c9c409865b8"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/physical-replies.bin": {
+      "bytes": 6839259,
+      "sha256": "1b8bd28b05fd375246a4eeba4b567b8062efc99ce0958e7251d4b627945cb6de"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/physical-request-index.csv": {
+      "bytes": 705629,
+      "sha256": "91008c00da0e99eb4b42e35767508eb161793f4f4d9b398c52104d6a3327aeb6"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/physical-requests.bin": {
+      "bytes": 1818137,
+      "sha256": "aeb96757de9daa4089fd10e17e7ca3fb1fd24136aae496c4cbabba39bc7b9ba3"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/transport-observations.json": {
+      "bytes": 75128,
+      "sha256": "d09c848907042feda34f5103fd1bf0ea586aba5a230c9a1261be1d368884c5ec"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/writer/0001-archive.bin": {
+      "bytes": 1432233,
+      "sha256": "e72feddd1e34cdc125cf5eef68ee6744049f44bd6cbd19bb78679bdf49372e08"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/writer/0002-events.bin": {
+      "bytes": 559632,
+      "sha256": "81ec408c0f749de52de7c187eed7add717325d85f5ba357269ba58c880df5b5d"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/writer/0003-archive.bin": {
+      "bytes": 1437510,
+      "sha256": "0eeade9a7ada971f99f6006b89b0e8ff15a51d53dd1f8751b85494cf9cb10bde"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/writer/0004-events.bin": {
+      "bytes": 559872,
+      "sha256": "294052503a3844d037cfcfba0d920592b3ebb6f45404e822d7cb582380e1a3a7"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/writer/0005-archive.bin": {
+      "bytes": 121558,
+      "sha256": "a1b25f3d6d9a654e148eeda120f547d7650c09f6f03867dc5774f7b9c0714bac"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/load/writer/0006-events.bin": {
+      "bytes": 47344,
+      "sha256": "9c9685ea85229b4ff9d9093c00ee840aa1834736d37bac1bb3803ccb924961be"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/node-0-identity.json": {
+      "bytes": 1101,
+      "sha256": "4086fae2ec48aa8afb980f2c7a6cb9f5fc6ca9fa8bc48f1a5f81d91758570a78"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/node-0.log": {
+      "bytes": 10309,
+      "sha256": "10a6a4579b0ad4431f59934e0098980ec977eb8d56c502393437a61015186cf4"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/node-0/idle-observations/idle-000.actual.json": {
+      "bytes": 9227,
+      "sha256": "b8eeae83f56a1d68de628f9c1ae2912cf07d2f974c88af9715db005e7f4f566d"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/node-1-identity.json": {
+      "bytes": 1101,
+      "sha256": "9b97e88eadb6c94c27d45a2939a94d7d6e049faa1dafc8636aee341ae2c3b213"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/node-1.log": {
+      "bytes": 10282,
+      "sha256": "daf77bf9348eb092b6e462c501292a46648a972a9dc399cf723b3ed279de88ec"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/node-1/idle-observations/idle-000.actual.json": {
+      "bytes": 9227,
+      "sha256": "ec7d38baddee3b90b4fb8b0fbc85c09c9ad52545fe3de078713baba286f65708"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/node-2-identity.json": {
+      "bytes": 1101,
+      "sha256": "d7a964af42a1f9e5e1b6308ca3c1859b230b46983ebc053efe4d91d65982a106"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/node-2.log": {
+      "bytes": 10282,
+      "sha256": "7a3179a41b8f17cd116bf59874a3656fda676c949f799a63661d1aea88ad0058"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/node-2/idle-observations/idle-000.actual.json": {
+      "bytes": 9227,
+      "sha256": "503298b87707defab1de2b5479cea1915affe7465e52062de55cbaeec3706c39"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/owned-cpu-rss-io-1hz.jsonl": {
+      "bytes": 40750,
+      "sha256": "e79475eea460a53da38153a1fb1a7915a7d5a4178afa1c1cd273e6159eb3e036"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/release.json": {
+      "bytes": 9508,
+      "sha256": "c2df0427bea0cdd8575ee3130adf4ff4aa43c65fca0a5458ed0c7c8c1eea4676"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/telemetry-receipt.json": {
+      "bytes": 466,
+      "sha256": "3d07fd06ccf8117257c6db01d28cbd55bdacaf0c07a8dac99de03a4448cce447"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/native/actual-runtime-artifacts/aeron-all-1.53.3.jar": {
+      "bytes": 3544128,
+      "sha256": "4c6c8a5014a2b67424051170392a005daa9a998ac963302d2819d0f3db749ef2"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/native/actual-runtime-artifacts/agrona-2.6.1.jar": {
+      "bytes": 491990,
+      "sha256": "84c07eb02695c06bfda3d6c3a20c1984e3ff1bbd617b2f8e678140baf973fa28"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/native/actual-runtime-artifacts/cluster-0.1.0-SNAPSHOT.jar": {
+      "bytes": 566333,
+      "sha256": "e7ec1a57aa1495fa98834a03f08b3028c711835d46fefe7229420699960f3258"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/native/actual-runtime-artifacts/core-0.1.0-SNAPSHOT.jar": {
+      "bytes": 81916,
+      "sha256": "ba9644585ede2b30b68afc783b15128507d1567105d70d7d8edc36f91b58fb47"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-3-collection-r1/collection/raw-files/job/idle-arm/registration.json": {
+      "bytes": 673,
+      "sha256": "666dcbc9b78fbc924979c25823a9870a915b8004b069b9fc0d20626fd5029248"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/SUCCESS.json": {
+      "bytes": 4653,
+      "sha256": "e11d0968ce826b0c8dfd270f8a5e759473b5e76f8dacf8eb80574eb599a18a50"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/idle-root-arm-4-review-r1/ROOT_REVIEW.json": {
+      "bytes": 3072,
+      "sha256": "6bbb8f16a88feb58f3d0c0274e87ee233fd13ebb3437c736ccaa5a2939735197"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/raw/result.json": {
+      "bytes": 360672,
+      "sha256": "5383500a581ba24b0c5cd641724b0a2008298ddb8692615e5540a0830c51dddf"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/native/result.json": {
+      "bytes": 404045,
+      "sha256": "d630be0a411b7532ba67ee4fbc41e8f95102b9850c772ffe0f195083ea9ffac3"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/finalized/LOCAL_COLLECTION_COMPLETE.json": {
+      "bytes": 1772,
+      "sha256": "3d5a46641d982e200714feecd954300c3a7529e5e3770b3d26acd8a4d40a23c7"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/root-controller-closed.json": {
+      "bytes": 798,
+      "sha256": "b3ab7fa53be95a8767daac1c1b7ac94ea6ef3daeedb091b3c276403bccddc6f9"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/final-position.json": {
+      "bytes": 184,
+      "sha256": "31c9c97640874543cbe11d34986627dd6889a95517a86a4080a6a83e22b83ea0"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/functional-result.json": {
+      "bytes": 10621,
+      "sha256": "9d5ed6566ba82ab0b9d8dc7858893acabf2655e4e0e1b55022030b69bcf42b96"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/admission-plan.json": {
+      "bytes": 1654,
+      "sha256": "3b21533a729bc010113bc6fbe57ec2d08a8324e8646641a76694479220390eb1"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/arrivals.csv": {
+      "bytes": 1359386,
+      "sha256": "1b60f6cfdd063da1a843a4953d4cc33091e2632e42477920c466c314518c36a4"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/backlog.csv": {
+      "bytes": 821,
+      "sha256": "40da3fb0187f7483015131ffd79f0532b5fe13217976ab350b50a6b6a42c7202"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/configuration.json": {
+      "bytes": 1788,
+      "sha256": "df78e952564fb551e0d3cfa252390a5efbbc0daaaf0d1948ccdebf15ca3f8aba"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/load-result.json": {
+      "bytes": 8734,
+      "sha256": "47afdcd6539281be0c7f8e787034be33946b49a71831669d5110b2431b9c7d21"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/cycle-1.verified.txt": {
+      "bytes": 658,
+      "sha256": "b8dcbac4ee159461e5620c704e0fcb6542be36c98a9347c34dadd93052f3124d"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/cycle-2.verified.txt": {
+      "bytes": 667,
+      "sha256": "b5661d1a7e005c30709ca22b0c9d000efe480c1d702569b9a5b6b0290b3a643a"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/cycle-3.verified.txt": {
+      "bytes": 668,
+      "sha256": "b8a4f01183e630cbc9e063065f254c9332a0606446923249ff588807a0216ce8"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/logical-rpc-replies.bin": {
+      "bytes": 4434995,
+      "sha256": "7066b3035a5fd0866691b437eb4b9a604d51e623e29b8c5c1448371ea9614620"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/logical-rpc-requests.bin": {
+      "bytes": 368365,
+      "sha256": "097f4abfdaaf251819628e164391d0db1729e1f4bcc4b4c6767b65ff4cb3b5c9"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/maintenance/logical-rpc-timings.csv": {
+      "bytes": 134022,
+      "sha256": "a406fe50f5af5a163d11774efb63392fc9bb5dc2a5c6d5af9bf5eb7ddff74440"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/owner-after-close.json": {
+      "bytes": 6637,
+      "sha256": "34c5641dbeceba0531aac9f01dd334818cccd9afd1902bfdd67e7594f5d2efef"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/owner-before-close.json": {
+      "bytes": 6637,
+      "sha256": "bdb8687fc06f713cca7151f0cdcb28a25ffd795250238681d19ba908e77873ef"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/physical-offer-codes.csv": {
+      "bytes": 260696,
+      "sha256": "5822afe1bef934a5a91bca37a186c5342ae4d3c806211085af3c761536dff79b"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/physical-replies.bin": {
+      "bytes": 6869997,
+      "sha256": "c26f018fe67e8d6ea0e15609175f5bbd1cb872e59d99c988558dcb0c5eff9615"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/physical-request-index.csv": {
+      "bytes": 719705,
+      "sha256": "63df06a6ae638a80fe8786bcb4fea24cf38f2dc549403f05ff80d80dd8ebdd25"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/physical-requests.bin": {
+      "bytes": 1839851,
+      "sha256": "ebfeecc308bab1ff5fbd54a50901ad3b7dcfab8e80272541fc2b14b2cd1ebf2f"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/transport-observations.json": {
+      "bytes": 70395,
+      "sha256": "c94cb5274379085dd0a8e32e9a9b68e0ffd84178daab06272661e6014fc6657c"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/writer/0001-archive.bin": {
+      "bytes": 1432233,
+      "sha256": "8bc8dc9a38008628d77f0d80f77ba8a79125fa03724ada61c1820df9d985c724"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/writer/0002-events.bin": {
+      "bytes": 559632,
+      "sha256": "5b205974a718c5b95a475a0918266e4df2f25effe850aa1aa02758b982018f02"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/writer/0003-archive.bin": {
+      "bytes": 1437510,
+      "sha256": "61e31aa0227fc188bbf931c84e2c86a27c500660293c2f235b5d3e914a662dde"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/writer/0004-events.bin": {
+      "bytes": 559872,
+      "sha256": "60c18be603a6b0ca3cb649edcbd928e388da7bba040a1603b96ffe5382cc6267"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/writer/0005-archive.bin": {
+      "bytes": 121558,
+      "sha256": "3515bce3fe46c589f1846c23257a44015c25f59eea886a8ab2732bf3c794ca72"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/load/writer/0006-events.bin": {
+      "bytes": 47344,
+      "sha256": "a37ff987ae3e23c65506a815badf1a10d6bb68a65e0b5202aad5c6be41286b5e"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/node-0-identity.json": {
+      "bytes": 1100,
+      "sha256": "29913822b73de7d15cb744c88a326aa3e084c4100208b37fc0c0f224ac44f400"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/node-0.log": {
+      "bytes": 10294,
+      "sha256": "35bd1bea1e47f1b37531e06c03dc4dc4e2ca5d4ec9ddfcce7683038feda0c108"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/node-0/idle-observations/idle-000.actual.json": {
+      "bytes": 9212,
+      "sha256": "dfe3e9c2bd98e21856f437fb5f937199862f0ac4c7fc75780156d92dbd1e04c5"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/node-1-identity.json": {
+      "bytes": 1100,
+      "sha256": "4dc52bfe87dfae6653a3314b361111d50c9b690a11267708daea4d946afc39fe"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/node-1.log": {
+      "bytes": 10267,
+      "sha256": "51010c31d72ef70df06e1c9f07b538739aff0d2ab05eb0bc520874a0c14b1d0d"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/node-1/idle-observations/idle-000.actual.json": {
+      "bytes": 9212,
+      "sha256": "a4c2471b2a22854edcccf9531bb8c26f410996b067eeff29b556ee118bcf6f75"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/node-2-identity.json": {
+      "bytes": 1100,
+      "sha256": "fd668c2ba28f51c21dd2294727eb15ab86b5238cff4db50b426a4e051a295aa2"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/node-2.log": {
+      "bytes": 10267,
+      "sha256": "1ebb07cc96fc5d55a1a5152d9f04052176e0f3e9ad707e2e95ade09050b3d462"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/node-2/idle-observations/idle-000.actual.json": {
+      "bytes": 9212,
+      "sha256": "678b5080f08d9ea4b5bf2e0813670a55911acae7c7d4973b742476d37b70b2a2"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/owned-cpu-rss-io-1hz.jsonl": {
+      "bytes": 38348,
+      "sha256": "73e24a9a5b0d6b321b034f6275ef80c9da624867cf9df9189937c52f58854119"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/release.json": {
+      "bytes": 9508,
+      "sha256": "c2df0427bea0cdd8575ee3130adf4ff4aa43c65fca0a5458ed0c7c8c1eea4676"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/telemetry-receipt.json": {
+      "bytes": 466,
+      "sha256": "d63222ca7e92e9d8443f8abcc3c08790e315ddbe5bcc15269735ef8850e63bbe"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/native/actual-runtime-artifacts/aeron-all-1.53.3.jar": {
+      "bytes": 3544128,
+      "sha256": "4c6c8a5014a2b67424051170392a005daa9a998ac963302d2819d0f3db749ef2"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/native/actual-runtime-artifacts/agrona-2.6.1.jar": {
+      "bytes": 491990,
+      "sha256": "84c07eb02695c06bfda3d6c3a20c1984e3ff1bbd617b2f8e678140baf973fa28"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/native/actual-runtime-artifacts/cluster-0.1.0-SNAPSHOT.jar": {
+      "bytes": 566333,
+      "sha256": "e7ec1a57aa1495fa98834a03f08b3028c711835d46fefe7229420699960f3258"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/native/actual-runtime-artifacts/core-0.1.0-SNAPSHOT.jar": {
+      "bytes": 81916,
+      "sha256": "ba9644585ede2b30b68afc783b15128507d1567105d70d7d8edc36f91b58fb47"
+    },
+    "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-idle-arm-4-collection-r1/collection/raw-files/job/idle-arm/registration.json": {
+      "bytes": 672,
+      "sha256": "8ac28f3225c1ec36cccf1f1c41b81e6ceea004fd9c44d8624088282504eda43f"
+    }
+  },
+  "scriptSha256": "aa90d3906c4168bf24ba38d93b2b29d47145cd9f6217cabc47d42c490a2a260d"
+}
