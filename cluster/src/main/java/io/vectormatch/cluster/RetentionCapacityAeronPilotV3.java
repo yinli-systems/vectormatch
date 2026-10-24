@@ -44,6 +44,7 @@ public final class RetentionCapacityAeronPilotV3 {
     private final RetentionServiceV3.Profile profile=RetentionBatchProfilesV3.finiteLoadProfile();
     private final String code=RetentionNodeMainV3.codeFingerprint();
     private final RetentionIdlePolicyV3.Selection idleSelection=RetentionIdlePolicyV3.systemSelection();
+    private final RetentionOwnerPollPolicyV3.Selection ownerPollSelection=RetentionOwnerPollPolicyV3.systemSelection();
     private final List<Owned> owned=new ArrayList<>();
     private final RetentionCapacityPlanV3.Plan plan;
     private final RetentionCapacityDiskGuardV3 disk;
@@ -75,10 +76,11 @@ public final class RetentionCapacityAeronPilotV3 {
         registration.put("archiveChunkBytes",archiveChunkBytes);registration.put("eventFetchCount",16);registration.put("commonChunkEnvelope",commonEnvelope);registration.put("readWindow",readWindow);registration.put("commonReadWindowEnvelope",readWindowExperiment);
         if(workload==Workload.LONG_CUTS){registration.put("workloadPreset","long-cuts-33792-v1");registration.put("expectedFullCommandCuts",workload.fullCommandCuts());registration.put("expectedTrailingCommands",workload.trailingCommands());registration.put("equivalentFullLoadCutNumbers",List.of(2,3,4,5,6,7,8,9,10,11));}
         if(idleSelection.explicit())registration.put("retentionIdleSelection",idleSelection.observation());
+        if(ownerPollSelection.explicit())registration.put("ownerPollSelection",ownerPollSelection.observation());
         write("registration.json",registration);writeArtifactInventory();
     }
     public static Path run(Path newPairRoot)throws Exception{
-        RetentionIdlePolicyV3.systemSelection(); // Reject invalid opt-in before a pair directory is created.
+        RetentionOwnerPollPolicyV3.systemSelection();RetentionIdlePolicyV3.systemSelection(); // Reject invalid opt-in before a pair directory is created.
         Path pair=newPairRoot.toAbsolutePath().normalize();Files.createDirectory(pair);int ports=ports();
         for(int cap:List.of(1,4)){
             var pilot=new RetentionCapacityAeronPilotV3(pair.resolve("cap-"+cap),cap,ports);
@@ -96,9 +98,9 @@ public final class RetentionCapacityAeronPilotV3 {
         return pair;
     }
     /** Single factor: both arms cap4, all operational caps from the same union envelope. */
-    public static Path runArchiveChunks(Path newPairRoot)throws Exception{RetentionIdlePolicyV3.systemSelection();return runArchiveChunks(newPairRoot,ports());}
+    public static Path runArchiveChunks(Path newPairRoot)throws Exception{RetentionOwnerPollPolicyV3.systemSelection();RetentionIdlePolicyV3.systemSelection();return runArchiveChunks(newPairRoot,ports());}
     public static Path runArchiveChunks(Path newPairRoot,int ports)throws Exception{
-        RetentionIdlePolicyV3.systemSelection();
+        RetentionOwnerPollPolicyV3.systemSelection();RetentionIdlePolicyV3.systemSelection();
         verifyChunkPorts(ports); // Explicit occupied port fails before any registration/business; no fallback.
         Path pair=newPairRoot.toAbsolutePath().normalize();Files.createDirectory(pair);
         for(int chunk:List.of(DEFAULT_ARCHIVE_CHUNK,MAX_SUPPORTED_ARCHIVE_CHUNK)){
@@ -111,9 +113,9 @@ public final class RetentionCapacityAeronPilotV3 {
         RetentionCapacityJsonV3.writeNew(pair.resolve("pair-completion.json"),Map.of("passed",true,"archiveChunkBytes",List.of(DEFAULT_ARCHIVE_CHUNK,MAX_SUPPORTED_ARCHIVE_CHUNK),"fixedBusinessBatchCap",4,"scope","Single-factor local functional chunk comparison; not a capacity or speedup proof"));return pair;
     }
     /** Single factor: same cap4/chunk6144 artifact, exclusive read window1 versus8. */
-    public static Path runReadWindows(Path pair)throws Exception{RetentionIdlePolicyV3.systemSelection();return runReadWindows(pair,ports());}
+    public static Path runReadWindows(Path pair)throws Exception{RetentionOwnerPollPolicyV3.systemSelection();RetentionIdlePolicyV3.systemSelection();return runReadWindows(pair,ports());}
     public static Path runReadWindows(Path newPairRoot,int ports)throws Exception{
-        RetentionIdlePolicyV3.systemSelection();
+        RetentionOwnerPollPolicyV3.systemSelection();RetentionIdlePolicyV3.systemSelection();
         verifyChunkPorts(ports);Path pair=newPairRoot.toAbsolutePath().normalize();Files.createDirectory(pair);
         for(int window:List.of(1,8)){
             var pilot=new RetentionCapacityAeronPilotV3(pair.resolve("window-"+window),4,ports,MAX_SUPPORTED_ARCHIVE_CHUNK,false,window,true);
@@ -135,7 +137,7 @@ public final class RetentionCapacityAeronPilotV3 {
         return runIdleWindow8(newArmRoot,ports,Workload.LONG_CUTS);
     }
     private static Path runIdleWindow8(Path newArmRoot,int ports,Workload workload)throws Exception{
-        requireIdleSelection(RetentionIdlePolicyV3.systemSelection());
+        RetentionOwnerPollPolicyV3.systemSelection();requireIdleSelection(RetentionIdlePolicyV3.systemSelection());
         verifyChunkPorts(ports); // Selection validation precedes ports and the first filesystem mutation.
         var config=workload.idleConfig();
         var pilot=new RetentionCapacityAeronPilotV3(newArmRoot,config.batchCap(),ports,config.archiveChunkBytes(),false,config.readWindow(),true,workload);
@@ -154,10 +156,11 @@ public final class RetentionCapacityAeronPilotV3 {
         if(!selection.explicit())throw new IllegalArgumentException("idle-window8 requires explicit JVM property "+RetentionIdlePolicyV3.PROPERTY+"=100000|1000000 before launch");
     }
     public static void main(String[] args)throws Exception{
+        RetentionOwnerPollPolicyV3.systemSelection();
         if(args.length!=1&&!((args.length==2||args.length==3)&&(args[1].equals("archive-chunks")||args[1].equals("read-windows")||args[1].equals("idle-window8")||args[1].equals("idle-window8-long-cuts"))))throw new IllegalArgumentException("RetentionCapacityAeronPilotV3 <new-directory> [archive-chunks|read-windows|idle-window8|idle-window8-long-cuts [fixed-port-base]]");
         if(args.length==3&&!args[2].matches("[1-9][0-9]{3,4}"))throw new IllegalArgumentException("canonical fixed UDP port base required");
         if(args.length>=2&&(args[1].equals("idle-window8")||args[1].equals("idle-window8-long-cuts"))){
-            requireIdleSelection(RetentionIdlePolicyV3.systemSelection());
+            RetentionOwnerPollPolicyV3.systemSelection();requireIdleSelection(RetentionIdlePolicyV3.systemSelection());
             Path result=runIdleWindow8(Path.of(args[0]),args.length==3?Integer.parseInt(args[2]):ports(),args[1].equals("idle-window8")?Workload.SHORT:Workload.LONG_CUTS);
             System.out.println("VECTOR_V3_CAPACITY_SOURCE_PILOT_PASS evidence="+result);return;
         }
