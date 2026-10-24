@@ -146,6 +146,40 @@ class RetentionCapacityPlanV3Test {
         assertEquals(plan.noRetryRawTraceBytes(),plan.maximumRawTraceBytes());
     }
 
+    @Test void explicitWindow32CandidatesShareFullCreditStorageAndWireBudgetsWithoutChangingDefaults() {
+        int arrivals=33_792;
+        long negatives=arrivals+RetentionCapacityPlanV3.plan(arrivals,4,profile).maximumLogicalMaintenanceRpcs();
+        var control=RetentionCapacityPlanV3.commonReadWindow32Plan(arrivals,4,profile,8,arrivals/4,negatives);
+        var candidate=RetentionCapacityPlanV3.commonReadWindow32Plan(arrivals,4,profile,32,arrivals/4,negatives);
+        assertTrue(control.admitted(),control.admissionRejections().toString());
+        assertTrue(candidate.admitted(),candidate.admissionRejections().toString());
+        assertEquals(32,control.maxReadOnlyInFlight());assertEquals(32,candidate.maxReadOnlyInFlight());
+        assertEquals(32,control.eventFetchCount());assertEquals(32,candidate.eventFetchCount());
+        assertEquals(6144,candidate.archiveChunkBytes());assertEquals(4,candidate.batchCap());
+        assertTrue(candidate.commonReadWindowEnvelope());assertFalse(candidate.commonEventFetchEnvelope());
+        assertEquals(true,candidate.observation().get("commonReadWindow32Envelope"));
+        var first=new LinkedHashMap<>(control.observation());var second=new LinkedHashMap<>(candidate.observation());
+        first.remove("requestedReadWindow");second.remove("requestedReadWindow");
+        assertEquals(first,second,"single-factor 8/32 arms require identical admitted caps");
+        var legacy=RetentionCapacityPlanV3.commonReadWindowPlan(arrivals,4,profile,8,arrivals/4,negatives);
+        assertEquals(8,legacy.maxReadOnlyInFlight());assertEquals(16,legacy.eventFetchCount());
+        assertTrue(candidate.readOnlyStagingBytes()>legacy.readOnlyStagingBytes());
+        assertTrue(candidate.readOnlyFailureTraceReserveBytes()>legacy.readOnlyFailureTraceReserveBytes());
+        assertTrue(candidate.maximumRawTraceBytes()<=RetentionCapacityPlanV3.RAW_TRACE_LIMIT);
+        assertTrue(candidate.maximumAllocatedGrowthBytes()<=RetentionCapacityPlanV3.ALLOCATED_GROWTH_LIMIT);
+        var cfg8=RetentionCapacityExperimentV3.Config.readWindow32(arrivals,500,8);
+        var cfg32=RetentionCapacityExperimentV3.Config.readWindow32(arrivals,500,32);
+        assertEquals(control,RetentionCapacityExperimentV3.boundedPlan(cfg8,profile));
+        assertEquals(candidate,RetentionCapacityExperimentV3.boundedPlan(cfg32,profile));
+        assertFalse(new RetentionCapacityExperimentV3.Config(arrivals,500,4,6144,8).commonReadWindow32Envelope());
+        assertThrows(IllegalArgumentException.class,()->RetentionCapacityPlanV3.commonReadWindowPlan(arrivals,4,profile,32,0,0));
+        assertThrows(IllegalArgumentException.class,()->RetentionCapacityPlanV3.commonReadWindow32Plan(arrivals,4,profile,1,0,0));
+        assertThrows(IllegalArgumentException.class,()->RetentionCapacityExperimentV3.Config.readWindow32(arrivals,500,1));
+        assertThrows(IllegalArgumentException.class,()->new RetentionCapacityExperimentV3.Config(arrivals,500,4,6144,32));
+        assertThrows(IllegalArgumentException.class,()->new RetentionCapacityExperimentV3.Config(arrivals,500,4,6144,32,true,32,true,true));
+        assertThrows(IllegalArgumentException.class,()->new RetentionCapacityExperimentV3.Config(arrivals,500,4,6144,32,true,16,false,true));
+    }
+
     @Test void readWindowInputsAndLegacyDefaultsRetainExistingFiniteHardCaps() {
         for(int unsupported:new int[]{0,2,9})
             assertThrows(IllegalArgumentException.class,()->RetentionCapacityPlanV3.commonReadWindowPlan(6400,4,profile,unsupported,0,0));
