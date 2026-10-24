@@ -21,3 +21,5 @@ All15fresh cases passed3forks ×500warmup ×10measurement iterations. Complete r
 |CANCEL|10000|0|0.787376|0.455341|0.578|
 
 Warmup100 still materially affects small fixtures. Use500warmup iterations consistently for the next core code comparison, retaining every fork and reporting uncertainty. This recommendation supersedes the earlier100-iteration comparison choice; earlier raw data stays unchanged. Last50-versus-previous50 warmup means for all45forks are retained in[comparison](warmup-comparison.json); short-window variation is not a JIT or scheduling guarantee.
+
+Three matching cases have individual batch observations more than5× their median, including a45.959us batch mean in1level/100trades and32.805us in100levels/1trade. They remain in the mean/error and raw JSON; no outliers were removed. The wide intervals prevent treating these means as stable speed guarantees. [Full dispersion](batch-dispersion.json) is retained.
