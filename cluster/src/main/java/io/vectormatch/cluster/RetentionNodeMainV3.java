@@ -26,6 +26,12 @@ public final class RetentionNodeMainV3 {
                 new MatchingEngine.Limits(8, 16, 256, 64), 512, 1024, 64, 512 * 1024);
         return new RetentionServiceV3.Profile(PROFILE_ID, core, 1024, 16, 8, 64, 2048, 2 * 1024 * 1024, 8 * 1024 * 1024);
     }
+    /** Explicit selectors only: existing smoke arguments retain their original profile bytes. */
+    public static RetentionServiceV3.Profile profile(String profileId) {
+        if (PROFILE_ID.equals(profileId)) return smokeProfile();
+        if (RetentionBatchProfilesV3.PROFILE_ID.equals(profileId)) return RetentionBatchProfilesV3.finiteLoadProfile();
+        throw new IllegalArgumentException("explicit known V3 profile required");
+    }
     /** Actual loaded class bytes, independent of source labels or a launcher's claimed revision. */
     public static String codeFingerprint() {
         try {
@@ -58,11 +64,10 @@ public final class RetentionNodeMainV3 {
     }
     @SuppressWarnings("try")
     public static void main(String[] args) throws Exception {
-        if (args.length != 8) throw new IllegalArgumentException("RetentionNodeMainV3 <node> <state-root> <ports> <sync:0|2> <local-smoke-v3> <lineage> <expected-profile-sha> <expected-code-sha>");
+        if (args.length != 8) throw new IllegalArgumentException("RetentionNodeMainV3 <node> <state-root> <ports> <sync:0|2> <local-smoke-v3|finite-batch-load-v3-v1> <lineage> <expected-profile-sha> <expected-code-sha>");
         int node = Integer.parseInt(args[0]), portBase = Integer.parseInt(args[2]), sync = Integer.parseInt(args[3]);
         if (sync != 0 && sync != 2) throw new IllegalArgumentException("invalid V3 sync level");
-        if (!PROFILE_ID.equals(args[4])) throw new IllegalArgumentException("explicit V3 profile required");
-        var profile = smokeProfile(); var scope = new RetentionWireV3.Scope(profile.fingerprint(), args[5]);
+        var profile = profile(args[4]); var scope = new RetentionWireV3.Scope(profile.fingerprint(), args[5]);
         String code = codeFingerprint();
         if (!scope.profileHash().equals(args[6]) || !code.equals(args[7])) throw new IllegalArgumentException("V3 launch expected profile/code differs from actual loaded configuration");
         var topology = ClusterTopology.local(portBase); topology.requireLocalMember(node);
