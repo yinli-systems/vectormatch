@@ -1,0 +1,11 @@
+# Closed read-window collection preparation
+
+This directory only adds local configuration, supervision and all-outcome byte verification. Its `frozen/` sixteen sources and manifest are exact reviewed copies; the benchmark controller is never launched here.
+
+`build_config.py` requires the real STAGE_SUCCESS receipt and its SHA, exact23 staged source rows, the matching source TAR and local source bytes. It adds only the three opaque execution register/stdout/stderr names. The register is JSONL and is never parsed as a single JSON object. Round2 additionally requires the exact independent root round1 collection gate.
+
+`collect_and_audit.py` defaults to local validation. Actual read-only SSH collection requires explicit `--collect-readonly`, config SHA, preparation SHA, fresh output, and a SHA-bound root closed-controller receipt. `allOwnedStopped` must come from actual owned summary/closure; controller exit alone is insufficient. No business/controller/Java launch, remote write, signal, recursive PREP collection or prune is implemented. Only the fresh JOB may be recursively archived, and source PREP always uses the exact allowlist.
+
+After full outer byte/mode/owner/empty-directory closure, `verify_closed_archives.py` streams every nested native file and directory without extracting sparse payloads, even if functional correctness failed. Frozen strict native and correlation/phase raw auditors both run; their errors remain preserved. Strict raw success requires three cycles/six read phases and actual positive-offer-awaiting-reply high water1/8, exact chunk/event ranges, all128 workers and canonical accepted identities. Per-read RPC elapsed intervals may overlap. Only all strict audits passing permits local finalization, which still writes an unapproved root gate candidate. No next round is authorized automatically and no12.8-second result is called sustained or stable capacity.
+
+All partial transfers, raw tapes, CSV/status/error receipts and tool stdout/stderr are retained on failure; no automatic retry occurs. Initial pureguards failed because macOS default temporary directories pass through a symlinked var path; exact source ZIP/logs were kept, fixtures moved under this directory and no no-links guard was weakened. A prospective nested compressed limit was aligned to the frozen256MiB bound before any collection.

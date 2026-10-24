@@ -1,0 +1,71 @@
+E.E.E.E.
+======================================================================
+ERROR: test_actual_bound_stage_and_dryrun_config_are_local_with_exact26_names (__main__.Guards)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/test_collection_guards.py", line 12, in test_actual_bound_stage_and_dryrun_config_are_local_with_exact26_names
+    out=self.root/'config';receipt=b.build(self.path,b.sha(self.path),1,out);c,s,allow=runner.checked_config(out/'collector-config.json',receipt['configSha256']);self.assertEqual(26,len(allow));self.assertEqual(23,len(s['stagedFiles']));self.assertIn('round-1-execution-register.json',allow);self.assertTrue(receipt['registerJsonIsOpaqueJsonl'])
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/build_config.py", line 71, in build
+    s,r=stage_inputs(stage,stage_sha);g=prior(round_number,gate,gate_sha);require(round_number in (1,2),'Onlyround1/2');output=no_links(output);require(not output.exists(),'Fresh output only; preserve failures');output.mkdir(parents=True,mode=0o700);inputs=output/'inputs';inputs.mkdir()
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/build_config.py", line 37, in stage_inputs
+    path=reference(path,expected_sha);require(path.name=='STAGE_SUCCESS.json','Actual STAGE_SUCCESS receipt required');s=read(path);f=frozen_sources()
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/build_config.py", line 24, in reference
+    p=no_links(p);require(p.is_file() and p.stat().st_size<=32*1024**2 and sha(p)==h,'Missing, oversized or changed reference');return p
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/build_config.py", line 21, in no_links
+    require(not any(q.is_symlink() for q in [p]+list(p.parents)),'Symlink input refused');return p
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/build_config.py", line 13, in require
+    if not ok:raise ValueError(msg)
+ValueError: Symlink input refused
+
+======================================================================
+ERROR: test_closed_gate_cannot_equate_controller_exit_with_owned_stop (__main__.Guards)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/test_collection_guards.py", line 30, in test_closed_gate_cannot_equate_controller_exit_with_owned_stop
+    c={'round':1};x={'schemaVersion':1,'scope':'ROOT_VERIFIED_CLOSED_WINDOW_CONTROLLER','rootVerified':True,'round':1,'frozenReleaseSha256':b.RELEASE,'controllerSha256':b.CONTROLLER,'job':b.PREP+'/round-1','controllerIdentityGone':True,'allOwnedStopped':False};p=self.root/'closed.json';p.write_text(json.dumps(x));self.assertRaises(ValueError,runner.closed_proof,p,b.sha(p),c);x['allOwnedStopped']=True;p.write_text(json.dumps(x));self.assertTrue(runner.closed_proof(p,b.sha(p),c)['allOwnedStopped'])
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/collect_and_audit.py", line 16, in closed_proof
+    p=b.reference(path,expected_sha);x=b.read(p)
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/build_config.py", line 24, in reference
+    p=no_links(p);require(p.is_file() and p.stat().st_size<=32*1024**2 and sha(p)==h,'Missing, oversized or changed reference');return p
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/build_config.py", line 21, in no_links
+    require(not any(q.is_symlink() for q in [p]+list(p.parents)),'Symlink input refused');return p
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/build_config.py", line 13, in require
+    if not ok:raise ValueError(msg)
+ValueError: Symlink input refused
+
+======================================================================
+ERROR: test_failed_functional_native_bytes_still_verified_without_extraction (__main__.Guards)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/test_collection_guards.py", line 42, in test_failed_functional_native_bytes_still_verified_without_extraction
+    c=self.fixture();r=nested.verify(c,self.root/'audit');self.assertTrue(r['passed']);self.assertFalse(r['functionalRunPassed']);self.assertFalse(r['sparsePayloadsExtracted']);self.assertEqual(2,r['nativeDirectories'])
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/verify_closed_archives.py", line 10, in verify
+    archive=collection/'pilot-after-clean-stop.tar.gz';reference(archive,receipt['nestedNativeArchive']['sha256']);require(archive.stat().st_size==receipt['nestedNativeArchive']['bytes']==after['archive']['archive']['bytes'] and sha(archive)==after['archive']['archive']['sha256'],'Compressed nested binding')
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/build_config.py", line 24, in reference
+    p=no_links(p);require(p.is_file() and p.stat().st_size<=32*1024**2 and sha(p)==h,'Missing, oversized or changed reference');return p
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/build_config.py", line 21, in no_links
+    require(not any(q.is_symlink() for q in [p]+list(p.parents)),'Symlink input refused');return p
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/build_config.py", line 13, in require
+    if not ok:raise ValueError(msg)
+ValueError: Symlink input refused
+
+======================================================================
+ERROR: test_round2_needs_real_full_prior_root_gate (__main__.Guards)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/test_collection_guards.py", line 28, in test_round2_needs_real_full_prior_root_gate
+    x={'schemaVersion':1,'scope':'ROOT_VERIFIED_CLOSED_WINDOW_ROUND_1_COLLECTION','collectionComplete':True,'round':1,'frozenReleaseSha256':b.RELEASE,'controllerSha256':b.CONTROLLER,'localFullMemberShaBytesModesOwnersEmptyDirsVerified':True,'allRawInputsAndFailuresRetained':True,'independentLocalCollectionReceiptSha256':'a'*64,'closedArchiveSha256':'b'*64,'closedNativeInventorySha256':'c'*64};p=self.root/'gate.json';p.write_text(json.dumps(x));self.assertEqual(p,b.prior(2,p,b.sha(p)));x['allRawInputsAndFailuresRetained']=False;p.write_text(json.dumps(x));self.assertRaises(ValueError,b.prior,2,p,b.sha(p))
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/build_config.py", line 64, in prior
+    p=reference(path,expected_sha);g=read(p)
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/build_config.py", line 24, in reference
+    p=no_links(p);require(p.is_file() and p.stat().st_size<=32*1024**2 and sha(p)==h,'Missing, oversized or changed reference');return p
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/build_config.py", line 21, in no_links
+    require(not any(q.is_symlink() for q in [p]+list(p.parents)),'Symlink input refused');return p
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/build_config.py", line 13, in require
+    if not ok:raise ValueError(msg)
+ValueError: Symlink input refused
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.068s
+
+FAILED (errors=4)

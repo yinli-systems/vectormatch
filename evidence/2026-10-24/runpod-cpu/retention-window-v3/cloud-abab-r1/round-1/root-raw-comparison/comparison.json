@@ -1,0 +1,535 @@
+{
+  "allInputsUnchangedAfterAnalysis": true,
+  "armOrder": [
+    1,
+    8
+  ],
+  "arms": [
+    {
+      "all6400ArrivalsBoundExactlyOnceToPhysicalRequestAndAcceptedReply": true,
+      "allPhysicalCallbacks": 5543,
+      "allPhysicalRequests": 5543,
+      "allPositiveAdmissions": 5543,
+      "backlogSamples": {
+        "maxSampledAggregateQueued": 2487,
+        "maxSampledPending": 5,
+        "rows": 19,
+        "scope": "Sampled observations, not continuous queue maxima or per-worker source high-water."
+      },
+      "businessBatchSizeDistributionFrames": {
+        "1": 3490,
+        "2": 31,
+        "3": 48,
+        "4": 676
+      },
+      "businessFrames": 4245,
+      "businessOrdersFromDecodedFrames": 6400,
+      "componentPercentilesAreNotAdditive": true,
+      "cycleWallScope": "Recorded coordinator cycle start/end endpoints, independently subtracted and cross-checked against complete RPC ranges and absence of business offers; not kernel/fsync attribution.",
+      "cycles": [
+        {
+          "arrivalsReleasedDuringCycle": 2570,
+          "businessOffersDuringCycle": 0,
+          "cycle": 1,
+          "endOffsetNs": 11285551935,
+          "logicalRpcs": 621,
+          "recordedEndMonotonicNs": 35672755863409,
+          "recordedStartMonotonicNs": 35667616314302,
+          "recordedWallDurationNs": 5139549107,
+          "startOffsetNs": 6146002828,
+          "sumRpcElapsedNsNotWallTime": 4945682379
+        },
+        {
+          "arrivalsReleasedDuringCycle": 255,
+          "businessOffersDuringCycle": 0,
+          "cycle": 2,
+          "endOffsetNs": 17290948481,
+          "logicalRpcs": 621,
+          "recordedEndMonotonicNs": 35678761259955,
+          "recordedStartMonotonicNs": 35673759309812,
+          "recordedWallDurationNs": 5001950143,
+          "startOffsetNs": 12288998338,
+          "sumRpcElapsedNsNotWallTime": 4815521141
+        },
+        {
+          "arrivalsReleasedDuringCycle": 0,
+          "businessOffersDuringCycle": 0,
+          "cycle": 3,
+          "endOffsetNs": 17799671550,
+          "logicalRpcs": 56,
+          "recordedEndMonotonicNs": 35679269983024,
+          "recordedStartMonotonicNs": 35678796363373,
+          "recordedWallDurationNs": 473619651,
+          "startOffsetNs": 17326051899,
+          "sumRpcElapsedNsNotWallTime": 444313852
+        }
+      ],
+      "extraCallbacks": 0,
+      "extraPositiveAdmissions": 0,
+      "framesSavedByBatchingVersusOnePerOrder": 2155,
+      "latencyComponentQuantilesNs": {
+        "allArrivalScheduleToReply": {
+          "max": 5168060255,
+          "p50": 10961175,
+          "p90": 4427802996,
+          "p95": 4779050464,
+          "p99": 5032984288,
+          "p999": 5146288129
+        },
+        "arrivalToDispatch": {
+          "max": 5156630417,
+          "p50": 89049,
+          "p90": 4418145795,
+          "p95": 4768941067,
+          "p99": 5024933563,
+          "p999": 5137709309
+        },
+        "dispatchToFirstSuccessfulOfferReturn": {
+          "max": 12318256,
+          "p50": 162348,
+          "p90": 402395,
+          "p95": 497024,
+          "p99": 963249,
+          "p999": 2353472
+        },
+        "firstSuccessfulOfferReturnToReplyCompletion": {
+          "max": 23171858,
+          "p50": 8013516,
+          "p90": 11106170,
+          "p95": 11947990,
+          "p99": 16732224,
+          "p999": 20555349
+        },
+        "schedulerLateness": {
+          "max": 4302048,
+          "p50": 57143,
+          "p90": 59600,
+          "p95": 60872,
+          "p99": 66574,
+          "p999": 1205099
+        }
+      },
+      "meanOrdersPerBusinessFrame": 1.507656065959953,
+      "negativeOffers": 30,
+      "physicalRequestsByKind": {
+        "ArchiveChunk": 488,
+        "ArchiveCommit": 3,
+        "BusinessBatch": 4245,
+        "EventAck": 3,
+        "FetchEvents": 801,
+        "PrepareArchive": 3
+      },
+      "rawMetrics": {
+        "acceptedDistinctArrivals": 6400,
+        "acceptedInsideArrivalWindow": 6141,
+        "allArrivalP99Ns": 5032984288,
+        "arrivalWindowGoodputPerSecond": 479.765625,
+        "lastKnownReplyDrainNs": 4525984569
+      },
+      "readPhaseObservedLowerBounds": [
+        {
+          "coordinatorLastEndNs": 35669526955977,
+          "generation": 1,
+          "kind": "ArchiveChunk",
+          "logicalReads": 234,
+          "observedLowerBoundNotExactBankLifetime": true,
+          "reservationStartNs": 35667648371795,
+          "wallSpanNs": 1878584182,
+          "wireObservedOfferedAwaitingFirstCallbackHighWater": 1
+        },
+        {
+          "coordinatorLastEndNs": 35672668015820,
+          "generation": 2,
+          "kind": "FetchEvents",
+          "logicalReads": 384,
+          "observedLowerBoundNotExactBankLifetime": true,
+          "reservationStartNs": 35669650373548,
+          "wallSpanNs": 3017642272,
+          "wireObservedOfferedAwaitingFirstCallbackHighWater": 1
+        },
+        {
+          "coordinatorLastEndNs": 35675574062522,
+          "generation": 3,
+          "kind": "ArchiveChunk",
+          "logicalReads": 234,
+          "observedLowerBoundNotExactBankLifetime": true,
+          "reservationStartNs": 35673784291329,
+          "wallSpanNs": 1789771193,
+          "wireObservedOfferedAwaitingFirstCallbackHighWater": 1
+        },
+        {
+          "coordinatorLastEndNs": 35678688796635,
+          "generation": 4,
+          "kind": "FetchEvents",
+          "logicalReads": 384,
+          "observedLowerBoundNotExactBankLifetime": true,
+          "reservationStartNs": 35675715409023,
+          "wallSpanNs": 2973387612,
+          "wireObservedOfferedAwaitingFirstCallbackHighWater": 1
+        },
+        {
+          "coordinatorLastEndNs": 35678961016330,
+          "generation": 5,
+          "kind": "ArchiveChunk",
+          "logicalReads": 20,
+          "observedLowerBoundNotExactBankLifetime": true,
+          "reservationStartNs": 35678805402306,
+          "wallSpanNs": 155614024,
+          "wireObservedOfferedAwaitingFirstCallbackHighWater": 1
+        },
+        {
+          "coordinatorLastEndNs": 35679240875945,
+          "generation": 6,
+          "kind": "FetchEvents",
+          "logicalReads": 33,
+          "observedLowerBoundNotExactBankLifetime": true,
+          "reservationStartNs": 35678977966831,
+          "wallSpanNs": 262909114,
+          "wireObservedOfferedAwaitingFirstCallbackHighWater": 1
+        }
+      ],
+      "readWindow": 1,
+      "retainedConsumeIntervalsIndependentlyReconstructed": false,
+      "totalRecordedMaintenanceCycleWallNs": 10615118901,
+      "wireObservedPositiveOfferAwaitingFirstCallbackHighWater": 1
+    },
+    {
+      "all6400ArrivalsBoundExactlyOnceToPhysicalRequestAndAcceptedReply": true,
+      "allPhysicalCallbacks": 7171,
+      "allPhysicalRequests": 7171,
+      "allPositiveAdmissions": 7171,
+      "backlogSamples": {
+        "maxSampledAggregateQueued": 1,
+        "maxSampledPending": 7,
+        "rows": 15,
+        "scope": "Sampled observations, not continuous queue maxima or per-worker source high-water."
+      },
+      "businessBatchSizeDistributionFrames": {
+        "1": 5690,
+        "2": 6,
+        "3": 10,
+        "4": 167
+      },
+      "businessFrames": 5873,
+      "businessOrdersFromDecodedFrames": 6400,
+      "componentPercentilesAreNotAdditive": true,
+      "cycleWallScope": "Recorded coordinator cycle start/end endpoints, independently subtracted and cross-checked against complete RPC ranges and absence of business offers; not kernel/fsync attribution.",
+      "cycles": [
+        {
+          "arrivalsReleasedDuringCycle": 440,
+          "businessOffersDuringCycle": 0,
+          "cycle": 1,
+          "endOffsetNs": 7025107890,
+          "logicalRpcs": 621,
+          "recordedEndMonotonicNs": 35689323374378,
+          "recordedStartMonotonicNs": 35688443260258,
+          "recordedWallDurationNs": 880114120,
+          "startOffsetNs": 6144993770,
+          "sumRpcElapsedNsNotWallTime": 5154863729
+        },
+        {
+          "arrivalsReleasedDuringCycle": 255,
+          "businessOffersDuringCycle": 0,
+          "cycle": 2,
+          "endOffsetNs": 13044709229,
+          "logicalRpcs": 621,
+          "recordedEndMonotonicNs": 35695342975717,
+          "recordedStartMonotonicNs": 35694588110787,
+          "recordedWallDurationNs": 754864930,
+          "startOffsetNs": 12289844299,
+          "sumRpcElapsedNsNotWallTime": 4720108231
+        },
+        {
+          "arrivalsReleasedDuringCycle": 0,
+          "businessOffersDuringCycle": 0,
+          "cycle": 3,
+          "endOffsetNs": 13198998398,
+          "logicalRpcs": 56,
+          "recordedEndMonotonicNs": 35695497264886,
+          "recordedStartMonotonicNs": 35695375932630,
+          "recordedWallDurationNs": 121332256,
+          "startOffsetNs": 13077666142,
+          "sumRpcElapsedNsNotWallTime": 508923381
+        }
+      ],
+      "extraCallbacks": 0,
+      "extraPositiveAdmissions": 0,
+      "framesSavedByBatchingVersusOnePerOrder": 527,
+      "latencyComponentQuantilesNs": {
+        "allArrivalScheduleToReply": {
+          "max": 900388604,
+          "p50": 8162197,
+          "p90": 157458680,
+          "p95": 524252636,
+          "p99": 774253656,
+          "p999": 884176604
+        },
+        "arrivalToDispatch": {
+          "max": 889500280,
+          "p50": 78080,
+          "p90": 151049627,
+          "p95": 516876624,
+          "p99": 765671544,
+          "p999": 875342056
+        },
+        "dispatchToFirstSuccessfulOfferReturn": {
+          "max": 1935338,
+          "p50": 140029,
+          "p90": 171578,
+          "p95": 210897,
+          "p99": 567754,
+          "p999": 1000408
+        },
+        "firstSuccessfulOfferReturnToReplyCompletion": {
+          "max": 21052023,
+          "p50": 7868158,
+          "p90": 9800885,
+          "p95": 10228119,
+          "p99": 11183988,
+          "p999": 19811948
+        },
+        "schedulerLateness": {
+          "max": 1855361,
+          "p50": 57072,
+          "p90": 58807,
+          "p95": 59561,
+          "p99": 62325,
+          "p999": 79238
+        }
+      },
+      "meanOrdersPerBusinessFrame": 1.0897326749531755,
+      "negativeOffers": 35,
+      "physicalRequestsByKind": {
+        "ArchiveChunk": 488,
+        "ArchiveCommit": 3,
+        "BusinessBatch": 5873,
+        "EventAck": 3,
+        "FetchEvents": 801,
+        "PrepareArchive": 3
+      },
+      "rawMetrics": {
+        "acceptedDistinctArrivals": 6400,
+        "acceptedInsideArrivalWindow": 6141,
+        "allArrivalP99Ns": 774253656,
+        "arrivalWindowGoodputPerSecond": 479.765625,
+        "lastKnownReplyDrainNs": 277586063
+      },
+      "readPhaseObservedLowerBounds": [
+        {
+          "coordinatorLastEndNs": 35688706986453,
+          "generation": 1,
+          "kind": "ArchiveChunk",
+          "logicalReads": 234,
+          "observedLowerBoundNotExactBankLifetime": true,
+          "reservationStartNs": 35688467103928,
+          "wallSpanNs": 239882525,
+          "wireObservedOfferedAwaitingFirstCallbackHighWater": 8
+        },
+        {
+          "coordinatorLastEndNs": 35689245631761,
+          "generation": 2,
+          "kind": "FetchEvents",
+          "logicalReads": 384,
+          "observedLowerBoundNotExactBankLifetime": true,
+          "reservationStartNs": 35688825547311,
+          "wallSpanNs": 420084450,
+          "wireObservedOfferedAwaitingFirstCallbackHighWater": 8
+        },
+        {
+          "coordinatorLastEndNs": 35694827501647,
+          "generation": 3,
+          "kind": "ArchiveChunk",
+          "logicalReads": 234,
+          "observedLowerBoundNotExactBankLifetime": true,
+          "reservationStartNs": 35694606316623,
+          "wallSpanNs": 221185024,
+          "wireObservedOfferedAwaitingFirstCallbackHighWater": 8
+        },
+        {
+          "coordinatorLastEndNs": 35695276173451,
+          "generation": 4,
+          "kind": "FetchEvents",
+          "logicalReads": 384,
+          "observedLowerBoundNotExactBankLifetime": true,
+          "reservationStartNs": 35694901309101,
+          "wallSpanNs": 374864350,
+          "wireObservedOfferedAwaitingFirstCallbackHighWater": 8
+        },
+        {
+          "coordinatorLastEndNs": 35695410312587,
+          "generation": 5,
+          "kind": "ArchiveChunk",
+          "logicalReads": 20,
+          "observedLowerBoundNotExactBankLifetime": true,
+          "reservationStartNs": 35695384664587,
+          "wallSpanNs": 25648000,
+          "wireObservedOfferedAwaitingFirstCallbackHighWater": 8
+        },
+        {
+          "coordinatorLastEndNs": 35695472030522,
+          "generation": 6,
+          "kind": "FetchEvents",
+          "logicalReads": 33,
+          "observedLowerBoundNotExactBankLifetime": true,
+          "reservationStartNs": 35695424007526,
+          "wallSpanNs": 48022996,
+          "wireObservedOfferedAwaitingFirstCallbackHighWater": 8
+        }
+      ],
+      "readWindow": 8,
+      "retainedConsumeIntervalsIndependentlyReconstructed": false,
+      "totalRecordedMaintenanceCycleWallNs": 1756311306,
+      "wireObservedPositiveOfferAwaitingFirstCallbackHighWater": 8
+    }
+  ],
+  "comparisons": {
+    "allArrivalP99ReductionFraction": 0.8461641023108237,
+    "extraPhysicalAdmissionsExplainedExactlyByAdditionalBusinessFrames": 1628,
+    "goodputImprovementObserved": false,
+    "recordedMaintenanceCycleWallReductionFraction": 0.8345462427336027
+  },
+  "counterbalancedOrder": false,
+  "fixedOrderDriftLimitation": true,
+  "inputFiles": {
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-1/load/arrivals.csv": {
+      "bytes": 1369058,
+      "sha256": "c8d223bd024330143a59c865c4d79b809b1f9dd7aa9f08e474989fcd3687aacc"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-1/load/backlog.csv": {
+      "bytes": 1104,
+      "sha256": "0061e88ede93cf4734d159909ab23b09ed299840b993497929ad926876e7f61d"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-1/load/configuration.json": {
+      "bytes": 1611,
+      "sha256": "7f7c39d093b910c515bcfe0255ff9f1036d950d748080accc7eee61170dabb2a"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-1/load/load-result.json": {
+      "bytes": 6473,
+      "sha256": "d85affc8656017a36e1d21688f779806bd5f16e633eec08ff6cce2aaec9247ec"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-1/load/maintenance/cycle-1.verified.txt": {
+      "bytes": 692,
+      "sha256": "b5ca48c238506692ba9118237b8ed5c6bb56f1b3126fd5fad3f4c5cbef6e88df"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-1/load/maintenance/cycle-2.verified.txt": {
+      "bytes": 701,
+      "sha256": "b39adc13b5d6c267229d277d036f1387dcca85119bc72054c54237ba55417db5"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-1/load/maintenance/cycle-3.verified.txt": {
+      "bytes": 702,
+      "sha256": "83157ffc96a4df3bf5136d2d71565b7601143a2ec8a53dc4a1acf452ba210b7c"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-1/load/maintenance/logical-rpc-replies.bin": {
+      "bytes": 4434995,
+      "sha256": "a091c6f40434e1fe9a27124c42490fa946b60018994ff09555510bdaa2d61f21"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-1/load/maintenance/logical-rpc-requests.bin": {
+      "bytes": 368365,
+      "sha256": "b7d710281eb71b8841203db6fed5eebb4eeee02a3501f453de71fd0bfb5b5c2c"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-1/load/maintenance/logical-rpc-timings.csv": {
+      "bytes": 134026,
+      "sha256": "e32b32aa75a2cf2b1d438c5c4b2eac6dedafc9a3b7e66fe8b861d040975f55f1"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-1/load/physical-offer-codes.csv": {
+      "bytes": 197570,
+      "sha256": "383e4234af4a73be040cf0157d7c08ecee703a6333d3801f0b8dc14eb9546ecc"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-1/load/physical-replies.bin": {
+      "bytes": 6498089,
+      "sha256": "ba5155280a6c0d1ee7ec2585c6cf0ec8a2c541fa3e6f9658fc41a2a95d81ec1b"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-1/load/physical-requests.bin": {
+      "bytes": 1577127,
+      "sha256": "0495ed765cd50399038bf5bb459cdb83682a3f9dacf921a07f1823efc786f682"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-8/load/arrivals.csv": {
+      "bytes": 1359391,
+      "sha256": "8cbe10bb4716e935bbf82f7d81f083567472e60bf29bc280ac6b70b574404212"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-8/load/backlog.csv": {
+      "bytes": 873,
+      "sha256": "c1081ff0b5e50952d542aa010f7830e3caa36ead1b60620b6f4a22b5bd13bc28"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-8/load/configuration.json": {
+      "bytes": 1611,
+      "sha256": "2a2d25b4e47b719ee53c4acb567fb975faacb58835c248b4f83c59f340ac7af3"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-8/load/load-result.json": {
+      "bytes": 6462,
+      "sha256": "6d4a48a2d4376f760ce69d17b8df830f6b445aa3e9a08a2af26bcdf794d57181"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-8/load/maintenance/cycle-1.verified.txt": {
+      "bytes": 692,
+      "sha256": "2f05602661f9e7a3bc733f31018a6826013e3eba1b83e20af177999599cb3d63"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-8/load/maintenance/cycle-2.verified.txt": {
+      "bytes": 701,
+      "sha256": "50854b422c43e46248c39782dd2d05db573fbc8cbb5cb4a6011aceffcaad20e3"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-8/load/maintenance/cycle-3.verified.txt": {
+      "bytes": 702,
+      "sha256": "7bd507e1d19f7729058e454d387dd517f1e02d3ad2b0542cf60750d8b6134483"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-8/load/maintenance/logical-rpc-replies.bin": {
+      "bytes": 4434995,
+      "sha256": "7fb638b2fb97f115d8b4f0a329ed58220b14dc0c48c71e923d041233e212df91"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-8/load/maintenance/logical-rpc-requests.bin": {
+      "bytes": 368365,
+      "sha256": "19e94ef913c03adf0b388d0d4fe438121cefdaee43fae2a11541002b65404bd6"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-8/load/maintenance/logical-rpc-timings.csv": {
+      "bytes": 134074,
+      "sha256": "fd901eeabdb974afba48ea82e6ce4ebbaa9e54ec098f68a07f40814b5a2c34d5"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-8/load/physical-offer-codes.csv": {
+      "bytes": 257771,
+      "sha256": "aa1e868021df1bf0c99e53af3135b3a7c58ee9bcf6f754098877ba6f2c97b129"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-8/load/physical-replies.bin": {
+      "bytes": 6852993,
+      "sha256": "298ecb8d39cdeae226eadb8d08d0d2f4351163cbb0390a434fa4cbf36b7ea701"
+    },
+    "window-cloud-collection-round-1-r1/collection/raw-files/job/read-window-pair/window-8/load/physical-requests.bin": {
+      "bytes": 1827839,
+      "sha256": "6a221827c7d4b30914956ce1ab549b2bd6b3937107f16c148cca65e2f55e2935"
+    },
+    "window-cloud-preparation-r1/LOCAL_PREPARATION_FROZEN.json": {
+      "bytes": 8503,
+      "sha256": "a1c00b76d064eca9d7d4f357894b5c6c8019248978acc515253e33d18010e36d"
+    },
+    "window-cloud-preparation-r1/audit_raw.py": {
+      "bytes": 41575,
+      "sha256": "8e0b8264325bc12b92f5785b4976b99f83c0bf411c6a44582ef29ef71bdcd83d"
+    },
+    "window-cloud-preparation-r1/common.py": {
+      "bytes": 9623,
+      "sha256": "54d981300381f802c8db8247859e00b3f45cea806b59dd40d4f5eeed05a85783"
+    },
+    "window-cloud-preparation-r1/read_phase_audit.py": {
+      "bytes": 10458,
+      "sha256": "ef6b9d3c0215d3379b54b42274a16d8bedd9291ad5da3b662a8d45a69762466d"
+    }
+  },
+  "limitations": [
+    "No change to preregistered same-order ABAB; it is not a counterbalanced experiment.",
+    "Finite tail orders and a trailing maintenance cycle do not establish persistent500/s queue growth or sustained capacity.",
+    "Per-RPC coordinator elapsed intervals overlap under pipelining; their sum is not maintenance wall time.",
+    "Component percentiles are over the same6400 arrivals but cannot be added to reconstruct total p99.",
+    "Batch distributions explain the complete admission-count difference; shorter pauses are a plausible reason for less batch filling, not a separately isolated causal factor.",
+    "Wire positive-admission intervals establish observed read overlap; retained-slot/consume timestamps are not independently recorded."
+  ],
+  "nativeAndOriginalPostgresProtectionIndependentlyAuditedHere": false,
+  "passed": true,
+  "performanceAndBatchCalculationsIndependentOfRuntimeSummary": true,
+  "preregisteredTotalOrder": [
+    1,
+    8,
+    1,
+    8
+  ],
+  "rawWireDecoderReusedFromFrozenPreparation": true,
+  "schema": "window-round1-independent-performance-analysis-v1",
+  "scope": "One finite fixed-order pair, 6400 orders per arm at planned500/s; no stable-capacity, absolute-realtime, endurance or independent-host claim."
+}
