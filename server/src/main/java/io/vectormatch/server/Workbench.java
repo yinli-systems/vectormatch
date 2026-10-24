@@ -37,7 +37,7 @@ public final class Workbench implements AutoCloseable {
     private long recoveredCommands, repairedTailBytes, commands, rejected, replayed, tradesTotal;
     private long flowCounter, lastRateCommands, lastRateTrades, lastRateTime = System.nanoTime();
     private double commandsPerSecond, tradesPerSecond;
-    private volatile boolean flowEnabled = true;
+    private volatile boolean flowEnabled = Boolean.parseBoolean(System.getProperty("vm.flow.enabled", "true"));
     private volatile int flowRate = 8;
     private double flowCredits;
     private volatile boolean healthy = true;
@@ -81,8 +81,8 @@ public final class Workbench implements AutoCloseable {
                 mirrorCheckedAt = mirrorRefreshedAt = System.currentTimeMillis();
                 mirrorStatus = "SYNCHRONIZED";
             }
-            // Reapply every bootstrap command by its stable identity after partial initialization.
-            seed();
+            // Existing startup behavior remains the default; restored clusters can explicitly skip business seeding.
+            if (Boolean.parseBoolean(System.getProperty("vm.bootstrap.enabled", "true"))) seed();
             lastRateTrades = tradesTotal;
             lastRateCommands = commands;
             for (OrderView order : engine.orders(2)) flowCounter = Math.max(flowCounter, suffix(order.clientOrderId()));
