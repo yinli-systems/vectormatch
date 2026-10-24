@@ -10,9 +10,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.LockSupport;
 
-/** One physical Aeron session, one network owner,128 bounded logical producer slots. */
+/** One physical Aeron session and network owner, with 128 or 256 bounded logical producer slots. */
 final class MultiplexedLoadTransports implements RemoteCapacityExperiment.CloseableTransportFactory {
-    static final int LOGICAL_WORKERS = 128;
     private static final long RESEND_NS = TimeUnit.MILLISECONDS.toNanos(500);
     private static final long NEGATIVE_RETRY_NS = TimeUnit.MICROSECONDS.toNanos(100);
 
@@ -46,7 +45,7 @@ final class MultiplexedLoadTransports implements RemoteCapacityExperiment.Closea
         volatile Pending pending;
         final AtomicLong accepted = new AtomicLong(), resends = new AtomicLong(), unaccepted = new AtomicLong(), timeouts = new AtomicLong();
     }
-    private final Worker[] workers = new Worker[LOGICAL_WORKERS];
+    private final Worker[] workers;
     private final Thread owner;
     private final CompletableFuture<Void> ready = new CompletableFuture<>();
     private final AtomicReference<Throwable> failure = new AtomicReference<>();
@@ -58,7 +57,7 @@ final class MultiplexedLoadTransports implements RemoteCapacityExperiment.Closea
                              ClientEndpoint endpoint, NetworkTransport network) {
         this(options.workers(), () -> {
             ClusterClient client = new ClusterClient(options.directory().resolve("load-multiplexed-driver"), topology, endpoint, network);
-            try { client.enableAsynchronousOwner(LOGICAL_WORKERS); }
+            try { client.enableAsynchronousOwner(options.workers()); }
             catch (RuntimeException | Error error) { client.close(); throw error; }
             return new OwnerIO() {
                 public long register(Command command) { return client.asynchronousRegister(command); }
@@ -75,7 +74,9 @@ final class MultiplexedLoadTransports implements RemoteCapacityExperiment.Closea
     }
 
     MultiplexedLoadTransports(int workerCount, OwnerFactory factory) {
-        if (workerCount != LOGICAL_WORKERS) throw new IllegalArgumentException("Multiplexed comparison requires exactly128 logical workers");
+        if (workerCount != 128 && workerCount != 256)
+            throw new IllegalArgumentException("Multiplexed comparison requires 128 or 256 logical workers");
+        workers = new Worker[workerCount];
         for (int i = 0; i < workers.length; i++) workers[i] = new Worker();
         owner = new Thread(() -> own(factory), "capacity-multiplexed-network-owner");
         owner.start();
@@ -221,6 +222,7 @@ final class MultiplexedLoadTransports implements RemoteCapacityExperiment.Closea
     public String transportMode() { return "multiplexed"; }
     public String aeronMode() { return "one-session-one-network-owner"; }
     public Integer sessionCount() { healthy(); return 1; }
+    public Integer pendingCapacity() { healthy(); return workers.length; }
     public String driverMode() { return "shared"; }
     public Integer driverCount() { healthy(); return 1; }
     public Long driverNakUnicastDelayNs() { healthy(); return nakDelay; }

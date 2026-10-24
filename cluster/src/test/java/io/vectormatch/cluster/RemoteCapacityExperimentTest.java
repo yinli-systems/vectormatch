@@ -34,6 +34,7 @@ class RemoteCapacityExperimentTest {
         assertNull(RemoteCapacityExperiment.summarize(load).get("clientNakUnicastDelayNs"));
         assertNull(RemoteCapacityExperiment.summarize(load).get("clientSessionCount"));
         assertEquals("direct", RemoteCapacityExperiment.summarize(load).get("clientTransportMode"));
+        assertFalse(RemoteCapacityExperiment.summarize(load).containsKey("clientPendingCapacity"), "Direct transport must not invent an async pending bound");
     }
 
     @Test void actualFactoryDriverMetadataIsCapturedOnlyAfterEveryWorkerConnects() throws Exception {
@@ -82,7 +83,7 @@ class RemoteCapacityExperimentTest {
         public void close() {}
     }
 
-    @Test void multiplexedTransportIsStrictOptInWithSame128LogicalWorkersAndSharedDriver() {
+    @Test void multiplexedTransportIsStrictOptInWith128Or256LogicalWorkersAndSharedDriver() {
         var direct = RemoteCapacityExperiment.ClientTransportMode.DIRECT;
         var multiplexed = RemoteCapacityExperiment.ClientTransportMode.MULTIPLEXED;
         assertEquals(direct, RemoteCapacityExperiment.ClientTransportMode.parse(null));
@@ -91,18 +92,28 @@ class RemoteCapacityExperimentTest {
         for (String invalid : List.of("", "DIRECT", "multiplexed ", "shared", "async", "true"))
             assertThrows(IllegalArgumentException.class, () -> RemoteCapacityExperiment.ClientTransportMode.parse(invalid));
         assertDoesNotThrow(() -> multiplexed.validate(RemoteCapacityExperiment.ClientDriverMode.SHARED, 128));
-        for (int workers : List.of(1, 64, 127, 129, 256))
+        assertDoesNotThrow(() -> multiplexed.validate(RemoteCapacityExperiment.ClientDriverMode.SHARED, 256));
+        for (int workers : List.of(0, 1, 63, 64, 127, 129, 255, 257))
             assertThrows(IllegalArgumentException.class, () -> multiplexed.validate(RemoteCapacityExperiment.ClientDriverMode.SHARED, workers));
         assertThrows(IllegalArgumentException.class, () -> multiplexed.validate(RemoteCapacityExperiment.ClientDriverMode.ISOLATED, 128));
+        assertThrows(IllegalArgumentException.class, () -> multiplexed.validate(RemoteCapacityExperiment.ClientDriverMode.ISOLATED, 256));
         assertDoesNotThrow(() -> direct.validate(RemoteCapacityExperiment.ClientDriverMode.ISOLATED, 64));
         assertDoesNotThrow(() -> direct.validate(RemoteCapacityExperiment.ClientDriverMode.SHARED, 256));
     }
 
     @Test void onePhysicalSessionMetadataIsCapturedOnlyAfterAll128LogicalWorkersAreReady() throws Exception {
+        capturesActualMultiplexedMetadataAfterAllWorkersAreReady(128);
+    }
+
+    @Test void onePhysicalSessionWith256PendingIsCapturedOnlyAfterAll256LogicalWorkersAreReady() throws Exception {
+        capturesActualMultiplexedMetadataAfterAllWorkersAreReady(256);
+    }
+
+    private void capturesActualMultiplexedMetadataAfterAllWorkersAreReady(int workerCount) throws Exception {
         AtomicInteger opened = new AtomicInteger();
-        var options = new RemoteCapacityExperiment.Options(directory, 19000, 10000, 128, 128, 64,
+        var options = new RemoteCapacityExperiment.Options(directory, 19000, 10000, workerCount, workerCount, 64,
                 100, 1000, 0, 1000, RemoteCapacityExperiment.Profile.EXTENDED_350K_256);
-        var load = RemoteCapacityExperiment.runLoad(options, samples(128, 128), new RemoteCapacityExperiment.TransportFactory() {
+        var load = RemoteCapacityExperiment.runLoad(options, samples(workerCount, workerCount), new RemoteCapacityExperiment.TransportFactory() {
             public RemoteCapacityExperiment.Transport open(int worker) {
                 opened.incrementAndGet();
                 return new FakeTransport() {
@@ -114,17 +125,24 @@ class RemoteCapacityExperimentTest {
             public String transportMode() { return "multiplexed"; }
             public String aeronMode() { return "one-session-one-network-owner"; }
             public Integer sessionCount() {
-                assertEquals(128, opened.get(), "Physical-session metadata must be captured after every logical worker is ready");
+                assertEquals(workerCount, opened.get(), "Physical-session metadata must be captured after every logical worker is ready");
                 return 1;
+            }
+            public Integer pendingCapacity() {
+                assertEquals(workerCount, opened.get(), "Pending metadata must be captured after every logical worker is ready");
+                return workerCount;
             }
         });
         Map<String, Object> result = RemoteCapacityExperiment.summarize(load);
-        assertEquals(128, result.get("workers"));
+        assertEquals(workerCount, result.get("workers"));
         assertEquals("multiplexed", result.get("clientTransportMode"));
         assertEquals("one-session-one-network-owner", result.get("clientAeronMode"));
         assertEquals(1, result.get("clientDriverCount"));
         assertEquals(1, result.get("clientSessionCount"));
-        assertEquals(128, load.completed.get());
+        assertEquals(workerCount, result.get("clientPendingCapacity"));
+        assertEquals(workerCount, load.completed.get());
+        assertEquals(workerCount, load.workerCounters.size());
+        for (int index = 0; index < load.samples.length; index++) assertEquals(index % workerCount, load.samples[index].worker);
     }
 
     @Test void fatalOwnerErrorPersistsAllArrivalEvidenceAndRethrowsTheOriginalError() throws Exception {

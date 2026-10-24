@@ -149,7 +149,15 @@ def load_generator_jvm_arguments(trial, configuration, fixed=None):
     expected_aeron = "one-independent-Aeron-per-client" if actual_transport == "direct" else "one-session-one-network-owner"
     assert configuration["clientAeronMode"] == expected_aeron, "Client Aeron ownership mode differs"
     if actual_transport == "multiplexed":
-        assert trial["workers"] == 128 and mode == "shared" and driver_flags == [permitted[1]], "Multiplexed transport requires shared driver and 128 logical workers"
+        assert type(trial["workers"]) is int and trial["workers"] in (128, 256) and mode == "shared" and driver_flags == [permitted[1]], "Multiplexed transport requires shared driver and 128 or 256 logical workers"
+        # Historical 128-worker artifacts predate this runtime field; the new 256
+        # path must attest its actual physical-client pending bound explicitly.
+        if "clientPendingCapacity" in configuration or trial["workers"] == 256:
+            assert type(configuration.get("clientPendingCapacity")) is int and configuration["clientPendingCapacity"] == trial["workers"], "Multiplexed pending capacity differs from logical workers"
+        if "workers" in configuration or trial["workers"] == 256:
+            assert type(configuration.get("workers")) is int and configuration["workers"] == trial["workers"], "Effective logical workers differ"
+        if "maxServiceRequestsInFlight" in configuration or trial["workers"] == 256:
+            assert type(configuration.get("maxServiceRequestsInFlight")) is int and configuration["maxServiceRequestsInFlight"] == trial["workers"], "Effective logical in-flight bound differs"
     return list(extra)
 
 

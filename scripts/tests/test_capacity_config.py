@@ -491,13 +491,56 @@ class CapacityConfigTest(unittest.TestCase):
                 with self.subTest(mode=mode, changes=changes), self.assertRaises(AssertionError):
                     config.load_generator_jvm_arguments(self.trial, {**runtime, **changes}, fixed)
         self.assertEqual(2, len(digests))
-        wrong_workers = {**self.trial, "workers": 256}
-        with self.assertRaisesRegex(AssertionError, "128 logical workers"):
+        wrong_workers = {**self.trial, "workers": 129}
+        with self.assertRaisesRegex(AssertionError, "128 or 256 logical workers"):
             config.load_generator_jvm_arguments(wrong_workers, runtime, fixed)
         isolated = {**self.trial, "loadGeneratorJvmArguments": [DRIVER_FLAG + "isolated",
             "-Dvectormatch.capacity.client.transport=multiplexed", "-Daeron.nak.unicast.delay=1000"]}
         with self.assertRaises(AssertionError):
             config.load_generator_jvm_arguments(isolated, {**runtime, "clientDriverMode": "isolated", "clientDriverCount": 128}, fixed)
+
+    def test_multiplexed_256_requires_true_pending_and_logical_runtime_bounds(self):
+        fixed = {"clientTransportMode": "multiplexed", "clientSessionCount": 1}
+        trial = {**self.trial, "workers": 256, "profile": "extended-350k-256",
+                 "loadGeneratorJvmArguments": [DRIVER_FLAG + "shared", "-Dvectormatch.capacity.client.transport=multiplexed"]}
+        runtime = self.runtime("shared", clientTransportMode="multiplexed", clientSessionCount=1,
+                               clientAeronMode="one-session-one-network-owner", clientPendingCapacity=256,
+                               workers=256, maxServiceRequestsInFlight=256)
+        self.assertEqual(trial["loadGeneratorJvmArguments"], config.load_generator_jvm_arguments(trial, runtime, fixed))
+        for name in ("clientPendingCapacity", "workers", "maxServiceRequestsInFlight"):
+            for invalid in (None, True, 128, 255, 257, 256.0, "256"):
+                with self.subTest(name=name, invalid=invalid), self.assertRaises(AssertionError):
+                    config.load_generator_jvm_arguments(trial, {**runtime, name: invalid}, fixed)
+            missing = runtime.copy(); del missing[name]
+            with self.subTest(missing=name), self.assertRaises(AssertionError):
+                config.load_generator_jvm_arguments(trial, missing, fixed)
+        for unsupported in (0, 1, 63, 64, 127, 129, 255, 257, True, "256", 256.0):
+            with self.subTest(unsupported=unsupported), self.assertRaises(AssertionError):
+                config.load_generator_jvm_arguments({**trial, "workers": unsupported}, runtime, fixed)
+
+    def test_pending_capacity_is_optional_for_legacy_128_but_strict_when_present(self):
+        fixed = {"clientTransportMode": "multiplexed", "clientSessionCount": 1}
+        trial = {**self.trial, "loadGeneratorJvmArguments": [DRIVER_FLAG + "shared",
+                 "-Dvectormatch.capacity.client.transport=multiplexed"]}
+        runtime = self.runtime("shared", clientTransportMode="multiplexed", clientSessionCount=1,
+                               clientAeronMode="one-session-one-network-owner")
+        self.assertEqual(trial["loadGeneratorJvmArguments"], config.load_generator_jvm_arguments(trial, runtime, fixed))
+        self.assertEqual(trial["loadGeneratorJvmArguments"], config.load_generator_jvm_arguments(
+            trial, {**runtime, "clientPendingCapacity": 128}, fixed))
+        for invalid in (None, True, 127, 256, 128.0, "128"):
+            with self.subTest(invalid=invalid), self.assertRaises(AssertionError):
+                config.load_generator_jvm_arguments(trial, {**runtime, "clientPendingCapacity": invalid}, fixed)
+
+    def test_direct_256_remains_independent_sessions_and_worker_changes_change_argv(self):
+        flags = [DRIVER_FLAG + "shared", "-Dvectormatch.capacity.client.transport=direct"]
+        trial = {**self.trial, "workers": 256, "profile": "extended-350k-256", "loadGeneratorJvmArguments": flags}
+        fixed = {"clientTransportMode": "direct", "clientSessionCount": 256}
+        runtime = self.runtime("shared", clientTransportMode="direct", clientSessionCount=256)
+        self.assertEqual(flags, config.load_generator_jvm_arguments(trial, runtime, fixed))
+        args256 = config.load_generator_arguments(trial, self.release, flags)
+        args128 = config.load_generator_arguments({**trial, "workers": 128}, self.release, flags)
+        self.assertNotEqual(config.command_sha256(args256), config.command_sha256(args128))
+        self.assertNotIn("clientPendingCapacity", runtime)
 
     def test_transport_flags_reject_duplicates_conflicts_missing_fixed_or_runtime(self):
         fixed = {"clientTransportMode": "multiplexed", "clientSessionCount": 1}

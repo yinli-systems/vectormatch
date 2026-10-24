@@ -109,6 +109,7 @@ public final class RemoteCapacityExperiment {
         default String transportMode() { return "direct"; }
         default String aeronMode() { return "one-independent-Aeron-per-client"; }
         default Integer sessionCount() { return null; }
+        default Integer pendingCapacity() { return null; }
         default Long driverNakUnicastDelayNs() { return null; }
         default Long driverNakUnicastRetryDelayRatio() { return null; }
     }
@@ -129,8 +130,8 @@ public final class RemoteCapacityExperiment {
             throw new IllegalArgumentException(CLIENT_TRANSPORT_PROPERTY + " must be direct or multiplexed");
         }
         void validate(ClientDriverMode driver, int workers) {
-            if (this == MULTIPLEXED && (driver != ClientDriverMode.SHARED || workers != 128))
-                throw new IllegalArgumentException("multiplexed client transport requires shared driver and exactly 128 logical workers");
+            if (this == MULTIPLEXED && (driver != ClientDriverMode.SHARED || workers != 128 && workers != 256))
+                throw new IllegalArgumentException("multiplexed client transport requires shared driver and 128 or 256 logical workers");
         }
     }
     enum ClientDriverMode {
@@ -224,7 +225,7 @@ public final class RemoteCapacityExperiment {
         volatile Throwable workerFailure;
         volatile String scheduledOriginUtc;
         String clientDriverMode = "test-transport", clientTransportMode = "direct", clientAeronMode = "one-independent-Aeron-per-client";
-        Integer clientDriverCount, clientSessionCount;
+        Integer clientDriverCount, clientSessionCount, clientPendingCapacity;
         Long clientNakUnicastDelayNs, clientNakUnicastRetryDelayRatio;
         LoadResult(Options options, Sample[] samples) { this.options = options; this.samples = samples; }
     }
@@ -331,6 +332,7 @@ public final class RemoteCapacityExperiment {
                 configuration.put("clientTransportMode", load.clientTransportMode);
                 configuration.put("clientAeronMode", load.clientAeronMode);
                 configuration.put("clientSessionCount", load.clientSessionCount);
+                if (load.clientPendingCapacity != null) configuration.put("clientPendingCapacity", load.clientPendingCapacity);
                 if (load.clientNakUnicastDelayNs != null && load.clientNakUnicastRetryDelayRatio != null) {
                     configuration.put("clientNakUnicastDelayNs", load.clientNakUnicastDelayNs);
                     configuration.put("clientNakUnicastRetryDelayRatio", load.clientNakUnicastRetryDelayRatio);
@@ -512,6 +514,7 @@ public final class RemoteCapacityExperiment {
         load.clientTransportMode = factory.transportMode();
         load.clientAeronMode = factory.aeronMode();
         load.clientSessionCount = factory.sessionCount();
+        load.clientPendingCapacity = factory.pendingCapacity();
         // Capture the concluded shared driver's actual values after all connections are ready.
         // Other factories remain explicitly unavailable rather than assuming library defaults.
         load.clientNakUnicastDelayNs = factory.driverNakUnicastDelayNs();
@@ -649,7 +652,7 @@ public final class RemoteCapacityExperiment {
         long lateScheduler = Arrays.stream(samples).filter(s -> s.enqueued - s.planned > TimeUnit.MILLISECONDS.toNanos(load.options.schedulerLatenessLimitMs())).count();
         long maxConfirmation = Arrays.stream(samples).mapToLong(s -> s.confirmed).max().orElse(load.windowEnd);
         long elapsed = Math.max(load.windowEnd, maxConfirmation) - load.origin;
-        return fields("test", "external-replicated-matching-fixed-arrival-capacity", "profile", load.options.profile().label,
+        Map<String, Object> summary = fields("test", "external-replicated-matching-fixed-arrival-capacity", "profile", load.options.profile().label,
                 "clientDriverMode", load.clientDriverMode, "clientDriverCount", load.clientDriverCount,
                 "clientNakUnicastDelayNs", load.clientNakUnicastDelayNs,
                 "clientNakUnicastRetryDelayRatio", load.clientNakUnicastRetryDelayRatio,
@@ -687,6 +690,8 @@ public final class RemoteCapacityExperiment {
                         "Each worker has one in-flight synchronous client; this measures this deployed client+cluster path, not an unconstrained engine limit",
                         "No synchronized-clock one-way latency and no production capacity SLA", "Execute-start is an API timestamp, not first wire offer; scheduler delay and FIFO delay are included in end-to-end latency",
                         "Backlog counters are observational non-atomic snapshots, not exact queue conservation at an instant", "Pause gateway/projector writers and use isolated trial state; shared-member load generation must be disclosed"));
+        if (load.clientPendingCapacity != null) summary.put("clientPendingCapacity", load.clientPendingCapacity);
+        return summary;
     }
 
     static long offsetNanos(int index, int rate) { return Math.multiplyExact((long) index, 1_000_000_000L) / rate; }

@@ -65,26 +65,35 @@ class MultiplexedLoadTransportsTest {
     }
 
     @Test void oneOwnerRetains128PendingAndResolvesReverseOrderWithoutEvictingThe65th() throws Exception {
-        FakeIO io = new FakeIO(); ExecutorService pool = Executors.newFixedThreadPool(128);
-        try (var factory = new MultiplexedLoadTransports(128, () -> io)) {
+        retainsAllPendingAndResolvesReverseOrder(128);
+    }
+
+    @Test void oneOwnerRetains256PendingAndResolvesReverseOrderWithoutEvictingThe129th() throws Exception {
+        retainsAllPendingAndResolvesReverseOrder(256);
+    }
+
+    private void retainsAllPendingAndResolvesReverseOrder(int workerCount) throws Exception {
+        FakeIO io = new FakeIO(); ExecutorService pool = Executors.newFixedThreadPool(workerCount);
+        try (var factory = new MultiplexedLoadTransports(workerCount, () -> io)) {
             List<RemoteCapacityExperiment.Transport> clients = new ArrayList<>();
             List<Future<CommandCodec.Reply>> replies = new ArrayList<>();
-            for (int worker = 0; worker < 128; worker++) {
+            for (int worker = 0; worker < workerCount; worker++) {
                 var transport = factory.open(worker); clients.add(transport); final int selected = worker;
                 replies.add(pool.submit(() -> transport.execute(command(selected), Duration.ofSeconds(8))));
             }
-            await(() -> io.registered.get() == 128 && io.fresh.get() == 128);
+            await(() -> io.registered.get() == workerCount && io.fresh.get() == workerCount);
             io.release.set(true);
-            for (int worker = 0; worker < 128; worker++) {
+            for (int worker = 0; worker < workerCount; worker++) {
                 var reply = replies.get(worker).get(5, TimeUnit.SECONDS);
                 assertTrue(reply.result().accepted());
                 assertEquals(100, io.engine.account(worker + 1).quote().available());
             }
-            assertEquals(128L, io.deliveryOrder.getFirst());
+            assertEquals((long) workerCount, io.deliveryOrder.getFirst());
             assertEquals(1L, io.deliveryOrder.getLast());
             assertNotSame(Thread.currentThread(), io.thread.get());
             assertEquals("multiplexed", factory.transportMode()); assertEquals("shared", factory.driverMode());
             assertEquals("one-session-one-network-owner", factory.aeronMode()); assertEquals(1, factory.sessionCount());
+            assertEquals(workerCount, factory.pendingCapacity()); assertEquals(1, factory.driverCount());
             assertEquals(1000L, factory.driverNakUnicastDelayNs()); assertEquals(100L, factory.driverNakUnicastRetryDelayRatio());
             clients.forEach(RemoteCapacityExperiment.Transport::close);
         } finally { pool.shutdownNow(); assertTrue(pool.awaitTermination(5, TimeUnit.SECONDS)); }
@@ -92,19 +101,27 @@ class MultiplexedLoadTransportsTest {
     }
 
     @Test void timeoutRetainsOneCorrelationFutureAndBlocksAnyHigherIdentityUntilConsumed() throws Exception {
+        timeoutRetainsSameIdentityUntilConsumed(128, 0);
+    }
+
+    @Test void lastOf256WorkersRetainsSameIdentityAfterTimeoutWithoutAutomaticResend() throws Exception {
+        timeoutRetainsSameIdentityUntilConsumed(256, 255);
+    }
+
+    private void timeoutRetainsSameIdentityUntilConsumed(int workerCount, int workerIndex) throws Exception {
         FakeIO io = new FakeIO();
-        try (var factory = new MultiplexedLoadTransports(128, () -> io)) {
-            var client = factory.open(0);
-            assertThrows(IllegalStateException.class, () -> client.execute(command(0), Duration.ofMillis(30)));
+        try (var factory = new MultiplexedLoadTransports(workerCount, () -> io)) {
+            var client = factory.open(workerIndex);
+            assertThrows(IllegalStateException.class, () -> client.execute(command(workerIndex), Duration.ofMillis(30)));
             assertEquals(1, io.registered.get());
-            assertThrows(IllegalStateException.class, () -> client.execute(new Deposit(1, "logical-0", 2, Asset.QUOTE, 100), Duration.ofMillis(30)));
+            assertThrows(IllegalStateException.class, () -> client.execute(new Deposit(workerIndex + 1, "logical-" + workerIndex, 2, Asset.QUOTE, 100), Duration.ofMillis(30)));
             int offersAtTimeout = io.offered.get();
             Thread.sleep(550);
             assertEquals(offersAtTimeout, io.offered.get(), "No automatic resend between execute calls or after their deadline");
             ExecutorService retry = Executors.newSingleThreadExecutor();
             CommandCodec.Reply result;
             try {
-                Future<CommandCodec.Reply> resumed = retry.submit(() -> client.execute(command(0), Duration.ofSeconds(2)));
+                Future<CommandCodec.Reply> resumed = retry.submit(() -> client.execute(command(workerIndex), Duration.ofSeconds(2)));
                 await(() -> io.offered.get() > offersAtTimeout);
                 io.release.set(true);
                 result = resumed.get(3, TimeUnit.SECONDS);
@@ -162,7 +179,10 @@ class MultiplexedLoadTransportsTest {
         var client = factory.open(0);
         assertThrows(MultiplexedLoadTransports.OwnerFailure.class, () -> client.execute(command(0), Duration.ofSeconds(2)));
         assertThrows(MultiplexedLoadTransports.OwnerFailure.class, factory::close); assertTrue(io.closed.get());
-        assertThrows(IllegalArgumentException.class, () -> new MultiplexedLoadTransports(256, () -> io));
+        for (int unsupported : new int[]{0, 1, 63, 64, 127, 129, 255, 257})
+            assertThrows(IllegalArgumentException.class, () -> new MultiplexedLoadTransports(unsupported, () -> {
+                fail("Unsupported logical counts must be rejected before physical IO opens"); return io;
+            }));
         assertThrows(MultiplexedLoadTransports.OwnerFailure.class, () -> new MultiplexedLoadTransports(128, () -> { throw new IllegalStateException("cannot connect"); }));
     }
 }
