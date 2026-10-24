@@ -116,6 +116,9 @@ public final class MatchingEngine {
     private final NavigableMap<Long, LinkedHashMap<Long, Order>> asks = new TreeMap<>();
     private long commandSeq, eventSeq, marketSeq, nextOrderId = 1;
     private long totalBase, totalQuote;
+    // Deliberately absent from legacy constructors and V2 snapshot encoding.
+    // Only the explicit V3 facade enables this private embedded engine.
+    private boolean retentionV3;
 
     public MatchingEngine() { this(1024); }
     public MatchingEngine(int resultCachePerProducer) { this(resultCachePerProducer, Limits.defaults()); }
@@ -136,6 +139,51 @@ public final class MatchingEngine {
     public int retainedOrderCount() { return orders.size(); }
     public int producerCount() { return producers.size(); }
     public int cachedResultCount() { return cachedByCommandSeq.size(); }
+
+    record RetentionProducer(long accountId, String producerId, long highWater) {}
+    void enableRetentionV3() {
+        if (retentionV3) throw new IllegalStateException("V3 bridge already enabled");
+        retentionV3 = true;
+    }
+    private void requireRetentionV3() {
+        if (!retentionV3) throw new IllegalStateException("terminal compaction requires explicit V3 facade");
+    }
+    long retentionAcceptedPlaceCount() { requireRetentionV3(); return nextOrderId - 1; }
+    long retentionProducerHighWater(long account, String producerId) {
+        requireRetentionV3();
+        Producer producer = producers.get(new ProducerKey(account, producerId));
+        return producer == null ? 0 : producer.highWater;
+    }
+    List<RetentionProducer> retentionProducers() {
+        requireRetentionV3();
+        return producers.entrySet().stream().map(e -> new RetentionProducer(
+                e.getKey().accountId, e.getKey().producerId, e.getValue().highWater)).toList();
+    }
+    List<Command> retentionCachedCommands() {
+        requireRetentionV3();
+        return producers.values().stream().flatMap(p -> p.results.values().stream()).map(Cached::command).toList();
+    }
+    List<Result> retentionCachedResults() {
+        requireRetentionV3();
+        return producers.values().stream().flatMap(p -> p.results.values().stream()).map(Cached::result).toList();
+    }
+    int compactRetentionTerminalOrders(Collection<Long> orderIds) {
+        requireRetentionV3();
+        Set<Long> unique = new HashSet<>();
+        // Validate the complete set before any mutation. Never alter book/FIFO,
+        // balances, counters, producer high-water or retry results here.
+        for (long id : orderIds) {
+            Order order = orders.get(id);
+            if (!unique.add(id) || order == null || isActive(order.status)
+                    || !Objects.equals(clientIds.get(new ClientOrderKey(order.accountId, order.clientId)), id))
+                throw new IllegalArgumentException("V3 compaction requires unique hot terminal orders");
+        }
+        for (long id : orderIds) {
+            Order order = orders.remove(id);
+            clientIds.remove(new ClientOrderKey(order.accountId, order.clientId));
+        }
+        return unique.size();
+    }
 
     public Execution apply(Command command) { return execute(command); }
 
@@ -327,6 +375,8 @@ public final class MatchingEngine {
     }
     private Result cancel(Cancel command, List<Event> events) {
         Order order = orders.get(command.orderId);
+        if (retentionV3 && order == null && command.orderId > 0 && command.orderId < nextOrderId)
+            return rejected("V3 terminal order archived; hot cancellation unavailable");
         if (order == null || order.accountId != command.accountId) return rejected("order not found for account");
         if (!isActive(order.status)) return rejected("order is no longer active");
         LinkedHashMap<Long, Order> level = bookFor(order.side).get(order.price);
