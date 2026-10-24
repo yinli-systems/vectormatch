@@ -22,6 +22,8 @@ Also verified on **three Runpod Pods using native private UDP**: six-direction n
 
 The separate [fixed-leader capacity campaign](docs/CAPACITY_RESULTS.md) records open-loop arrival-rate and concurrency curves, planned-to-confirmed p99, backlog, client admission loss, rejection and unknown outcomes. Every point retains raw arrivals, snapshots, process arguments and per-node telemetry. The console keeps different node/load/state profiles in separate selectable curves, including invalid and short-window observations. These are finite client-plus-replicated-matching measurements with the generator sharing member 2; HTTP/projection/fanout capacity and long-run SLAs need separate evidence. Physical anti-affinity and persistence after Pod stop remain unverified. High connection-count fanout, sharding and production authentication remain future work.
 
+The current [CPU cohort](evidence/2026-10-24/runpod-cpu/README.md) uses one existing CPU host after the three GPU Pods were stopped. Its [350k-command capacity curve](evidence/2026-10-24/runpod-cpu/capacity-summary/README.md) preserves both stable13k/s windows, valid18k/26k overload, and an invalid scheduler observation that stopped the remaining matrix. This is three JVMs over loopback UDP, distinct from the historical three-Pod results. The original HTTP/PostgreSQL application is still pending CPU restoration.
+
 ## Toolchain
 
 Java 21, Gradle, Aeron, Netty, React and TypeScript. The bootstrap pins Temurin 21.0.13+9, Node 24.22.1 and Gradle 8.14.3 and verifies vendor SHA-256 files. Portable development tools live under `.tools/` and are never committed.
