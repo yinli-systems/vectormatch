@@ -1,0 +1,50 @@
+{
+  "allOriginalFilesRetained": true,
+  "allOwnedStrictlyPidAbsent": true,
+  "forcedKill": false,
+  "identities": [
+    {
+      "arguments": [
+        "/opt/vectormatch-cpu/tools/jdk-21.0.13+9/bin/java",
+        "-Xmx64m",
+        "-cp",
+        "/opt/vectormatch-cpu/tools/cpu-jfr-attach-probe-r1",
+        "AttachForceProbe",
+        "/opt/vectormatch-cpu/tools/cpu-jfr-attach-probe-r1"
+      ],
+      "commandSha256": "b0f1602518a7ac93ecf2d559685d4bebc904f8896066d57dcf9cc2e9a89c94ce",
+      "pid": 37320,
+      "startTicks": 8250300
+    },
+    {
+      "arguments": [
+        "/opt/vectormatch-cpu/tools/jdk-21.0.13+9/bin/jcmd",
+        "-J-Xmx64m",
+        "37320",
+        "JFR.configure",
+        "repositorypath=/opt/vectormatch-cpu/tools/cpu-jfr-attach-probe-r1/repository",
+        "maxchunksize=1m"
+      ],
+      "commandSha256": "8959f06e6658afbcf91aadbe647e503ef61194d429736f17376625fdd5121c8d",
+      "pid": 37338,
+      "startTicks": 8250308
+    },
+    {
+      "arguments": [
+        "/opt/vectormatch-cpu/tools/jdk-21.0.13+9/bin/jcmd",
+        "-J-Xmx64m",
+        "37320",
+        "JFR.start",
+        "name=vectormatch-force-probe",
+        "settings=/opt/vectormatch-cpu/tools/cpu-jfr-attach-probe-r1/force-only.jfc",
+        "filename=/opt/vectormatch-cpu/tools/cpu-jfr-attach-probe-r1/probe.jfr",
+        "dumponexit=true",
+        "maxsize=8m",
+        "disk=true"
+      ],
+      "commandSha256": "d40fd44978027ddd3b7d27159d736379d62c253c1708690c5347124a1ce4ed56",
+      "pid": 37364,
+      "startTicks": 8250333
+    }
+  ]
+}

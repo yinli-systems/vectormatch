@@ -1,0 +1,1 @@
+Archive tooling drafts and rejected pre-copy destination attempt. The first draft retained an existing destination; its exclusive guard failed before any copy/write. Corrected fresh tooling created the separate all-node JFR archive. Both source drafts and correction note are retained; no benchmark was rerun.

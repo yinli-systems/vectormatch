@@ -24,3 +24,17 @@ A parent-JFR repetition used the same application JARs and accepted all20000 ori
 Actual child launcher sanitation meant only the parent JVM inherited JAVA_TOOL_OPTIONS. That missed source detail is retained explicitly. The recording contains all28 payload/receipt force(true) calls:641.558980ms total,14.770634ms median,57.490354ms maximum. Parent GC20pauses total50.853877ms/max4.945335ms across setup/load/finalisation. Direct Java call durations include filesystem and scheduling; no server force/GC cost was measured. Separate exact-owned-PID Linux jcmd attachment was subsequently validated using four synthetic force calls in an isolated32KiB probe; it starts no cluster or orders. Node instrumentation remains a separate diagnostic run.
 
 [Full parent-only recording, original native/raw evidence and explicit limitation](../evidence/2026-10-24/runpod-cpu/retention-maintained-capacity-v3/native-1000-parent-jfr-r1/README.md). The repository's existing *.jfr ignore rule initially omitted two materialized recording bodies, although the full native TAR already contained the Linux recording. Full Git-blob verification caught the omission before any successful private proof was issued. Both explicit authorised synthetic JFR files were force-added; all187 archive files then matched the pushed commit. The global ignore rule remains intact.
+
+## Completed four-JVM JFR diagnostic
+
+All four actual registered PIDs now have recordings. Each began before the20-second arrival window; no DataLoss event was observed and every recording is below its8MiB cap. Same application JARs accepted all20000 original orders with zero unknown/rejected/notSent/late>20ms. In-window goodput998.5/s, scheduled-arrival p50=17.188846ms, p99=507.187725ms, sampled backlog11. This diagnostic is not a code speedup: tracing, attachment/startup and environment/time differ. The wide spread across repeated1000/s observations requires controlled uninstrumented repetitions before a capacity boundary can be claimed.
+
+|Node|RecordingWriter force(true) calls overlapping window|Call p50 ms|Call p99 ms|Within-window call interval union s|Window share|GC pause max ms|
+|---|---:|---:|---:|---:|---:|---:|
+|0|2119|7.939761|16.467856|18.331919299|91.66%|6.567256|
+|1|2057|8.242028|16.769532|18.345831054|91.73%|5.189352|
+|2|2095|7.960790|16.550224|18.353707158|91.77%|5.669996|
+
+The stacks identify synchronous RecordingWriter.onBlock calls in each shared archive-conductor thread. Interval unions are per JVM and never added across concurrent nodes. Call duration includes filesystem and OS scheduling; this is not isolated physical disk latency. It identifies a dominant persistence wait in this measured configuration. Next candidate: compare bounded read credits32/128 in one new artifact, using the same128-credit staging/failure envelope, fixed business/leader/durability configuration and predeclared startup/warm-up policy in both arms. More complete coalescing is a hypothesis until controlled A/B evidence establishes a gain; defaults remain unchanged.
+
+[Complete four-JVM native/raw/JFR evidence, exact attach tooling and Linux attach proof](../evidence/2026-10-24/runpod-cpu/retention-maintained-capacity-v3/native-1000-all-jfr-r1/README.md). Every original arrival was independently bound to decoded request/reply identities, hashes and results; all native outer/inner bytes and metadata were verified.
