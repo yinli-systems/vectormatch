@@ -145,6 +145,8 @@ public final class RetentionEngineV3 {
     private long archivedThroughCommandSeq, archivedAcceptedPlaceTotal, archivedEventSeq, archivedMarketSeq, maintenanceSeq;
     private String archivedChainHash, chainHead;
     private ArchiveAck lastArchiveAck;
+    // Ephemeral optimistic-admission generation. Tokens cannot cross instance/restore boundaries.
+    private long stateGeneration;
 
     public RetentionEngineV3(Profile profile, String lineageId) {
         this(profile, lineageId, new MatchingEngine(profile.resultCachePerProducer(), profile.limits()));
@@ -172,20 +174,37 @@ public final class RetentionEngineV3 {
                 side, price, quantity, tif);
     }
 
-    public Execution execute(Command command) {
-        if (!validIdentity(command))
-            return invalid("V3 identity requires positive account/sequence and ASCII producer <=48");
-        // Preserve permanent high-water and finite original-result/conflict/stale behavior,
-        // including while fresh command admission is blocked by archival backpressure.
-        if (command.requestSeq() <= engine.retentionProducerHighWater(command.accountId(), command.producerId()))
-            return engine.execute(command);
-        if (command instanceof Place order && !Objects.equals(order.clientOrderId(),
-                structuredClientOrderId(order.accountId(), order.producerId(), order.requestSeq())))
-            return invalid("V3 client order id must equal the structured request identity");
+    /** Unforgeable, one-use reservation tied to this exact single-writer state. */
+    public static final class Admission {
+        private final RetentionEngineV3 owner;
+        private final Command command;
+        private final long commandSeq, maintenanceSeq, generation, reservedHistoryBytes;
+        private final int eventCount;
+        private boolean applied;
+        private Admission(RetentionEngineV3 owner, Command command, int events, long bytes) {
+            this.owner = owner; this.command = command; this.eventCount = events;
+            this.reservedHistoryBytes = bytes; this.commandSeq = owner.lastCommandSeq();
+            this.maintenanceSeq = owner.maintenanceSeq; this.generation = owner.stateGeneration;
+        }
+        public Command command() { return command; }
+        public int eventCount() { return eventCount; }
+        public long reservedHistoryBytes() { return reservedHistoryBytes; }
+        public long businessSeq() { return commandSeq; }
+        public long maintenanceSeq() { return maintenanceSeq; }
+        public long stateGeneration() { return generation; }
+    }
+
+    /** Does not alter counters, retry state, history, balances, or token generations. */
+    public Admission previewAdmission(Command command) {
+        if (!validIdentity(command)
+                || command.requestSeq() <= engine.retentionProducerHighWater(command.accountId(), command.producerId())
+                || !validStructuredPlace(command))
+            return new Admission(this, command, 0, 0);
         int predictedEvents = engine.maximumEventsFor(command);
         if (predictedEvents > Long.MAX_VALUE - lastEventSeq()
-                || (command instanceof Deposit ? 0 : predictedEvents) > Long.MAX_VALUE - lastMarketSeq())
-            throw new HistoryBackpressureException("V3 event/market sequence exhausted; not executed");
+                || (command instanceof Deposit ? 0 : predictedEvents) > Long.MAX_VALUE - lastMarketSeq()
+                || stateGeneration == Long.MAX_VALUE)
+            throw new HistoryBackpressureException("V3 event/market/generation sequence exhausted; not executed");
         long reserve = ENTRY_FRAME_BYTES + RetentionCodecV3.commandBytes(command).length + RESULT_MAX_BYTES
                 + predictedEvents * (EVENT_MAX_BYTES + 2 * ORDER_MAX_BYTES);
         if (pending.size() >= profile.maxPendingCommands()
@@ -193,9 +212,31 @@ public final class RetentionEngineV3 {
                 || predictedEvents > profile.maxPendingEvents() - pendingEvents
                 || reserve > profile.maxPendingSerializedBytes() - pendingSerializedBytes)
             throw new HistoryBackpressureException("V3 pending history/fanout capacity; archive ACK required");
+        return new Admission(this, command, predictedEvents, reserve);
+    }
+
+    public Execution execute(Command command) { return apply(previewAdmission(command)); }
+
+    /** Apply only on the same writer with no intervening core mutation. */
+    public Execution apply(Admission admission) {
+        Objects.requireNonNull(admission, "admission");
+        if (admission.owner != this || admission.applied || admission.commandSeq != lastCommandSeq()
+                || admission.maintenanceSeq != maintenanceSeq || admission.generation != stateGeneration)
+            throw new IllegalStateException("stale, foreign, or consumed V3 admission");
+        admission.applied = true;
+        Command command = admission.command;
+        if (!validIdentity(command))
+            return invalid("V3 identity requires positive account/sequence and ASCII producer <=48");
+        if (command.requestSeq() <= engine.retentionProducerHighWater(command.accountId(), command.producerId()))
+            return engine.execute(command);
+        if (!validStructuredPlace(command))
+            return invalid("V3 client order id must equal the structured request identity");
+        int predictedEvents = admission.eventCount;
+        long reserve = admission.reservedHistoryBytes;
         long previousCommandSeq = engine.lastCommandSeq();
         Execution execution = engine.execute(command);
         if (engine.lastCommandSeq() == previousCommandSeq) return execution;
+        stateGeneration++;
         // A finite set derived from this command's returned IDs; never scan all hot orders.
         NavigableSet<Long> touched = new TreeSet<>();
         if (execution.result().accepted() && command instanceof Place) touched.add(execution.result().orderId());
@@ -234,7 +275,8 @@ public final class RetentionEngineV3 {
         Objects.requireNonNull(acknowledgement, "acknowledgement");
         if (acknowledgement.equals(lastArchiveAck))
             return new CompactionResult(maintenanceSeq, archivedThroughCommandSeq, 0, 0, true);
-        if (maintenanceSeq == Long.MAX_VALUE) throw new IllegalStateException("maintenance sequence exhausted");
+        if (maintenanceSeq == Long.MAX_VALUE || stateGeneration == Long.MAX_VALUE)
+            throw new IllegalStateException("maintenance/generation sequence exhausted");
         ArchiveBatch expected = archiveThrough(acknowledgement.throughCommandSeq());
         if (!expected.acknowledgement.equals(acknowledgement))
             throw new IllegalArgumentException("archive ACK profile/lineage/range/hash/digest mismatch");
@@ -256,7 +298,7 @@ public final class RetentionEngineV3 {
         archivedMarketSeq = released.getLast().marketSeqAfter();
         archivedChainHash = acknowledgement.chainHash();
         lastArchiveAck = acknowledgement;
-        maintenanceSeq++;
+        maintenanceSeq++; stateGeneration++;
         return new CompactionResult(maintenanceSeq, cut, removed, released.size(), false);
     }
 
