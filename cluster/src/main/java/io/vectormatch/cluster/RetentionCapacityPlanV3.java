@@ -13,6 +13,7 @@ import static io.vectormatch.cluster.RetentionReplyV3.*;
 public final class RetentionCapacityPlanV3 {
     public static final int MAX_ARRIVALS = 350_000, WORKERS = 128, COMMANDS_PER_CYCLE = 3072;
     public static final int MAXIMUM_OFFERS_PER_RPC = 4;
+    public static final int MAX_READ_ONLY_IN_FLIGHT = 8;
     public static final long WRITER_PAYLOAD_LIMIT = 1024L*1024*1024;
     public static final int WRITER_TOTAL_FILE_LIMIT = 1024;
     public static final long RAW_TRACE_LIMIT = 2L*1024*1024*1024;
@@ -23,6 +24,8 @@ public final class RetentionCapacityPlanV3 {
     public static final int RAW_FRAME_PREFIX_BYTES = 12;
     public static final long FIXED_TRACE_BYTES = 384L*1024;
     public static final long EGRESS_ATTESTATION_TRACE_BYTES = 2L*1024*1024; // <=1MiB sample JSON plus bounded terminal/owner metadata
+    // RetentionCapacityJsonV3.writeNew enforces this limit on the single failure-observation document.
+    public static final long READ_ONLY_FAILURE_METADATA_BYTES = 1024L*1024;
 
     public record Plan(int arrivals, int batchCap, int maximumMaintenanceCycles, long maximumEvents,
                        long maximumLogicalMaintenanceRpcs, long maximumBusinessFrames,
@@ -36,8 +39,32 @@ public final class RetentionCapacityPlanV3 {
                        long maximumArchiveChunkRpcs, long maximumEventFetchRpcs,
                        int largestReplyBytes, int archiveChunkBytes, boolean commonChunkEnvelope,
                        long selectedMaximumLogicalMaintenanceRpcs, long selectedMaximumArchiveChunkRpcs,
-                       List<String> admissionRejections) {
+                       List<String> admissionRejections,
+                       int requestedReadWindow, int maxReadOnlyInFlight, boolean commonReadWindowEnvelope,
+                       long readOnlyStagingBytes, long readOnlyFailureTraceReserveBytes) {
         public Plan { admissionRejections = List.copyOf(admissionRejections); }
+        /** Source-compatible serial plan constructor, including the common-chunk experiment. */
+        public Plan(int arrivals, int batchCap, int maximumMaintenanceCycles, long maximumEvents,
+                    long maximumLogicalMaintenanceRpcs, long maximumBusinessFrames,
+                    long maximumExtraPositiveOffers, long maximumNegativeOfferAttempts,
+                    long maximumWriterPayloadBytes, int maximumWriterPayloadFiles,
+                    long noRetryRawTraceBytes, long worstFourOfferRawTraceBytes,
+                    long maximumRawTraceBytes, long maximumAllocatedGrowthBytes,
+                    long minimumFreeRuntimeBytes, long maximumJournalRecords, long maximumJournalBytes,
+                    int maximumArchiveEntryBytes, int archiveHeaderBytes,
+                    long maximumArchivePayloadBytes, long maximumEventPayloadBytes,
+                    long maximumArchiveChunkRpcs, long maximumEventFetchRpcs,
+                    int largestReplyBytes, int archiveChunkBytes, boolean commonChunkEnvelope,
+                    long selectedMaximumLogicalMaintenanceRpcs, long selectedMaximumArchiveChunkRpcs,
+                    List<String> admissionRejections) {
+            this(arrivals,batchCap,maximumMaintenanceCycles,maximumEvents,maximumLogicalMaintenanceRpcs,maximumBusinessFrames,
+                    maximumExtraPositiveOffers,maximumNegativeOfferAttempts,maximumWriterPayloadBytes,maximumWriterPayloadFiles,
+                    noRetryRawTraceBytes,worstFourOfferRawTraceBytes,maximumRawTraceBytes,maximumAllocatedGrowthBytes,
+                    minimumFreeRuntimeBytes,maximumJournalRecords,maximumJournalBytes,maximumArchiveEntryBytes,archiveHeaderBytes,
+                    maximumArchivePayloadBytes,maximumEventPayloadBytes,maximumArchiveChunkRpcs,maximumEventFetchRpcs,
+                    largestReplyBytes,archiveChunkBytes,commonChunkEnvelope,selectedMaximumLogicalMaintenanceRpcs,
+                    selectedMaximumArchiveChunkRpcs,admissionRejections,1,1,false,0,0);
+        }
         public boolean admitted() { return admissionRejections.isEmpty(); }
         public int maximumPhysicalOffersPerRpc() { return MAXIMUM_OFFERS_PER_RPC; }
         public int maximumWriterFilesIncludingReceipts() { return Math.multiplyExact(maximumWriterPayloadFiles,2); }
@@ -47,6 +74,8 @@ public final class RetentionCapacityPlanV3 {
         public Map<String,Object> observation() {
             var out = new LinkedHashMap<String,Object>();
             out.put("archiveChunkBytes",archiveChunkBytes);out.put("eventFetchCount",16);out.put("commonChunkEnvelope",commonChunkEnvelope);
+            out.put("requestedReadWindow",requestedReadWindow);out.put("maxReadOnlyInFlight",maxReadOnlyInFlight);out.put("commonReadWindowEnvelope",commonReadWindowEnvelope);
+            out.put("readOnlyStagingBytes",readOnlyStagingBytes);out.put("readOnlyFailureTraceReserveBytes",readOnlyFailureTraceReserveBytes);
             out.put("selectedMaximumLogicalMaintenanceRpcs",selectedMaximumLogicalMaintenanceRpcs);out.put("selectedMaximumArchiveChunkRpcs",selectedMaximumArchiveChunkRpcs);
             out.put("maximumSupportedArchiveChunkBytes",MAX_SUPPORTED_ARCHIVE_CHUNK);out.put("maximumEncodedChunkReplyBytes",maxEncodedArchiveChunkReplyBytes(MAX_SUPPORTED_ARCHIVE_CHUNK));
             out.put("arrivals",arrivals); out.put("batchCap",batchCap); out.put("maximumMaintenanceCycles",maximumMaintenanceCycles);
@@ -72,7 +101,7 @@ public final class RetentionCapacityPlanV3 {
                          int singleReply,int setupTrace,long archiveRequest,int descriptorReply,
                          int chunkRequest,int fullChunkReply,int fetchRequest,int eventReplyOverhead,
                          int maxEventWire,int archiveAckRequest,int archiveAckReply,int eventAckRequest,int eventAckReply,
-                         int archiveAckOperation,int eventAckOperation) {}
+                         int archiveAckOperation,int eventAckOperation,int readOnlyRequest,int readOnlyReply) {}
     private RetentionCapacityPlanV3() {}
 
     /** Full four-offer envelope. Rejected plans retain their arithmetic for inspection. */
@@ -101,12 +130,49 @@ public final class RetentionCapacityPlanV3 {
                 Math.max(a.maximumArchiveEntryBytes(),b.maximumArchiveEntryBytes()),a.archiveHeaderBytes(),Math.max(a.maximumArchivePayloadBytes(),b.maximumArchivePayloadBytes()),Math.max(a.maximumEventPayloadBytes(),b.maximumEventPayloadBytes()),
                 Math.max(a.maximumArchiveChunkRpcs(),b.maximumArchiveChunkRpcs()),a.maximumEventFetchRpcs(),Math.max(a.largestReplyBytes(),b.largestReplyBytes()),archiveChunkBytes,true,selected.maximumLogicalMaintenanceRpcs(),selected.maximumArchiveChunkRpcs(),rejected);
     }
+    public static int requireReadWindow(int readWindow) {
+        if(readWindow!=1&&readWindow!=MAX_READ_ONLY_IN_FLIGHT)
+            throw new IllegalArgumentException("read window must be1 or8");
+        return readWindow;
+    }
+    /** Fixed cap4/chunk6144/fetch16 experiment; both selected windows reserve the complete common eight-read envelope. */
+    public static Plan commonReadWindowPlan(int arrivals,int batchCap,RetentionServiceV3.Profile profile,int readWindow,long extras,long negatives) {
+        requireReadWindow(readWindow);
+        if(batchCap!=MAX_BUSINESS_BATCH)throw new IllegalArgumentException("common read-window plan requires fixed batch cap4");
+        if(extras<0||negatives<0)throw new IllegalArgumentException("explicit common offer budgets required");
+        Plan selected=calculate(arrivals,batchCap,profile,extras,negatives,MAX_SUPPORTED_ARCHIVE_CHUNK,true);
+        Probe p=probe(profile,batchCap,MAX_SUPPORTED_ARCHIVE_CHUNK,true);
+        // Cover original owner wires, caller originals, offer/failure clones, and complete reply staging.
+        // This is a finite wire-copy reserve, not an assertion that Java/native heap usage is fully predicted.
+        long staging=4L*MAX_READ_ONLY_IN_FLIGHT*(p.readOnlyRequest+p.readOnlyReply)+READ_ONLY_FAILURE_METADATA_BYTES;
+        // On the first failed window preserve every original, including tickets that may already have been admitted.
+        // The bounded metadata document and one timing row per read are additional to the ordinary RPC inventory.
+        long failureTrace=MAX_READ_ONLY_IN_FLIGHT*(p.readOnlyRequest+(long)RAW_FRAME_PREFIX_BYTES+256L)+READ_ONLY_FAILURE_METADATA_BYTES;
+        long base=Math.addExact(selected.noRetryRawTraceBytes(),failureTrace);
+        long allFour=Math.addExact(selected.worstFourOfferRawTraceBytes(),failureTrace);
+        long raw=Math.addExact(selected.maximumRawTraceBytes(),failureTrace);
+        long allocation=Math.addExact(selected.maximumAllocatedGrowthBytes(),Math.addExact(failureTrace,staging));
+        var rejected=new ArrayList<>(selected.admissionRejections());
+        if(raw>RAW_TRACE_LIMIT&&!rejected.contains("derived raw trace exceeds finite 2GiB cap"))
+            rejected.add("derived raw trace exceeds finite 2GiB cap");
+        if(allocation>ALLOCATED_GROWTH_LIMIT&&!rejected.contains("derived payload/trace/native-reserve allocation exceeds 2.5GiB growth cap"))
+            rejected.add("derived payload/trace/native-reserve allocation exceeds 2.5GiB growth cap");
+        return new Plan(arrivals,batchCap,selected.maximumMaintenanceCycles(),selected.maximumEvents(),selected.maximumLogicalMaintenanceRpcs(),selected.maximumBusinessFrames(),extras,negatives,
+                selected.maximumWriterPayloadBytes(),selected.maximumWriterPayloadFiles(),base,allFour,raw,allocation,
+                selected.minimumFreeRuntimeBytes(),selected.maximumJournalRecords(),selected.maximumJournalBytes(),selected.maximumArchiveEntryBytes(),selected.archiveHeaderBytes(),
+                selected.maximumArchivePayloadBytes(),selected.maximumEventPayloadBytes(),selected.maximumArchiveChunkRpcs(),selected.maximumEventFetchRpcs(),Math.max(selected.largestReplyBytes(),p.readOnlyReply),
+                MAX_SUPPORTED_ARCHIVE_CHUNK,false,selected.selectedMaximumLogicalMaintenanceRpcs(),selected.selectedMaximumArchiveChunkRpcs(),rejected,
+                readWindow,MAX_READ_ONLY_IN_FLIGHT,true,staging,failureTrace);
+    }
     private static Plan calculate(int arrivals,int batchCap,RetentionServiceV3.Profile profile,long extras,long negatives,int archiveChunkBytes) {
+        return calculate(arrivals,batchCap,profile,extras,negatives,archiveChunkBytes,false);
+    }
+    private static Plan calculate(int arrivals,int batchCap,RetentionServiceV3.Profile profile,long extras,long negatives,int archiveChunkBytes,boolean fullCounterHash) {
         requireArchiveChunkBytes(archiveChunkBytes);
         Objects.requireNonNull(profile);
         if(arrivals<1||arrivals>MAX_ARRIVALS||(batchCap!=1&&batchCap!=4))
             throw new IllegalArgumentException("finite workload requires 1..350000 arrivals and cap1 or cap4");
-        Probe p=probe(profile,batchCap,archiveChunkBytes); int loadCycles=ceil(arrivals,COMMANDS_PER_CYCLE),cycles=1+loadCycles;
+        Probe p=probe(profile,batchCap,archiveChunkBytes,fullCounterHash); int loadCycles=ceil(arrivals,COMMANDS_PER_CYCLE),cycles=1+loadCycles;
         long totalEvents=2L*arrivals+3,archiveBytes=p.header+p.setupFrames,eventBytes=0,chunkRpcs=ceil(archiveBytes,archiveChunkBytes),fetchRpcs=1;
         // Setup is exported separately. Each load prefix has <=3072 commands and exactly two events per successful buy.
         eventBytes=eventFrameBytes(3,p); long physicalRequestBytes=p.archiveRequest;
@@ -178,6 +244,9 @@ public final class RetentionCapacityPlanV3 {
     }
     private static int ceil(long count,int unit) { return Math.toIntExact((count+unit-1)/unit); }
     private static Probe probe(RetentionServiceV3.Profile profile,int batchCap,int archiveChunkBytes) {
+        return probe(profile,batchCap,archiveChunkBytes,false);
+    }
+    private static Probe probe(RetentionServiceV3.Profile profile,int batchCap,int archiveChunkBytes,boolean fullCounterHash) {
         String lineage="p".repeat(64);Scope scope=new Scope(profile.fingerprint(),lineage);
         var engine=new RetentionEngineV3(profile.core(),lineage);
         List<Command> commands=List.of(new Deposit(1,"fund",1,Asset.BASE,2),new Deposit(2,"fund",1,Asset.QUOTE,20),
@@ -187,12 +256,14 @@ public final class RetentionCapacityPlanV3 {
         for(Command command:commands)if(!engine.execute(command).result().accepted())throw new IllegalArgumentException("profile cannot execute the bounded codec witness");
         var history=engine.pendingHistory();long retained=0;int setup=0;
         for(int i=0;i<history.size();i++){int bytes=history.get(i).canonicalBytes().length+36;retained+=bytes;if(i<3)setup+=bytes;}
-        var archive=engine.archiveThrough(5);int header=Math.toIntExact(archive.canonicalBytes().length-retained);
+        var archive=engine.archiveThrough(5);var ack=archive.acknowledgementAfterExternalVerification();
+        int header=Math.toIntExact(archive.canonicalBytes().length-retained);
         int normal=history.get(3).canonicalBytes().length+36,extra=history.get(4).canonicalBytes().length+36-normal;
         if(header<1||extra<0||history.get(3).execution().events().size()!=2||history.get(4).execution().events().size()!=2
                 ||history.get(3).terminalOrders().size()!=1||history.get(4).terminalOrders().size()!=2)
             throw new IllegalStateException("workload codec witness shape changed; rederive capacity admission");
-        Counters counters=new Counters(100,100,100,98,0,98,0,"");
+        String counterHash=fullCounterHash?ack.chainHash():"";
+        Counters counters=new Counters(100,100,100,98,0,98,0,counterHash);
         Command buy=commands.get(4);int singleRequest=RetentionWireV3.encode(new Request(scope,1,new BusinessBatch(List.of(buy)))).length;
         int singleReply=batchReplySize(scope,counters,List.of(buy));
         // A maximum cap does not guarantee packed frames: singleton bounds must dominate each possible k-member layout.
@@ -203,7 +274,6 @@ public final class RetentionCapacityPlanV3 {
         }
         int setupTrace=0;for(int i=0;i<3;i++)setupTrace+=RetentionWireV3.encode(new Request(scope,i+1,new Business(commands.get(i)))).length
                 +RetentionReplyV3.encode(new Reply(scope,i+1,counters,new State(history.get(i).execution().result(),false,null),"")).length+24+256;
-        var ack=archive.acknowledgementAfterExternalVerification();
         int prepareRequest=RetentionWireV3.encode(new Request(scope,1,new PrepareArchive(5))).length;
         int descriptor=RetentionReplyV3.encode(new Reply(scope,1,counters,new Descriptor(ack,4096),"")).length;
         int chunkRequest=RetentionWireV3.encode(new Request(scope,1,new ArchiveChunk(ack,MAX_SUPPORTED_ARCHIVE_CHUNK+1024,0,archiveChunkBytes))).length;
@@ -216,14 +286,18 @@ public final class RetentionCapacityPlanV3 {
         var eventOperation=new EventAck(new MaintenanceIdentity("projector",Long.MAX_VALUE),100);
         var maintenance=new RetentionServiceV3.MaintenanceResult(RetentionServiceV3.MaintenanceCode.APPLIED,
                 new RetentionEngineV3.CompactionResult(1,5,2,5,false),100,"",false);
-        Counters ackCounters=new Counters(100,100,100,98,1,98,100,"");
+        Counters ackCounters=new Counters(100,100,100,98,1,98,100,counterHash);
         int ackReply=RetentionReplyV3.encode(new Reply(scope,1,ackCounters,new State(null,false,maintenance),"")).length;
         int eventAckReply=RetentionReplyV3.encode(new Reply(scope,1,ackCounters,new State(null,false,
                 new RetentionServiceV3.MaintenanceResult(RetentionServiceV3.MaintenanceCode.APPLIED,null,100,"",false)),"")).length;
+        Counters readCounters=new Counters(100,100,100,98,1,98,0,ack.chainHash());
+        int readChunkReply=RetentionReplyV3.encode(new Reply(scope,1,readCounters,new Chunk(ack,MAX_SUPPORTED_ARCHIVE_CHUNK+1024,0,new byte[archiveChunkBytes]),"")).length;
+        int readEventOverhead=RetentionReplyV3.encode(new Reply(scope,1,readCounters,new Events(new EventBatch(0,100,List.of())),"")).length;
         return new Probe(header,setup,normal,extra,singleRequest,singleReply,setupTrace,prepareRequest,descriptor,chunkRequest,chunkReply,
                 fetchRequest,eventOverhead,maxEvent,RetentionWireV3.encode(new Request(scope,1,archiveOperation)).length,ackReply,
                 RetentionWireV3.encode(new Request(scope,1,eventOperation)).length,eventAckReply,
-                RetentionWireV3.encodeOperation(archiveOperation).length,RetentionWireV3.encodeOperation(eventOperation).length);
+                RetentionWireV3.encodeOperation(archiveOperation).length,RetentionWireV3.encodeOperation(eventOperation).length,
+                Math.max(chunkRequest,fetchRequest),Math.max(readChunkReply,readEventOverhead+16*maxEvent));
     }
     private static int batchReplySize(Scope scope,Counters counters,List<Command> commands) {
         var entries=new ArrayList<BatchEntry>();
@@ -233,7 +307,7 @@ public final class RetentionCapacityPlanV3 {
                     new Result(ResultCode.ACCEPTED,"accepted",seq,seq,0,1),false,BatchStatus.APPLIED,new Frontier(seq,seq,seq,seq-2)));
         }
         // Last frontier binds all four monotonic counters in the outer reply.
-        Frontier last=entries.getLast().frontier();Counters bound=new Counters(last.applicationMutation(),last.businessSeq(),last.eventSeq(),last.marketSeq(),0,98,0,"");
+        Frontier last=entries.getLast().frontier();Counters bound=new Counters(last.applicationMutation(),last.businessSeq(),last.eventSeq(),last.marketSeq(),0,98,0,counters.stateHash());
         return RetentionReplyV3.encode(new Reply(scope,1,bound,new Batch(entries),"")).length;
     }
 }

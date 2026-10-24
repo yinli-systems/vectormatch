@@ -114,11 +114,93 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
             if (timeout == null || timeout.isZero() || timeout.isNegative() || timeout.compareTo(Duration.ofMinutes(2)) > 0)
                 throw new IllegalArgumentException("bounded positive maintenance wait required");
             try { return slot.completion.get(timeout.toNanos(), TimeUnit.NANOSECONDS); }
-            catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw maintenanceUnknown(slot, interrupted); }
-            catch (ExecutionException | TimeoutException error) { throw maintenanceUnknown(slot, error); }
+            catch (InterruptedException interrupted) { Thread.currentThread().interrupt();if(slot.bank!=null)throw slot.bank.abort(interrupted); throw maintenanceUnknown(slot, interrupted); }
+            catch (ExecutionException error) { if(error.getCause() instanceof ReadBankFailureException bundle)throw bundle;throw maintenanceUnknown(slot,error); }
+            catch (TimeoutException error) { if(slot.bank!=null)throw slot.bank.abort(error);throw maintenanceUnknown(slot,error); }
         }
         public byte[] originalWire() { return slot.bytes.clone(); }
+        public boolean isDone() { return slot.completion.isDone(); }
+        public void arm(){synchronized(lock){
+            if(slot.bank==null)throw new IllegalStateException("only explicitly reserved bank reads are armed here");
+            slot.bank.affinity();if(slot.bank.failure!=null)throw slot.bank.failure;healthy();
+            if(readBank!=slot.bank||slot.bank.closed||closing||maintenanceStopped)throw new IllegalStateException("read phase terminal");
+            if(slot.armed)return;
+            if(clock.getAsLong()-slot.deadline>=0){maintenanceStopped=true;stopReadBank(new TimeoutException("original read permit expired before arm"));throw slot.bank.failure;}
+            slot.armed=true;slot.armedNs=clock.getAsLong();observeReadHighWaters();wake();
+        }}
+        public Map<String,Object> observation() { synchronized(lock) {
+            var out=new LinkedHashMap<String,Object>();out.put("correlationId",slot.request.correlationId());out.put("wireSha256",hash(slot.bytes));
+            out.put("readPhaseGeneration",slot.bank==null?null:slot.bank.generation);out.put("armedMonotonicNs",slot.armedNs==Long.MIN_VALUE?null:slot.armedNs);out.put("operationKind",slot.request.operation().getClass().getSimpleName());out.put("armed",slot.armed);out.put("consumed",slot.consumed);
+            out.put("reservedMonotonicNs",slot.reservedNs);out.put("absoluteOfferDeadlineNs",slot.deadline);out.put("possibleOffers",slot.possibleOffers);out.put("mayHaveExecuted",slot.possiblyOffered);
+            out.put("acceptedPhysicalOffers",slot.acceptedOffers);out.put("negativeOffers",slot.negativeOffers);out.put("disabled",slot.disabled);
+            out.put("completionDone",slot.completion.isDone());out.put("completionExceptional",slot.completion.isCompletedExceptionally());
+            out.put("firstOfferCallNs",slot.firstOfferNs==Long.MIN_VALUE?null:slot.firstOfferNs);out.put("firstSuccessfulOfferReturnNs",slot.firstAcceptedNs==Long.MIN_VALUE?null:slot.firstAcceptedNs);
+            out.put("replyCompletionNs",slot.completedNs==Long.MIN_VALUE?null:slot.completedNs);return Collections.unmodifiableMap(out);
+        }}
     }
+    /** Immutable bounded all-slot bundle survives a broken evidence filesystem. */
+    public static final class ReadBankFailureException extends IllegalStateException {
+        private static final long serialVersionUID=1L;
+        private final List<byte[]> wires;
+        private final List<Map<String,Object>> observations;
+        private ReadBankFailureException(List<MaintenanceSlot> slots,Throwable cause,RetentionBatchOwnerV3 owner){
+            super("V3_READ_BANK_FAILED: all retained original wires remain authoritative; no ACK, fresh correlation or implicit rollback",cause);
+            wires=slots.stream().map(slot->slot.bytes.clone()).toList();
+            observations=slots.stream().map(slot->owner.new MaintenanceTicket(slot).observation()).toList();
+        }
+        public List<byte[]> originalWires(){return wires.stream().map(byte[]::clone).toList();}
+        public List<Map<String,Object>> observations(){return observations;}
+    }
+    /** Exclusive lease; reserved, active and completed-unconsumed reads all occupy a credit. */
+    public final class ReadBank implements AutoCloseable {
+        private final int limit;
+        private final long generation=++readPhaseGeneration;
+        private final Thread caller=Thread.currentThread();
+        private final LinkedHashMap<Long,MaintenanceSlot> pending=new LinkedHashMap<>();
+        private boolean closed;
+        private Class<?> kind;
+        private ReadBankFailureException failure;
+        private ReadBank(int limit){this.limit=limit;}
+        private void affinity(){if(Thread.currentThread()!=caller)throw new IllegalStateException("one read-bank caller required");}
+        public MaintenanceTicket reserve(Operation operation,long deadline) {
+            affinity();synchronized(lock){if(failure!=null)throw failure;healthy();
+                if(closed||readBank!=this||closing||maintenanceStopped)throw new IllegalStateException("read bank terminal; retain every original wire");
+                if(!(operation instanceof ArchiveChunk)&&!(operation instanceof FetchEvents))throw new IllegalArgumentException("read bank permits only archive chunks and event fetches");
+                if(kind!=null&&kind!=operation.getClass())throw new IllegalStateException("one read kind per phase generation");
+                if(kind==null)kind=operation.getClass();
+                for(var slot:pending.values()){
+                    if(slot.request.operation().equals(operation))return new MaintenanceTicket(slot);
+                    if(slot.request.operation().getClass()!=operation.getClass())throw new IllegalStateException("chunk and event read phases cannot overlap");
+                }
+                if(pending.size()>=limit)throw new IllegalStateException("bounded read-bank credits full, including completed-unconsumed");
+                long now=clock.getAsLong(),remaining=deadline-now;
+                if(remaining<=0||remaining>MAX_PERMIT_NS)throw new IllegalArgumentException("bounded absolute read permit required");
+                if(nextCorrelation==Long.MAX_VALUE)throw new IllegalStateException("transport correlation exhausted");
+                var slot=new MaintenanceSlot(new Request(scope,++nextCorrelation,operation),now,deadline);slot.bank=this;slot.armed=false;pending.put(slot.request.correlationId(),slot);
+                readOnlyRetainedHighWater=Math.max(readOnlyRetainedHighWater,pending.size());readOnlySubmitted++;return new MaintenanceTicket(slot);
+            }
+        }
+        public void consume(MaintenanceTicket ticket){affinity();synchronized(lock){
+            if(ticket==null||ticket.slot.bank!=this)throw new IllegalArgumentException("foreign read ticket");
+            var slot=ticket.slot;if(slot.consumed)return;if(failure!=null)throw failure;healthy();
+            if(closed||readBank!=this||!slot.completion.isDone()||slot.completion.isCompletedExceptionally())throw new IllegalStateException("only a definite recorded read reply can release a credit");
+            if(pending.remove(slot.request.correlationId())!=slot)throw new IllegalStateException("read credit ownership differs");slot.consumed=true;
+            retiredReadCorrelations.add(slot.request.correlationId());if(retiredReadCorrelations.size()>256)retiredReadCorrelations.remove(retiredReadCorrelations.iterator().next());
+            wake();
+        }}
+        public List<Map<String,Object>> outstandingObservations(){synchronized(lock){return pending.values().stream().map(slot->new MaintenanceTicket(slot).observation()).toList();}}
+        public ReadBankFailureException abort(Throwable cause){affinity();synchronized(lock){if(closed||readBank!=this)throw new IllegalStateException("retired read bank cannot abort another generation");maintenanceStopped=true;stopReadBank(cause);wake();return failure;}}
+        @Override public void close(){affinity();synchronized(lock){
+            if(closed)return;if(failure!=null)throw failure;
+            if(readBank!=this||!pending.isEmpty())throw new IllegalStateException("unresolved/unconsumed reads fence control/ACK and new cycles");
+            closed=true;readBank=null;wake();
+        }}
+    }
+    public ReadBank openReadBank(int window){synchronized(lock){healthy();
+        if(window!=1&&window!=8)throw new IllegalArgumentException("read window must be1or8");
+        if(closing||maintenanceStopped||readBank!=null||maintenance!=null||pendingCount()!=0)throw new IllegalStateException("read bank requires definite business/control closure");
+        readBank=new ReadBank(window);selectedReadWindow=window;return readBank;
+    }}
     public static final class UnknownMaintenanceException extends IllegalStateException {
         private static final long serialVersionUID = 1L;
         private final byte[] originalWire;
@@ -133,14 +215,16 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
     private static final class MaintenanceSlot {
         final Request request;
         final byte[] bytes;
-        final long deadline, mutationReserveBytes;
+        final long deadline, mutationReserveBytes,reservedNs;
         final boolean mutating;
         final CompletableFuture<Reply> completion = new CompletableFuture<>();
         long nextOffer;
+        long armedNs=Long.MIN_VALUE,firstOfferNs=Long.MIN_VALUE,firstAcceptedNs=Long.MIN_VALUE,completedNs=Long.MIN_VALUE,acceptedOffers,negativeOffers;
         int possibleOffers;
-        boolean possiblyOffered, disabled;
+        boolean possiblyOffered, disabled,armed=true,consumed;
+        ReadBank bank;
         MaintenanceSlot(Request request, long now, long deadline) {
-            this.request = request; this.deadline = deadline; nextOffer = now;
+            this.request = request; this.deadline = deadline;reservedNs=now; nextOffer = now;
             bytes = RetentionWireV3.encode(request);
             mutating = request.operation() instanceof ArchiveCommit || request.operation() instanceof EventAck;
             mutationReserveBytes = mutating ? RetentionWireV3.encodeOperation(request.operation()).length + 1024L : 0;
@@ -158,6 +242,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
                 throw new IllegalArgumentException("business must use producer-bound logical slots");
             long now = clock.getAsLong(), remaining = absoluteOfferDeadlineNs - now;
             if (remaining <= 0 || remaining > MAX_PERMIT_NS) throw new IllegalArgumentException("bounded absolute maintenance permit required");
+            if(readBank!=null)throw new IllegalStateException("read bank must close before serial control/ACK");
             if (maintenance != null) {
                 if (!maintenance.request.operation().equals(operation)) throw new IllegalStateException("one unresolved maintenance RPC; cannot change payload/identity");
                 return new MaintenanceTicket(maintenance); // No implicit permit renewal.
@@ -173,38 +258,46 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
         return submitMaintenance(operation, clock.getAsLong() + timeout.toNanos()).await(timeout);
     }
     private int offerMaintenance(RetentionBatchOwnerIOV3 io, long now) {
-        MaintenanceSlot slot = maintenance;
-        if (slot == null || slot.disabled) return 0;
+        return offerMaintenanceSlot(io,maintenance,now);
+    }
+    private int offerMaintenanceSlot(RetentionBatchOwnerIOV3 io,MaintenanceSlot slot,long now) {
+        if (slot == null || slot.disabled || !slot.armed || slot.completion.isDone() || maintenanceStopped || closing) return 0;
         if (now - slot.deadline >= 0 || slot.possibleOffers >= 4) {
             slot.disabled = true; maintenanceStopped = true;
-            slot.completion.completeExceptionally(new UnknownMaintenanceException(slot, null)); return 0;
+            if(slot.bank!=null)stopReadBank(new TimeoutException("original read deadline or four-offer budget exhausted"));else slot.completion.completeExceptionally(new UnknownMaintenanceException(slot,null)); return 0;
         }
         if (now - slot.nextOffer < 0) return 0;
         if (slot.mutating && (maintenanceMutationOffers >= Math.min(1024, config.profile().maxMaintenanceJournalRecords())
                 || slot.mutationReserveBytes > config.profile().maxMaintenanceJournalBytes() - maintenanceMutationReserveBytes)) {
             slot.disabled = true; maintenanceStopped = true;
-            slot.completion.completeExceptionally(new UnknownMaintenanceException(slot, null)); return 0;
+            if(slot.bank!=null)stopReadBank(new TimeoutException("original read deadline or four-offer budget exhausted"));else slot.completion.completeExceptionally(new UnknownMaintenanceException(slot,null)); return 0;
         }
         byte[] offerBytes = slot.bytes.clone();
-        now = clock.getAsLong(); if (closing || now - slot.deadline >= 0) return 0;
+        now = clock.getAsLong();if(closing)return 0;
+        if(now-slot.deadline>=0){slot.disabled=true;maintenanceStopped=true;
+            if(slot.bank!=null)stopReadBank(new TimeoutException("original read permit expired before offer call"));
+            else slot.completion.completeExceptionally(new UnknownMaintenanceException(slot,null));return 0;
+        }
         boolean earlierPossible = slot.possiblyOffered;
         slot.possiblyOffered = true; slot.possibleOffers++;
         if (slot.mutating) { maintenanceMutationOffers++; maintenanceMutationReserveBytes += slot.mutationReserveBytes; }
+        if(slot.firstOfferNs==Long.MIN_VALUE)slot.firstOfferNs=now;
         long result = io.offer(offerBytes); // Throwing offers remain possibly executed and consume journal budget.
         if (result < 0) {
             slot.possibleOffers--; slot.possiblyOffered = earlierPossible;
             if (slot.mutating) { maintenanceMutationOffers--; maintenanceMutationReserveBytes -= slot.mutationReserveBytes; }
-            maintenanceNegativeOffers++; slot.nextOffer = now + NEGATIVE_RETRY_NS;
+            maintenanceNegativeOffers++; slot.negativeOffers++; slot.nextOffer = now + NEGATIVE_RETRY_NS;
             if (result == Publication.CLOSED || result == Publication.MAX_POSITION_EXCEEDED)
                 throw new IllegalStateException("fatal maintenance offer code " + result);
             return 0;
         }
-        maintenanceAcceptedOffers++; slot.nextOffer = now + RESEND_NS; return 1;
+        maintenanceAcceptedOffers++;slot.acceptedOffers++;observeReadHighWaters();if(slot.firstAcceptedNs==Long.MIN_VALUE)slot.firstAcceptedNs=clock.getAsLong(); slot.nextOffer = now + RESEND_NS; return 1;
     }
-    private void receiveMaintenance(Reply reply) {
-        MaintenanceSlot slot = maintenance;
+    private void receiveMaintenance(Reply reply,MaintenanceSlot slot) {
         if (!slot.possiblyOffered) throw new IllegalStateException("maintenance reply precedes offer");
+        if(slot.completion.isDone()){readOnlyDuplicateOrLateReplies++;return;}
         if (!reply.error().isEmpty()) {
+            if(slot.bank!=null){maintenanceStopped=true;stopReadBank(new IllegalStateException("read reply error: "+reply.error()));return;}
             if (slot.mutating) throw new IllegalStateException("maintenance mutation error remains unresolved: " + reply.error());
         } else {
             Operation operation = slot.request.operation(); Payload payload = reply.payload();
@@ -242,7 +335,27 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
                 } else if (result.compaction() != null || result.error().isEmpty()) throw new IllegalStateException("failed maintenance shape differs");
             }
         }
-        maintenanceReplies++; slot.completion.complete(reply); maintenance = null;
+        maintenanceReplies++;slot.completedNs=clock.getAsLong();slot.completion.complete(reply);
+        if(slot==maintenance)maintenance=null;
+        else {readOnlyCompleted++;}
+    }
+    private void observeReadHighWaters(){
+        if(readBank==null)return;
+        int armed=0,offered=0;for(var slot:readBank.pending.values())if(!slot.completion.isDone()){
+            if(slot.armed)armed++;if(slot.acceptedOffers>0)offered++;
+        }
+        readOnlyInFlightHighWater=Math.max(readOnlyInFlightHighWater,armed);readOnlyOfferedInFlightHighWater=Math.max(readOnlyOfferedInFlightHighWater,offered);
+    }
+    private void stopReadBank(Throwable cause){
+        if(readBank==null)return;
+        for(var slot:readBank.pending.values())slot.disabled=true;
+        if(readBank.failure==null)readBank.failure=new ReadBankFailureException(List.copyOf(readBank.pending.values()),cause,this);
+        for(var slot:readBank.pending.values())slot.completion.completeExceptionally(readBank.failure);
+    }
+    private int offerReadBank(RetentionBatchOwnerIOV3 io){
+        if(readBank==null||maintenanceStopped)return 0;int work=0;
+        for(var slot:readBank.pending.values()){work+=offerMaintenanceSlot(io,slot,clock.getAsLong());if(maintenanceStopped)break;}
+        return work;
     }
     private static final class Slot {
         final int worker;
@@ -293,6 +406,10 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
     private final Thread owner;
     private boolean closing, admissionStopped, maintenanceStopped;
     private MaintenanceSlot maintenance;
+    private ReadBank readBank;
+    private final LinkedHashSet<Long> retiredReadCorrelations=new LinkedHashSet<>();
+    private int selectedReadWindow=1,readOnlyRetainedHighWater,readOnlyInFlightHighWater,readOnlyOfferedInFlightHighWater;
+    private long readOnlySubmitted,readOnlyCompleted,readOnlyDuplicateOrLateReplies,readPhaseGeneration;
     private long maintenanceMutationOffers, maintenanceMutationReserveBytes, maintenanceAcceptedOffers, maintenanceNegativeOffers, maintenanceReplies;
     private Throwable failure;
     private Map<String, Object> transportObservation = Map.of("available", false, "reason", "not_ready");
@@ -317,7 +434,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
     public Ticket submit(int worker, Command command, long absoluteOfferDeadlineNs) {
         synchronized (lock) {
             healthy();
-            if (closing || admissionStopped || maintenanceStopped) throw new IllegalStateException("owner closed to new business; retained unknowns require explicit closure");
+            if (closing || admissionStopped || maintenanceStopped || readBank!=null) throw new IllegalStateException("owner closed to new business; retained unknowns require explicit closure");
             if (worker < 0 || worker >= slots.length) throw new IllegalArgumentException("invalid logical worker");
             long now = clock.getAsLong(), remaining = absoluteOfferDeadlineNs - now;
             if (remaining <= 0 || remaining > MAX_PERMIT_NS) throw new IllegalArgumentException("absolute offer permit must be within two minutes");
@@ -392,7 +509,10 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
     private void receive(Reply reply) {
         synchronized (lock) {
             if (!scope.equals(reply.scope())) throw new IllegalStateException("reply scope differs");
-            if (maintenance != null && maintenance.request.correlationId() == reply.correlationId()) { receiveMaintenance(reply); return; }
+            if(reply.correlationId()<=0||reply.correlationId()>nextCorrelation)throw new IllegalStateException("reply correlation exceeds allocated monotonic high-water");
+            if (maintenance != null && maintenance.request.correlationId() == reply.correlationId()) { receiveMaintenance(reply,maintenance); return; }
+            if(readBank!=null){var slot=readBank.pending.get(reply.correlationId());if(slot!=null){receiveMaintenance(reply,slot);return;}}
+            if(retiredReadCorrelations.contains(reply.correlationId())){readOnlyDuplicateOrLateReplies++;return;}
             Frame frame = frames.get(reply.correlationId());
             if (frame == null) { lateReplies++; return; }
             if (!frame.mayHaveExecuted) throw new IllegalStateException("reply precedes any possibly accepted offer");
@@ -422,7 +542,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
             Slot slot = iterator.next();
             if (!permitted(slot, now)) { iterator.remove(); notSent(slot, "PERMIT_REVOKED_OR_EXPIRED_BEFORE_FRAME"); }
         }
-        while (!admissionStopped && !maintenanceStopped && !ready.isEmpty() && frames.size() < slots.length) {
+        while (!admissionStopped && !maintenanceStopped && readBank==null && !ready.isEmpty() && frames.size() < slots.length) {
             Slot first = ready.peekFirst();
             if (ready.size() < config.batchCap() && now - first.readyNs < config.flushDelayNs()) break;
             int count = Math.min(config.batchCap(), ready.size()); var group = new ArrayList<Slot>(count);
@@ -435,7 +555,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
     private int offerFrames(RetentionBatchOwnerIOV3 io) {
         int work = 0;
         for (Frame frame : frames.values()) {
-            if (closing || admissionStopped || maintenanceStopped || frame.disabled || frame.slots.stream().allMatch(s -> s.terminal != null)) continue;
+            if (closing || admissionStopped || maintenanceStopped || readBank!=null || frame.disabled || frame.slots.stream().allMatch(s -> s.terminal != null)) continue;
             long now = clock.getAsLong();
             if (!framePermitted(frame, now)) {
                 frame.disabled = true;
@@ -483,6 +603,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
             for (Slot slot : frame.slots) delay = Math.min(delay, Math.max(0, slot.permitDeadline - now));
         }
         if (maintenance != null && !maintenance.disabled) delay = Math.min(delay, Math.max(0, Math.min(maintenance.nextOffer, maintenance.deadline) - now));
+        if(readBank!=null)for(var slot:readBank.pending.values())if(slot.armed&&!slot.disabled&&!slot.completion.isDone())delay=Math.min(delay,Math.max(0,Math.min(slot.nextOffer,slot.deadline)-now));
         return Math.max(1, delay);
     }
     private void own(IOFactory factory) {
@@ -494,7 +615,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
                 int work = io.poll(this::receive); long pause;
                 if(clock.getAsLong()-transportObservedAtNs>=TimeUnit.SECONDS.toNanos(1))captureTransport(io);
                 synchronized (lock) {
-                    long now = clock.getAsLong(); build(now); work += offerMaintenance(io, now); work += offerFrames(io);
+                    long now = clock.getAsLong(); build(now); work += offerMaintenance(io, now);work+=offerReadBank(io); work += offerFrames(io);
                     for (var iterator = frames.entrySet().iterator(); iterator.hasNext();) {
                         Frame f = iterator.next().getValue();
                         if (f.slots.stream().allMatch(s -> s.terminal != null)) { iterator.remove(); retiredFrames++; }
@@ -510,6 +631,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
             synchronized (lock) {
                 closing = true;
                 if (maintenance != null) maintenance.completion.completeExceptionally(new UnknownMaintenanceException(maintenance, failure));
+                stopReadBank(failure);
                 for (Slot slot : slots) if (slot != null) {
                     if (slot.ordinal == 0) notSent(slot, "OWNER_CLOSED_BEFORE_ACCEPTED_OFFER");
                     else slot.completion.completeExceptionally(failure == null ? unresolved(slot, null) : new OwnerFailure(failure));
@@ -546,6 +668,11 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
             out.put("retiredFrames", retiredFrames); out.put("pendingHighWater", pendingHighWater); out.put("frameHighWater", frameHighWater);
             out.put("newBusinessAdmissionStopped", admissionStopped); out.put("closed", closing); out.put("ownerThreadAlive", owner.isAlive());
             out.put("failureType", failure == null ? null : failure.getClass().getName()); out.put("transportObservation", transportObservation);out.put("transportObservedAtMonotonicNs",transportObservedAtNs);
+            out.put("selectedReadWindow",selectedReadWindow);out.put("readOnlyHardCapacity",8);out.put("readBankOpen",readBank!=null);
+            out.put("readOnlyRetained",readBank==null?0:readBank.pending.size());out.put("readOnlyInFlight",readBank==null?0:readBank.pending.values().stream().filter(slot->slot.armed&&!slot.completion.isDone()).count());out.put("readOnlyCompletedUnconsumed",readBank==null?0:readBank.pending.values().stream().filter(slot->slot.completion.isDone()&&!slot.completion.isCompletedExceptionally()).count());out.put("readOnlyRetainedHighWater",readOnlyRetainedHighWater);out.put("readOnlyInFlightHighWater",readOnlyInFlightHighWater);out.put("readOnlyOfferedAwaitingReplyHighWater",readOnlyOfferedInFlightHighWater);
+            out.put("queuedReads",readBank==null?0:readBank.pending.values().stream().filter(s->!s.possiblyOffered).count());
+            out.put("readOnlySubmitted",readOnlySubmitted);out.put("readOnlyCompleted",readOnlyCompleted);out.put("ignoredRetiredReadDuplicateOrLateReplies",readOnlyDuplicateOrLateReplies);
+            out.put("retiredReadCorrelationCount",retiredReadCorrelations.size());out.put("retiredReadCorrelationCapacity",256);
             out.put("maintenanceRpcCapacity", 1); out.put("maintenancePending", maintenance != null);
             out.put("maintenanceStopped", maintenanceStopped); out.put("maintenanceAcceptedOffers", maintenanceAcceptedOffers);
             out.put("maintenanceNegativeOffers", maintenanceNegativeOffers); out.put("maintenanceReplies", maintenanceReplies);

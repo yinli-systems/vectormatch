@@ -7,6 +7,7 @@ import java.util.*;
 
 import static io.vectormatch.core.MatchingEngine.*;
 import static io.vectormatch.cluster.RetentionWireV3.*;
+import static io.vectormatch.cluster.RetentionReplyV3.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RetentionCapacityPlanV3Test {
@@ -93,5 +94,82 @@ class RetentionCapacityPlanV3Test {
         var rejected=RetentionCapacityPlanV3.plan(350000,1,small);
         assertFalse(rejected.admitted());assertTrue(rejected.admissionRejections().contains("finite four-offer ACK journal budget"));
         assertThrows(IllegalArgumentException.class,rejected::requireAdmitted);
+    }
+
+    @Test void readWindowsShareTheCompleteEightReadEnvelopeAndAllRuntimeCaps() {
+        for(int arrivals:new int[]{6400,350_000}) {
+            long negatives=arrivals+RetentionCapacityPlanV3.plan(arrivals,4,profile).maximumLogicalMaintenanceRpcs();
+            var serial=RetentionCapacityPlanV3.commonReadWindowPlan(arrivals,4,profile,1,arrivals/4,negatives);
+            var window=RetentionCapacityPlanV3.commonReadWindowPlan(arrivals,4,profile,8,arrivals/4,negatives);
+            assertEquals(serial.admitted(),window.admitted());
+            if(arrivals==6400)assertTrue(serial.admitted(),serial.admissionRejections().toString());
+            else {
+                // Reserving a full hash in every trace can reject a prospective large run.
+                // Both arms must fail the same finite cap; do not widen it to force admission.
+                assertFalse(serial.admitted());
+                assertTrue(serial.admissionRejections().contains("derived payload/trace/native-reserve allocation exceeds 2.5GiB growth cap"));
+                assertThrows(IllegalArgumentException.class,serial::requireAdmitted);
+                assertThrows(IllegalArgumentException.class,window::requireAdmitted);
+            }
+            assertEquals(1,serial.requestedReadWindow());assertEquals(8,window.requestedReadWindow());
+            assertEquals(8,serial.maxReadOnlyInFlight());assertEquals(8,window.maxReadOnlyInFlight());
+            assertTrue(serial.commonReadWindowEnvelope());assertFalse(serial.commonChunkEnvelope());
+            assertEquals(6144,serial.archiveChunkBytes());assertEquals(4,serial.batchCap());
+            assertEquals(16,serial.observation().get("eventFetchCount"));
+            var serialObservation=new LinkedHashMap<>(serial.observation());
+            var windowObservation=new LinkedHashMap<>(window.observation());
+            serialObservation.remove("requestedReadWindow");windowObservation.remove("requestedReadWindow");
+            assertEquals(serialObservation,windowObservation);
+            assertTrue(serial.readOnlyStagingBytes()>0);assertTrue(serial.readOnlyFailureTraceReserveBytes()>0);
+            assertTrue(serial.maximumRawTraceBytes()<RetentionCapacityPlanV3.RAW_TRACE_LIMIT);
+            if(serial.admitted())assertTrue(serial.maximumAllocatedGrowthBytes()<RetentionCapacityPlanV3.ALLOCATED_GROWTH_LIMIT);
+            else assertTrue(serial.maximumAllocatedGrowthBytes()>RetentionCapacityPlanV3.ALLOCATED_GROWTH_LIMIT);
+        }
+    }
+
+    @Test void readWindowReservesCoverRealCodecOriginalsRepliesAndFailureMetadata() {
+        String lineage="r".repeat(64);var engine=new RetentionEngineV3(profile.core(),lineage);
+        for(var command:List.of(new Deposit(1,"fund",1,Asset.BASE,2),new Deposit(2,"fund",1,Asset.QUOTE,20),
+                RetentionEngineV3.place(1,"seed",1,Side.SELL,10,2,TimeInForce.GTC),
+                RetentionEngineV3.place(2,"load-w127",Long.MAX_VALUE-1,Side.BUY,10,1,TimeInForce.IOC),
+                RetentionEngineV3.place(2,"load-w127",Long.MAX_VALUE,Side.BUY,10,1,TimeInForce.IOC)))
+            assertTrue(engine.execute(command).result().accepted());
+        var archive=engine.archiveThrough(5);var ack=archive.acknowledgementAfterExternalVerification();
+        var scope=new Scope(profile.fingerprint(),lineage);
+        var counters=new Counters(100,100,100,98,1,98,100,ack.chainHash());
+        int originalBytes=RetentionWireV3.encode(new Request(scope,Long.MAX_VALUE,new ArchiveChunk(ack,7168,0,6144))).length;
+        int replyBytes=RetentionReplyV3.encode(new Reply(scope,Long.MAX_VALUE,counters,new Chunk(ack,7168,0,new byte[6144]),"")).length;
+        var plan=RetentionCapacityPlanV3.commonReadWindowPlan(6400,4,profile,8,0,0);
+        assertTrue(plan.largestReplyBytes()>=replyBytes,"the full 64-byte counter-hash codec allowance is reserved");
+        assertTrue(plan.readOnlyStagingBytes()>=8L*4*(originalBytes+replyBytes)+RetentionCapacityPlanV3.READ_ONLY_FAILURE_METADATA_BYTES);
+        assertTrue(plan.readOnlyFailureTraceReserveBytes()>=8L*(4+originalBytes)+RetentionCapacityPlanV3.READ_ONLY_FAILURE_METADATA_BYTES);
+        assertEquals(plan.noRetryRawTraceBytes(),plan.maximumRawTraceBytes());
+    }
+
+    @Test void readWindowInputsAndLegacyDefaultsRetainExistingFiniteHardCaps() {
+        for(int unsupported:new int[]{0,2,9})
+            assertThrows(IllegalArgumentException.class,()->RetentionCapacityPlanV3.commonReadWindowPlan(6400,4,profile,unsupported,0,0));
+        assertThrows(IllegalArgumentException.class,()->RetentionCapacityPlanV3.commonReadWindowPlan(6400,1,profile,1,0,0));
+        assertThrows(IllegalArgumentException.class,()->RetentionCapacityPlanV3.commonReadWindowPlan(6400,4,profile,1,-1,0));
+        for(var legacy:List.of(RetentionCapacityPlanV3.plan(6400,4,profile),
+                RetentionCapacityPlanV3.planWithOfferBudget(6400,4,profile,0,0),
+                RetentionCapacityPlanV3.commonChunkPlan(6400,4,profile,6144,0,0))) {
+            assertEquals(1,legacy.requestedReadWindow());assertEquals(1,legacy.maxReadOnlyInFlight());
+            assertFalse(legacy.commonReadWindowEnvelope());assertEquals(0,legacy.readOnlyStagingBytes());
+            assertEquals(0,legacy.readOnlyFailureTraceReserveBytes());
+        }
+        assertEquals(2L*1024*1024*1024,RetentionCapacityPlanV3.RAW_TRACE_LIMIT);
+        assertEquals(5L*1024*1024*1024/2,RetentionCapacityPlanV3.ALLOCATED_GROWTH_LIMIT);
+        assertEquals(1024L*1024*1024,RetentionCapacityPlanV3.WRITER_PAYLOAD_LIMIT);
+        assertEquals(1024,RetentionCapacityPlanV3.WRITER_TOTAL_FILE_LIMIT);
+        assertEquals(4,RetentionCapacityPlanV3.MAXIMUM_OFFERS_PER_RPC);
+        var legacy=RetentionCapacityPlanV3.planWithOfferBudget(350_000,4,profile,0,0);
+        var common=RetentionCapacityPlanV3.commonReadWindowPlan(350_000,4,profile,8,0,0);
+        assertEquals(legacy.maximumJournalRecords(),common.maximumJournalRecords());
+        assertEquals(legacy.maximumJournalBytes(),common.maximumJournalBytes());
+        assertEquals(legacy.maximumArchivePayloadBytes(),common.maximumArchivePayloadBytes());
+        assertTrue(common.maximumWriterPayloadBytes()>legacy.maximumWriterPayloadBytes(),"the common envelope allows the full counter hash per fetch reply");
+        assertTrue(common.maximumWriterPayloadBytes()<RetentionCapacityPlanV3.WRITER_PAYLOAD_LIMIT);
+        assertEquals(legacy.maximumWriterPayloadFiles(),common.maximumWriterPayloadFiles());
     }
 }
