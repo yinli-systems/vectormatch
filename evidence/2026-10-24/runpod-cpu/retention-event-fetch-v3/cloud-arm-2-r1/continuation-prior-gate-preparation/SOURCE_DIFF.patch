@@ -1,0 +1,801 @@
+--- baseline/owner-freeze.py
++++ freeze.py
+@@ -1,62 +1,184 @@
+-"""Local receipt from an already verified, committed, remotely reachable private archive."""
++"""Root-executed only AFTER actual private push. Local validation and two new JSON receipts only."""
+ from pathlib import Path
+-import argparse, datetime, hashlib, json, stat, subprocess
+-ROOT=Path(__file__).resolve().parents[4];BASE=ROOT/'runtime/cloud/cpu-20261024'
+-def sha(p):
+-    h=hashlib.sha256()
+-    with p.open('rb') as f:
+-        for b in iter(lambda:f.read(1024*1024),b''):h.update(b)
++import argparse, datetime, hashlib, json, os, stat, subprocess, sys
++sys.dont_write_bytecode = True
++from contracts import *
++ROOT = Path(__file__).resolve().parents[4]
++BASE = ROOT / 'runtime/cloud/cpu-20261024'
++HERE = Path(__file__).resolve().parent
++VISIBILITY = BASE / 'event-cloud-repository-visibility-r1/REPOSITORY.json'
++VISIBILITY_SHA = '3c7a64e521a8133c490f70fd8602a458fe8208f460f59b9554ac8ec3e3f4b873'
++
++def sha(path):
++    h = hashlib.sha256()
++    with path.open('rb') as source:
++        for block in iter(lambda: source.read(1024**2), b''):
++            h.update(block)
+     return h.hexdigest()
+-def read(p):return json.loads(p.read_text())
+-def save(p,x):
+-    with p.open('x') as f:json.dump(x,f,indent=2,sort_keys=True);f.write('\n')
++
++def load(path):
++    return json.loads(path.read_text())
++
++def no_links(path):
++    path = Path(path).absolute()
++    need('..' not in path.parts and not any(x.is_symlink() for x in (path, *path.parents)), 'Canonical nonlinked local path')
++    return path
++
++def row(path):
++    s = path.lstat()
++    need(stat.S_ISREG(s.st_mode) and s.st_nlink == 1, 'Independent regular local evidence')
++    return dict(mode=stat.S_IMODE(s.st_mode), uid=s.st_uid, gid=s.st_gid, bytes=s.st_size, sha256=sha(path))
++
++def snapshot(path):
++    no_links(path)
++    need(path.is_dir(), 'Existing directory')
++    files = {}
++    directories = {}
++    for f in [path] + sorted(path.rglob('*')):
++        need(not f.is_symlink(), 'No evidence symlink')
++        s = f.lstat()
++        name = str(f.relative_to(path))
++        if stat.S_ISDIR(s.st_mode):
++            directories[name] = dict(mode=stat.S_IMODE(s.st_mode), uid=s.st_uid, gid=s.st_gid)
++        else:
++            files[name] = row(f)
++    return {'files': files, 'directories': directories}
++
++def verify_archive(archive):
++    inventory = load(archive / 'INVENTORY.json')
++    closed = load(archive / 'CLOSED.json')
++    need(closed['passed'] is True and closed['inventorySha256'] == sha(archive / 'INVENTORY.json'), 'Closed exact evidence manifest')
++    need(closed['allOriginalCollectionAndBothCompleteTarsRetained'] is True and closed['sourceCopyBeforeAfterEqual'] is True
++         and closed['fullShaSizeModeUidGidEmptyDirectoryClosureVerified'] is True and closed['allKnownMarkerScansPassed'] is True,
++         'Complete archive/copy/metadata/marker closure')
++    actual = snapshot(archive)
++    actual['files'].pop('INVENTORY.json')
++    actual['files'].pop('CLOSED.json')
++    need(actual['files'] == inventory['files'] and actual['directories'] == inventory['directories'], 'Every full archive file and directory exact')
++    need(len(actual['files']) <= 1500 and sum(r['bytes'] for r in actual['files'].values()) <= 512 * 1024**2,
++         'Finite full evidence cap')
++    return inventory, closed
++
+ def git(*args):
+-    r=subprocess.run(['git',*args],cwd=ROOT,capture_output=True,text=True,check=True,timeout=60);return r.stdout.strip()
+-p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--arm',type=int,choices=[1,2,3],required=True)
+-p.add_argument('--archive',type=Path,required=True);p.add_argument('--root-review',type=Path,required=True)
+-p.add_argument('--output',type=Path,required=True);a=p.parse_args()
+-archive=a.archive.resolve();rel=str(archive.relative_to(ROOT));root_review=a.root_review.resolve();review=read(root_review)
+-assert review['passed'] and review['allFullOuterMembersVerified'] and review['allRawInputsUnchanged'] and review['arm']==a.arm
+-assert review['sourceCommit']=='977197616ade0283174f2ea6ddfaa700547f6d15' and review['independent4AnchorCodeFingerprint']=='23586ccc5b9ad88aef2eba48a4eeceb15e64fdc62142bd2971c23e028724b884'
+-for n,row in review['inputs'].items():
+-    f=Path(n);f=f if f.is_absolute() else ROOT/f
+-    assert f.stat().st_size==row['bytes'] and sha(f)==row['sha256']
+-manifest=archive/'INVENTORY.json';closed=archive/'CLOSED.json';m=read(manifest);c=read(closed)
+-assert c['passed'] and c['inventorySha256']==sha(manifest)
+-actual_files={};dirs={}
+-for f in [archive]+list(archive.rglob('*')):
+-    assert not f.is_symlink();s=f.stat();n=str(f.relative_to(archive));meta=dict(mode=stat.S_IMODE(s.st_mode),uid=s.st_uid,gid=s.st_gid)
+-    if f.is_dir():dirs[n]=meta
+-    elif n not in ['INVENTORY.json','CLOSED.json']:actual_files[n]=dict(meta,bytes=s.st_size,sha256=sha(f))
+-assert actual_files==m['files'] and dirs==m['directories']
+-run=BASE/('cpu-owner-poll-arm-%d-collection-r1'%a.arm);final=read(run/'finalized/LOCAL_COLLECTION_COMPLETE.json')
+-assert read(run/'SUCCESS.json')['passed'] and final['passed'] and final['arm']==a.arm
+-raw=read(run/'raw/result.json');assert raw['strictSchedulerTimingAdmission'] and raw['arms'][0]['schedulerTimingValidFromRaw']
+-for original in [x for x in run.rglob('*') if x.is_file() and not any(y in ['__pycache__','.pytest_cache'] for y in x.relative_to(run).parts)]:
+-    mirror=archive/'actual-collection'/original.relative_to(run)
+-    assert mirror.is_file() and mirror.stat().st_size==original.stat().st_size and sha(mirror)==sha(original)
+-assert not git('status','--porcelain','--untracked-files=all','--',rel),'Evidence must already be committed without local changes'
+-tracked=set(git('ls-tree','-r','--name-only','HEAD','--',rel).splitlines())
+-assert tracked=={rel+'/'+n for n in list(m['files'])+['INVENTORY.json','CLOSED.json']}
+-head=git('rev-parse','HEAD');remote=git('ls-remote','origin','refs/heads/main')
+-assert remote.split()==[head,'refs/heads/main']
+-visibility=BASE/'owner-cloud-repository-visibility-r1/REPOSITORY.json';v=read(visibility)
+-assert v['metadata']['repository_full_name']=='yinli-systems/vectormatch' and v['metadata']['visibility']=='private'
+-a.output.mkdir(parents=True)
+-now=datetime.datetime.now(datetime.timezone.utc).isoformat()
+-push=dict(schemaVersion=1,scope='ROOT_VERIFIED_PRIVATE_EVIDENCE_PUSH',repository='yinli-systems/vectormatch',visibility='private',
+-    pushCompleted=True,remoteCommitVerified=True,commit=head,fullOriginalEvidencePushed=True,
+-    evidenceManifestSha256=sha(manifest),evidenceClosedSha256=sha(closed),evidencePath=rel,
+-    closedArchiveSha256=final['closedArchiveSha256'],closedNativeInventorySha256=final['closedNativeInventorySha256'],
+-    repositoryMetadataReceiptSha256=sha(visibility),actualLsRemote=remote,rootIndependentReviewSha256=sha(root_review),atUtc=now)
+-save(a.output/'private-push.json',push)
+-gate=dict(schemaVersion=2,scope='ROOT_VERIFIED_CLOSED_CPU_OWNER_POLL_ARM_COLLECTION',collectionComplete=True,arm=a.arm,
+-    ownerPollMaximumParkNs=final['ownerPollMaximumParkNs'],serverDriverMaximumParkNs=final['serverDriverMaximumParkNs'],
+-    frozenReleaseSha256=final['frozenReleaseSha256'],controllerSha256=final['controllerSha256'],codeFingerprint=review['independent4AnchorCodeFingerprint'],
+-    localFullMemberShaBytesModesOwnersEmptyDirsVerified=True,allRawInputsAndFailuresRetained=True,strictSchedulerTimingAdmission=True,
+-    independentLocalCollectionReceiptSha256=sha(run/'finalized/LOCAL_COLLECTION_COMPLETE.json'),
+-    closedArchiveSha256=final['closedArchiveSha256'],closedNativeInventorySha256=final['closedNativeInventorySha256'],
+-    privatePushReceiptSha256=sha(a.output/'private-push.json'),rootIndependentReviewSha256=sha(root_review),
+-    sourceCommit=review['sourceCommit'],atUtc=now,sourceSha256=sha(Path(__file__)))
+-save(a.output/'collection-gate.json',gate)
+-print(json.dumps(dict(passed=True,arm=a.arm,commit=head,gateSha256=sha(a.output/'collection-gate.json'),privatePushSha256=sha(a.output/'private-push.json'))))
++    env = dict(os.environ, GIT_OPTIONAL_LOCKS='0')
++    result = subprocess.run(['git', *args], cwd=ROOT, env=env, capture_output=True, check=True, timeout=60)
++    return result.stdout
++
++def blob_sha1(path):
++    h = hashlib.sha1()
++    h.update(b'blob ' + str(path.stat().st_size).encode() + b'\x00')
++    with path.open('rb') as source:
++        for block in iter(lambda: source.read(1024**2), b''):
++            h.update(block)
++    return h.hexdigest()
++
++def verify_current_private_commit(archive, inventory, expected_commit):
++    rel = str(archive.relative_to(ROOT))
++    need(not git('status', '--porcelain', '--untracked-files=all', '--', rel).strip(), 'Full evidence must already be committed clean')
++    need(git('rev-parse', '--show-object-format').strip() == b'sha1', 'Registered repository Git object format')
++    tracked = {}
++    for raw in git('ls-tree', '-r', '-z', 'HEAD', '--', rel).split(b'\0'):
++        if not raw:
++            continue
++        head, name = raw.split(b'\t', 1)
++        mode, kind, object_id = head.decode().split()
++        need(kind == 'blob' and mode in ('100644', '100755'), 'Only regular committed evidence blobs')
++        tracked[name.decode()] = (mode, object_id)
++    expected = {rel + '/' + n for n in list(inventory['files']) + ['INVENTORY.json', 'CLOSED.json']}
++    need(set(tracked) == expected, 'Exact committed full archive file set, no omissions/extras')
++    for name, (mode, object_id) in tracked.items():
++        local = ROOT / name
++        need(blob_sha1(local) == object_id and bool(local.stat().st_mode & 0o111) == (mode == '100755'),
++             'Every full current file matches actual committed Git blob')
++    head = git('rev-parse', 'HEAD').decode().strip()
++    remote = git('ls-remote', 'origin', 'refs/heads/main').decode().strip()
++    origin = git('remote', 'get-url', 'origin').decode().strip()
++    need(sha(VISIBILITY) == VISIBILITY_SHA, 'Actual private repository metadata receipt changed')
++    validate_private_state(expected_commit, head, remote, origin, load(VISIBILITY))
++    return head, remote
++
++def write_new(path, value):
++    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
++    os.fchmod(descriptor, 0o600)
++    with os.fdopen(descriptor, 'wb') as output:
++        output.write(encoded(value))
++        output.flush()
++        os.fsync(output.fileno())
++
++def main():
++    parser = argparse.ArgumentParser(allow_abbrev=False)
++    parser.add_argument('--arm', type=int, choices=[1, 2, 3], required=True)
++    parser.add_argument('--archive', type=Path, required=True)
++    parser.add_argument('--root-review', type=Path, required=True)
++    parser.add_argument('--archive-root-review', type=Path, required=True)
++    parser.add_argument('--archive-root-review-sha256', required=True)
++    parser.add_argument('--expected-commit', required=True)
++    parser.add_argument('--output', type=Path, required=True)
++    a = parser.parse_args()
++    archive = no_links(a.archive)
++    expected_archive = ROOT / ('evidence/2026-10-24/runpod-cpu/retention-event-fetch-v3/cloud-arm-%d-r1' % a.arm)
++    need(archive == expected_archive, 'Only exact complete current arm archive')
++    review_path = no_links(a.root_review)
++    need(review_path.is_relative_to(BASE), 'Explicit local root review receipt')
++    archive_review_path = no_links(a.archive_root_review)
++    need(archive_review_path.is_relative_to(BASE) and hexsha(a.archive_root_review_sha256)
++         and sha(archive_review_path) == a.archive_root_review_sha256, 'Root-selected independent full archive review')
++    output = no_links(a.output)
++    need(output == BASE / ('event-cloud-arm-%d-prior-gate-r1' % a.arm)
++         and not output.exists(), 'Fresh local current-arm output, no overwrite')
++    run = BASE / ('cpu-event-fetch-arm-%d-collection-r1' % a.arm)
++    inventory, closed = verify_archive(archive)
++    validate_archive_review(load(archive_review_path), a.arm, sha(archive / 'INVENTORY.json'), sha(archive / 'CLOSED.json'), inventory)
++    original = snapshot(run)
++    mirror = snapshot(archive / 'actual-collection')
++    need(original == mirror, 'Entire original collection mirrored byte/meta/emptydir exact, no excluded files')
++    need(row(review_path) == row(archive / 'root-review/ROOT_REVIEW.json'), 'Actual root review mirror exact')
++    review = load(review_path)
++    for name, pin in review['inputs'].items():
++        path = no_links(Path(name) if Path(name).is_absolute() else ROOT / name)
++        need(path.stat().st_size == pin['bytes'] and sha(path) == pin['sha256'], 'Actual independently reviewed input unchanged')
++    success = load(run / 'SUCCESS.json')
++    final_path = run / 'finalized/LOCAL_COLLECTION_COMPLETE.json'
++    final = load(final_path)
++    raw_path = run / 'raw/result.json'
++    raw = load(raw_path)
++    derived = validate_reports(success, final, raw, review, a.arm, sha(raw_path))
++    for key, relative in [('rawResult', 'raw/result.json'), ('nativeResult', 'native/result.json'),
++                          ('collectionReceipt', 'collection/collection-receipt.json')]:
++        actual = run / relative
++        pin = final['files'][key]
++        need(pin['path'] == str(actual) and actual.stat().st_size == pin['bytes'] and sha(actual) == pin['sha256'],
++             'Actual finalizer pointer SHA/size binding')
++    head, remote = verify_current_private_commit(archive, inventory, a.expected_commit)
++    need(snapshot(run) == original, 'Original collection changed during private-push verification')
++    verify_archive(archive)
++    need(sha(review_path) == sha(archive / 'root-review/ROOT_REVIEW.json'), 'Root review unchanged before receipt creation')
++    need(sha(archive_review_path) == a.archive_root_review_sha256, 'Independent archive review unchanged before receipt creation')
++    now = datetime.datetime.now(datetime.timezone.utc).isoformat()
++    push = dict(schemaVersion=1, scope='ROOT_VERIFIED_PRIVATE_EVIDENCE_PUSH', repository=REPOSITORY, visibility='private',
++                pushCompleted=True, remoteCommitVerified=True, commit=head, fullOriginalEvidencePushed=True,
++                evidenceManifestSha256=sha(archive / 'INVENTORY.json'), evidenceClosedSha256=sha(archive / 'CLOSED.json'),
++                evidencePath=str(archive.relative_to(ROOT)), closedArchiveSha256=final['closedArchiveSha256'],
++                closedNativeInventorySha256=final['closedNativeInventorySha256'],
++                repositoryMetadataReceiptSha256=sha(VISIBILITY), actualLsRemote=remote,
++                rootIndependentReviewSha256=sha(review_path), archiveRootReviewSha256=sha(archive_review_path), atUtc=now)
++    gate = dict(schemaVersion=2, scope='ROOT_VERIFIED_CLOSED_CPU_EVENT_FETCH_ARM_COLLECTION', collectionComplete=True,
++                arm=a.arm, eventFetchCount=page(a.arm), ownerPollMaximumParkNs=1000000, serverDriverMaximumParkNs=100000,
++                frozenReleaseSha256=RELEASE, controllerSha256=CONTROLLER, codeFingerprint=CODE,
++                localFullMemberShaBytesModesOwnersEmptyDirsVerified=final['localFullMemberShaBytesModesOwnersEmptyDirsVerified'],
++                allRawInputsAndFailuresRetained=final['allClosedRoundRawFilesAndErrorReceiptsRetained'],
++                strictSchedulerTimingAdmission=raw['strictSchedulerTimingAdmission'], **derived,
++                independentLocalCollectionReceiptSha256=sha(final_path), rawAuditSha256=sha(raw_path),
++                closedArchiveSha256=final['closedArchiveSha256'], closedNativeInventorySha256=final['closedNativeInventorySha256'],
++                privatePushReceiptSha256=digest(encoded(push)), rootIndependentReviewSha256=sha(review_path),
++                archiveRootReviewSha256=sha(archive_review_path), sourceCommit=SOURCE, atUtc=now, sourceSha256=sha(Path(__file__)))
++    validate_pair(gate, push, a.arm, digest(encoded(push)))
++    output.mkdir(mode=0o700)
++    write_new(output / 'private-push.json', push)
++    write_new(output / 'collection-gate.json', gate)
++    print(json.dumps(dict(passed=True, arm=a.arm, eventFetchCount=page(a.arm), commit=head,
++                         gateSha256=sha(output / 'collection-gate.json'), privatePushSha256=sha(output / 'private-push.json'),
++                         remoteAccessOrBusinessStarted=False)))
++
++if __name__ == '__main__':
++    main()
+--- baseline/owner-next-launch.py
++++ upload_pair.py
+@@ -1,52 +1,77 @@
+-"""One explicit next arm; prerequisite data must already be privately pushed."""
++"""One SSH; exclusive prior JSON pair upload only. No launch, retry, cleanup or alternate remote path."""
+ from pathlib import Path
+-import argparse, base64, datetime, hashlib, importlib.util, json, shlex, subprocess, sys
+-ROOT=Path(__file__).resolve().parents[4]
+-BASE=ROOT/'runtime/cloud/cpu-20261024'
+-def sha(p): return hashlib.sha256(p.read_bytes()).hexdigest()
+-def save(p,x):
+-    with p.open('x') as f: json.dump(x,f,indent=2,sort_keys=True);f.write('\n')
+-def module(p,name):
+-    spec=importlib.util.spec_from_file_location(name,p);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
+-p=argparse.ArgumentParser(allow_abbrev=False)
+-p.add_argument('--arm',type=int,choices=[2,3,4],required=True)
+-p.add_argument('--prior-directory',type=Path,required=True)
+-a=p.parse_args();prior=a.arm-1
+-gate=a.prior_directory.resolve()/'collection-gate.json';push=a.prior_directory.resolve()/'private-push.json'
+-stage_prep=BASE/'cpu-owner-poll-stage-preparation-r2'
+-assert sha(stage_prep/'launch_owner_poll.py')=='ceb345623402f93f6ebc05987ae8c5be0fc55454bbc7afb829737851f6618e8e'
+-sys.path.insert(0,str(stage_prep));launcher=module(stage_prep/'launch_owner_poll.py','root_verified_next_launcher')
+-stage=BASE/'cpu-owner-poll-cloud-staging-r1';stage_sha='57a9d1c85567035dbd7022f99ccc66e1e8054f27ff8bfcd4d1153eac3160388a'
+-receipt,checked=launcher.validate_stage(stage,stage_sha)
+-files=launcher.validate_prior(a.arm,gate,sha(gate),push,checked,receipt['releaseSha256'])
+-assert len(files)==2
+-helper=BASE/'remote.py';assert sha(helper)=='0922e32bee55b1e47503880e763fcf112626649d31f037bb62e5c4ceb588bb73'
+-remote=module(helper,'root_next_arm_remote')
+-out=BASE/('owner-cloud-arm-%d-launch-execution-r1'%a.arm);out.mkdir()
+-payload={name:dict(data=base64.b64encode(path.read_bytes()).decode(),sha256=sha(path),mode=path.stat().st_mode&0o777) for name,path in files.items()}
+-save(out/'PREREQUISITE_UPLOAD_REGISTRATION.json',dict(arm=a.arm,sourceSha256=sha(Path(__file__)),files={n:{k:v for k,v in row.items() if k!='data'} for n,row in payload.items()},atUtc=datetime.datetime.now(datetime.timezone.utc).isoformat()))
+-program='payload='+repr(payload)+'\n'+r'''
+-import base64,hashlib,json,os,pathlib,platform,stat
+-assert platform.node()=='ed6c0673f5cb' and os.geteuid()==0
+-prep=pathlib.Path('/opt/vectormatch-cpu/preparation/cpu-owner-poll-cloud-abab-r1')
+-for name,row in payload.items():
+- p=prep/name
+- assert name.startswith('release/arm-') and p.parent==prep/'release' and not p.exists()
+- for q in (p,*p.parents):assert not q.is_symlink()
+- data=base64.b64decode(row['data'],validate=True);assert hashlib.sha256(data).hexdigest()==row['sha256']
+- with p.open('xb') as f:f.write(data);f.flush();os.fsync(f.fileno())
+- os.chmod(p,row['mode']);assert hashlib.sha256(p.read_bytes()).hexdigest()==row['sha256'] and stat.S_IMODE(p.stat().st_mode)==row['mode']
+-print(json.dumps({'passed':True,'uploaded':{n:r['sha256'] for n,r in payload.items()},'businessStarted':False,'noOverwrite':True}))
++import argparse, base64, datetime, importlib.util, inspect, json, shlex, sys
++sys.dont_write_bytecode = True
++import contracts
++from contracts import *
++from freeze import BASE, HERE, no_links, row, sha, write_new
++REMOTE_HELPER_SHA = '0922e32bee55b1e47503880e763fcf112626649d31f037bb62e5c4ceb588bb73'
++
++def program(payload, arm):
++    validate_payload(payload, arm)
++    values = {name: getattr(contracts, name) for name in ('SOURCE', 'CODE', 'RELEASE', 'CONTROLLER', 'PREP', 'REPOSITORY', 'PAGE_ORDER')}
++    source = 'import base64,hashlib,json,os,pathlib,stat,platform\n'
++    source += '\n'.join(name + '=' + repr(value) for name, value in values.items()) + '\n'
++    for name in ('need', 'digest', 'hexsha', 'page', 'validate_pair', 'validate_payload', 'exclusive_write_pair'):
++        source += inspect.getsource(getattr(contracts, name)) + '\n'
++    source += 'payload=' + repr(payload) + '\narm=' + repr(arm) + '\n'
++    source += '''
++need(platform.system()=='Linux' and platform.machine()=='x86_64' and platform.node()=='ed6c0673f5cb' and os.geteuid()==0,'Exact existing CPU host/root')
++prep=pathlib.Path(PREP)
++for path in (prep,*prep.parents,prep/'release',prep/'release/release.json',prep/'cpu_event_fetch_abab.py'):
++ need(not path.is_symlink(),'No linked canonical deployment')
++need(digest((prep/'release/release.json').read_bytes())==RELEASE,'Same actual ready release')
++need(digest((prep/'cpu_event_fetch_abab.py').read_bytes())==CONTROLLER,'Same frozen controller')
++print(json.dumps(exclusive_write_pair(prep,payload,arm)),flush=True)
+ '''
+-result=remote.run('python3 -B -c '+shlex.quote(program),timeout=45)
+-(out/'upload.stdout.json').write_text(result.stdout);(out/'upload.stderr.txt').write_text(result.stderr)
+-assert result.returncode==0 and json.loads(result.stdout)['passed'] is True
+-command=[sys.executable,'-B',str(stage_prep/'launch_owner_poll.py'),'--arm',str(a.arm),'--staging',str(stage),
+-    '--stage-success-sha256',stage_sha,'--output',str(BASE/('owner-cloud-arm-%d-launch-r1'%a.arm)),
+-    '--prior-collection',str(gate),'--prior-collection-sha256',sha(gate),'--prior-private-push',str(push)]
+-save(out/'REGISTRATION.json',dict(argv=command,sourceSha256=sha(Path(__file__)),oneAttemptOnly=True,atUtc=datetime.datetime.now(datetime.timezone.utc).isoformat()))
+-with (out/'stdout.txt').open('xb') as stdout,(out/'stderr.txt').open('xb') as stderr:
+-    result=subprocess.run(command,stdout=stdout,stderr=stderr,timeout=90)
+-save(out/'completion.json',dict(exitCode=result.returncode,stdoutSha256=sha(out/'stdout.txt'),stderrSha256=sha(out/'stderr.txt'),atUtc=datetime.datetime.now(datetime.timezone.utc).isoformat()))
+-print(json.dumps(dict(arm=a.arm,exitCode=result.returncode,priorGateSha256=sha(gate))))
+-raise SystemExit(result.returncode)
++    return source
++
++def main():
++    parser = argparse.ArgumentParser(allow_abbrev=False)
++    parser.add_argument('--arm', type=int, choices=[1, 2, 3], required=True)
++    parser.add_argument('--prior-directory', type=Path, required=True)
++    parser.add_argument('--collection-gate-sha256', required=True)
++    parser.add_argument('--private-push-sha256', required=True)
++    parser.add_argument('--output', type=Path, required=True)
++    a = parser.parse_args()
++    directory = no_links(a.prior_directory)
++    need(directory == BASE / ('event-cloud-arm-%d-prior-gate-r1' % a.arm), 'Exact local current prior pair')
++    payload = {}
++    for leaf, expected in [('collection-gate.json', a.collection_gate_sha256), ('private-push.json', a.private_push_sha256)]:
++        path = no_links(directory / leaf)
++        pin = row(path)
++        need(hexsha(expected) and pin['sha256'] == expected and pin['mode'] == 0o600 and pin['bytes'] <= 65536,
++             'Root-selected exact original prior JSON')
++        payload['release/arm-%d-%s' % (a.arm, leaf)] = dict(data=base64.b64encode(path.read_bytes()).decode(),
++                                                            **{key: pin[key] for key in ('sha256', 'bytes', 'mode')})
++    source = program(payload, a.arm)
++    helper = no_links(BASE / 'remote.py')
++    need(sha(helper) == REMOTE_HELPER_SHA, 'Single existing direct SSH helper pin')
++    output = no_links(a.output)
++    need(output.parent == BASE and output.name.startswith('event-cloud-arm-%d-prior-upload-r' % a.arm)
++         and not output.exists(), 'Fresh upload observation, no overwrite/retry')
++    output.mkdir(mode=0o700)
++    write_new(output / 'REGISTRATION.json', dict(arm=a.arm, eventFetchCount=page(a.arm), atUtc=datetime.datetime.now(datetime.timezone.utc).isoformat(),
++         sourceSha256=sha(Path(__file__)), contractsSha256=sha(HERE / 'contracts.py'), remoteHelperSha256=sha(helper),
++         files={name: {key: value for key, value in pin.items() if key != 'data'} for name, pin in payload.items()},
++         oneSshOnly=True, noLaunch=True, noOverwrite=True, noRetry=True))
++    with (output / 'remote-program.py').open('x') as saved:
++        saved.write(source)
++    spec = importlib.util.spec_from_file_location('one_explicit_prior_pair_remote', helper)
++    remote = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(remote)
++    result = remote.run('python3 -B -c ' + shlex.quote(source), timeout=45)
++    with (output / 'stdout.json').open('x') as f:
++        f.write(result.stdout)
++    with (output / 'stderr.txt').open('x') as f:
++        f.write(result.stderr)
++    write_new(output / 'COMPLETION.json', dict(exitCode=result.returncode, stdoutSha256=sha(output / 'stdout.json'),
++                                              stderrSha256=sha(output / 'stderr.txt'), noAutomaticRetry=True, noBusinessStarted=True))
++    need(result.returncode == 0, 'Upload failed/uncertain: preserve partial remote originals, inspect read-only; never automatically retry')
++    receipt = json.loads(result.stdout)
++    need(receipt['passed'] is True and receipt['uploaded'] == {name: pin['sha256'] for name, pin in payload.items()}
++         and receipt['businessStarted'] is False, 'Exact two-file exclusive readback')
++    print(json.dumps(receipt))
++
++if __name__ == '__main__':
++    main()
+--- /dev/null
++++ contracts.py
+@@ -0,0 +1,173 @@
++"""Pure prerequisite reconciliation and exclusive two-file write; no process/network entrypoint."""
++import base64, hashlib, json, os, pathlib, stat
++SOURCE = 'd92301d3058acc83cb85d5bc5b4fd2e3f0ed4df8'
++CODE = '87a7ccd092f4d3c890bf8cc8bd7c6ffcd18900838699cd2b873fd1931cddb6aa'
++RELEASE = '0ebad5d1ae1bd7900fc6dad7d78994d11ec3281f4077cfb7eba9b1bb3f506d59'
++CONTROLLER = 'eb84eed09cad46c5097c32d980a1629f7c7c7fec3759e904544f7ef9e91e3100'
++PREP = '/opt/vectormatch-cpu/preparation/cpu-event-fetch-cloud-abab-r1'
++REPOSITORY = 'yinli-systems/vectormatch'
++PAGE_ORDER = (16, 32, 16, 32)
++
++def need(ok, message):
++    if not ok:
++        raise AssertionError(message)
++
++def digest(data):
++    return hashlib.sha256(data).hexdigest()
++
++def encoded(value):
++    return (json.dumps(value, indent=2, sort_keys=True) + '\n').encode()
++
++def hexsha(value, length=64):
++    return isinstance(value, str) and len(value) == length and all(c in '0123456789abcdef' for c in value)
++
++def page(arm):
++    need(type(arm) is int and arm in (1, 2, 3), 'Only preceding arms1..3 produce next-arm prerequisites')
++    return PAGE_ORDER[arm - 1]
++
++def validate_reports(success, final, raw, review, arm, raw_sha):
++    selected = page(arm)
++    for value in (success, final, raw, review):
++        need(value['passed'] is True and value['arm'] == arm and value['eventFetchCount'] == selected,
++             'Four actual same-arm/page reports must pass')
++        need(value['ownerPollMaximumParkNs'] == 1000000 and value['serverDriverMaximumParkNs'] == 100000,
++             'Fixed owner1ms and server/driver100us')
++    need(len(success['steps']) == 5 and all(x['exitCode'] == 0 for x in success['steps']), 'Five actual closed collection steps')
++    need(final['schemaVersion'] == 1 and final['frozenReleaseSha256'] == RELEASE and final['controllerSha256'] == CONTROLLER,
++         'Actual finalizer same release/controller')
++    need(final['nestedFullVerificationPending'] is False and final['localFullMemberShaBytesModesOwnersEmptyDirsVerified'] is True
++         and final['allClosedRoundRawFilesAndErrorReceiptsRetained'] is True, 'Complete nested/original byte and failure retention')
++    need(raw['sourceCommit'] == review['sourceCommit'] == SOURCE and raw['releaseSha256'] == review['releaseSha256'] == RELEASE
++         and review['independent4AnchorCodeFingerprint'] == CODE and review['rawAuditSha256'] == raw_sha,
++         'Actual source/code/release/root-to-raw binding')
++    need(review['allFullOuterMembersVerified'] is True and review['allRawInputsUnchanged'] is True
++         and review['originalOwnerProjectionVerified'] is True, 'Independent full outer/raw/owner closure')
++    need(final['rawInputFiles'] == review['rawInputFiles'] == len(raw['inputs']), 'Exact original raw input inventory size')
++    need(raw['strictSchedulerTimingAdmission'] is True and raw['localFunctionalDiagnosticOptIn'] is False
++         and len(raw['arms']) == len(review['arms']) == 1, 'Strict finite CPU arm; no local diagnostic admission')
++    actual = raw['arms'][0]
++    cfg = actual['config']
++    need(actual['schedulerTimingValidFromRaw'] is True and actual['localFunctionalOnly'] is False,
++         'Actual raw scheduler admission must pass')
++    need(cfg['arrivals'] == 33792 and cfg['ratePerSecond'] == 500 and cfg['actualCodeSha256'] == CODE
++         and cfg['eventFetchCount'] == selected and cfg['commonEventFetchEnvelope'] is True
++         and cfg['batchCap'] == 4 and cfg['archiveChunkBytes'] == 6144 and cfg['readWindow'] == 8,
++         'Exact LONG workload and fixed geometry')
++    need(len(actual['cycles']) == 12 and len(actual['readPhaseBindings']['readPhases']) == 24,
++         'Full12cycles/24phases required')
++    m = actual['rawMetrics']
++    need(m['scheduledArrivals'] == m['releasedArrivals'] == m['confirmedAcceptedUniqueOrders'] == 33792
++         and all(m[x] == 0 for x in ('notSent', 'unknownFinal', 'serverRejected', 'schedulerLatenessOver20ms')),
++         'All original finite arrivals confirmed with strict scheduler and no unresolved outcomes')
++    need(review['arms'][0]['arrivals'] == 33792 and review['arms'][0]['eventFetchCount'] == selected
++         and review['arms'][0]['ownerPollMaximumParkNs'] == 1000000,
++         'Independent finite workload/page observation')
++    need(final['ownerPollAttestation']['passed'] is True and raw['ownerPollAttestation']['passed'] is True
++         and review['actualOwnerAttestation']['passed'] is True
++         and review['actualOwnerAttestation']['actualConfiguredIdleFactoryCreations'] == 22,
++         'Actual owner and22factory inventory prerequisite')
++    qualified = all(v['sameNewArtifactFunctionalQualified'] is True for v in (final, raw, review))
++    canonical = all(v['allOriginalRawCanonicalAndThreeSnapshotsVerified'] is True for v in (final, raw, review))
++    need(qualified and canonical, 'Qualification/canonical flags must independently reconcile final/raw/root, never be presumed')
++    for key in ('closedArchiveSha256', 'closedNativeInventorySha256'):
++        need(hexsha(final[key]), 'Actual complete archive/inventory SHA')
++    return {'sameNewArtifactFunctionalQualified': qualified,
++            'allOriginalRawCanonicalAndThreeSnapshotsVerified': canonical}
++
++def validate_private_state(expected_commit, actual_head, remote, origin, metadata):
++    need(hexsha(expected_commit, 40) and actual_head == expected_commit, 'Root selected actual current commit required')
++    need(remote.split() == [expected_commit, 'refs/heads/main'], 'Current origin/main must equal actual HEAD')
++    need(origin in ('https://github.com/yinli-systems/vectormatch.git', 'git@github.com:yinli-systems/vectormatch.git'),
++         'Exact repository origin')
++    need(metadata['metadata']['repository_full_name'] == REPOSITORY and metadata['metadata']['visibility'] == 'private',
++         'Actual private repository metadata receipt')
++
++def validate_archive_review(review, arm, inventory_sha, closed_sha, inventory):
++    need(review['passed'] is True and review['arm'] == arm
++         and review['inventorySha256'] == inventory_sha and review['closedSha256'] == closed_sha,
++         'Actual independent archive review binds these complete archive receipts')
++    for key in ('allRootReviewInputBodiesBoundAndUnchanged', 'allSourceInventoriesUnchanged',
++                'exactCompleteCollectionMirror', 'localFullMemberShaBytesModesOwnersEmptyDirsVerified'):
++        need(review[key] is True, 'Actual independent archive predicate: ' + key)
++    need(review['payloadFiles'] == len(inventory['files'])
++         and review['directories'] == len(inventory['directories'])
++         and review['payloadBytes'] == sum(row['bytes'] for row in inventory['files'].values())
++         and hexsha(review['scriptSha256']), 'Independent full archive count/bytes/source closure')
++
++def validate_pair(gate, push, arm, push_sha):
++    selected = page(arm)
++    need(gate['schemaVersion'] == 2 and gate['scope'] == 'ROOT_VERIFIED_CLOSED_CPU_EVENT_FETCH_ARM_COLLECTION'
++         and gate['collectionComplete'] is True and gate['arm'] == arm and gate['eventFetchCount'] == selected
++         and gate['sourceCommit'] == SOURCE and gate['codeFingerprint'] == CODE
++         and gate['frozenReleaseSha256'] == RELEASE and gate['controllerSha256'] == CONTROLLER
++         and gate['ownerPollMaximumParkNs'] == 1000000 and gate['serverDriverMaximumParkNs'] == 100000,
++         'Exact new Event Fetch prior gate identity')
++    for key in ('localFullMemberShaBytesModesOwnersEmptyDirsVerified', 'allRawInputsAndFailuresRetained',
++                'strictSchedulerTimingAdmission', 'sameNewArtifactFunctionalQualified',
++                'allOriginalRawCanonicalAndThreeSnapshotsVerified'):
++        need(gate[key] is True, 'Actual gate predicate: ' + key)
++    for key in ('independentLocalCollectionReceiptSha256', 'closedArchiveSha256', 'closedNativeInventorySha256',
++                'privatePushReceiptSha256', 'rootIndependentReviewSha256', 'rawAuditSha256'):
++        need(hexsha(gate[key]), 'Original gate evidence SHA: ' + key)
++    need(gate['privatePushReceiptSha256'] == push_sha, 'Exact private-push original bytes')
++    need(push['schemaVersion'] == 1 and push['scope'] == 'ROOT_VERIFIED_PRIVATE_EVIDENCE_PUSH'
++         and push['repository'] == REPOSITORY and push['visibility'] == 'private'
++         and push['pushCompleted'] is True and push['remoteCommitVerified'] is True
++         and push['fullOriginalEvidencePushed'] is True and hexsha(push['commit'], 40)
++         and push['actualLsRemote'].split() == [push['commit'], 'refs/heads/main'], 'Actual private remote commit receipt')
++    need(push['evidencePath'] == 'evidence/2026-10-24/runpod-cpu/retention-event-fetch-v3/cloud-arm-%d-r1' % arm,
++         'Exact arm full-evidence path')
++    for key in ('evidenceManifestSha256', 'evidenceClosedSha256', 'repositoryMetadataReceiptSha256'):
++        need(hexsha(push[key]), 'Private full-evidence SHA')
++    for key in ('closedArchiveSha256', 'closedNativeInventorySha256', 'rootIndependentReviewSha256'):
++        need(push[key] == gate[key], 'Gate/private-push actual evidence binding: ' + key)
++    return True
++
++def validate_payload(payload, arm):
++    page(arm)
++    expected = {'release/arm-%d-collection-gate.json' % arm, 'release/arm-%d-private-push.json' % arm}
++    need(set(payload) == expected, 'Exactly two arm-specific prior JSON names, no alternate destination')
++    decoded = {}
++    for name, row in payload.items():
++        need(set(row) == {'data', 'sha256', 'bytes', 'mode'} and row['mode'] == 0o600
++             and type(row['bytes']) is int and 0 < row['bytes'] <= 65536 and hexsha(row['sha256']), 'Bounded exact prior JSON row')
++        data = base64.b64decode(row['data'], validate=True)
++        need(len(data) == row['bytes'] and digest(data) == row['sha256'], 'Original prior JSON bytes')
++        decoded[name] = data
++    gate_name = 'release/arm-%d-collection-gate.json' % arm
++    push_name = 'release/arm-%d-private-push.json' % arm
++    validate_pair(json.loads(decoded[gate_name]), json.loads(decoded[push_name]), arm, digest(decoded[push_name]))
++    return decoded
++
++def exclusive_write_pair(prep, payload, arm):
++    """Same function executes on remote; local guards use isolated temporary directories only."""
++    decoded = validate_payload(payload, arm)
++    prep = pathlib.Path(prep)
++    for path in (prep, *prep.parents, prep / 'release'):
++        need(not path.is_symlink(), 'No linked destination ancestor')
++    need(prep.is_dir() and (prep / 'release').is_dir(), 'Existing canonical release directory only')
++    # Validate BOTH absences before the first write. Partial syscall failures are preserved, never deleted/retried.
++    for name in decoded:
++        need(not os.path.lexists(prep / name), 'Exclusive prior file already exists')
++    directory = os.open(prep / 'release', os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
++    try:
++        for name, data in sorted(decoded.items()):
++            leaf = pathlib.PurePosixPath(name).name
++            fd = os.open(leaf, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600, dir_fd=directory)
++            os.fchmod(fd, 0o600)
++            with os.fdopen(fd, 'wb') as output:
++                output.write(data)
++                output.flush()
++                os.fsync(output.fileno())
++            check = os.open(leaf, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=directory)
++            with os.fdopen(check, 'rb') as source:
++                actual = source.read(65537)
++                s = os.fstat(source.fileno())
++            need(actual == data and stat.S_ISREG(s.st_mode) and s.st_nlink == 1 and stat.S_IMODE(s.st_mode) == 0o600,
++                 'Exact exclusive uploaded SHA/mode/link readback')
++        os.fsync(directory)
++    finally:
++        os.close(directory)
++    return {'passed': True, 'arm': arm, 'eventFetchCount': page(arm),
++            'uploaded': {name: digest(data) for name, data in decoded.items()},
++            'businessStarted': False, 'noOverwrite': True, 'noDeletionOrRetry': True}
+--- /dev/null
++++ test_prior.py
+@@ -0,0 +1,192 @@
++"""Synthetic dictionaries and resolved tempdir only; no actual raw/Git/SSH/freeze main."""
++import ast, base64, copy, hashlib, inspect, pathlib, tempfile, unittest
++import contracts as c
++import freeze
++import upload_pair
++
++def reports(arm=1):
++    base = dict(passed=True, arm=arm, eventFetchCount=c.page(arm), ownerPollMaximumParkNs=1000000, serverDriverMaximumParkNs=100000)
++    success = dict(base, steps=[{'exitCode': 0}] * 5)
++    final = dict(base, schemaVersion=1, frozenReleaseSha256=c.RELEASE, controllerSha256=c.CONTROLLER,
++        nestedFullVerificationPending=False, localFullMemberShaBytesModesOwnersEmptyDirsVerified=True,
++        allClosedRoundRawFilesAndErrorReceiptsRetained=True, rawInputFiles=1, ownerPollAttestation={'passed': True},
++        sameNewArtifactFunctionalQualified=True, allOriginalRawCanonicalAndThreeSnapshotsVerified=True,
++        closedArchiveSha256='a'*64, closedNativeInventorySha256='b'*64)
++    actual = dict(schedulerTimingValidFromRaw=True, localFunctionalOnly=False,
++        config=dict(arrivals=33792, ratePerSecond=500, actualCodeSha256=c.CODE, eventFetchCount=c.page(arm),
++                    commonEventFetchEnvelope=True, batchCap=4, archiveChunkBytes=6144, readWindow=8),
++        cycles=[{}]*12, readPhaseBindings={'readPhases': [{}]*24}, rawMetrics=dict(scheduledArrivals=33792,
++        releasedArrivals=33792, confirmedAcceptedUniqueOrders=33792, notSent=0, unknownFinal=0, serverRejected=0, schedulerLatenessOver20ms=0))
++    raw = dict(base, sourceCommit=c.SOURCE, releaseSha256=c.RELEASE, strictSchedulerTimingAdmission=True,
++        localFunctionalDiagnosticOptIn=False, arms=[actual], inputs={'SYNTHETIC_NOT_BUSINESS_EVIDENCE': {}},
++        ownerPollAttestation={'passed': True}, sameNewArtifactFunctionalQualified=True, allOriginalRawCanonicalAndThreeSnapshotsVerified=True)
++    review = dict(base, sourceCommit=c.SOURCE, releaseSha256=c.RELEASE, independent4AnchorCodeFingerprint=c.CODE,
++        rawAuditSha256='c'*64, allFullOuterMembersVerified=True, allRawInputsUnchanged=True, originalOwnerProjectionVerified=True,
++        rawInputFiles=1, arms=[dict(arrivals=33792, eventFetchCount=c.page(arm), ownerPollMaximumParkNs=1000000)],
++        actualOwnerAttestation={'passed': True, 'actualConfiguredIdleFactoryCreations': 22},
++        sameNewArtifactFunctionalQualified=True, allOriginalRawCanonicalAndThreeSnapshotsVerified=True)
++    return [success, final, raw, review]
++
++def pair(arm=1):
++    push = dict(schemaVersion=1, scope='ROOT_VERIFIED_PRIVATE_EVIDENCE_PUSH', repository=c.REPOSITORY, visibility='private',
++        pushCompleted=True, remoteCommitVerified=True, fullOriginalEvidencePushed=True, commit='1'*40,
++        actualLsRemote='1'*40+'\trefs/heads/main', evidencePath='evidence/2026-10-24/runpod-cpu/retention-event-fetch-v3/cloud-arm-%d-r1'%arm,
++        evidenceManifestSha256='d'*64, evidenceClosedSha256='e'*64, repositoryMetadataReceiptSha256='f'*64,
++        closedArchiveSha256='a'*64, closedNativeInventorySha256='b'*64, rootIndependentReviewSha256='c'*64)
++    gate = dict(schemaVersion=2, scope='ROOT_VERIFIED_CLOSED_CPU_EVENT_FETCH_ARM_COLLECTION', collectionComplete=True,
++        arm=arm, eventFetchCount=c.page(arm), sourceCommit=c.SOURCE, codeFingerprint=c.CODE, frozenReleaseSha256=c.RELEASE,
++        controllerSha256=c.CONTROLLER, ownerPollMaximumParkNs=1000000, serverDriverMaximumParkNs=100000,
++        localFullMemberShaBytesModesOwnersEmptyDirsVerified=True, allRawInputsAndFailuresRetained=True,
++        strictSchedulerTimingAdmission=True, sameNewArtifactFunctionalQualified=True, allOriginalRawCanonicalAndThreeSnapshotsVerified=True,
++        independentLocalCollectionReceiptSha256='a'*64, closedArchiveSha256='a'*64, closedNativeInventorySha256='b'*64,
++        privatePushReceiptSha256=c.digest(c.encoded(push)), rootIndependentReviewSha256='c'*64, rawAuditSha256='d'*64)
++    return gate, push
++
++def payload(arm=1):
++    return {'release/arm-%d-%s.json'%(arm,leaf):dict(data=base64.b64encode(c.encoded(v)).decode(),bytes=len(c.encoded(v)),
++        sha256=c.digest(c.encoded(v)),mode=0o600) for leaf,v in zip(('collection-gate','private-push'),pair(arm))}
++
++class ReportGuards(unittest.TestCase):
++    def test_all_registered_arm_selections(self):
++        for arm in (1,2,3):self.assertTrue(all(c.validate_reports(*reports(arm),arm,'c'*64).values()))
++        for arm in (0,4,True,'1'):
++            with self.assertRaises(AssertionError):c.page(arm)
++
++    def test_wrong_page_in_each_report(self):
++        for index in range(4):
++            values=reports();values[index]['eventFetchCount']=32
++            with self.assertRaises(AssertionError):c.validate_reports(*values,1,'c'*64)
++
++    def test_owner_driver_source_code_release_and_raw_sha(self):
++        changes=[(2,'ownerPollMaximumParkNs',100000),(2,'serverDriverMaximumParkNs',1000000),(2,'sourceCommit','0'*40),
++            (3,'independent4AnchorCodeFingerprint','0'*64),(3,'rawAuditSha256','0'*64),(1,'frozenReleaseSha256','0'*64)]
++        for index,key,value in changes:
++            values=reports();values[index][key]=value
++            with self.assertRaises(AssertionError):c.validate_reports(*values,1,'c'*64)
++
++    def test_each_final_raw_root_qualification_must_actually_pass(self):
++        for index in (1,2,3):
++            for key in ('sameNewArtifactFunctionalQualified','allOriginalRawCanonicalAndThreeSnapshotsVerified'):
++                values=reports();values[index][key]=False
++                with self.assertRaises(AssertionError):c.validate_reports(*values,1,'c'*64)
++
++    def test_strict_scheduler_not_local_diagnostic(self):
++        for key in ('strictSchedulerTimingAdmission','localFunctionalDiagnosticOptIn'):
++            values=reports();values[2][key]=not values[2][key]
++            with self.assertRaises(AssertionError):c.validate_reports(*values,1,'c'*64)
++        values=reports();values[2]['arms'][0]['schedulerTimingValidFromRaw']=False
++        with self.assertRaises(AssertionError):c.validate_reports(*values,1,'c'*64)
++
++    def test_incomplete_tar_collection_and_long_inventory(self):
++        for key in ('nestedFullVerificationPending','localFullMemberShaBytesModesOwnersEmptyDirsVerified'):
++            values=reports();values[1][key]=not values[1][key]
++            with self.assertRaises(AssertionError):c.validate_reports(*values,1,'c'*64)
++        for index in (0,1,2):
++            values=reports()
++            if index==0:values[0]['steps'].pop()
++            elif index==1:values[2]['arms'][0]['cycles'].pop()
++            else:values[2]['arms'][0]['readPhaseBindings']['readPhases'].pop()
++            with self.assertRaises(AssertionError):c.validate_reports(*values,1,'c'*64)
++
++    def test_unknown_rejections_late_schedule_or_missing_originals(self):
++        for key in ('notSent','unknownFinal','serverRejected','schedulerLatenessOver20ms','confirmedAcceptedUniqueOrders'):
++            values=reports();values[2]['arms'][0]['rawMetrics'][key]+=1
++            with self.assertRaises(AssertionError):c.validate_reports(*values,1,'c'*64)
++
++class PrivateArchiveGuards(unittest.TestCase):
++    def test_private_remote_head_and_origin_required(self):
++        args=['1'*40,'1'*40,'1'*40+'\trefs/heads/main','https://github.com/yinli-systems/vectormatch.git',
++              {'metadata':{'repository_full_name':c.REPOSITORY,'visibility':'private'}}]
++        c.validate_private_state(*args)
++        for index,value in [(1,'2'*40),(2,'2'*40+'\trefs/heads/main'),(3,'https://github.com/other/repo.git')]:
++            changed=copy.deepcopy(args);changed[index]=value
++            with self.assertRaises(AssertionError):c.validate_private_state(*changed)
++        args[4]['metadata']['visibility']='public'
++        with self.assertRaises(AssertionError):c.validate_private_state(*args)
++
++    def test_independent_archive_sha_counts_and_mirror_flags(self):
++        inventory={'files':{'synthetic.txt':{'bytes':3}},'directories':{'.':{}}}
++        review=dict(passed=True,arm=1,inventorySha256='a'*64,closedSha256='b'*64,allRootReviewInputBodiesBoundAndUnchanged=True,
++            allSourceInventoriesUnchanged=True,exactCompleteCollectionMirror=True,localFullMemberShaBytesModesOwnersEmptyDirsVerified=True,
++            payloadFiles=1,directories=1,payloadBytes=3,scriptSha256='c'*64)
++        c.validate_archive_review(review,1,'a'*64,'b'*64,inventory)
++        for key,value in [('exactCompleteCollectionMirror',False),('inventorySha256','0'*64),('payloadBytes',2)]:
++            with self.assertRaises(AssertionError):c.validate_archive_review(dict(review,**{key:value}),1,'a'*64,'b'*64,inventory)
++
++    def test_git_blob_header_hash_without_git(self):
++        with tempfile.TemporaryDirectory()as temporary:
++            path=pathlib.Path(temporary).resolve()/'synthetic.txt';path.write_bytes(b'abc')
++            self.assertEqual(freeze.blob_sha1(path),hashlib.sha1(b'blob 3\x00abc').hexdigest())
++
++    def test_full_archive_emptydir_metadata_and_extra_file(self):
++        with tempfile.TemporaryDirectory()as temporary:
++            root=pathlib.Path(temporary).resolve();(root/'empty').mkdir();(root/'synthetic.txt').write_bytes(b'abc')
++            inventory=freeze.snapshot(root);(root/'INVENTORY.json').write_bytes(c.encoded(inventory))
++            closed=dict(passed=True,inventorySha256=freeze.sha(root/'INVENTORY.json'),allOriginalCollectionAndBothCompleteTarsRetained=True,
++                sourceCopyBeforeAfterEqual=True,fullShaSizeModeUidGidEmptyDirectoryClosureVerified=True,allKnownMarkerScansPassed=True)
++            (root/'CLOSED.json').write_bytes(c.encoded(closed));freeze.verify_archive(root)
++            (root/'extra.txt').write_text('extra')
++            with self.assertRaises(AssertionError):freeze.verify_archive(root)
++
++class PairUploadGuards(unittest.TestCase):
++    def test_same_artifact_pair_and_wrong_scope_page_flags(self):
++        for arm in (1,2,3):
++            gate,push=pair(arm);self.assertTrue(c.validate_pair(gate,push,arm,c.digest(c.encoded(push))))
++        for key,value in [('scope','ROOT_VERIFIED_CLOSED_CPU_OWNER_POLL_ARM_COLLECTION'),('eventFetchCount',32),('sourceCommit','0'*40),
++            ('frozenReleaseSha256','0'*64),('sameNewArtifactFunctionalQualified',False),('allOriginalRawCanonicalAndThreeSnapshotsVerified',False)]:
++            gate,push=pair();gate[key]=value
++            with self.assertRaises(AssertionError):c.validate_pair(gate,push,1,c.digest(c.encoded(push)))
++
++    def test_private_byte_and_root_archive_binding(self):
++        gate,push=pair()
++        with self.assertRaises(AssertionError):c.validate_pair(gate,push,1,'0'*64)
++        push['closedArchiveSha256']='0'*64
++        with self.assertRaises(AssertionError):c.validate_pair(gate,push,1,gate['privatePushReceiptSha256'])
++
++    def test_payload_exactly_two_names_original_bytes_and0600(self):
++        for change in ('extra','wrongarm','bytes','mode'):
++            values=payload();name=next(iter(values))
++            if change=='extra':values['release/other.json']=values[name]
++            elif change=='wrongarm':values['release/arm-2-collection-gate.json']=values.pop(name)
++            elif change=='bytes':values[name]['bytes']+=1
++            else:values[name]['mode']=0o644
++            with self.assertRaises(AssertionError):c.validate_payload(values,1)
++
++    def test_exclusive_pair_exact_readback_and_repeat_nooverwrite(self):
++        with tempfile.TemporaryDirectory()as temporary:
++            root=pathlib.Path(temporary).resolve();(root/'release').mkdir()
++            result=c.exclusive_write_pair(root,payload(),1);self.assertEqual(set(result['uploaded']),set(payload()))
++            self.assertEqual(len(list(root.rglob('*.json'))),2)
++            for name in result['uploaded']:self.assertEqual((root/name).stat().st_mode&0o777,0o600)
++            before=freeze.snapshot(root)
++            with self.assertRaises(AssertionError):c.exclusive_write_pair(root,payload(),1)
++            self.assertEqual(freeze.snapshot(root),before)
++
++    def test_existing_second_target_or_broken_link_prevents_first_write(self):
++        for symlink in (False,True):
++            with tempfile.TemporaryDirectory()as temporary:
++                root=pathlib.Path(temporary).resolve();(root/'release').mkdir();existing=root/'release/arm-1-private-push.json'
++                if symlink:existing.symlink_to(root/'absent')
++                else:existing.write_text('original')
++                with self.assertRaises(AssertionError):c.exclusive_write_pair(root,payload(),1)
++                self.assertFalse((root/'release/arm-1-collection-gate.json').exists())
++                if not symlink:self.assertEqual(existing.read_text(),'original')
++
++    def test_linked_release_directory_refused(self):
++        with tempfile.TemporaryDirectory()as temporary:
++            root=pathlib.Path(temporary).resolve();(root/'real').mkdir();(root/'release').symlink_to(root/'real',target_is_directory=True)
++            with self.assertRaises(AssertionError):c.exclusive_write_pair(root,payload(),1)
++            self.assertEqual(list((root/'real').iterdir()),[])
++
++    def test_remote_source_same_exclusive_function_and_no_launch_primitives(self):
++        source=upload_pair.program(payload(),1);compile(source,'<synthetic-upload>','exec')
++        self.assertIn(inspect.getsource(c.exclusive_write_pair),source)
++        forbidden={'Popen','run','exec','eval','unlink','rmdir','remove','kill'}
++        for node in ast.walk(ast.parse(source)):
++            if isinstance(node,ast.Call):
++                name=node.func.attr if isinstance(node.func,ast.Attribute)else node.func.id if isinstance(node.func,ast.Name)else None
++                self.assertNotIn(name,forbidden)
++                self.assertFalse(isinstance(node.func,ast.Attribute) and node.func.attr=='system'
++                    and isinstance(node.func.value,ast.Name) and node.func.value.id=='os')
++
++if __name__=='__main__':unittest.main(verbosity=2)
+--- /dev/null
++++ run_guards.py
+@@ -0,0 +1,24 @@
++"""One registered synthetic-only guard attempt; never calls freeze/upload main or Git/SSH."""
++from pathlib import Path
++import datetime, hashlib, json, stat, subprocess, sys, zipfile
++HERE=Path(__file__).resolve().parent
++def row(path):
++    data=path.read_bytes();s=path.stat()
++    return dict(bytes=len(data),sha256=hashlib.sha256(data).hexdigest(),mode=stat.S_IMODE(s.st_mode))
++def save(path,value):
++    with path.open('x')as out:json.dump(value,out,indent=2,sort_keys=True);out.write('\n')
++def main():
++    output=HERE/'guards-r1';output.mkdir()
++    files={name:row(HERE/name)for name in ['contracts.py','freeze.py','upload_pair.py','test_prior.py','run_guards.py']}
++    argv=[sys.executable,'-B','-m','unittest','-v','test_prior']
++    save(output/'REGISTRATION.json',dict(atUTC=datetime.datetime.now(datetime.timezone.utc).isoformat(),argv=argv,cwd=str(HERE),sourceFiles=files,syntheticAndTemporaryOnly=True,noActualFreezeUploadGitSshJavaRawAudit=True))
++    with zipfile.ZipFile(output/'sources.zip','x',compression=zipfile.ZIP_DEFLATED)as archive:
++        for name in files:archive.write(HERE/name,name)
++    with(output/'stdout').open('xb')as stdout,(output/'stderr').open('xb')as stderr:
++        result=subprocess.run(argv,cwd=HERE,stdout=stdout,stderr=stderr,timeout=60)
++    after={name:row(HERE/name)for name in files}
++    save(output/'EXECUTION.json',dict(exitCode=result.returncode,sourceFilesBefore=files,sourceFilesAfter=after,sourceInputsUnchanged=files==after,
++        sourceZip=row(output/'sources.zip'),stdout=row(output/'stdout'),stderr=row(output/'stderr'),actualFreezeOrUploadRun=False))
++    print(json.dumps(dict(exitCode=result.returncode,sourceInputsUnchanged=files==after,stderr=(output/'stderr').read_text())))
++    raise SystemExit(result.returncode or int(files!=after))
++if __name__=='__main__':main()
+--- /dev/null
++++ run_guards_r2.py
+@@ -0,0 +1,24 @@
++"""One registered synthetic-only guard attempt; never calls freeze/upload main or Git/SSH."""
++from pathlib import Path
++import datetime, hashlib, json, stat, subprocess, sys, zipfile
++HERE=Path(__file__).resolve().parent
++def row(path):
++    data=path.read_bytes();s=path.stat()
++    return dict(bytes=len(data),sha256=hashlib.sha256(data).hexdigest(),mode=stat.S_IMODE(s.st_mode))
++def save(path,value):
++    with path.open('x')as out:json.dump(value,out,indent=2,sort_keys=True);out.write('\n')
++def main():
++    output=HERE/'guards-r2';output.mkdir()
++    files={name:row(HERE/name)for name in ['contracts.py','freeze.py','upload_pair.py','test_prior.py','run_guards.py']}
++    argv=[sys.executable,'-B','-m','unittest','-v','test_prior']
++    save(output/'REGISTRATION.json',dict(atUTC=datetime.datetime.now(datetime.timezone.utc).isoformat(),argv=argv,cwd=str(HERE),sourceFiles=files,syntheticAndTemporaryOnly=True,noActualFreezeUploadGitSshJavaRawAudit=True))
++    with zipfile.ZipFile(output/'sources.zip','x',compression=zipfile.ZIP_DEFLATED)as archive:
++        for name in files:archive.write(HERE/name,name)
++    with(output/'stdout').open('xb')as stdout,(output/'stderr').open('xb')as stderr:
++        result=subprocess.run(argv,cwd=HERE,stdout=stdout,stderr=stderr,timeout=60)
++    after={name:row(HERE/name)for name in files}
++    save(output/'EXECUTION.json',dict(exitCode=result.returncode,sourceFilesBefore=files,sourceFilesAfter=after,sourceInputsUnchanged=files==after,
++        sourceZip=row(output/'sources.zip'),stdout=row(output/'stdout'),stderr=row(output/'stderr'),actualFreezeOrUploadRun=False))
++    print(json.dumps(dict(exitCode=result.returncode,sourceInputsUnchanged=files==after,stderr=(output/'stderr').read_text())))
++    raise SystemExit(result.returncode or int(files!=after))
++if __name__=='__main__':main()
