@@ -1,0 +1,45 @@
+{
+  "arguments": [
+    "/usr/bin/setfacl",
+    "--no-mask",
+    "-m",
+    "u:963:--x,m::--x",
+    "/opt/vectormatch-cpu/preparation/pg-readonly-recovery-r1"
+  ],
+  "exitCode": 0,
+  "stdout": "",
+  "stderr": "",
+  "before": {
+    "path": "/opt/vectormatch-cpu/preparation/pg-readonly-recovery-r1",
+    "uid": 0,
+    "gid": 0,
+    "mode": 448,
+    "inode": 14731624,
+    "device": 48,
+    "mtimeNs": 1792817896106480190,
+    "acl": [
+      "group::---",
+      "other::---",
+      "user::rwx"
+    ]
+  },
+  "after": {
+    "path": "/opt/vectormatch-cpu/preparation/pg-readonly-recovery-r1",
+    "uid": 0,
+    "gid": 0,
+    "mode": 456,
+    "inode": 14731624,
+    "device": 48,
+    "mtimeNs": 1792817896106480190,
+    "acl": [
+      "group::---",
+      "mask::--x",
+      "other::---",
+      "user:963:--x",
+      "user::rwx"
+    ]
+  },
+  "firstFourTargetsUntouched": true,
+  "pgDataOwnershipUntouched": true,
+  "postgresStarted": false
+}
