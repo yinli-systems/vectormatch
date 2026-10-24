@@ -82,10 +82,10 @@ class RetentionAeronAdapterV3Test {
     @Test void newReadOperationsAreBoundedCanonicalAndDoNotEnterMaintenanceNamespace() {
         var a = adapter(); call(a, new Business(new Deposit(1, "fund", 1, Asset.BASE, 10)));
         var descriptor = (Descriptor) call(a, new PrepareArchive(1)).payload();
-        for (Operation op : List.of(new FetchEvents(1, 16), new PrepareArchive(1), new ArchiveChunk(descriptor.acknowledgement(), descriptor.totalBytes(), 0, 3072))) {
+        for (Operation op : List.of(new FetchEvents(1, 16), new FetchEvents(1, MAX_SUPPORTED_EVENT_FETCH_COUNT), new PrepareArchive(1), new ArchiveChunk(descriptor.acknowledgement(), descriptor.totalBytes(), 0, 3072))) {
             Request r = request(op); assertEquals(r, RetentionWireV3.decode(RetentionWireV3.encode(r)));
         }
-        assertThrows(IllegalArgumentException.class, () -> new FetchEvents(1, 17));
+        assertThrows(IllegalArgumentException.class, () -> new FetchEvents(1, MAX_SUPPORTED_EVENT_FETCH_COUNT + 1));
         assertThrows(IllegalArgumentException.class, () -> new ArchiveChunk(descriptor.acknowledgement(), descriptor.totalBytes(), 0, MAX_SUPPORTED_ARCHIVE_CHUNK+1));
         assertEquals(1, call(a, new Position()).counters().applicationMutation());
     }
