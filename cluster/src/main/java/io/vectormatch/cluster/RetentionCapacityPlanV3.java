@@ -14,6 +14,8 @@ public final class RetentionCapacityPlanV3 {
     public static final int MAX_ARRIVALS = 350_000, WORKERS = 128, COMMANDS_PER_CYCLE = 3072;
     public static final int MAXIMUM_OFFERS_PER_RPC = 4;
     public static final int MAX_READ_ONLY_IN_FLIGHT = 8;
+    /** Only the explicitly named read-window32 experiment may reserve this envelope. */
+    public static final int EXPERIMENT_READ_ONLY_IN_FLIGHT = 32;
     public static final long WRITER_PAYLOAD_LIMIT = 1024L*1024*1024;
     public static final int WRITER_TOTAL_FILE_LIMIT = 1024;
     public static final long RAW_TRACE_LIMIT = 2L*1024*1024*1024;
@@ -85,6 +87,7 @@ public final class RetentionCapacityPlanV3 {
                     selectedMaximumArchiveChunkRpcs,admissionRejections,1,1,false,0,0);
         }
         public boolean admitted() { return admissionRejections.isEmpty(); }
+        public boolean commonReadWindow32Envelope() { return maxReadOnlyInFlight == EXPERIMENT_READ_ONLY_IN_FLIGHT; }
         public int maximumPhysicalOffersPerRpc() { return MAXIMUM_OFFERS_PER_RPC; }
         public int maximumWriterFilesIncludingReceipts() { return Math.multiplyExact(maximumWriterPayloadFiles,2); }
         public void requireAdmitted() {
@@ -95,6 +98,7 @@ public final class RetentionCapacityPlanV3 {
             out.put("archiveChunkBytes",archiveChunkBytes);out.put("eventFetchCount",eventFetchCount);out.put("commonChunkEnvelope",commonChunkEnvelope);
             if(commonEventFetchEnvelope){out.put("commonEventFetchEnvelope",true);out.put("selectedMaximumEventFetchRpcs",selectedMaximumEventFetchRpcs);}
             out.put("requestedReadWindow",requestedReadWindow);out.put("maxReadOnlyInFlight",maxReadOnlyInFlight);out.put("commonReadWindowEnvelope",commonReadWindowEnvelope);
+            if(commonReadWindow32Envelope())out.put("commonReadWindow32Envelope",true);
             out.put("readOnlyStagingBytes",readOnlyStagingBytes);out.put("readOnlyFailureTraceReserveBytes",readOnlyFailureTraceReserveBytes);
             out.put("selectedMaximumLogicalMaintenanceRpcs",selectedMaximumLogicalMaintenanceRpcs);out.put("selectedMaximumArchiveChunkRpcs",selectedMaximumArchiveChunkRpcs);
             out.put("maximumSupportedArchiveChunkBytes",MAX_SUPPORTED_ARCHIVE_CHUNK);out.put("maximumEncodedChunkReplyBytes",maxEncodedArchiveChunkReplyBytes(MAX_SUPPORTED_ARCHIVE_CHUNK));
@@ -206,6 +210,32 @@ public final class RetentionCapacityPlanV3 {
                 selected.selectedMaximumLogicalMaintenanceRpcs(),selected.selectedMaximumArchiveChunkRpcs(),rejected,8,MAX_READ_ONLY_IN_FLIGHT,true,
                 Math.max(a.readOnlyStagingBytes(),b.readOnlyStagingBytes()),Math.max(a.readOnlyFailureTraceReserveBytes(),b.readOnlyFailureTraceReserveBytes()),
                 eventFetchCount,true,selected.maximumEventFetchRpcs());
+    }
+    public static int requireReadWindow32(int readWindow) {
+        if(readWindow!=8&&readWindow!=EXPERIMENT_READ_ONLY_IN_FLIGHT)
+            throw new IllegalArgumentException("explicit read-window32 experiment requires8 or32 credits");
+        return readWindow;
+    }
+    /** Fixed page and cut; both selected windows reserve exactly the same32-credit failure/staging envelope. */
+    public static Plan commonReadWindow32Plan(int arrivals,int batchCap,RetentionServiceV3.Profile profile,
+                                             int eventFetchCount,int readWindow,long extras,long negatives) {
+        requireReadWindow32(readWindow);requireEventFetchCount(eventFetchCount);
+        if(arrivals!=33792||batchCap!=4)throw new IllegalArgumentException("read-window32 requires fixed LONG33792/cap4");
+        Plan base=readWindowPlan(arrivals,batchCap,profile,8,extras,negatives,eventFetchCount);
+        Probe p=probe(profile,batchCap,MAX_SUPPORTED_ARCHIVE_CHUNK,true,eventFetchCount);
+        long staging=4L*EXPERIMENT_READ_ONLY_IN_FLIGHT*(p.readOnlyRequest+p.readOnlyReply)+READ_ONLY_FAILURE_METADATA_BYTES;
+        long failure=EXPERIMENT_READ_ONLY_IN_FLIGHT*(p.readOnlyRequest+(long)RAW_FRAME_PREFIX_BYTES+256L)+READ_ONLY_FAILURE_METADATA_BYTES;
+        long extraFailure=Math.subtractExact(failure,base.readOnlyFailureTraceReserveBytes());
+        long raw=Math.addExact(base.maximumRawTraceBytes(),extraFailure);
+        long allocation=Math.addExact(base.maximumAllocatedGrowthBytes(),Math.addExact(extraFailure,Math.subtractExact(staging,base.readOnlyStagingBytes())));
+        var rejected=new ArrayList<>(base.admissionRejections());
+        if(raw>RAW_TRACE_LIMIT&&!rejected.contains("derived raw trace exceeds finite 2GiB cap"))rejected.add("derived raw trace exceeds finite 2GiB cap");
+        if(allocation>ALLOCATED_GROWTH_LIMIT&&!rejected.contains("derived payload/trace/native-reserve allocation exceeds 2.5GiB growth cap"))rejected.add("derived payload/trace/native-reserve allocation exceeds 2.5GiB growth cap");
+        return new Plan(arrivals,batchCap,base.maximumMaintenanceCycles(),base.maximumEvents(),base.maximumLogicalMaintenanceRpcs(),base.maximumBusinessFrames(),extras,negatives,
+                base.maximumWriterPayloadBytes(),base.maximumWriterPayloadFiles(),Math.addExact(base.noRetryRawTraceBytes(),extraFailure),Math.addExact(base.worstFourOfferRawTraceBytes(),extraFailure),raw,allocation,
+                base.minimumFreeRuntimeBytes(),base.maximumJournalRecords(),base.maximumJournalBytes(),base.maximumArchiveEntryBytes(),base.archiveHeaderBytes(),base.maximumArchivePayloadBytes(),base.maximumEventPayloadBytes(),
+                base.maximumArchiveChunkRpcs(),base.maximumEventFetchRpcs(),base.largestReplyBytes(),MAX_SUPPORTED_ARCHIVE_CHUNK,false,base.selectedMaximumLogicalMaintenanceRpcs(),base.selectedMaximumArchiveChunkRpcs(),rejected,
+                readWindow,EXPERIMENT_READ_ONLY_IN_FLIGHT,true,staging,failure,eventFetchCount,false,base.selectedMaximumEventFetchRpcs());
     }
     private static Plan calculate(int arrivals,int batchCap,RetentionServiceV3.Profile profile,long extras,long negatives,int archiveChunkBytes) {
         return calculate(arrivals,batchCap,profile,extras,negatives,archiveChunkBytes,false);

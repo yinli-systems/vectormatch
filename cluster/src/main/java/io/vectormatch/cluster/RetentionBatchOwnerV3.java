@@ -196,10 +196,16 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
             closed=true;readBank=null;wake();
         }}
     }
-    public ReadBank openReadBank(int window){synchronized(lock){healthy();
-        if(window!=1&&window!=8)throw new IllegalArgumentException("read window must be1or8");
+    public ReadBank openReadBank(int window){
+        RetentionCapacityPlanV3.requireReadWindow(window);return openReadBank(window,8);
+    }
+    /** Explicit opt-in, preserving the old API's eight-credit ceiling. */
+    public ReadBank openReadBank32(int window){
+        RetentionCapacityPlanV3.requireReadWindow32(window);return openReadBank(window,32);
+    }
+    private ReadBank openReadBank(int window,int hardCapacity){synchronized(lock){healthy();
         if(closing||maintenanceStopped||readBank!=null||maintenance!=null||pendingCount()!=0)throw new IllegalStateException("read bank requires definite business/control closure");
-        readBank=new ReadBank(window);selectedReadWindow=window;return readBank;
+        readBank=new ReadBank(window);selectedReadWindow=window;readOnlyHardCapacity=hardCapacity;return readBank;
     }}
     public static final class UnknownMaintenanceException extends IllegalStateException {
         private static final long serialVersionUID = 1L;
@@ -408,7 +414,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
     private MaintenanceSlot maintenance;
     private ReadBank readBank;
     private final LinkedHashSet<Long> retiredReadCorrelations=new LinkedHashSet<>();
-    private int selectedReadWindow=1,readOnlyRetainedHighWater,readOnlyInFlightHighWater,readOnlyOfferedInFlightHighWater;
+    private int readOnlyHardCapacity=8,selectedReadWindow=1,readOnlyRetainedHighWater,readOnlyInFlightHighWater,readOnlyOfferedInFlightHighWater;
     private long readOnlySubmitted,readOnlyCompleted,readOnlyDuplicateOrLateReplies,readPhaseGeneration;
     private long maintenanceMutationOffers, maintenanceMutationReserveBytes, maintenanceAcceptedOffers, maintenanceNegativeOffers, maintenanceReplies;
     private Throwable failure;
@@ -676,7 +682,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
             out.put("retiredFrames", retiredFrames); out.put("pendingHighWater", pendingHighWater); out.put("frameHighWater", frameHighWater);
             out.put("newBusinessAdmissionStopped", admissionStopped); out.put("closed", closing); out.put("ownerThreadAlive", owner.isAlive());
             out.put("failureType", failure == null ? null : failure.getClass().getName()); out.put("transportObservation", transportObservation);out.put("transportObservedAtMonotonicNs",transportObservedAtNs);
-            out.put("selectedReadWindow",selectedReadWindow);out.put("readOnlyHardCapacity",8);out.put("readBankOpen",readBank!=null);
+            out.put("selectedReadWindow",selectedReadWindow);out.put("readOnlyHardCapacity",readOnlyHardCapacity);out.put("readBankOpen",readBank!=null);
             out.put("readOnlyRetained",readBank==null?0:readBank.pending.size());out.put("readOnlyInFlight",readBank==null?0:readBank.pending.values().stream().filter(slot->slot.armed&&!slot.completion.isDone()).count());out.put("readOnlyCompletedUnconsumed",readBank==null?0:readBank.pending.values().stream().filter(slot->slot.completion.isDone()&&!slot.completion.isCompletedExceptionally()).count());out.put("readOnlyRetainedHighWater",readOnlyRetainedHighWater);out.put("readOnlyInFlightHighWater",readOnlyInFlightHighWater);out.put("readOnlyOfferedAwaitingReplyHighWater",readOnlyOfferedInFlightHighWater);
             out.put("queuedReads",readBank==null?0:readBank.pending.values().stream().filter(s->!s.possiblyOffered).count());
             out.put("readOnlySubmitted",readOnlySubmitted);out.put("readOnlyCompleted",readOnlyCompleted);out.put("ignoredRetiredReadDuplicateOrLateReplies",readOnlyDuplicateOrLateReplies);
