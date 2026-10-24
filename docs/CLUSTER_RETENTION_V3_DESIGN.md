@@ -1,10 +1,19 @@
 # Proposed V3 Cluster, archive and endurance integration
 
-This is an unimplemented next-stage design. The current candidate implements only
-the bounded core facade, codec and small local correctness tests described in
-`CORE_RETENTION_V3.md`. It is not a new capacity/endurance result or permission to
-replace original native state. The legacy V2 profile/wire/capacity harness remains
-unchanged.
+This design separates the implemented local prototype from the remaining
+distributed/export/endurance stages. Independent candidate
+[`71199b`](https://github.com/yinli-systems/vectormatch/tree/71199b16beea2ccad406bca98d4966faf3d8d0e2)
+implements bounded request wire encoding, generation-bound joint admission,
+maintenance identity/cache/journal state and a combined checkpoint in a separate
+in-process single-writer service above the bounded core candidate109ae.
+Root's full check passed167configured tests;
+11PG integration tests skipped without a DB fixture. This is not connected to
+Aeron ingress/NodeMain and has no new response/export transport or durable writer.
+It supplies no new capacity/endurance result or permission to replace original
+native state. The legacy V2 profile/wire/capacity harness remains unchanged.
+The distributed/export/endurance phases below remain unimplemented. Scope and
+source hashes are preserved in the
+[candidate evidence](../evidence/2026-10-24/runpod-cpu/cluster-retention-v3/source-validation/README.md).
 
 ## Separate profile and wire boundary
 
