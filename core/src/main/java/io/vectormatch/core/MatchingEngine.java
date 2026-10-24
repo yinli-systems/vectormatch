@@ -246,6 +246,17 @@ public final class MatchingEngine {
             return noEvents(ResultCode.REJECTED, "producer capacity reached", 0);
         if (commandSeq == Long.MAX_VALUE)
             return noEvents(ResultCode.REJECTED, "command sequence exhausted", 0);
+        // An order can emit at most one acceptance, one expiry, and one trade
+        // per retained maker. Keep the usual hot path O(1), and compute the
+        // exact count only when a 64-bit event counter nears exhaustion.
+        long upperEventBound = (long) orders.size() + 2L;
+        if (eventSeq > Long.MAX_VALUE - upperEventBound
+                || (!(command instanceof Deposit) && marketSeq > Long.MAX_VALUE - upperEventBound)) {
+            int pendingEvents = maximumEventsFor(command);
+            if (pendingEvents > Long.MAX_VALUE - eventSeq
+                    || (!(command instanceof Deposit) && pendingEvents > Long.MAX_VALUE - marketSeq))
+                return noEvents(ResultCode.REJECTED, "event sequence capacity reached", 0);
+        }
         commandSeq++;
         List<Event> events = new ArrayList<>();
         Result result;
