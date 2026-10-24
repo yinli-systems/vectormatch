@@ -31,6 +31,8 @@ class MultiplexedLoadTransportsTest {
         final Map<Long, Command> commands = new LinkedHashMap<>();
         final Map<Long, CommandCodec.Reply> waiting = new LinkedHashMap<>(), responses = new LinkedHashMap<>();
         final MatchingEngine engine = ClusterCapacity.newEngine();
+        Map<String, Object> idleObservation = RemoteCapacityExperiment.unavailableSharedDriverIdleObservation();
+        final AtomicInteger idleObservationReads = new AtomicInteger();
         long correlation;
         void owner() {
             thread.compareAndSet(null, Thread.currentThread());
@@ -61,7 +63,41 @@ class MultiplexedLoadTransportsTest {
         public int leader() { owner(); return 0; }
         public long nakDelayNs() { owner(); return 1000; }
         public long nakRetryRatio() { owner(); return 100; }
+        public Map<String, Object> sharedDriverIdleObservation() {
+            owner(); idleObservationReads.incrementAndGet(); return idleObservation;
+        }
         public void close() { owner(); assertTrue(closed.compareAndSet(false, true), "Physical resource closes once"); }
+    }
+
+    @Test void measuredOwnerEvidenceIsCapturedOnceBeforeReadyAndRetainedWithoutReinterpretingIt() {
+        FakeIO io = new FakeIO();
+        var evidence = new LinkedHashMap<String, Object>(Map.of(
+                "available", false, "source", "fake-owner-evidence", "opaque", "not-a-requested-flag"));
+        io.idleObservation = evidence;
+        Map<String, Object> expected = Map.copyOf(evidence);
+        try (var factory = new MultiplexedLoadTransports(128, () -> io)) {
+            assertEquals(1, io.idleObservationReads.get(), "Capture must finish before constructor readiness");
+            assertNotSame(Thread.currentThread(), io.thread.get(), "Only physical owner captures driver evidence");
+            assertEquals(expected, factory.sharedDriverIdleObservation());
+            evidence.put("available", true);
+            evidence.put("opaque", "changed-after-capture");
+            assertEquals(expected, factory.sharedDriverIdleObservation(), "Retain a snapshot of actual owner evidence");
+            assertFalse((Boolean) factory.sharedDriverIdleObservation().get("available"), "Do not relabel a fake as observed");
+            assertThrows(UnsupportedOperationException.class,
+                    () -> factory.sharedDriverIdleObservation().put("maxParkNs", 100000));
+            assertEquals(1, io.idleObservationReads.get());
+        }
+        assertTrue(io.closed.get());
+    }
+
+    @Test void fakeOwnerWithoutObservationStaysExplicitlyUnavailable() {
+        FakeIO io = new FakeIO();
+        try (var factory = new MultiplexedLoadTransports(256, () -> io)) {
+            assertEquals(RemoteCapacityExperiment.unavailableSharedDriverIdleObservation(), factory.sharedDriverIdleObservation());
+            assertFalse((Boolean) factory.sharedDriverIdleObservation().get("available"));
+            assertFalse(factory.sharedDriverIdleObservation().containsKey("maxParkNs"));
+            assertEquals("unavailable", factory.sharedDriverIdleObservation().get("source"));
+        }
     }
 
     @Test void oneOwnerRetains128PendingAndResolvesReverseOrderWithoutEvictingThe65th() throws Exception {

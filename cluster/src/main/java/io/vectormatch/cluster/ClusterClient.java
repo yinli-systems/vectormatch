@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 /** Single-thread-confined development client. Retries preserve the entire business command identity. */
 public final class ClusterClient implements AutoCloseable, EgressListener {
+    static final String DRIVER_MAX_PARK_PROPERTY = "vectormatch.client.driverMaxParkNs";
     private static final long CONNECT_TIMEOUT_NS = TimeUnit.SECONDS.toNanos(20);
     private static final long CONNECT_SEED_TIMEOUT_NS = TimeUnit.SECONDS.toNanos(2);
     private final MediaDriver driver;
@@ -86,21 +87,64 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
     }
 
     static MediaDriver launchDriver(Path driverDirectory, NetworkTransport transport) {
-        return MediaDriver.launchEmbedded(new MediaDriver.Context()
+        return launchDriver(driverDirectory, transport, driverMaxParkNs(System.getProperty(DRIVER_MAX_PARK_PROPERTY)));
+    }
+
+    static MediaDriver launchDriver(Path driverDirectory, NetworkTransport transport, Long maximum) {
+        MediaDriver.Context context = driverContext(driverDirectory, transport, maximum);
+        IdleStrategy selected = context.sharedIdleStrategy();
+        MediaDriver result = MediaDriver.launchEmbedded(context);
+        if (maximum != null) {
+            if (result.context().sharedIdleStrategy() != selected
+                    || result.context().threadingMode() != ThreadingMode.SHARED) {
+                result.close();
+                throw new IllegalStateException("Client shared driver did not retain its configured idle strategy");
+            }
+            System.out.println("VECTOR_CLIENT_DRIVER_IDLE policyVersion=1 maxSpins=10 maxYields=5"
+                    + " minParkNs=1000 maxParkNs=" + maximum + " threadingMode=SHARED"
+                    + " driverDirectoryUri=" + Path.of(result.aeronDirectoryName()).toUri()
+                    + " actualStrategy=" + selected + " scope=client-driver-only");
+        }
+        return result;
+    }
+
+    static Long driverMaxParkNs(String value) {
+        if (value == null) return null;
+        if (!value.matches("[1-9][0-9]{3,6}"))
+            throw new IllegalArgumentException(DRIVER_MAX_PARK_PROPERTY + " must be canonical decimal 1000..1000000 ns");
+        long maximum = Long.parseLong(value);
+        if (maximum < 1000 || maximum > 1_000_000)
+            throw new IllegalArgumentException(DRIVER_MAX_PARK_PROPERTY + " must be 1000..1000000 ns");
+        return maximum;
+    }
+
+    /** Context construction is pure; invalid input is rejected before a driver directory is created. */
+    static MediaDriver.Context driverContext(Path driverDirectory, NetworkTransport transport, Long maximum) {
+        if (maximum != null) driverMaxParkNs(Long.toString(maximum));
+        return new MediaDriver.Context()
                 .aeronDirectoryName(driverDirectory.toAbsolutePath().toString())
                 .threadingMode(ThreadingMode.SHARED)
-                .sharedIdleStrategy(new BackoffIdleStrategy())
+                .sharedIdleStrategy(maximum == null ? new BackoffIdleStrategy()
+                        : new BackoffIdleStrategy(10, 5, 1000, maximum))
                 .socketSndbufLength(128 * 1024)
                 .socketRcvbufLength(128 * 1024)
                 .mtuLength(transport.mtuLength())
                 .termBufferSparseFile(true)
                 .dirDeleteOnStart(false) // Aeron checks for an active driver before recreating stale files.
-                .dirDeleteOnShutdown(true));
+                .dirDeleteOnShutdown(true);
     }
 
     long clusterSessionId() { return client.clusterSessionId(); }
     long aeronClientId() { return client.context().aeron().clientId(); }
     String resolvedEgressChannel() { return client.egressSubscription().tryResolveChannelEndpointPort(); }
+
+    Map<String, Object> sharedDriverIdleObservation() {
+        IdleStrategy strategy = driver.context().sharedIdleStrategy();
+        return Map.of("directory", driver.aeronDirectoryName(),
+                "threadingMode", driver.context().threadingMode().name(),
+                "strategyClass", strategy.getClass().getName(),
+                "strategyDescription", strategy.toString());
+    }
 
     private AeronCluster connect(ClusterTopology topology, ClientEndpoint endpoint, NetworkTransport transport) {
         long deadline = System.nanoTime() + CONNECT_TIMEOUT_NS;

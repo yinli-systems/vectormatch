@@ -112,7 +112,18 @@ public final class RemoteCapacityExperiment {
         default Integer pendingCapacity() { return null; }
         default Long driverNakUnicastDelayNs() { return null; }
         default Long driverNakUnicastRetryDelayRatio() { return null; }
+        default Map<String, Object> sharedDriverIdleObservation() { return unavailableSharedDriverIdleObservation(); }
     }
+    static Map<String, Object> unavailableSharedDriverIdleObservation() {
+        return Map.of("available", false, "source", "unavailable",
+                "reason", "factory-does-not-observe-measured-shared-driver");
+    }
+
+    /** Same captured observation is used in configuration, load-result and final result. */
+    static void recordSharedDriverIdleObservation(Map<String, Object> document, LoadResult load) {
+        document.put("clientSharedDriverIdleObservation", load.clientSharedDriverIdleObservation);
+    }
+
     interface CloseableTransportFactory extends TransportFactory, AutoCloseable {
         @Override void close();
     }
@@ -227,6 +238,7 @@ public final class RemoteCapacityExperiment {
         String clientDriverMode = "test-transport", clientTransportMode = "direct", clientAeronMode = "one-independent-Aeron-per-client";
         Integer clientDriverCount, clientSessionCount, clientPendingCapacity;
         Long clientNakUnicastDelayNs, clientNakUnicastRetryDelayRatio;
+        Map<String, Object> clientSharedDriverIdleObservation = unavailableSharedDriverIdleObservation();
         LoadResult(Options options, Sample[] samples) { this.options = options; this.samples = samples; }
     }
 
@@ -268,6 +280,7 @@ public final class RemoteCapacityExperiment {
                 "fullCheckpointMaximumBytes", profile.snapshotMaxBytes(), "profileMaximumWorkers", profile.maximumWorkers, "sessionReapWaitSecondsPerPhase", profile.sessionReapWaitSeconds,
                 "clientConnectionConcurrencyLimit", profile.connectionConcurrency == 0 ? "unbounded" : profile.connectionConcurrency,
                 "clientDriverMode", clientDriverMode.label, "clientDriverCount", null,
+                "clientSharedDriverIdleObservation", unavailableSharedDriverIdleObservation(),
                 "clientTransportMode", clientTransportMode.label, "clientSessionCount", null,
                 "clientAeronMode", clientTransportMode.aeronMode, "clientDriverCountScope", "load phase only; count recorded after every worker connects; setup/validation excluded",
                 "validationTimeoutSeconds", CHECK_TIMEOUT.toSeconds(), "setupTimeoutSeconds", SETUP_TIMEOUT.toSeconds(),
@@ -332,6 +345,7 @@ public final class RemoteCapacityExperiment {
                 configuration.put("clientTransportMode", load.clientTransportMode);
                 configuration.put("clientAeronMode", load.clientAeronMode);
                 configuration.put("clientSessionCount", load.clientSessionCount);
+                recordSharedDriverIdleObservation(configuration, load);
                 if (load.clientPendingCapacity != null) configuration.put("clientPendingCapacity", load.clientPendingCapacity);
                 if (load.clientNakUnicastDelayNs != null && load.clientNakUnicastRetryDelayRatio != null) {
                     configuration.put("clientNakUnicastDelayNs", load.clientNakUnicastDelayNs);
@@ -519,6 +533,7 @@ public final class RemoteCapacityExperiment {
         // Other factories remain explicitly unavailable rather than assuming library defaults.
         load.clientNakUnicastDelayNs = factory.driverNakUnicastDelayNs();
         load.clientNakUnicastRetryDelayRatio = factory.driverNakUnicastRetryDelayRatio();
+        load.clientSharedDriverIdleObservation = Map.copyOf(factory.sharedDriverIdleObservation());
         load.origin = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(200);
         load.scheduledOriginUtc = Instant.now().plusNanos(load.origin - System.nanoTime()).toString();
         load.windowEnd = load.origin + offsetNanos(options.arrivals(), options.rate());
@@ -690,6 +705,7 @@ public final class RemoteCapacityExperiment {
                         "Each worker has one in-flight synchronous client; this measures this deployed client+cluster path, not an unconstrained engine limit",
                         "No synchronized-clock one-way latency and no production capacity SLA", "Execute-start is an API timestamp, not first wire offer; scheduler delay and FIFO delay are included in end-to-end latency",
                         "Backlog counters are observational non-atomic snapshots, not exact queue conservation at an instant", "Pause gateway/projector writers and use isolated trial state; shared-member load generation must be disclosed"));
+        recordSharedDriverIdleObservation(summary, load);
         if (load.clientPendingCapacity != null) summary.put("clientPendingCapacity", load.clientPendingCapacity);
         return summary;
     }

@@ -24,6 +24,9 @@ final class MultiplexedLoadTransports implements RemoteCapacityExperiment.Closea
         int leader();
         long nakDelayNs();
         long nakRetryRatio();
+        default Map<String, Object> sharedDriverIdleObservation() {
+            return RemoteCapacityExperiment.unavailableSharedDriverIdleObservation();
+        }
         @Override void close();
     }
     @FunctionalInterface interface OwnerFactory { OwnerIO open(); }
@@ -52,6 +55,8 @@ final class MultiplexedLoadTransports implements RemoteCapacityExperiment.Closea
     private volatile boolean closing;
     private volatile int leader = -1;
     private volatile Long nakDelay, nakRatio;
+    private volatile Map<String, Object> sharedDriverIdleObservation =
+            RemoteCapacityExperiment.unavailableSharedDriverIdleObservation();
 
     MultiplexedLoadTransports(RemoteCapacityExperiment.Options options, ClusterTopology topology,
                              ClientEndpoint endpoint, NetworkTransport network) {
@@ -68,6 +73,12 @@ final class MultiplexedLoadTransports implements RemoteCapacityExperiment.Closea
                 public int leader() { return client.leaderMemberId(); }
                 public long nakDelayNs() { return client.driverNakUnicastDelayNs(); }
                 public long nakRetryRatio() { return client.driverNakUnicastRetryDelayRatio(); }
+                public Map<String, Object> sharedDriverIdleObservation() {
+                    var observed = new LinkedHashMap<>(client.sharedDriverIdleObservation());
+                    observed.put("available", true);
+                    observed.put("source", "measured-multiplexed-owner");
+                    return Map.copyOf(observed);
+                }
                 public void close() { client.close(); }
             };
         });
@@ -155,7 +166,10 @@ final class MultiplexedLoadTransports implements RemoteCapacityExperiment.Closea
         OwnerIO io = null;
         int first = 0;
         try {
-            io = factory.open(); leader = io.leader(); nakDelay = io.nakDelayNs(); nakRatio = io.nakRetryRatio(); ready.complete(null);
+            io = factory.open(); leader = io.leader(); nakDelay = io.nakDelayNs(); nakRatio = io.nakRetryRatio();
+            // Capture once on the physical owner, before readiness publishes this actual driver's evidence.
+            sharedDriverIdleObservation = Map.copyOf(io.sharedDriverIdleObservation());
+            ready.complete(null);
             while (!closing) {
                 int work = io.poll(); leader = io.leader();
                 for (var iterator = active.entrySet().iterator(); iterator.hasNext();) {
@@ -227,6 +241,7 @@ final class MultiplexedLoadTransports implements RemoteCapacityExperiment.Closea
     public Integer driverCount() { healthy(); return 1; }
     public Long driverNakUnicastDelayNs() { healthy(); return nakDelay; }
     public Long driverNakUnicastRetryDelayRatio() { healthy(); return nakRatio; }
+    public Map<String, Object> sharedDriverIdleObservation() { healthy(); return sharedDriverIdleObservation; }
 
     private void joinOwner() {
         boolean interrupted = Thread.interrupted();

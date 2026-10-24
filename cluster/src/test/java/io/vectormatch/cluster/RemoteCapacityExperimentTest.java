@@ -33,6 +33,8 @@ class RemoteCapacityExperimentTest {
         assertNull(RemoteCapacityExperiment.summarize(load).get("clientDriverCount"));
         assertNull(RemoteCapacityExperiment.summarize(load).get("clientNakUnicastDelayNs"));
         assertNull(RemoteCapacityExperiment.summarize(load).get("clientSessionCount"));
+        assertEquals(RemoteCapacityExperiment.unavailableSharedDriverIdleObservation(),
+                RemoteCapacityExperiment.summarize(load).get("clientSharedDriverIdleObservation"));
         assertEquals("direct", RemoteCapacityExperiment.summarize(load).get("clientTransportMode"));
         assertFalse(RemoteCapacityExperiment.summarize(load).containsKey("clientPendingCapacity"), "Direct transport must not invent an async pending bound");
     }
@@ -62,6 +64,40 @@ class RemoteCapacityExperimentTest {
         assertEquals(100L, RemoteCapacityExperiment.summarize(load).get("clientNakUnicastRetryDelayRatio"));
         assertEquals(2, RemoteCapacityExperiment.summarize(load).get("clientSessionCount"));
         assertEquals("one-independent-Aeron-per-client", RemoteCapacityExperiment.summarize(load).get("clientAeronMode"));
+    }
+
+    @Test void sameCapturedOwnerEvidencePropagatesToAllResultDocumentsWithoutFlagDerivedValues() throws Exception {
+        AtomicInteger connections = new AtomicInteger(), observations = new AtomicInteger();
+        var evidence = new LinkedHashMap<String, Object>(Map.of("available", false,
+                "source", "fake-owner-only", "opaque", "preserve-this-even-if-not-verified"));
+        Map<String, Object> expected = Map.copyOf(evidence);
+        var load = RemoteCapacityExperiment.runLoad(options(100, 1, 1, 1, 100, 100), samples(1, 1),
+                new RemoteCapacityExperiment.TransportFactory() {
+                    public RemoteCapacityExperiment.Transport open(int worker) {
+                        connections.incrementAndGet();
+                        return new FakeTransport() {
+                            public CommandCodec.Reply execute(Command command, Duration timeout) { return accepted(command, 1, false); }
+                        };
+                    }
+                    public Map<String, Object> sharedDriverIdleObservation() {
+                        assertEquals(1, connections.get(), "Capture only after the measured clients are ready");
+                        observations.incrementAndGet(); return evidence;
+                    }
+                });
+        assertEquals(1, observations.get());
+        evidence.put("available", true); evidence.put("maxParkNs", 1000000);
+        var configuration = new LinkedHashMap<String, Object>();
+        RemoteCapacityExperiment.recordSharedDriverIdleObservation(configuration, load);
+        var loadResult = RemoteCapacityExperiment.summarize(load);
+        var result = RemoteCapacityExperiment.summarize(load);
+        for (Map<String, Object> document : List.of(configuration, loadResult, result)) {
+            assertEquals(expected, document.get("clientSharedDriverIdleObservation"));
+            assertSame(load.clientSharedDriverIdleObservation, document.get("clientSharedDriverIdleObservation"));
+        }
+        assertFalse((Boolean) load.clientSharedDriverIdleObservation.get("available"));
+        assertFalse(load.clientSharedDriverIdleObservation.containsKey("maxParkNs"));
+        assertThrows(UnsupportedOperationException.class,
+                () -> load.clientSharedDriverIdleObservation.put("source", "verified"));
     }
 
     private RemoteCapacityExperiment.Options options(int rate, int arrivals, int workers, int queue, int timeout, int drain) {
