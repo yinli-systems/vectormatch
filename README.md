@@ -30,6 +30,10 @@ The independent [client-driver A/B/A/B](evidence/2026-10-24/runpod-cpu/client-dr
 
 The separate [eight-point synthetic force(true) diagnostic](evidence/2026-10-24/runpod-cpu/force-path-experiment/comparison-r2/README.md) retains all3376operations and3200measurement rows on the existing CPU overlay. Single-writer force medians are1.35–1.40ms;three writer threads in oneJVM show2.51–2.77ms medians and4.65–4.99ms rowp99. This supports investigating durable batching;it is not transaction latency,a stable-throughput improvement or a unique disk ceiling. The prior parser-failed attempt is retained separately.
 
+The opt-in [V3 bounded batch/maintenance candidate](evidence/2026-10-24/runpod-cpu/retention-batch-maintenance-v3/README.md) now has a forced full-project rerun (243 passed,11 PostgreSQL-dependent skips) and six complete native trees. Raw reconciliation confirms10,003 business commands/20,003 events, exact prefix exports and same-wire ACK replay. Its functional harness pauses business at maintenance boundaries; a separate continuously scheduled arrival harness is still being implemented. These tests establish no new capacity or100M result.
+
+[Original application CPU recovery](docs/CPU_RESTORATION_PLAN.md) has separately restarted the three original native clones and observed the leader after tail replay at command4609/event6214/market6194/export6214. All processes were cleanly stopped and the PG baseline remained unchanged. Current three-replica canonical proof and HTTP/WS recovery are pending. An explicit [passive gateway startup option](docs/PASSIVE_GATEWAY_RESTORATION.md) disables bootstrap and flow before construction; its tested artifact is preserved independently.
+
 ## Toolchain
 
 Java 21, Gradle, Aeron, Netty, React and TypeScript. The bootstrap pins Temurin 21.0.13+9, Node 24.22.1 and Gradle 8.14.3 and verifies vendor SHA-256 files. Portable development tools live under `.tools/` and are never committed.
