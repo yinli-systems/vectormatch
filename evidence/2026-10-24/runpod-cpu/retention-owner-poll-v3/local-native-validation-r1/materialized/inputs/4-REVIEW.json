@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "scope": "INDEPENDENT_READ_ONLY_OWNER_POLL_SOURCE_REVIEW_R1_AND_CORRECTED_R2",
+  "createdAtUTC": "2026-10-24T09:23:05.167595+00:00",
+  "sourceReviewPassed": true,
+  "reviewedInputInventorySha256": "5113077573263f2557579ee4f51a3b994185665d2e88c0c747acd9a31e511479",
+  "originalSourceReadySha256": "06058e7ab7d8c7407704bf40658aec59c060dde79070c4ae848bcbd59ebe53e7",
+  "correctedSourceReadySha256": "505b586e0d6f8ed950bae2b645522fe1845c1852a8e40e4c65a4ffd1025e36b8",
+  "actualR2PatchSha256": "97d29672ae0a1404fa294b85d7bc22746a1ddac8d66ab8d6f8e522834667b57f",
+  "remainingConcreteBlockers": [],
+  "resolvedFinding": {
+    "priority": "P2",
+    "path": "cluster/src/test/java/io/vectormatch/cluster/RetentionOwnerPollPolicyV3Test.java",
+    "originalLine": 110,
+    "issue": "FakeIO enqueues original bytes before offer returns. take() alone is not a happens-before fence for owner frame.nextOffer update; direct parkDuration could observe due-now and return1 instead of selected cap.",
+    "correctedLine": 110,
+    "resolution": "R2 first waits on locked owner.snapshot acceptedPhysicalOffers==1, so offer return and nextOffer update have completed; fake clock remains fixed and no response/revoke mutates frame before cap assertion.",
+    "oldTestSha256": "376d672d5a6f7d1668e059c08ff5d2929d014680c90efcc444ac2080edcf1520",
+    "correctedTestSha256": "e511a2572f13156cde00630ea9e9c0a5332f3d929bced4bd060fc59f86417ac5",
+    "productionUnchangedByCorrection": true,
+    "notAnObservedTestFailure": true
+  },
+  "reviewedContracts": [
+    {
+      "path": "RetentionCapacityAeronPilotV3.java",
+      "lines": [
+        82,
+        101,
+        102,
+        116,
+        117,
+        139,
+        158
+      ],
+      "finding": "All public executable paths validate owner policy before choosing/checking ports or creating trial directories; delegated idle short/long helper validates before verifyChunkPorts."
+    },
+    {
+      "path": "RetentionCapacityAeronPilotV3.java",
+      "lines": [
+        46,
+        47,
+        79,
+        256,
+        260,
+        262
+      ],
+      "finding": "Pilot records owner selection intent; actual child argv adds only existing node/driver idle property, with hidden option variables removed. Owner property is not propagated to nodes."
+    },
+    {
+      "path": "RetentionCapacityExperimentV3.java",
+      "lines": [
+        62,
+        68,
+        89,
+        114,
+        209
+      ],
+      "finding": "Owner selection is captured before first filesystem write and explicitly passed to constructed owner; explicit configuration/summary actualObservation reads owner snapshot, rejects cap mismatch and reports missing owner unavailable."
+    },
+    {
+      "path": "RetentionOwnerPollPolicyV3.java",
+      "lines": [
+        14,
+        29,
+        40,
+        52
+      ],
+      "finding": "Only canonical100000/1000000 accepted; absent selection remains1ms. Hidden environment selection is rejected; actual snapshot evidence is labelled requested sleep without OS-lateness guarantee."
+    },
+    {
+      "path": "RetentionBatchOwnerV3.java",
+      "lines": [
+        26,
+        423,
+        428,
+        601,
+        610,
+        611,
+        623
+      ],
+      "finding": "Legacy constructors keep1ms and independent Config.flushDelayNs ceiling stays1ms. The wait calculation changes only initial cap; permit/retry/maintenance/read deadlines, read-bank credit, correlation, UNKNOWN and ACK fencing bodies remain unchanged."
+    },
+    {
+      "path": "RetentionBatchOwnerV3Test.java/RetentionReadBankV3Test.java",
+      "finding": "Two new test-only fixture constructors preserve prior clock/IO initialization and read-service readiness. Existing fixture paths remain; new guards cover both caps without OS sleep or throughput assertions."
+    }
+  ],
+  "nodeMainAndNodeIdlePolicyCandidateEqualRootMain": true,
+  "testOnlyChangeSinceR1": [
+    "cluster/src/test/java/io/vectormatch/cluster/RetentionOwnerPollPolicyV3Test.java"
+  ],
+  "sourceImportedOrExecuted": false,
+  "testGradleJvmNativeGitSshOrCloudActions": false,
+  "candidateSourceMutatedByReviewer": false,
+  "performanceOrCapacityClaim": false,
+  "limitations": [
+    "Static source review only; no compile/unit/native result is implied.",
+    "R2 retains historical R1 sourceDiffSha256; separate SOURCE_REVIEW_R2_DIFF receipt explicitly binds current97d29672 patch to corrected505b586e source map.",
+    "Pilot intent must still be reconciled with actual load owner/snapshot evidence in future runtime proofs."
+  ]
+}

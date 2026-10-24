@@ -1,0 +1,13 @@
+# Owner poll SHORT local functional pair and closed raw proof
+
+Root reviewed and ran exactly one pair from frozen runner7420722c/config8dcdb4df. Source9771976 and actual local/Linux FP23586ccc/4JAR bytes are pinned. Only owner requested park1ms versus100us differs; node/driver stays100us. Each freshlineage uses6400@500/s,cap4/chunk6144/Fetch16/read8/leader0/term0/sync2/MTU1248/ports42000. Source/profile/raw/growth/journal/deadline/offer/path/sample caps are unchanged.
+
+The original4runtimehelpers/config are unmodified. Direct unreaped Popen plus ps is honest launch evidence, not independently decoded NUL kernel parentargv. Java owns exactProcessHandle/start/command/argv+TERM-only node cleanup. Wrapper sends no signals/escalation/retry; failedarm1 blocksarm2. Root reports bothparents exit0/canonical+actualownerpass; A validscheduler, B40lateinvalid. No local performance comparison is claimed evenwhenAvalid.
+
+The sole shared868b puregate checks3intent records,2constructed-owner actuals,beforealive/afterstopped snapshots, independent50usflush, exactregistered parent/nodeargv,parent-only ownerproperty and unchanged actual100us7objects/node+1owner=22. Fourteen pureguards passed. Four additional isolatedSHORT/importalias/tempfile-integrity guards passed. No newforcedUNKNOWN/replay scenario is added; nativezeroUNKNOWN closure and meaningful78unit guards have distinct scopes.
+
+Closed capture uses256MiBcompressed/8GiBlogical/4096member bounds, fullstream SHA/mode/uid/gid/emptydir readback, no extraction/deletion. The fullproof archive must additionally preserve this entire preparation (SHORT3/LONG9 bodies,guards,closures); capture itself includes runtime helper/source/proof/JAR inputs. The sources here are immutable inputs for that separate archive.
+
+SHORT is the unchanged801475 localfunctional baseline plus its common/read_phase bodies. Thin rawbinding verifies everyconsumed payload against original captured SHA/size/mode/uid/gid, restores importaliases and gates PASS on868b. It retains actualschedulerinvalidity with no CPUadmission. LONG1fdec exact9source/test bytes remain separate/strict forfuturecloud, never fakeSHORT throughLONGcontract. Original baselines and8phase/3cycle versus24phase/12cycle limits are unchanged.
+
+PAIR_FUNCTIONAL_COMPLETE is explicitly PRE_RAW_AUDIT. Final OWNER_POLL_NEW_ARTIFACT_FUNCTIONAL_PAIR is written only afterfullcapture+bothrawfunctional+actualownergates, with fullresult/sourcefreeze/archive/inventory SHArefs and localPerformanceClaimedfalse. Distinct6400lineages are not cumulativeendurance or100Mproof. No Git/SSH/Java/native was executed by this new capture/raw preparation; nativepair was separately rootauthorized.
