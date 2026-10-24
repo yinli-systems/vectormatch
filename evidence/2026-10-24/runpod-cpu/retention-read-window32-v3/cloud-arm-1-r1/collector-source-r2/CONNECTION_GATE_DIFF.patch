@@ -1,0 +1,11 @@
+--- blocked-r1/collect_closed_round.py
++++ corrected-r2/collect_closed_round.py
+@@ -13,7 +13,7 @@
+         p=Path(__file__).parent/name
+         require(p.is_file()and p.stat().st_size==row['bytes']and sha(p)==row['sha256'],'Independent local source preparation changed')
+         target=dest/'collector-source'/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(p.read_bytes())
+-    require(sha(remote_helper)=='0922e32bee55b1e47503880e763fcf112626649d31f037bb62e5c4ceb588bb73','Exact reviewed remote helper required')
++    require(sha(remote_helper)=='b130d64cd6497c54df3dc1865e85520606880ecf9e117f8ab490c98960b405be','Exact reviewed remote helper required')
+     spec=importlib.util.spec_from_file_location('closed_round_readonly_remote',remote_helper);remote=importlib.util.module_from_spec(spec);spec.loader.exec_module(remote)
+     job=prep+'/arm-'+str(c['arm'])
+     inventory_program='JOB='+repr(job)+'\nSOURCE='+repr(prep)+'\nALLOW='+repr(allow)+'\nEXPECTED='+repr(expected)+'\nHOST='+repr(c['host'])+'\nRELEASE_SHA='+repr(c['releaseSha256'])+'\nARM='+repr(c['arm'])+'\nMAX_PARK='+repr(c['serverDriverMaximumParkNs'])+'\nOWNER_PARK='+repr(c['ownerPollMaximumParkNs'])+'\nEVENT_PAGE='+repr(c['eventFetchCount'])+'\nREAD_WINDOW='+repr(c['readWindow'])+'\n'+r'''

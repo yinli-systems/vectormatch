@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/opt/vectormatch-cpu/experiments/read-window32-current-abab-r1/cpu_read_window32_abab.py", line 1147, in <module>
+    main()
+  File "/opt/vectormatch-cpu/experiments/read-window32-current-abab-r1/cpu_read_window32_abab.py", line 1142, in main
+    result = execute(base, release, options.release) if options.start_new else preflight(base, release)
+  File "/opt/vectormatch-cpu/experiments/read-window32-current-abab-r1/cpu_read_window32_abab.py", line 739, in preflight
+    idle = strict_idle(base)
+  File "/opt/vectormatch-cpu/experiments/read-window32-current-abab-r1/cpu_read_window32_abab.py", line 513, in strict_idle
+    require(not foreign, 'Unowned Java VM or Postgres active: ' + json.dumps(foreign))
+  File "/opt/vectormatch-cpu/experiments/read-window32-current-abab-r1/cpu_read_window32_abab.py", line 68, in require
+    raise RuntimeError(message)
+RuntimeError: Unowned Java VM or Postgres active: [{"pid": 5669, "startTicks": 7428604, "commandSha256": "73a9f4d509698c07e7aed32337146b681b34072f153aa935b0a967630278b471"}]

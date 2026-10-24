@@ -1,0 +1,109 @@
+--- old-container/common.py
++++ current-container/common.py
+@@ -1,7 +1,7 @@
+ """Pure local validation shared by the closed-round collector/auditors. No network at import."""
+ from pathlib import Path, PurePosixPath
+ import argparse, hashlib, json, re, sys
+-def valid_prep(value):return value=='/opt/vectormatch-cpu/preparation/cpu-read-window32-cloud-abab-r1'
++def valid_prep(value):return value=='/opt/vectormatch-cpu/experiments/read-window32-current-abab-r1'
+ SUPPORTED_WINDOWS=(8,32)
+ OWNER_VALIDATOR_SHA='868b1f426906e16602e2ad9a0e7c7bba33bb5e80ea950af171a9903ac5dc4fdd'
+ def require(value,message):
+@@ -19,7 +19,7 @@
+ def load_config(path):
+     c=json.loads(Path(path).read_text())
+     require(c['schemaVersion']==6 and c['experiment']=='retention-read-window32-long-v1' and type(c['arm'])is int and c['arm']in(1,2,3,4),'One explicit owner-poll fixed-page32 read-window arm/schema6 required')
+-    prep=c['remotePrep'];require(valid_prep(prep) and c['host']=='ed6c0673f5cb','Fixed long PREP/host')
++    prep=c['remotePrep'];require(valid_prep(prep) and c['host']=='33ace3d92505','Fixed long PREP/host')
+     for key,h in [('releaseLocal','releaseSha256'),('stagingReceipt','stagingReceiptSha256'),('protectedReference','protectedReferenceSha256')]:
+         require(hexsha(c[h]) and sha(c[key])==c[h],'Frozen local input differs: '+key)
+     release=json.loads(Path(c['releaseLocal']).read_text())
+@@ -43,10 +43,10 @@
+         require(type(row['bytes'])is int and 0<=row['bytes']<=32*1024**2 and hexsha(row['sha256']),'Frozen source bytes/SHA')
+     require(expected['release/release.json']['sha256']==c['releaseSha256'],'Source release binding differs')
+     author_path=Path(__file__).with_name('controller-preparation-frozen.json')
+-    require(sha(author_path)=='3c08ef18ecb9599ccce4a7e6d03c8afeea760cdf66297f422520e5708ec1a9f0','Frozen read-window32 controller source inventory differs')
++    require(sha(author_path)=='e7f356c95b4f1622f844f8841196ec658daa50b96aba522b55a27da242d25368','Frozen read-window32 controller source inventory differs')
+     author=json.loads(author_path.read_text())['files']
+     release_rows={'release/release.json':{'sha256':c['releaseSha256']},
+-        'release/current-stopped-original-state.json':{'sha256':c['protectedReferenceSha256']},
++        'release/current-container-baseline.json':{'sha256':c['protectedReferenceSha256']},
+         'LOCAL_PREPARATION_FROZEN.json':{'bytes':author_path.stat().st_size,'sha256':sha(author_path)}}
+     release_rows.update({'release/lib/'+Path(name).name:row for name,row in release['artifacts'].items()})
+     release_rows.update({'release/proofs/'+name+'.json':{k:row[k]for k in('bytes','sha256')}for name,row in release['evidenceReferences'].items()})
+--- old-container/audit_native_artifacts.py
++++ current-container/audit_native_artifacts.py
+@@ -12,6 +12,13 @@
+     result['historicalValidatorScope']=result.pop('scope')
+     result['scope']='Actual node and owner MediaDriver strategies only; load-owner polling is attested separately'
+     return result
++
++def validate_absence_protection(manifest,before,after,manifest_sha):
++    require(before==after and before['passed'] is True and before['manifestSha256']==manifest_sha,'Exact before/after current-container baseline receipt required')
++    require(manifest['scope']==before['scope']=='CURRENT_CPU_CONTAINER_ABSENT_OLD_STATE_AND_FRESH_SYNTHETIC_NAMESPACE' and before['host']==manifest['host']=='33ace3d92505' and before['bootId']==manifest['bootId']=='8d765c71-dbfa-4354-8db0-6c392e701e6f','Current host/boot scope differs')
++    expected=['/opt/vectormatch-cpu/restorations/original-native-r1','/opt/vectormatch-cpu/preparation']
++    require(before['absentProtectedPaths']==manifest['absentProtectedPaths']==expected and before['old57AndPg989RestorationClaimed'] is False and manifest['old57AndPg989RestorationClaimed'] is False and manifest['newSyntheticNamespaceOnly'] is True,'Cannot inherit original57/PG989 or omit protected absent roots')
++    return True
+ 
+ def audit(a,c,release):
+     controller.configure_arm(c['arm'])
+@@ -102,14 +109,10 @@
+         log_reports.append(classify_node_log((job/('idle-arm/node-%d.log'%n)).read_bytes(), node=n,pid=rec['pid'],
+             profile=release['profileFingerprint'],lineage=arms[0]['lineage'],code=release['codeFingerprint'],
+             final_hash=final['combinedSha256'],idle_actual=actual_idle))
+-    protected_path=raw/'source/release/current-stopped-original-state.json';require(sha(protected_path)==release['protectedOriginalState']['manifestSha256'],'Frozen protected state SHA')
++    protected_path=raw/'source/release/current-container-baseline.json';require(sha(protected_path)==release['protectedOriginalState']['manifestSha256'],'Frozen protected state SHA')
+     protected=json.loads(protected_path.read_text());original=json.loads(Path(c['protectedReference']).read_text())
+-    for x,y in zip(protected['nativeTrees'],original['nativeTrees']):
+-        require(x['root']==y['root'] and set(x['files'])==set(y['files']) and x['directories']==y['directories'],'Protected original native closure')
+-        for name,row in x['files'].items():require(all(row[k]==y['files'][name][k] for k in ['bytes','sha256','mode','uid','gid']),'Protected original native full binding')
+-    require(len(protected['nativeTrees'])==len(original['nativeTrees'])==3 and protected['postgres']==original['postgres'],'Three original trees/PG reference')
+-    require(before['protectedOriginal']==after['protectedOriginal'] and before['protectedOriginal']['passed'] is True and before['protectedOriginal']['manifestSha256']==sha(protected_path),'Wrapper protected original before/after differs')
+-    require(sum(len(x['files'])for x in protected['nativeTrees'])==57 and after['protectedOriginal']['postgres']['files']==989,'Exact protected57 native/PG989 files required')
++    require(protected==original,'Actual collected current-container baseline body differs')
++    validate_absence_protection(protected,before['protectedOriginal'],after['protectedOriginal'],sha(protected_path))
+     for key,previous in c['priorGates'].items():
+         n=int(key)
+         require(sha(raw/('source/release/arm-%d-collection-gate.json'%n))==previous['sha256']
+@@ -118,7 +121,7 @@
+         previous=c['priorGates'][str(c['arm']-1)]
+         require(before['priorArm']['passed'] is True and before['priorArm']['gateSha256']==previous['sha256']
+             and before['priorArm']['privatePushReceiptSha256']==previous['privatePushSha256'],'Actual immediate prior-arm collection/private-push gate binding')
+-    report={'passed':True,'arm':c['arm'],'sourceCommit':release['sourceCommit'],'releaseSha256':c['releaseSha256'],'frozenCodeFingerprintIndependentlyRecomputed':h.hexdigest(),'actualCodeSources':actual_sources,'actualJarEntries':jar_entries,'nestedFiles':len(seen),'nestedDirectories':len(dirs),'nestedLogicalBytes':inv['logicalBytes'],'nestedAllocatedBytesRecorded':inv['allocatedBytes'],'allNestedFullShaBytesModeOwnerAndEmptyDirClosureVerified':True,'allNestedFilesExactlyBoundToOuterArchive':True,'actualArguments':identities,'threeRawNodeStopReports':True,'nodeLogClassifications':log_reports,'retainedPostCheckpointEosWarningPairs':sum(v['warningPairCount'] for v in log_reports),'idleAttestation':idle,'ownerPollAttestation':owner_actual,'serverDriverMaximumParkNs':100000,'ownerPollMaximumParkNs':c['ownerPollMaximumParkNs'],'eventFetchCount':c['eventFetchCount'],'readWindow':c['readWindow'],'commonReadWindow32Envelope':True,'commonEventFetchEnvelope':False,'normalParentExitBasis':'Successful frozen controller requires normal returncode 0, reaps direct parent and verifies registered identity absence; parent has no fourth raw stop report. Source/result reconciliation, no new live process query.','arms':arms,'commonOperationalCapsEqual':True,'sameNewArtifactFunctionalQualified':False,'authoritativeRawQualificationStillRequired':True,'protectedOriginalBeforeAfterExactlyEqual':True,'protectedNativeFiles':sum(len(x['files']) for x in protected['nativeTrees']),'protectedPgFiles':after['protectedOriginal']['postgres']['files'],'scope':'Local closed archive/artifact/lifecycle reconciliation only. Full protected-original checks performed by wrapper before/after, not independently rehashed remotely by collector.'}
++    report={'passed':True,'arm':c['arm'],'sourceCommit':release['sourceCommit'],'releaseSha256':c['releaseSha256'],'frozenCodeFingerprintIndependentlyRecomputed':h.hexdigest(),'actualCodeSources':actual_sources,'actualJarEntries':jar_entries,'nestedFiles':len(seen),'nestedDirectories':len(dirs),'nestedLogicalBytes':inv['logicalBytes'],'nestedAllocatedBytesRecorded':inv['allocatedBytes'],'allNestedFullShaBytesModeOwnerAndEmptyDirClosureVerified':True,'allNestedFilesExactlyBoundToOuterArchive':True,'actualArguments':identities,'threeRawNodeStopReports':True,'nodeLogClassifications':log_reports,'retainedPostCheckpointEosWarningPairs':sum(v['warningPairCount'] for v in log_reports),'idleAttestation':idle,'ownerPollAttestation':owner_actual,'serverDriverMaximumParkNs':100000,'ownerPollMaximumParkNs':c['ownerPollMaximumParkNs'],'eventFetchCount':c['eventFetchCount'],'readWindow':c['readWindow'],'commonReadWindow32Envelope':True,'commonEventFetchEnvelope':False,'normalParentExitBasis':'Successful frozen controller requires normal returncode 0, reaps direct parent and verifies registered identity absence; parent has no fourth raw stop report. Source/result reconciliation, no new live process query.','arms':arms,'commonOperationalCapsEqual':True,'sameNewArtifactFunctionalQualified':False,'authoritativeRawQualificationStillRequired':True,'protectedOriginalBeforeAfterExactlyEqual':True,'old57AndPg989RestorationClaimed':False,'protectedCurrentContainerAbsenceReceiptsExact':True,'scope':'Local closed archive/artifact/lifecycle reconciliation only. Fresh-container absence/boot/cgroup protection checks performed by wrapper before/after, not independently rehashed remotely by collector.'}
+     (a.out/'result.json').write_text(json.dumps(report,indent=2)+'\n');return report
+ 
+ def main():
+--- old-container/collect_and_audit.py
++++ current-container/collect_and_audit.py
+@@ -13,8 +13,8 @@
+ from common import load_config
+ 
+ HERE = Path(__file__).resolve().parent
+-REMOTE_SHA = '0922e32bee55b1e47503880e763fcf112626649d31f037bb62e5c4ceb588bb73'
+-CLOSE_SOURCE_SHA = '9aaa3d135b735ef0d5ef159ef295d50743096501219c45b1f9300eea806c3b2a'
++REMOTE_SHA = 'b130d64cd6497c54df3dc1865e85520606880ecf9e117f8ab490c98960b405be'
++CLOSE_SOURCE_SHA = 'ad7b6f68f5b68c988bd9ce95b094fa40c32139a137af274c1d0d30c3bf398089'
+ 
+ 
+ def checked_config(path, expected):
+--- old-container/build_config.py
++++ current-container/build_config.py
+@@ -43,7 +43,7 @@
+     output.mkdir(mode=0o700, parents=True)
+     inputs = output / 'inputs'; inputs.mkdir()
+     for source, name in [(release, 'release.json'), (stage, 'STAGE_SUCCESS.json'),
+-                         (protected, 'current-stopped-original-state.json')]:
++                         (protected, 'current-container-baseline.json')]:
+         shutil.copy2(source, inputs / name)
+     prior = {}
+     for n, (path, expected, push, push_sha) in sorted(gates.items()):
+@@ -57,7 +57,7 @@
+               'eventFetchCount':selected_event_page(), 'readWindow':selected_read_window(), 'remotePrep': str(PREP), 'host': actual['host'],
+               'releaseLocal': str((inputs / 'release.json').resolve()), 'releaseSha256': release_sha,
+               'stagingReceipt': str((inputs / 'STAGE_SUCCESS.json').resolve()), 'stagingReceiptSha256': stage_sha,
+-              'protectedReference': str((inputs / 'current-stopped-original-state.json').resolve()),
++              'protectedReference': str((inputs / 'current-container-baseline.json').resolve()),
+               'protectedReferenceSha256': protected_sha, 'priorGates': prior,
+               'executionMetadata': metadata}
+     path = output / 'collector-config.json'; save(path, config)
