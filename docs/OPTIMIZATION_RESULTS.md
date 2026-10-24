@@ -158,6 +158,8 @@ B两轮完成canonical终态、逐条业务回复和资产验证，且初次/最
 
 复制路径的首次[实际CPU smoke及独立校验](../evidence/2026-10-24/runpod-cpu/replicated-smoke/cpu-replicated-smoke-433-r1/independent-verification.json)通过：三个独立JVM、loopback UDP、sync2、全部1002个新业务命令接受、334笔成交、unknown和拒绝0，规范状态/资产/事件检查通过。单在途闭环122.181/s、API RTT p99 10.101286ms只代表该smoke，不能作为吞吐上限。原wrapper因误读summary.json而失败，实际Java退出0并写result.json；原失败收据不改写，独立collector核对全部样本后单独记录通过。
 
+CPU首个350k严格pilot已完成并独立逐行核验：10k/s×35s全部接受，窗口goodput9998.057/s、全量scheduled→confirmed p9918.516650ms、API RTT p9912.680527ms、drain6.422952ms，未发送/拒绝/错误/unknown均0。完整规范状态、逐reply、资金、outbox、leader与配置均通过，分析分类为OBSERVED_STABLE_WINDOW；它只是单个有限窗口，不是容量上限。[完整CPU基线与原始证据](../evidence/2026-10-24/runpod-cpu/capacity/cpu-pilot-10000-w128-r2/README.md)。
+
 CPU容量测试是新的单机三进程loopback cohort，不能与旧三台GPU Pod的跨机器结果直接相减当作优化收益。当前源433保留实际W128、多路复用单session/driver、2GiB heap、leader0及完整350k正确性检查。具体协议见[CPU容量协议](../evidence/2026-10-24/runpod-cpu/CAPACITY_PROTOCOL.md)。内核另用[JMH测量合同](CORE_JMH.md)，固定三fork并做预热敏感性检查；内核批均值与复制链路p99分别报告。
 
 ## 已完成的代码验证
