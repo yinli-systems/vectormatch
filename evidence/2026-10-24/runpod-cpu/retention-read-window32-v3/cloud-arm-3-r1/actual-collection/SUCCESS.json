@@ -1,0 +1,99 @@
+{
+  "allFailuresRetained": true,
+  "arm": 3,
+  "commonEventFetchEnvelope": false,
+  "commonReadWindow32Envelope": true,
+  "cpuCapacityClaimed": false,
+  "eventFetchCount": 32,
+  "nextArmAuthorized": false,
+  "ownerPollMaximumParkNs": 1000000,
+  "passed": true,
+  "readWindow": 8,
+  "rootGateCreated": false,
+  "serverDriverMaximumParkNs": 100000,
+  "steps": [
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read-window32-collection-preparation-r2/collect_closed_round.py",
+        "--config",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read32-arm-3-config-r1/collector-config.json",
+        "--dest",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read32-arm-3-collection-r1/collection",
+        "--remote-helper",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read-window32-collection-preparation-r2/remote_current.py",
+        "--collect-readonly"
+      ],
+      "exitCode": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "eb636380406a56b32d1ac178e6f09e4fd69dc23a484dca75a4facc456f472317"
+    },
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read-window32-collection-preparation-r2/verify_closed_archives.py",
+        "--collection",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read32-arm-3-collection-r1/collection",
+        "--output",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read32-arm-3-collection-r1/all-outcome-bytes"
+      ],
+      "exitCode": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "5f92d32ffaf9820a4b4a54d1321eeb9f5c2187bf11a73d1e14e436f57223bd05"
+    },
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read-window32-collection-preparation-r2/audit_native_artifacts.py",
+        "--config",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read32-arm-3-config-r1/collector-config.json",
+        "--collection",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read32-arm-3-collection-r1/collection",
+        "--out",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read32-arm-3-collection-r1/native"
+      ],
+      "exitCode": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "14bc5ceaeaf723030e1c2609de61d958a1a1dd4348eab45171ebdb3f53640d54"
+    },
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read-window32-collection-preparation-r2/audit_raw.py",
+        "--config",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read32-arm-3-config-r1/collector-config.json",
+        "--collection",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read32-arm-3-collection-r1/collection",
+        "--out",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read32-arm-3-collection-r1/raw"
+      ],
+      "exitCode": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "5c60ae7ccdb380f445c521c63cf64baca73cb869bac6ddfb82e8405a85c38a0a"
+    },
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read-window32-collection-preparation-r2/finalize_local_collection.py",
+        "--config",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read32-arm-3-config-r1/collector-config.json",
+        "--collection",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read32-arm-3-collection-r1/collection",
+        "--native-audit",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read32-arm-3-collection-r1/native",
+        "--raw-audit",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read32-arm-3-collection-r1/raw",
+        "--out",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read32-arm-3-collection-r1/finalized"
+      ],
+      "exitCode": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "b5850d79334707dc1afe49441d3b4b4362d0968b04f6a443492dd7d1ec09e80c"
+    }
+  ]
+}
