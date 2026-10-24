@@ -197,7 +197,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
         }}
     }
     public ReadBank openReadBank(int window){synchronized(lock){healthy();
-        if(window!=1&&window!=8)throw new IllegalArgumentException("read window must be1or8");
+        RetentionCapacityPlanV3.requireReadWindow(window);
         if(closing||maintenanceStopped||readBank!=null||maintenance!=null||pendingCount()!=0)throw new IllegalStateException("read bank requires definite business/control closure");
         readBank=new ReadBank(window);selectedReadWindow=window;return readBank;
     }}
@@ -676,7 +676,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
             out.put("retiredFrames", retiredFrames); out.put("pendingHighWater", pendingHighWater); out.put("frameHighWater", frameHighWater);
             out.put("newBusinessAdmissionStopped", admissionStopped); out.put("closed", closing); out.put("ownerThreadAlive", owner.isAlive());
             out.put("failureType", failure == null ? null : failure.getClass().getName()); out.put("transportObservation", transportObservation);out.put("transportObservedAtMonotonicNs",transportObservedAtNs);
-            out.put("selectedReadWindow",selectedReadWindow);out.put("readOnlyHardCapacity",8);out.put("readBankOpen",readBank!=null);
+            out.put("selectedReadWindow",selectedReadWindow);out.put("readOnlyHardCapacity",selectedReadWindow==RetentionCapacityPlanV3.MAX_EXPERIMENTAL_READ_WINDOW?RetentionCapacityPlanV3.MAX_EXPERIMENTAL_READ_WINDOW:RetentionCapacityPlanV3.MAX_READ_ONLY_IN_FLIGHT);out.put("readBankOpen",readBank!=null);
             out.put("readOnlyRetained",readBank==null?0:readBank.pending.size());out.put("readOnlyInFlight",readBank==null?0:readBank.pending.values().stream().filter(slot->slot.armed&&!slot.completion.isDone()).count());out.put("readOnlyCompletedUnconsumed",readBank==null?0:readBank.pending.values().stream().filter(slot->slot.completion.isDone()&&!slot.completion.isCompletedExceptionally()).count());out.put("readOnlyRetainedHighWater",readOnlyRetainedHighWater);out.put("readOnlyInFlightHighWater",readOnlyInFlightHighWater);out.put("readOnlyOfferedAwaitingReplyHighWater",readOnlyOfferedInFlightHighWater);
             out.put("queuedReads",readBank==null?0:readBank.pending.values().stream().filter(s->!s.possiblyOffered).count());
             out.put("readOnlySubmitted",readOnlySubmitted);out.put("readOnlyCompleted",readOnlyCompleted);out.put("ignoredRetiredReadDuplicateOrLateReplies",readOnlyDuplicateOrLateReplies);
