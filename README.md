@@ -24,6 +24,8 @@ The separate [fixed-leader capacity campaign](docs/CAPACITY_RESULTS.md) records 
 
 The current [CPU cohort](evidence/2026-10-24/runpod-cpu/README.md) uses one existing CPU host after the three GPU Pods were stopped. Its [350k-command capacity curve](evidence/2026-10-24/runpod-cpu/capacity-summary/README.md) preserves both stable13k/s windows, valid18k/26k overload, and an invalid scheduler observation that stopped the remaining matrix. This is three JVMs over loopback UDP, distinct from the historical three-Pod results. The original HTTP/PostgreSQL application is still pending CPU restoration.
 
+A separately registered [node max-park comparison](evidence/2026-10-24/runpod-cpu/node-idle-abab/comparison/README.md) holds source,leader,durability and clients fixed at18k/s:both1ms controls are nonstable,both100us treatments pass the finite-window criteria with350kaccepted/zero not-sent/zero UNKNOWN and all-arrival p9980.19/78.93ms. Higher-rate capacity and sustained latency remain to be tested. The [100M-order endurance design](docs/CPU_ENDURANCE_DESIGN.md) records the required versioned retention/history protocol rather than combining reset test states.
+
 ## Toolchain
 
 Java 21, Gradle, Aeron, Netty, React and TypeScript. The bootstrap pins Temurin 21.0.13+9, Node 24.22.1 and Gradle 8.14.3 and verifies vendor SHA-256 files. Portable development tools live under `.tools/` and are never committed.
