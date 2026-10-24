@@ -1,0 +1,9 @@
+# Client driver100us is not promoted
+
+B1 versusA1 lowers window goodput4.16% and raises accepted-only p9910.59%. B2 versusA2 raises goodput12.12% and lowers that conditional p9915.59%. The directions disagree;A controls themselves vary from19.20k to15.59k/s. All four are valid finite overload with initial/final UNKNOWN0. No point was excluded. All-arrival accepted p99 remains unavailable because requests were not sent. These are not pooled quantiles or a production SLA.
+
+Sampled CPU means summed over the four owned node/load processes are A1=3.572,B1=3.801,A2=3.371,B2=3.505 logical cores. This is not whole-host utilization or exclusive-core capacity;the shared namespace/cgroup is counted once.
+
+Keep the original client driver default1ms. The100us opt-in and every raw result remain archived;the experiment does not show a repeatable improvement. Node100us remains the independently supported configuration from the prior18k node-only experiment.
+
+The first-pair [archive-path diagnosis](../../derived/archive-path-client-abab-prefix2/diagnosis.json) motivates further isolated testing:tracked Archive write-path counters consume about95–99% of per-node sampled wall time. The [fixed Aeron1.53.3 implementation](https://raw.githubusercontent.com/aeron-io/aeron/1.53.3/aeron-archive/src/main/java/io/aeron/archive/RecordingWriter.java) and actual pinnedJAR bytecode show the timing encloses write and force. It also includes copy/checksum and descheduling;it is not a purefsync histogram or unique storage saturation proof. No tracked diagnostic counter grows in those sampled identities/windows;this does not prove absence of all network loss or ephemeral counters. The next probe must keep force(true),use independent synthetic files,and label filesystem micro-latency separately from trading latency.

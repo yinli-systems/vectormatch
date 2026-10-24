@@ -26,6 +26,8 @@ The current [CPU cohort](evidence/2026-10-24/runpod-cpu/README.md) uses one exis
 
 A separately registered [node max-park comparison](evidence/2026-10-24/runpod-cpu/node-idle-abab/comparison/README.md) holds source,leader,durability and clients fixed at18k/s:both1ms controls are nonstable,both100us treatments pass the finite-window criteria with350kaccepted/zero not-sent/zero UNKNOWN and all-arrival p9980.19/78.93ms. The subsequent [eight-point fixed100us curve](evidence/2026-10-24/runpod-cpu/park100us-curve/comparison/README.md) retains both repetitions at22k/26k/30k/34k:all are valid overload,window goodput17.63–19.18k/s,accepted-only p99467.62–538.82ms,UNKNOWN0. These finite tests do not uniquely identify a server ceiling. The [100M-order endurance design](docs/CPU_ENDURANCE_DESIGN.md) records the required versioned retention/history protocol rather than combining reset test states.
 
+The independent [client-driver A/B/A/B](evidence/2026-10-24/runpod-cpu/client-driver-experiment/comparison/INTERPRETATION.md) does not support promoting100us over the original1ms client default:the two pairs move in opposite directions for both goodput and accepted-only p99. All four finite overload points and CPU/raw evidence remain visible in separate configuration cohorts. A tracked Archive write-path timing lead motivates isolated storage testing;it is not a purefsync or unique bottleneck claim.
+
 ## Toolchain
 
 Java 21, Gradle, Aeron, Netty, React and TypeScript. The bootstrap pins Temurin 21.0.13+9, Node 24.22.1 and Gradle 8.14.3 and verifies vendor SHA-256 files. Portable development tools live under `.tools/` and are never committed.
