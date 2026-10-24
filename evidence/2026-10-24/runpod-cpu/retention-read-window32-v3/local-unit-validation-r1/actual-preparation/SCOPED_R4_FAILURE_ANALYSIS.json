@@ -1,0 +1,7 @@
+{
+  "actualFailure": "expected0 success timings but saw32 timing rows",
+  "testAssumptionIncorrect": true,
+  "cause": "abortReadPhase intentionally appends failure timing rows; post-abort stream snapshot is not the pre-failure consume boundary",
+  "productionChangedAfterFailure": false,
+  "correction": "capture all three last-successful-flush snapshots atomically immediately before injected failure, then bind completed records to exact requests; keep abort diagnostics intact"
+}

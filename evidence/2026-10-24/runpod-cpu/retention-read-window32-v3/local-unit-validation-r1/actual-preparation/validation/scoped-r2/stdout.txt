@@ -1,0 +1,34 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :cluster:processResources NO-SOURCE
+> Task :cluster:processTestResources NO-SOURCE
+> Task :core:compileJava
+> Task :core:processResources NO-SOURCE
+> Task :core:classes
+> Task :core:jar
+
+> Task :cluster:compileJava
+
+> Task :cluster:classes
+> Task :cluster:jar
+
+> Task :cluster:compileTestJava
+
+> Task :cluster:testClasses
+
+> Task :cluster:test
+
+RetentionMaintenanceReadWindowV3Test > firstMiddleLastRequestReplyAndTimingFailuresRetainTheEntire32CreditWaveAndFenceBothAcks() FAILED
+    org.opentest4j.AssertionFailedError: expected: <32> but was: <17>
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+        at app//org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+        at app//org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+        at app//org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+        at app//org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+        at app//io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test.firstMiddleLastRequestReplyAndTimingFailuresRetainTheEntire32CreditWaveAndFenceBothAcks(RetentionMaintenanceReadWindowV3Test.java:291)
+
+> Task :cluster:test FAILED
+
+[Incubating] Problems report is available at: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/read-window32-v3-worktree/build/reports/problems/problems-report.html
+6 actionable tasks: 6 executed

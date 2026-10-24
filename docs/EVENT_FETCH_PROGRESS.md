@@ -1,6 +1,6 @@
 # Event Fetch16/32 candidate
 
-The candidate on `codex/event-fetch-page-v3`, source commit `d92301d3058acc83cb85d5bc5b4fd2e3f0ed4df8`, adds an explicit V3 event page of16 or32. It remains a candidate; default page16 and owner1ms remain unchanged on main. Both arms must run the same new installed JARs, including their UTF8 validation cost.
+The candidate on `codex/event-fetch-page-v3`, source commit `d92301d3058acc83cb85d5bc5b4fd2e3f0ed4df8`, adds an explicit V3 event page of16 or32. The option is integrated into main after the complete native ABAB; default page16 and owner1ms remain unchanged. Both arms must run the same new installed JARs, including their UTF8 validation cost.
 
 | Evidence | Actual result | Qualification |
 |---|---|---|

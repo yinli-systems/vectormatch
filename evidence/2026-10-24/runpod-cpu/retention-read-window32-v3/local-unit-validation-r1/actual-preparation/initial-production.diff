@@ -1,0 +1,326 @@
+diff --git a/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchMaintenanceV3.java b/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchMaintenanceV3.java
+index fb3d045a..fb7cf6c7 100644
+--- a/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchMaintenanceV3.java
++++ b/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchMaintenanceV3.java
+@@ -52,6 +52,7 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
+     private final DataOutputStream requests,replies,timings;
+     private final long maximumLogicalRpcs;
+     private final int archiveChunkBytes,readWindow,eventFetchCount;
++    private final boolean commonReadWindow32Envelope;
+     private final Map<String,long[]> rpcKinds=new LinkedHashMap<>();
+     private long rpcCount,cycleCount;
+     private byte[] latestOriginalWire;
+@@ -108,9 +109,16 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
+     }
+     public RetentionBatchMaintenanceV3(RetentionBatchOwnerV3 owner,RetentionDurableWriterV3 writer,
+                                       RetentionServiceV3.Profile profile,String lineage,Path newRawDir,RunBudget budget,long maximumLogicalRpcs,int archiveChunkBytes,int readWindow,int eventFetchCount)throws IOException{
++        this(owner,writer,profile,lineage,newRawDir,budget,maximumLogicalRpcs,archiveChunkBytes,readWindow,eventFetchCount,false);
++    }
++    /** Explicit isolated experiment; legacy constructors retain their original1|8 window admission. */
++    public RetentionBatchMaintenanceV3(RetentionBatchOwnerV3 owner,RetentionDurableWriterV3 writer,
++                                      RetentionServiceV3.Profile profile,String lineage,Path newRawDir,RunBudget budget,long maximumLogicalRpcs,int archiveChunkBytes,int readWindow,int eventFetchCount,boolean commonReadWindow32Envelope)throws IOException{
++        this.commonReadWindow32Envelope=commonReadWindow32Envelope;
+         this.eventFetchCount=requireEventFetchCount(eventFetchCount);
+         this.archiveChunkBytes=requireArchiveChunkBytes(archiveChunkBytes);
+-        this.readWindow=RetentionCapacityPlanV3.requireReadWindow(readWindow);
++        this.readWindow=commonReadWindow32Envelope?RetentionCapacityPlanV3.requireReadWindow32(readWindow):RetentionCapacityPlanV3.requireReadWindow(readWindow);
++        if(commonReadWindow32Envelope&&archiveChunkBytes!=MAX_SUPPORTED_ARCHIVE_CHUNK)throw new IllegalArgumentException("read-window32 requires unchanged chunk6144");
+         if(maximumLogicalRpcs<1||maximumLogicalRpcs>250000)throw new IllegalArgumentException("explicit finite logical RPC cap1..250000 required");this.maximumLogicalRpcs=maximumLogicalRpcs;
+         this.owner=Objects.requireNonNull(owner);this.writer=Objects.requireNonNull(writer);this.profile=Objects.requireNonNull(profile);
+         this.lineage=lineage;scope=new Scope(profile.fingerprint(),lineage);this.budget=Objects.requireNonNull(budget);
+@@ -213,7 +221,7 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
+         long fileLimit=profile.core().maxPendingSerializedBytes()+1024L;
+         if(descriptor.totalBytes()>fileLimit)throw new IOException("archive exceeds explicit per-prefix allocation cap");
+         byte[] payload=new byte[descriptor.totalBytes()];
+-        activeReadBank=owner.openReadBank(readWindow);
++        activeReadBank=commonReadWindow32Envelope?owner.openReadBank32(readWindow):owner.openReadBank(readWindow);
+         for(int offset=0;offset<payload.length;){
+             var wave=new ArrayList<Operation>(readWindow);
+             for(int i=0;i<readWindow&&offset<payload.length;i++){
+@@ -235,7 +243,7 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
+         if(throughEvent-budget.lastEvent!=expectedEvents.size())throw new IOException("archive event total/gap differs");
+         if(!expectedEvents.isEmpty()){
+             ByteArrayOutputStream bytes=new ByteArrayOutputStream();DataOutputStream out=new DataOutputStream(bytes);int index=0;
+-            activeReadBank=owner.openReadBank(readWindow);
++            activeReadBank=commonReadWindow32Envelope?owner.openReadBank32(readWindow):owner.openReadBank(readWindow);
+             while(index<expectedEvents.size()){
+                 var wave=new ArrayList<Operation>(readWindow);int next=index;
+                 for(int i=0;i<readWindow&&next<expectedEvents.size();i++){
+@@ -269,6 +277,6 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
+         Files.writeString(rawRoot.resolve("cycle-"+cycleCount+".verified.txt"),receipt,StandardOpenOption.CREATE_NEW);
+         return new Cycle(ack,archiveFile.path(),eventFile,verified.entries(),throughEvent);
+     }
+-    public Map<String,Object> snapshot(){affinity();var result=new LinkedHashMap<String,Object>(budget.snapshot());result.put("archiveChunkBytes",archiveChunkBytes);result.put("eventFetchCount",eventFetchCount);result.put("readWindow",readWindow);result.put("logicalRpcCount",rpcCount);result.put("maximumLogicalRpcs",maximumLogicalRpcs);var kinds=new LinkedHashMap<String,Object>();for(var entry:rpcKinds.entrySet()){long[] v=entry.getValue();kinds.put(entry.getKey(),Map.of("count",v[0],"totalElapsedNs",v[1],"maxElapsedNs",v[2],"failed",v[3]));}result.put("rpcKinds",kinds);result.put("completedCycles",cycleCount);result.put("failed",failed);return Collections.unmodifiableMap(result);}
++    public Map<String,Object> snapshot(){affinity();var result=new LinkedHashMap<String,Object>(budget.snapshot());if(commonReadWindow32Envelope)result.put("commonReadWindow32Envelope",true);result.put("archiveChunkBytes",archiveChunkBytes);result.put("eventFetchCount",eventFetchCount);result.put("readWindow",readWindow);result.put("logicalRpcCount",rpcCount);result.put("maximumLogicalRpcs",maximumLogicalRpcs);var kinds=new LinkedHashMap<String,Object>();for(var entry:rpcKinds.entrySet()){long[] v=entry.getValue();kinds.put(entry.getKey(),Map.of("count",v[0],"totalElapsedNs",v[1],"maxElapsedNs",v[2],"failed",v[3]));}result.put("rpcKinds",kinds);result.put("completedCycles",cycleCount);result.put("failed",failed);return Collections.unmodifiableMap(result);}
+     @Override public void close()throws IOException{affinity();closed=true;try{requests.close();}finally{try{replies.close();}finally{timings.close();}}}
+ }
+diff --git a/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchOwnerV3.java b/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchOwnerV3.java
+index d00937ed..dfad5628 100644
+--- a/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchOwnerV3.java
++++ b/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchOwnerV3.java
+@@ -196,10 +196,16 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
+             closed=true;readBank=null;wake();
+         }}
+     }
+-    public ReadBank openReadBank(int window){synchronized(lock){healthy();
+-        if(window!=1&&window!=8)throw new IllegalArgumentException("read window must be1or8");
++    public ReadBank openReadBank(int window){
++        RetentionCapacityPlanV3.requireReadWindow(window);return openReadBank(window,8);
++    }
++    /** Explicit opt-in, preserving the old API's eight-credit ceiling. */
++    public ReadBank openReadBank32(int window){
++        RetentionCapacityPlanV3.requireReadWindow32(window);return openReadBank(window,32);
++    }
++    private ReadBank openReadBank(int window,int hardCapacity){synchronized(lock){healthy();
+         if(closing||maintenanceStopped||readBank!=null||maintenance!=null||pendingCount()!=0)throw new IllegalStateException("read bank requires definite business/control closure");
+-        readBank=new ReadBank(window);selectedReadWindow=window;return readBank;
++        readBank=new ReadBank(window);selectedReadWindow=window;readOnlyHardCapacity=hardCapacity;return readBank;
+     }}
+     public static final class UnknownMaintenanceException extends IllegalStateException {
+         private static final long serialVersionUID = 1L;
+@@ -408,7 +414,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
+     private MaintenanceSlot maintenance;
+     private ReadBank readBank;
+     private final LinkedHashSet<Long> retiredReadCorrelations=new LinkedHashSet<>();
+-    private int selectedReadWindow=1,readOnlyRetainedHighWater,readOnlyInFlightHighWater,readOnlyOfferedInFlightHighWater;
++    private int readOnlyHardCapacity=8,selectedReadWindow=1,readOnlyRetainedHighWater,readOnlyInFlightHighWater,readOnlyOfferedInFlightHighWater;
+     private long readOnlySubmitted,readOnlyCompleted,readOnlyDuplicateOrLateReplies,readPhaseGeneration;
+     private long maintenanceMutationOffers, maintenanceMutationReserveBytes, maintenanceAcceptedOffers, maintenanceNegativeOffers, maintenanceReplies;
+     private Throwable failure;
+@@ -676,7 +682,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
+             out.put("retiredFrames", retiredFrames); out.put("pendingHighWater", pendingHighWater); out.put("frameHighWater", frameHighWater);
+             out.put("newBusinessAdmissionStopped", admissionStopped); out.put("closed", closing); out.put("ownerThreadAlive", owner.isAlive());
+             out.put("failureType", failure == null ? null : failure.getClass().getName()); out.put("transportObservation", transportObservation);out.put("transportObservedAtMonotonicNs",transportObservedAtNs);
+-            out.put("selectedReadWindow",selectedReadWindow);out.put("readOnlyHardCapacity",8);out.put("readBankOpen",readBank!=null);
++            out.put("selectedReadWindow",selectedReadWindow);out.put("readOnlyHardCapacity",readOnlyHardCapacity);out.put("readBankOpen",readBank!=null);
+             out.put("readOnlyRetained",readBank==null?0:readBank.pending.size());out.put("readOnlyInFlight",readBank==null?0:readBank.pending.values().stream().filter(slot->slot.armed&&!slot.completion.isDone()).count());out.put("readOnlyCompletedUnconsumed",readBank==null?0:readBank.pending.values().stream().filter(slot->slot.completion.isDone()&&!slot.completion.isCompletedExceptionally()).count());out.put("readOnlyRetainedHighWater",readOnlyRetainedHighWater);out.put("readOnlyInFlightHighWater",readOnlyInFlightHighWater);out.put("readOnlyOfferedAwaitingReplyHighWater",readOnlyOfferedInFlightHighWater);
+             out.put("queuedReads",readBank==null?0:readBank.pending.values().stream().filter(s->!s.possiblyOffered).count());
+             out.put("readOnlySubmitted",readOnlySubmitted);out.put("readOnlyCompleted",readOnlyCompleted);out.put("ignoredRetiredReadDuplicateOrLateReplies",readOnlyDuplicateOrLateReplies);
+diff --git a/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityAeronPilotV3.java b/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityAeronPilotV3.java
+index faebcaad..322b2fbf 100644
+--- a/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityAeronPilotV3.java
++++ b/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityAeronPilotV3.java
+@@ -39,6 +39,7 @@ public final class RetentionCapacityAeronPilotV3 {
+     private final Path root;
+     private final int cap,ports,archiveChunkBytes,readWindow,eventFetchCount;
+     private final boolean eventFetchExperiment;
++    private final boolean readWindow32Experiment;
+     private final boolean readWindowExperiment;
+     private final Workload workload;
+     private final String lineage="capacity-pilot-"+UUID.randomUUID();
+@@ -65,10 +66,15 @@ public final class RetentionCapacityAeronPilotV3 {
+         this(freshRoot,cap,ports,archiveChunkBytes,commonEnvelope,readWindow,readWindowExperiment,workload,DEFAULT_EVENT_FETCH_COUNT,false);
+     }
+     private RetentionCapacityAeronPilotV3(Path freshRoot,int cap,int ports,int archiveChunkBytes,boolean commonEnvelope,int readWindow,boolean readWindowExperiment,Workload workload,int eventFetchCount,boolean eventFetchExperiment)throws Exception{
++        this(freshRoot,cap,ports,archiveChunkBytes,commonEnvelope,readWindow,readWindowExperiment,workload,eventFetchCount,eventFetchExperiment,false);
++    }
++    private RetentionCapacityAeronPilotV3(Path freshRoot,int cap,int ports,int archiveChunkBytes,boolean commonEnvelope,int readWindow,boolean readWindowExperiment,Workload workload,int eventFetchCount,boolean eventFetchExperiment,boolean readWindow32Experiment)throws Exception{
++        this.readWindow32Experiment=readWindow32Experiment;
++        if(readWindow32Experiment&&(eventFetchExperiment||cap!=4||archiveChunkBytes!=MAX_SUPPORTED_ARCHIVE_CHUNK||!readWindowExperiment||workload!=Workload.LONG_CUTS))throw new IllegalArgumentException("read-window32 requires fixed long/cap4/chunk6144 and explicit page/window");
+         this.eventFetchCount=requireEventFetchCount(eventFetchCount);this.eventFetchExperiment=eventFetchExperiment;
+         if(eventFetchExperiment&&(cap!=4||archiveChunkBytes!=MAX_SUPPORTED_ARCHIVE_CHUNK||readWindow!=8||!readWindowExperiment||workload!=Workload.LONG_CUTS))throw new IllegalArgumentException("event page experiment requires fixed long/cap4/chunk6144/read8");
+         this.workload=Objects.requireNonNull(workload);
+-        this.readWindow=RetentionCapacityPlanV3.requireReadWindow(readWindow);this.readWindowExperiment=readWindowExperiment;
++        this.readWindow=readWindow32Experiment?RetentionCapacityPlanV3.requireReadWindow32(readWindow):RetentionCapacityPlanV3.requireReadWindow(readWindow);this.readWindowExperiment=readWindowExperiment;
+         this.archiveChunkBytes=requireArchiveChunkBytes(archiveChunkBytes);this.cap=cap;this.ports=ports;root=freshRoot.toAbsolutePath().normalize();Files.createDirectory(root);
+         var base=RetentionCapacityPlanV3.plan(workload.arrivals,cap,profile);
+         plan=readWindowExperiment?RetentionCapacityExperimentV3.boundedPlan(experimentConfig(),profile):commonEnvelope?RetentionCapacityExperimentV3.boundedPlan(new RetentionCapacityExperimentV3.Config(workload.arrivals,workload.rate,cap,archiveChunkBytes),profile):
+@@ -79,7 +85,7 @@ public final class RetentionCapacityAeronPilotV3 {
+         var registration=new LinkedHashMap<String,Object>(Map.of("scope","LOCAL_THREE_JVM_CONTINUOUS_ARRIVAL_FUNCTIONAL_PILOT",
+                 "arrivals",workload.arrivals,"rate",workload.rate,"batchCap",cap,"appointedLeader",0,"sync",2,
+                 "profileSha256",profile.fingerprint(),"codeSha256",code,"lineage",lineage,"ports",ports));
+-        registration.put("archiveChunkBytes",archiveChunkBytes);registration.put("eventFetchCount",eventFetchCount);if(eventFetchExperiment)registration.put("commonEventFetchEnvelope",true);registration.put("commonChunkEnvelope",commonEnvelope);registration.put("readWindow",readWindow);registration.put("commonReadWindowEnvelope",readWindowExperiment);
++        registration.put("archiveChunkBytes",archiveChunkBytes);registration.put("eventFetchCount",eventFetchCount);if(eventFetchExperiment)registration.put("commonEventFetchEnvelope",true);if(readWindow32Experiment)registration.put("commonReadWindow32Envelope",true);registration.put("commonChunkEnvelope",commonEnvelope);registration.put("readWindow",readWindow);registration.put("commonReadWindowEnvelope",readWindowExperiment);
+         if(workload==Workload.LONG_CUTS){registration.put("workloadPreset","long-cuts-33792-v1");registration.put("expectedFullCommandCuts",workload.fullCommandCuts());registration.put("expectedTrailingCommands",workload.trailingCommands());registration.put("equivalentFullLoadCutNumbers",List.of(2,3,4,5,6,7,8,9,10,11));}
+         if(idleSelection.explicit())registration.put("retentionIdleSelection",idleSelection.observation());
+         if(ownerPollSelection.explicit())registration.put("ownerPollSelection",ownerPollSelection.observation());
+@@ -132,11 +138,29 @@ public final class RetentionCapacityAeronPilotV3 {
+         }
+         RetentionCapacityJsonV3.writeNew(pair.resolve("pair-completion.json"),Map.of("passed",true,"readWindows",List.of(1,8),"archiveChunkBytes",MAX_SUPPORTED_ARCHIVE_CHUNK,"fixedBusinessBatchCap",4,"scope","Local functional exclusive read-window comparison; no capacity or speedup claim"));return pair;
+     }
+-    private RetentionCapacityExperimentV3.Config experimentConfig(){if(eventFetchExperiment)return eventFetchPageConfig(eventFetchCount);return readWindowExperiment?
++    private RetentionCapacityExperimentV3.Config experimentConfig(){if(readWindow32Experiment)return readWindow32Config(eventFetchCount,readWindow);if(eventFetchExperiment)return eventFetchPageConfig(eventFetchCount);return readWindowExperiment?
+             new RetentionCapacityExperimentV3.Config(workload.arrivals,workload.rate,cap,archiveChunkBytes,readWindow):new RetentionCapacityExperimentV3.Config(workload.arrivals,workload.rate,cap,archiveChunkBytes);}
+     static RetentionCapacityExperimentV3.Config eventFetchPageConfig(int count){
+         return new RetentionCapacityExperimentV3.Config(Workload.LONG_CUTS.arrivals,500,4,MAX_SUPPORTED_ARCHIVE_CHUNK,8,requireEventFetchCount(count));
+     }
++    static RetentionCapacityExperimentV3.Config readWindow32Config(int page,int window){return RetentionCapacityExperimentV3.Config.readWindow32LongCuts(page,window);}
++    /** One arm only. A controller must keep the selected page fixed when comparing8/32/8/32. */
++    public static Path runReadWindow32LongCuts(Path newArmRoot,int ports,int page,int window)throws Exception{
++        readWindow32Config(page,window); // Reject the entire experiment selection before ports/filesystem access.
++        var idle=RetentionIdlePolicyV3.systemSelection();var owner=RetentionOwnerPollPolicyV3.systemSelection();
++        if(!idle.explicit()||idle.maximumParkNs()!=100000L||owner.effectiveMaximumParkNs()!=1000000L)
++            throw new IllegalArgumentException("read-window32 requires explicit server/driver100us and unchanged owner1ms");
++        if(ports!=42000)throw new IllegalArgumentException("read-window32 requires fixed42000 ports");
++        verifyChunkPorts(ports);
++        var pilot=new RetentionCapacityAeronPilotV3(newArmRoot,4,ports,MAX_SUPPORTED_ARCHIVE_CHUNK,false,window,true,Workload.LONG_CUTS,page,false,true);
++        Throwable failure=null;boolean passed=false;
++        try{pilot.exercise();passed=true;}catch(Throwable error){failure=error;pilot.failure(error);throw error;}
++        finally{try{pilot.stopOwned();}catch(Throwable cleanup){if(failure!=null)failure.addSuppressed(cleanup);else throw cleanup;}
++            finally{pilot.write("completion.json",Map.of("passed",passed&&pilot.allOwnedStopped,"allOwnedStopped",pilot.allOwnedStopped,
++                    "independentHosts",false,"capacityOrEnduranceProven",false,"fixedLeader",0,"archiveChunkBytes",MAX_SUPPORTED_ARCHIVE_CHUNK,
++                    "readWindow",window,"eventFetchCount",page,"commonReadWindow32Envelope",true));}}
++        return pilot.root;
++    }
+     /** Explicit one-arm page-size candidate; the only changed factor is16 versus32 events per fetch. */
+     public static Path runEventFetchPageLongCuts(Path newArmRoot,int ports,int count)throws Exception{
+         requireEventFetchCount(count);
+@@ -183,6 +207,11 @@ public final class RetentionCapacityAeronPilotV3 {
+     }
+     public static void main(String[] args)throws Exception{
+         RetentionOwnerPollPolicyV3.systemSelection();
++        if(args.length>=2 && args[1].equals("read-window32-long-cuts")){
++            if(args.length!=5||(!args[2].equals("16")&&!args[2].equals("32"))||(!args[3].equals("8")&&!args[3].equals("32"))||!args[4].equals("42000"))throw new IllegalArgumentException("read-window32-long-cuts requires explicit page16|32, window8|32 and42000");
++            Path result=runReadWindow32LongCuts(Path.of(args[0]),Integer.parseInt(args[4]),Integer.parseInt(args[2]),Integer.parseInt(args[3]));
++            System.out.println("VECTOR_V3_CAPACITY_SOURCE_PILOT_PASS evidence="+result);return;
++        }
+         if(args.length>=2 && args[1].equals("event-fetch-page-long-cuts")){
+             if(args.length!=4||(!args[2].equals("16")&&!args[2].equals("32"))||!args[3].equals("42000"))throw new IllegalArgumentException("event-fetch-page-long-cuts requires explicit16|32 and42000");
+             Path result=runEventFetchPageLongCuts(Path.of(args[0]),Integer.parseInt(args[3]),Integer.parseInt(args[2]));
+@@ -233,7 +262,7 @@ public final class RetentionCapacityAeronPilotV3 {
+             var functional=new LinkedHashMap<String,Object>(Map.of("passed",true,"businessSeq",position.counters().businessSeq(),"eventSeq",position.counters().eventSeq(),
+                     "acceptedPlaceCount",position.counters().acceptedPlaceCount(),"finalCombinedSha256",position.counters().stateHash(),
+                     "allThreeSnapshotLogsMatched",true,"noCapacityPromotion",true,"actualSourceSummary",result.summary(),"actualEgressBounds",actualEgress,"archiveChunkBytes",archiveChunkBytes));
+-            functional.put("eventFetchCount",eventFetchCount);if(eventFetchExperiment)functional.put("commonEventFetchEnvelope",true);functional.put("readWindow",readWindow);functional.put("commonReadWindowEnvelope",readWindowExperiment);write("functional-result.json",functional);
++            functional.put("eventFetchCount",eventFetchCount);if(eventFetchExperiment)functional.put("commonEventFetchEnvelope",true);if(readWindow32Experiment)functional.put("commonReadWindow32Envelope",true);functional.put("readWindow",readWindow);functional.put("commonReadWindowEnvelope",readWindowExperiment);write("functional-result.json",functional);
+         }
+         disk.check();write("disk-after-functional.json",disk.snapshot());
+     }
+diff --git a/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityExperimentV3.java b/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityExperimentV3.java
+index fc9b7c89..559fb14e 100644
+--- a/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityExperimentV3.java
++++ b/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityExperimentV3.java
+@@ -18,7 +18,10 @@ import static io.vectormatch.cluster.RetentionReplyV3.*;
+ /** Deterministic finite open-loop V3 source. Maintenance may stop dispatch, never its arrival clock. */
+ public final class RetentionCapacityExperimentV3 {
+     public static final long TASK_LIFETIME_NS=TimeUnit.SECONDS.toNanos(90),RPC_PERMIT_NS=TimeUnit.SECONDS.toNanos(2),DRAIN_NS=TimeUnit.SECONDS.toNanos(90);
+-    public record Config(int arrivals,int rate,int batchCap,int archiveChunkBytes,int readWindow,boolean commonReadWindowEnvelope,int eventFetchCount,boolean commonEventFetchEnvelope){
++    public record Config(int arrivals,int rate,int batchCap,int archiveChunkBytes,int readWindow,boolean commonReadWindowEnvelope,int eventFetchCount,boolean commonEventFetchEnvelope,boolean commonReadWindow32Envelope){
++        /** Source-compatible existing eight-credit/page experiment configuration. */
++        public Config(int arrivals,int rate,int batchCap,int archiveChunkBytes,int readWindow,boolean commonReadWindowEnvelope,int eventFetchCount,boolean commonEventFetchEnvelope){this(arrivals,rate,batchCap,archiveChunkBytes,readWindow,commonReadWindowEnvelope,eventFetchCount,commonEventFetchEnvelope,false);}
++        public static Config readWindow32LongCuts(int page,int window){return new Config(33792,500,4,MAX_SUPPORTED_ARCHIVE_CHUNK,window,true,page,false,true);}
+         public Config(int arrivals,int rate,int batchCap,int archiveChunkBytes,int readWindow,boolean commonReadWindowEnvelope){this(arrivals,rate,batchCap,archiveChunkBytes,readWindow,commonReadWindowEnvelope,DEFAULT_EVENT_FETCH_COUNT,false);}
+         /** Opt-in single-factor event-page experiment, fixed cap4/chunk6144/read8. */
+         public Config(int arrivals,int rate,int batchCap,int archiveChunkBytes,int readWindow,int eventFetchCount){this(arrivals,rate,batchCap,archiveChunkBytes,readWindow,true,eventFetchCount,true);}
+@@ -26,8 +29,13 @@ public final class RetentionCapacityExperimentV3 {
+         public Config(int arrivals,int rate,int batchCap,int archiveChunkBytes){this(arrivals,rate,batchCap,archiveChunkBytes,1,false);}
+         public Config(int arrivals,int rate,int batchCap,int archiveChunkBytes,int readWindow){this(arrivals,rate,batchCap,archiveChunkBytes,readWindow,true);}
+         public Config{
+-            requireArchiveChunkBytes(archiveChunkBytes);RetentionCapacityPlanV3.requireReadWindow(readWindow);requireEventFetchCount(eventFetchCount);
+-            if((commonEventFetchEnvelope&&(!commonReadWindowEnvelope||batchCap!=4||archiveChunkBytes!=MAX_SUPPORTED_ARCHIVE_CHUNK||readWindow!=8))||(!commonEventFetchEnvelope&&eventFetchCount!=DEFAULT_EVENT_FETCH_COUNT))throw new IllegalArgumentException("event-page selection requires explicit fixed cap4/chunk6144/read8 common envelope");
++            requireArchiveChunkBytes(archiveChunkBytes);
++            if(commonReadWindow32Envelope){
++                RetentionCapacityPlanV3.requireReadWindow32(readWindow);
++                if(arrivals!=33792||rate!=500||batchCap!=4||archiveChunkBytes!=MAX_SUPPORTED_ARCHIVE_CHUNK||!commonReadWindowEnvelope||commonEventFetchEnvelope)throw new IllegalArgumentException("read-window32 requires fixed LONG33792@500/cap4/chunk6144 and one explicit fixed page");
++            }else RetentionCapacityPlanV3.requireReadWindow(readWindow);
++            requireEventFetchCount(eventFetchCount);
++            if((commonEventFetchEnvelope&&(!commonReadWindowEnvelope||batchCap!=4||archiveChunkBytes!=MAX_SUPPORTED_ARCHIVE_CHUNK||readWindow!=8))||(!commonEventFetchEnvelope&&!commonReadWindow32Envelope&&eventFetchCount!=DEFAULT_EVENT_FETCH_COUNT))throw new IllegalArgumentException("event-page selection requires explicit fixed cap4/chunk6144/read8 common envelope");
+             if(arrivals<1||arrivals>MAX_ARRIVALS||rate<1||(batchCap!=1&&batchCap!=4)||1_000_000_000L*arrivals/rate<TimeUnit.SECONDS.toNanos(10)||1_000_000_000L*arrivals/rate>TimeUnit.SECONDS.toNanos(120)
+                     ||(commonReadWindowEnvelope&&(batchCap!=4||archiveChunkBytes!=MAX_SUPPORTED_ARCHIVE_CHUNK))||(!commonReadWindowEnvelope&&readWindow!=1))
+                 throw new IllegalArgumentException("finite source10..120sec; explicit read-window experiment requires cap4/chunk6144/window1or8");
+@@ -67,7 +75,7 @@ public final class RetentionCapacityExperimentV3 {
+         ownerPollSelection=RetentionOwnerPollPolicyV3.systemSelection();
+         idleSelection=RetentionIdlePolicyV3.systemSelection();
+         this.config=Objects.requireNonNull(config);this.profile=Objects.requireNonNull(profile);this.plan=Objects.requireNonNull(plan);plan.requireAdmitted();this.disk=Objects.requireNonNull(disk);
+-        if(plan.arrivals()!=config.arrivals()||plan.batchCap()!=config.batchCap()||plan.archiveChunkBytes()!=config.archiveChunkBytes()||plan.requestedReadWindow()!=config.readWindow()||plan.commonReadWindowEnvelope()!=config.commonReadWindowEnvelope()||plan.eventFetchCount()!=config.eventFetchCount()||plan.commonEventFetchEnvelope()!=config.commonEventFetchEnvelope()||!disk.plan().equals(plan)||!disk.ownedRoot().equals(ownedStateRoot.toAbsolutePath().normalize()))throw new IllegalArgumentException("exact config/plan/full-owned-root disk binding required");
++        if(plan.arrivals()!=config.arrivals()||plan.batchCap()!=config.batchCap()||plan.archiveChunkBytes()!=config.archiveChunkBytes()||plan.requestedReadWindow()!=config.readWindow()||plan.commonReadWindowEnvelope()!=config.commonReadWindowEnvelope()||plan.eventFetchCount()!=config.eventFetchCount()||plan.commonEventFetchEnvelope()!=config.commonEventFetchEnvelope()||plan.commonReadWindow32Envelope()!=config.commonReadWindow32Envelope()||!disk.plan().equals(plan)||!disk.ownedRoot().equals(ownedStateRoot.toAbsolutePath().normalize()))throw new IllegalArgumentException("exact config/plan/full-owned-root disk binding required");
+         this.lineage=new Scope(profile.fingerprint(),lineage).lineageId();
+         root=newRoot.toAbsolutePath().normalize();stateRoot=ownedStateRoot.toAbsolutePath().normalize();Files.createDirectory(root);
+         rows=new RetentionCapacityLedgerV3(config.arrivals());journalBudget=new RetentionBatchMaintenanceV3.RunBudget(profile);
+@@ -81,6 +89,7 @@ public final class RetentionCapacityExperimentV3 {
+     }
+     public static RetentionCapacityPlanV3.Plan boundedPlan(Config config,RetentionServiceV3.Profile profile){
+         var full=RetentionCapacityPlanV3.plan(config.arrivals(),config.batchCap(),profile);
++        if(config.commonReadWindow32Envelope())return RetentionCapacityPlanV3.commonReadWindow32Plan(config.arrivals(),config.batchCap(),profile,config.eventFetchCount(),config.readWindow(),config.arrivals()/4L,config.arrivals()+full.maximumLogicalMaintenanceRpcs());
+         if(config.commonEventFetchEnvelope())return RetentionCapacityPlanV3.commonEventFetchPlan(config.arrivals(),config.batchCap(),profile,config.eventFetchCount(),config.arrivals()/4L,config.arrivals()+full.maximumLogicalMaintenanceRpcs());
+         if(config.commonReadWindowEnvelope())return RetentionCapacityPlanV3.commonReadWindowPlan(config.arrivals(),config.batchCap(),profile,config.readWindow(),config.arrivals()/4L,config.arrivals()+full.maximumLogicalMaintenanceRpcs());
+         return RetentionCapacityPlanV3.commonChunkPlan(config.arrivals(),config.batchCap(),profile,config.archiveChunkBytes(),config.arrivals()/4L,config.arrivals()+full.maximumLogicalMaintenanceRpcs());
+@@ -92,7 +101,7 @@ public final class RetentionCapacityExperimentV3 {
+             disk.check();RetentionCapacityJsonV3.writeNew(root.resolve("admission-plan.json"),plan.observation());
+             writer=new RetentionDurableWriterV3(root.resolve("writer"),profile.core().maxPendingSerializedBytes()+1024,1024L*1024*1024,512);
+             owner=new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(profile,lineage,config.batchCap()),()->tape.attach(factory.open()),ownerPollSelection.effectiveMaximumParkNs());
+-            maintenance=new RetentionBatchMaintenanceV3(owner,writer,profile,lineage,root.resolve("maintenance"),journalBudget,plan.maximumLogicalMaintenanceRpcs(),config.archiveChunkBytes(),config.readWindow(),config.eventFetchCount());
++            maintenance=new RetentionBatchMaintenanceV3(owner,writer,profile,lineage,root.resolve("maintenance"),journalBudget,plan.maximumLogicalMaintenanceRpcs(),config.archiveChunkBytes(),config.readWindow(),config.eventFetchCount(),config.commonReadWindow32Envelope());
+             Instant wall=Instant.now();long mono=System.nanoTime();origin=mono+TimeUnit.SECONDS.toNanos(1);originUtc=wall.plusNanos(origin-mono).toString();windowEnd=origin+config.windowNs();
+             writeConfiguration();scheduler=new Thread(this::schedule,"v3-capacity-arrivals");sampler=new Thread(this::sample,"v3-capacity-backlog-observer");scheduler.start();sampler.start();
+             dispatch();drainEnd=System.nanoTime();
+@@ -119,7 +128,7 @@ public final class RetentionCapacityExperimentV3 {
+     }
+     private void recordFailure(Throwable failure){if(primary==null)primary=failure;else if(primary!=failure)primary.addSuppressed(failure);}
+     private void writeConfiguration()throws IOException{
+-        var values=new LinkedHashMap<String,Object>();values.put("schema","retention-v3-openloop-capacity-v1");values.put("arrivals",config.arrivals());values.put("ratePerSecond",config.rate());values.put("windowSeconds",config.windowNs()/1e9);values.put("batchCap",config.batchCap());values.put("archiveChunkBytes",config.archiveChunkBytes());values.put("eventFetchCount",config.eventFetchCount());if(config.commonEventFetchEnvelope())values.put("commonEventFetchEnvelope",true);values.put("commonChunkEnvelope",plan.commonChunkEnvelope());values.put("readWindow",config.readWindow());values.put("commonReadWindowEnvelope",plan.commonReadWindowEnvelope());values.put("maintenanceTimingSchema","13cols-correlation-phase-window-v1");values.put("readCreditPolicy","reserve+flush before arm; completed-unconsumed holds credit; consume after reply/timing flush");values.put("logicalWorkers",WORKERS);values.put("taskQueueCapacityPerWorker",QUEUE_CAPACITY);values.put("externalQueuePositions",8192);values.put("internalPendingCapacity",128);values.put("physicalSessions",1);values.put("sharedMediaDrivers",1);values.put("producerIdentityRule","worker=index%128;sequence=1+index/128;queue rejection leaves a legal gap");values.put("taskLifetimeNs",TASK_LIFETIME_NS);values.put("physicalOfferPermitNsFromDispatch",RPC_PERMIT_NS);values.put("physicalAdmissionTimestampSemantics","monotonic return observation after the first nonnegative publication.offer; not an exact internal Aeron admission instant");values.put("drainAdmissionNs",DRAIN_NS);values.put("batchFlushNs",50000);values.put("profileSha256",profile.fingerprint());values.put("actualCodeSha256",RetentionNodeMainV3.codeFingerprint());values.put("lineage",lineage);values.put("scheduledOriginUTC",originUtc);values.put("scheduledOriginMonotonicNs",origin);values.put("primitiveArrivalColumnBytes",rows.primitiveColumnBytes());values.put("arrivalClockPausesForMaintenance",false);values.put("maintenanceDispatchPolicy","drain pending while arrivals keep enqueuing/rejecting; exactprefix force/readback thenACK");values.put("scope","Finite openloop source; external canonical/leader/config proof required before any stability or capacity claim");if(idleSelection.explicit())values.put("retentionIdleSelection",idleSelection.observation());if(ownerPollSelection.explicit()){values.put("ownerPollSelection",ownerPollSelection.observation());values.put("ownerPollActual",ownerPollSelection.actualObservation(owner));}RetentionCapacityJsonV3.writeNew(root.resolve("configuration.json"),values);
++        var values=new LinkedHashMap<String,Object>();values.put("schema","retention-v3-openloop-capacity-v1");values.put("arrivals",config.arrivals());values.put("ratePerSecond",config.rate());values.put("windowSeconds",config.windowNs()/1e9);values.put("batchCap",config.batchCap());values.put("archiveChunkBytes",config.archiveChunkBytes());values.put("eventFetchCount",config.eventFetchCount());if(config.commonEventFetchEnvelope())values.put("commonEventFetchEnvelope",true);if(config.commonReadWindow32Envelope())values.put("commonReadWindow32Envelope",true);values.put("commonChunkEnvelope",plan.commonChunkEnvelope());values.put("readWindow",config.readWindow());values.put("commonReadWindowEnvelope",plan.commonReadWindowEnvelope());values.put("maintenanceTimingSchema","13cols-correlation-phase-window-v1");values.put("readCreditPolicy","reserve+flush before arm; completed-unconsumed holds credit; consume after reply/timing flush");values.put("logicalWorkers",WORKERS);values.put("taskQueueCapacityPerWorker",QUEUE_CAPACITY);values.put("externalQueuePositions",8192);values.put("internalPendingCapacity",128);values.put("physicalSessions",1);values.put("sharedMediaDrivers",1);values.put("producerIdentityRule","worker=index%128;sequence=1+index/128;queue rejection leaves a legal gap");values.put("taskLifetimeNs",TASK_LIFETIME_NS);values.put("physicalOfferPermitNsFromDispatch",RPC_PERMIT_NS);values.put("physicalAdmissionTimestampSemantics","monotonic return observation after the first nonnegative publication.offer; not an exact internal Aeron admission instant");values.put("drainAdmissionNs",DRAIN_NS);values.put("batchFlushNs",50000);values.put("profileSha256",profile.fingerprint());values.put("actualCodeSha256",RetentionNodeMainV3.codeFingerprint());values.put("lineage",lineage);values.put("scheduledOriginUTC",originUtc);values.put("scheduledOriginMonotonicNs",origin);values.put("primitiveArrivalColumnBytes",rows.primitiveColumnBytes());values.put("arrivalClockPausesForMaintenance",false);values.put("maintenanceDispatchPolicy","drain pending while arrivals keep enqueuing/rejecting; exactprefix force/readback thenACK");values.put("scope","Finite openloop source; external canonical/leader/config proof required before any stability or capacity claim");if(idleSelection.explicit())values.put("retentionIdleSelection",idleSelection.observation());if(ownerPollSelection.explicit()){values.put("ownerPollSelection",ownerPollSelection.observation());values.put("ownerPollActual",ownerPollSelection.actualObservation(owner));}RetentionCapacityJsonV3.writeNew(root.resolve("configuration.json"),values);
+     }
+     private void schedule(){
+         try{
+@@ -211,7 +220,7 @@ public final class RetentionCapacityExperimentV3 {
+                 }else{serverRejected++;String key=rows.resultCode[i]<0?"MISSING":ResultCode.values()[rows.resultCode[i]].name();rejectCodes.merge(key,1,Integer::sum);}
+             }
+         }
+-        var out=new LinkedHashMap<String,Object>();if(idleSelection.explicit())out.put("retentionIdleSelection",idleSelection.observation());if(ownerPollSelection.explicit()){out.put("ownerPollSelection",ownerPollSelection.observation());out.put("ownerPollActual",ownerPollSelection.actualObservation(owner));}out.put("schema","retention-v3-openloop-capacity-v1");out.put("scheduledArrivals",config.arrivals());out.put("releasedArrivals",rows.released.get());out.put("ratePerSecond",config.rate());out.put("batchCap",config.batchCap());out.put("archiveChunkBytes",config.archiveChunkBytes());out.put("eventFetchCount",config.eventFetchCount());if(config.commonEventFetchEnvelope())out.put("commonEventFetchEnvelope",true);out.put("commonChunkEnvelope",plan.commonChunkEnvelope());out.put("readWindow",config.readWindow());out.put("commonReadWindowEnvelope",plan.commonReadWindowEnvelope());out.put("arrivalWindowSeconds",config.windowNs()/1e9);out.put("scheduledOriginUTC",originUtc);out.put("scheduledOriginMonotonicNs",origin);
++        var out=new LinkedHashMap<String,Object>();if(idleSelection.explicit())out.put("retentionIdleSelection",idleSelection.observation());if(ownerPollSelection.explicit()){out.put("ownerPollSelection",ownerPollSelection.observation());out.put("ownerPollActual",ownerPollSelection.actualObservation(owner));}out.put("schema","retention-v3-openloop-capacity-v1");out.put("scheduledArrivals",config.arrivals());out.put("releasedArrivals",rows.released.get());out.put("ratePerSecond",config.rate());out.put("batchCap",config.batchCap());out.put("archiveChunkBytes",config.archiveChunkBytes());out.put("eventFetchCount",config.eventFetchCount());if(config.commonEventFetchEnvelope())out.put("commonEventFetchEnvelope",true);if(config.commonReadWindow32Envelope())out.put("commonReadWindow32Envelope",true);out.put("commonChunkEnvelope",plan.commonChunkEnvelope());out.put("readWindow",config.readWindow());out.put("commonReadWindowEnvelope",plan.commonReadWindowEnvelope());out.put("arrivalWindowSeconds",config.windowNs()/1e9);out.put("scheduledOriginUTC",originUtc);out.put("scheduledOriginMonotonicNs",origin);
+         out.put("schedulerLatenessOver20ms",rows.lateOver20ms);out.put("schedulerMaxLatenessNs",rows.maxSchedulerLateness);out.put("schedulerTimingValid",rows.lateOver20ms==0&&rows.released.get()==config.arrivals()&&exposureEnd-origin>=config.windowNs());out.put("arrivalClockPausedForMaintenance",false);
+         out.put("completedLogicalReplies",applied);out.put("notSent",notSent);out.put("unknownObserved",unknownObserved);out.put("unknownFinal",unknown);out.put("serverRejected",serverRejected);out.put("serverAdmissionRejectedObserved",admissionRejected);out.put("serverNotAttemptedObserved",notAttempted);out.put("serverRejectionCodes",rejectCodes);out.put("replyReplayed",replay);out.put("confirmedAcceptedUniqueOrders",uniqueAccepted);out.put("duplicateOrOutOfRangeAcceptedOrderIds",duplicateOrder);out.put("setupBusinessCommands",3);out.put("setupAcceptedOrders",1);out.put("acceptedOrdersInArrivalWindow",withinWindow);out.put("arrivalWindowGoodputPerSecond",withinWindow/(config.windowNs()/1e9));out.put("lastKnownReplyDrainNs",Math.max(0,lastEnd-windowEnd));out.put("totalSourceDrainNs",drainEnd==MISSING?null:Math.max(0,drainEnd-windowEnd));out.put("completedReplyConditionalP99Ns",quantile(confirmed,cn,0.99));out.put("acceptedOrderConditionalP99Ns",quantile(accepted,an,0.99));out.put("allArrivalReplyP99Ns",notSent==0&&unknown==0&&applied==config.arrivals()?quantile(confirmed,cn,0.99):null);Long allAcceptedP99=allAcceptedP99(config.arrivals(),applied,notSent,unknown,serverRejected,duplicateOrder,uniqueAccepted,accepted,an);out.put("allArrivalAcceptedOrderP99Ns",allAcceptedP99);out.put("allArrivalP99Ns",allAcceptedP99);out.put("allArrivalP99Policy","all planned arrivals must each confirm one distinct ACCEPTED order; null on notSent, unknown, unreleased, business rejection or duplicate/out-of-range orderId; allArrivalReplyP99Ns instead includes finite business-reject replies");
+         out.put("maintenanceCycles",cycles);out.put("maintenanceRpcMetrics",maintenance==null?null:maintenance.snapshot());out.put("diskGuard",disk.snapshot());out.put("journalRunBudget",journalBudget.snapshot());out.put("maximumObservedQueueSizePerWorker",rows.queueHighWater);out.put("primitiveArrivalColumnBytes",rows.primitiveColumnBytes());out.put("traceBytes",rawBudget.used.get());out.put("arrivalCsvBytes",rawBudget.csvBytes);out.put("rawTraceByteLimit",rawBudget.limit);out.put("physicalOfferTape",tape.snapshot());out.put("externalCorrectnessVerificationRequired",true);out.put("finiteStabilityClaimed",false);out.put("scope","Finite same-system openloop source; no percentile SLA, sustained/infinite capacity or 100M claim. All-arrival p99 undefined when any arrival is notSent/unknown/unreleased.");return out;
+diff --git a/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityPlanV3.java b/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityPlanV3.java
+index f9559f21..4d3cc7c8 100644
+--- a/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityPlanV3.java
++++ b/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityPlanV3.java
+@@ -14,6 +14,8 @@ public final class RetentionCapacityPlanV3 {
+     public static final int MAX_ARRIVALS = 350_000, WORKERS = 128, COMMANDS_PER_CYCLE = 3072;
+     public static final int MAXIMUM_OFFERS_PER_RPC = 4;
+     public static final int MAX_READ_ONLY_IN_FLIGHT = 8;
++    /** Only the explicitly named read-window32 experiment may reserve this envelope. */
++    public static final int EXPERIMENT_READ_ONLY_IN_FLIGHT = 32;
+     public static final long WRITER_PAYLOAD_LIMIT = 1024L*1024*1024;
+     public static final int WRITER_TOTAL_FILE_LIMIT = 1024;
+     public static final long RAW_TRACE_LIMIT = 2L*1024*1024*1024;
+@@ -85,6 +87,7 @@ public final class RetentionCapacityPlanV3 {
+                     selectedMaximumArchiveChunkRpcs,admissionRejections,1,1,false,0,0);
+         }
+         public boolean admitted() { return admissionRejections.isEmpty(); }
++        public boolean commonReadWindow32Envelope() { return maxReadOnlyInFlight == EXPERIMENT_READ_ONLY_IN_FLIGHT; }
+         public int maximumPhysicalOffersPerRpc() { return MAXIMUM_OFFERS_PER_RPC; }
+         public int maximumWriterFilesIncludingReceipts() { return Math.multiplyExact(maximumWriterPayloadFiles,2); }
+         public void requireAdmitted() {
+@@ -95,6 +98,7 @@ public final class RetentionCapacityPlanV3 {
+             out.put("archiveChunkBytes",archiveChunkBytes);out.put("eventFetchCount",eventFetchCount);out.put("commonChunkEnvelope",commonChunkEnvelope);
+             if(commonEventFetchEnvelope){out.put("commonEventFetchEnvelope",true);out.put("selectedMaximumEventFetchRpcs",selectedMaximumEventFetchRpcs);}
+             out.put("requestedReadWindow",requestedReadWindow);out.put("maxReadOnlyInFlight",maxReadOnlyInFlight);out.put("commonReadWindowEnvelope",commonReadWindowEnvelope);
++            if(commonReadWindow32Envelope())out.put("commonReadWindow32Envelope",true);
+             out.put("readOnlyStagingBytes",readOnlyStagingBytes);out.put("readOnlyFailureTraceReserveBytes",readOnlyFailureTraceReserveBytes);
+             out.put("selectedMaximumLogicalMaintenanceRpcs",selectedMaximumLogicalMaintenanceRpcs);out.put("selectedMaximumArchiveChunkRpcs",selectedMaximumArchiveChunkRpcs);
+             out.put("maximumSupportedArchiveChunkBytes",MAX_SUPPORTED_ARCHIVE_CHUNK);out.put("maximumEncodedChunkReplyBytes",maxEncodedArchiveChunkReplyBytes(MAX_SUPPORTED_ARCHIVE_CHUNK));
+@@ -207,6 +211,32 @@ public final class RetentionCapacityPlanV3 {
+                 Math.max(a.readOnlyStagingBytes(),b.readOnlyStagingBytes()),Math.max(a.readOnlyFailureTraceReserveBytes(),b.readOnlyFailureTraceReserveBytes()),
+                 eventFetchCount,true,selected.maximumEventFetchRpcs());
+     }
++    public static int requireReadWindow32(int readWindow) {
++        if(readWindow!=8&&readWindow!=EXPERIMENT_READ_ONLY_IN_FLIGHT)
++            throw new IllegalArgumentException("explicit read-window32 experiment requires8 or32 credits");
++        return readWindow;
++    }
++    /** Fixed page and cut; both selected windows reserve exactly the same32-credit failure/staging envelope. */
++    public static Plan commonReadWindow32Plan(int arrivals,int batchCap,RetentionServiceV3.Profile profile,
++                                             int eventFetchCount,int readWindow,long extras,long negatives) {
++        requireReadWindow32(readWindow);requireEventFetchCount(eventFetchCount);
++        if(arrivals!=33792||batchCap!=4)throw new IllegalArgumentException("read-window32 requires fixed LONG33792/cap4");
++        Plan base=readWindowPlan(arrivals,batchCap,profile,8,extras,negatives,eventFetchCount);
++        Probe p=probe(profile,batchCap,MAX_SUPPORTED_ARCHIVE_CHUNK,true,eventFetchCount);
++        long staging=4L*EXPERIMENT_READ_ONLY_IN_FLIGHT*(p.readOnlyRequest+p.readOnlyReply)+READ_ONLY_FAILURE_METADATA_BYTES;
++        long failure=EXPERIMENT_READ_ONLY_IN_FLIGHT*(p.readOnlyRequest+(long)RAW_FRAME_PREFIX_BYTES+256L)+READ_ONLY_FAILURE_METADATA_BYTES;
++        long extraFailure=Math.subtractExact(failure,base.readOnlyFailureTraceReserveBytes());
++        long raw=Math.addExact(base.maximumRawTraceBytes(),extraFailure);
++        long allocation=Math.addExact(base.maximumAllocatedGrowthBytes(),Math.addExact(extraFailure,Math.subtractExact(staging,base.readOnlyStagingBytes())));
++        var rejected=new ArrayList<>(base.admissionRejections());
++        if(raw>RAW_TRACE_LIMIT&&!rejected.contains("derived raw trace exceeds finite 2GiB cap"))rejected.add("derived raw trace exceeds finite 2GiB cap");
++        if(allocation>ALLOCATED_GROWTH_LIMIT&&!rejected.contains("derived payload/trace/native-reserve allocation exceeds 2.5GiB growth cap"))rejected.add("derived payload/trace/native-reserve allocation exceeds 2.5GiB growth cap");
++        return new Plan(arrivals,batchCap,base.maximumMaintenanceCycles(),base.maximumEvents(),base.maximumLogicalMaintenanceRpcs(),base.maximumBusinessFrames(),extras,negatives,
++                base.maximumWriterPayloadBytes(),base.maximumWriterPayloadFiles(),Math.addExact(base.noRetryRawTraceBytes(),extraFailure),Math.addExact(base.worstFourOfferRawTraceBytes(),extraFailure),raw,allocation,
++                base.minimumFreeRuntimeBytes(),base.maximumJournalRecords(),base.maximumJournalBytes(),base.maximumArchiveEntryBytes(),base.archiveHeaderBytes(),base.maximumArchivePayloadBytes(),base.maximumEventPayloadBytes(),
++                base.maximumArchiveChunkRpcs(),base.maximumEventFetchRpcs(),base.largestReplyBytes(),MAX_SUPPORTED_ARCHIVE_CHUNK,false,base.selectedMaximumLogicalMaintenanceRpcs(),base.selectedMaximumArchiveChunkRpcs(),rejected,
++                readWindow,EXPERIMENT_READ_ONLY_IN_FLIGHT,true,staging,failure,eventFetchCount,false,base.selectedMaximumEventFetchRpcs());
++    }
+     private static Plan calculate(int arrivals,int batchCap,RetentionServiceV3.Profile profile,long extras,long negatives,int archiveChunkBytes) {
+         return calculate(arrivals,batchCap,profile,extras,negatives,archiveChunkBytes,false);
+     }
