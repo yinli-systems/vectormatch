@@ -1,0 +1,11 @@
+# Qualified local long-cut native validation
+
+Source `bcf49c10b77a14708b53d3fc6c115a6a3b834408`, actual JAR fingerprint `6033c9ebfc2a7b1836c45f858784a4930540b469eb136635761fd3217733edc8`. One fresh lineage accepted all 33,792 IOC orders at the requested 500/s over 67.584 seconds. The three setup commands share the first command cut; twelve maintenance cycles contain eleven full command cuts plus the trailing three commands. Cuts 2–11 are ten equivalent setup-free cuts.
+
+This is FUNCTIONAL/CANONICAL evidence only: the local scheduler was invalid, with 26 arrivals released over 20ms late. No CPU performance, stable capacity, hard realtime or 100M result is admitted. Unknown observed/final, rejection, notSent and node warning counts are zero. All three final snapshot logs and the same-candidate reference agree; that reference is not an independent implementation.
+
+The original native archive includes all 191 entries, 159 regular files, 32 directories and 1,334,578,086 logical bytes. Both the authoritative auditor and root streamed every original archive member and verified SHA/bytes/modes/owners/empty directories. Nine 128MiB recording bodies are retained inside that compressed archive; they are not duplicated as standalone extracted files. All other original native regular files, including the 80 consumed inputs, are copied here.
+
+All auditor guards, the first failed derived audit, its source freezes and the successful corrected audit are retained. The failed assertion compared an intentionally empty Business reply hash against a later Position query hash. Source sends hashes only for Position. The correction verifies empty Business hashes and the Position hash format/frontiers; no raw Position query wire was captured, so its setup hash is not independently reconstructed. Full final reference bytes and all three snapshot checks remain verified. No business run was repeated.
+
+An archived-byte reproduction is registered separately under `reproduction-r1`; it runs Python only, with no Java, driver, SSH or business execution. The frozen runner accepts the explicitly qualified local scheduler result; its imported raw parser defaults to strict scheduler admission for any future CPU collector.

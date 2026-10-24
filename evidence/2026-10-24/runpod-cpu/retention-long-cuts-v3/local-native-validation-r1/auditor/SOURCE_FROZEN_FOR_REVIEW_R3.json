@@ -1,0 +1,68 @@
+{
+  "scope": "Only setup_hash validation corrected. Business stateHash intentionally empty via counters(false); only Position includes full hash. No raw Position wire exists, so no independent setup Position hash derivation claimed. Final full snapshot hash proof unchanged.",
+  "guardTests": 33,
+  "guardReceiptSha256": "31a9308a827e733a02ee158c0d4315310fa5729d304cedf3426b2887a7508bbc",
+  "files": {
+    "run_audit.py": {
+      "bytes": 11280,
+      "sha256": "4b2f867095db4fff7f1ed0a8f87501099f40db8eb3af26714477e0fe75fe9abc"
+    },
+    "source/archive_closure.py": {
+      "bytes": 2513,
+      "sha256": "02fc1951ae0064719d970a03df02a3a3906de5aae189691646fb5d7b183d8e14"
+    },
+    "source/audit_raw.py": {
+      "bytes": 46632,
+      "sha256": "9d6c3b8b899aaf626bd7542baac3da869279767af211fffcb44c90f66739e139"
+    },
+    "source/common.py": {
+      "bytes": 9623,
+      "sha256": "54d981300381f802c8db8247859e00b3f45cea806b59dd40d4f5eeed05a85783"
+    },
+    "source/idle_inventory.py": {
+      "bytes": 4146,
+      "sha256": "f220b55e81e5dc1f3211c9473519b5d08ed4b152cac9ef25679883e510df8ec0"
+    },
+    "source/read_phase_audit.py": {
+      "bytes": 10886,
+      "sha256": "e2ecece320bd15afc934f5a925a8e272bc74f76cd89581de839e3d078f78f44a"
+    },
+    "source/setup_audit.py": {
+      "bytes": 4019,
+      "sha256": "3d896be265ca0fc72068bb3cace047e6fa772d859e0ab51dc7229c840b9d70b2"
+    },
+    "source/workload_contract.py": {
+      "bytes": 4019,
+      "sha256": "1e420087e443e8f78df3199427d65358bd3a512a05961ea545028646fbfbaaf0"
+    },
+    "tests/test_long_contract.py": {
+      "bytes": 10105,
+      "sha256": "0a160ce01737fbe479744cd0f14cfce85ba456366637b1d075084c20fa2afe3f"
+    },
+    "tests/test_phase_baseline.py": {
+      "bytes": 8519,
+      "sha256": "0ca11d5411db573bded7f440d27ffe95047a6906984e1a79cb6957d59c8b79d9"
+    }
+  },
+  "priorFreezeSha256": "e1dba66e45fb245ddb52b27bfbbb6ca548bc7a412f73db976911ed0cb221fdee",
+  "failedOriginalAudit": {
+    "failureSha256": "df2edc1ba683963d4eab0d38075b7adaa68f072fa2fa7e52759e7280408296a1",
+    "executionReceiptSha256": "833b0ae92ac2d00128dd3d967b86d0b339a2162964e9ecffc60aeb1b3e524d1b",
+    "exactOldSourcesZipSha256": "f5b40fcb4b2e6abd354f165e559d2f61db3311aa7d82d6c3e9c3481e9a02981c"
+  },
+  "primarySourcePins": {
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionClusteredServiceV3.java": {
+      "sha256": "85a36892a0390fe2e001e346b1c5901c083cc8a6e373d500fcb5de6545364f88",
+      "bytes": 11649
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityAeronPilotV3.java": {
+      "sha256": "af52bb5ad3581b9e075832c7b1dea71826f6fd752f52fbe98935e1d89f21f3b0",
+      "bytes": 31421
+    }
+  },
+  "sourceAnchors": [
+    "RetentionClusteredServiceV3.java:96-97 counters(operation instanceof Position)",
+    "RetentionClusteredServiceV3.java:149-151 withHash?stateHash():empty",
+    "RetentionCapacityAeronPilotV3.java:217-223 verifyPosition query/reference then JSON-only persistence"
+  ]
+}

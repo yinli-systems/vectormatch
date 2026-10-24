@@ -1,0 +1,56 @@
+--- review-r2/source/setup_audit.py
++++ review-r3/source/setup_audit.py
+@@ -1,5 +1,16 @@
+ """Independent byte decode of exactly three setup commands, not a Java invocation."""
+ from workload_contract import LONG,require,validate_setup_commands
++import re
++
++
++def validate_setup_hashes(business_reply_hashes,position):
++    require(business_reply_hashes==['','',''],'Business reply counters(false) must carry an empty stateHash')
++    require((position['businessSeq'],position['eventSeq'],position['marketSeq'],position['exportedEventSeq'],position['leaderMemberId'])==(3,3,1,0,0)
++        and isinstance(position['combinedSha256'],str) and re.fullmatch('[0-9a-f]{64}',position['combinedSha256'])is not None,
++        'Setup Position exact frontier/leader or canonical SHA format differs')
++    return {'businessReplyHashIntentionallyEmpty':True,'positionHashFormatAndFrontiersVerified':True,
++        'positionHashIndependentlyRederivedFromRawPositionWire':False,
++        'scope':'Source counters(false) omits Business hash; native verifyPosition compares query to same-candidate reference but only Position JSON is retained. No raw query/reply hash derivation is claimed here.'}
+ 
+ 
+ def decode_setup(value,audit):
+@@ -34,8 +45,7 @@
+             ==((1,LONG.arrivals,0)if number==3 else(0,0,0)),'Setup result does not match exact maker/deposit')
+         require(answer['counters']==[number,number,number,1 if number==3 else 0,0,1 if number==3 else 0,0],'Setup counter prefix differs')
+     position=audit.js(arm/'setup-position.json')
+-    require((position['businessSeq'],position['eventSeq'],position['marketSeq'],position['exportedEventSeq'],position['leaderMemberId'])==(3,3,1,0,0)
+-        and position['combinedSha256']==replies[-1]['decoded']['stateHash'],'Setup position/hash/leader prefix differs')
++    hash_scope=validate_setup_hashes([r['decoded']['stateHash']for r in replies],position)
+     return {'passed':True,'businessCommands':3,'fundingBase':LONG.arrivals,'fundingQuote':LONG.arrivals*10,
+-        'makerQuantity':LONG.arrivals,'makerOrderId':1,'setupLastCommandSeq':3,'setupEventSeq':3,'setupIsIncludedInFirstCommandCut':True,
++        'makerQuantity':LONG.arrivals,'makerOrderId':1,'setupLastCommandSeq':3,'setupEventSeq':3,'setupIsIncludedInFirstCommandCut':True,'hashValidation':hash_scope,
+         'scope':'Decoded original setup wires and their exact successful replies/position; no external algorithm or business execution'}
+--- review-r2/tests/test_long_contract.py
++++ review-r3/tests/test_long_contract.py
+@@ -11,7 +11,7 @@
+ from workload_contract import LONG,validate_plan,validate_setup_commands,validate_cycle_frontiers,validate_final,scheduler_gate,validate_terminal_row,validate_business_answer,validate_actual_plan_observation
+ import read_phase_audit as phase
+ import audit_raw
+-from setup_audit import decode_setup
++from setup_audit import decode_setup,validate_setup_hashes
+ from test_phase_baseline import fixture
+ 
+ 
+@@ -55,6 +55,14 @@
+         self.assertEqual(decode_setup(wire,audit_raw)['command'],self.setup()[0])
+         for bad in [wire+b'x',wire[:-1]]:
+             with self.assertRaises(AssertionError):decode_setup(bad,audit_raw)
++
++    def test_business_setup_hash_is_empty_and_position_hash_is_separate_evidence(self):
++        position={'businessSeq':3,'eventSeq':3,'marketSeq':1,'exportedEventSeq':0,'leaderMemberId':0,'combinedSha256':'a'*64}
++        result=validate_setup_hashes(['','',''],position)
++        self.assertFalse(result['positionHashIndependentlyRederivedFromRawPositionWire'])
++        with self.assertRaisesRegex(AssertionError,'empty stateHash'):validate_setup_hashes(['','','a'*64],position)
++        position['combinedSha256']=''
++        with self.assertRaisesRegex(AssertionError,'Position exact'):validate_setup_hashes(['','',''],position)
+ 
+     def test_missing_cycle_missing_phase_and_wrong_final_cut_refused(self):
+         validate_cycle_frontiers(self.cycles(),self.phases(),LONG)

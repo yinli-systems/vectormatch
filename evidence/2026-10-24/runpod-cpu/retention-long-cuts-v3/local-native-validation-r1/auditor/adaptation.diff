@@ -1,0 +1,261 @@
+--- baseline/audit_raw.py
++++ source/audit_raw.py
+@@ -12,11 +12,13 @@
+ import traceback
+ from common import WINDOWS,audit_arguments,egress,egress_progress
+ from read_phase_audit import audit_rpc_phases,correlation_map
++from workload_contract import LONG,contract,validate_plan,scheduler_gate,validate_cycle_frontiers,validate_final,validate_terminal_row,validate_business_answer
+ 
+ HERE = pathlib.Path(__file__).resolve().parent
+ COLLECTION = None
+ JOB = None
+ INPUTS = {}
++MANIFEST_FILES = None
+ 
+ def require(condition, message):
+     if not condition:
+@@ -24,7 +26,12 @@
+ 
+ def raw(path):
+     value = path.read_bytes()
+-    INPUTS[str(path.relative_to(COLLECTION))] = {'bytes': len(value), 'sha256': hashlib.sha256(value).hexdigest()}
++    key=str(path.relative_to(COLLECTION));observation={'bytes':len(value),'sha256':hashlib.sha256(value).hexdigest()}
++    require(MANIFEST_FILES is not None and key in MANIFEST_FILES,'Every consumed original input must be in the closed191-entry manifest')
++    expected=MANIFEST_FILES[key];st=path.lstat()
++    require(not path.is_symlink() and st.st_size==len(value)==expected['bytes'] and observation['sha256']==expected['sha256']
++        and st.st_mode&0o777==expected['mode'] and st.st_uid==expected['uid'] and st.st_gid==expected['gid'],'Closed original input SHA/bytes/mode/owner mismatch')
++    INPUTS[key] = observation
+     return value
+ 
+ def js(path):
+@@ -162,16 +169,18 @@
+     require(suspect==allowed,'Other WARN/error/exception lines remain unclassified')
+     return {'warningCount':len(warnings),'warnings':warnings,'exactLogOrderObserved':True,'warningAfterSigtermTimestampIndependentlyProven':False,'causalScope':'Consistent with registered leader-first orderly stop; no warning/SIGTERM cross-process timestamps were recorded.'}
+ 
+-def audit_arm(selected_window, arm_override=None):
++def audit_arm(selected_window, arm_override=None, *, workload=LONG, local_functional_only=False):
++    workload=contract(workload);planned=workload.arrivals;window_seconds=planned/workload.rate
+     cap=6144
+     arm = pathlib.Path(arm_override) if arm_override is not None else JOB / 'read-window-pair' / ('window-%d' % selected_window); load = arm/'load'; maint = load/'maintenance'
+     cfg = js(load/'configuration.json'); summary = js(load/'load-result.json')
+-    require(cfg['arrivals'] == 6400 and cfg['ratePerSecond'] == 500 and cfg['windowSeconds'] == 12.8 and cfg['batchCap'] == 4 and cfg['archiveChunkBytes']==cap and cfg['eventFetchCount']==16 and cfg['commonChunkEnvelope'] is False and cfg['commonReadWindowEnvelope'] is True and cfg['readWindow']==selected_window, 'Fixed source configuration')
++    require(cfg['arrivals'] == planned and cfg['ratePerSecond'] == workload.rate and cfg['windowSeconds'] == window_seconds and cfg['batchCap'] == 4 and cfg['archiveChunkBytes']==cap and cfg['eventFetchCount']==16 and cfg['commonChunkEnvelope'] is False and cfg['commonReadWindowEnvelope'] is True and cfg['readWindow']==selected_window, 'Fixed explicit long source configuration')
+     require(cfg['logicalWorkers'] == 128 and cfg['taskQueueCapacityPerWorker'] == 64 and cfg['physicalSessions'] == 1
+             and cfg['sharedMediaDrivers'] == 1 and cfg['batchFlushNs'] == 50000 and cfg['arrivalClockPausesForMaintenance'] is False, 'Fixed owner configuration')
+-    arrivals = rows(load/'arrivals.csv'); require(len(arrivals) == 6400, 'Arrival row closure')
+-    origin = cfg['scheduledOriginMonotonicNs']; window = 12_800_000_000
++    arrivals = rows(load/'arrivals.csv'); require(len(arrivals) == planned, 'Explicit long arrival row closure')
++    origin = cfg['scheduledOriginMonotonicNs']; window = planned*1_000_000_000//workload.rate
+     plan=js(load/'admission-plan.json')
++    expected_phases=validate_plan(plan,workload)
+     require(plan['requestedReadWindow']==selected_window and plan['maxReadOnlyInFlight']==8 and plan['commonReadWindowEnvelope'] is True,'Actual read-window plan differs')
+     reqs = frames(load/'physical-requests.bin', True, request); reps = frames(load/'physical-replies.bin', True, reply)
+     require(reps and max(f['bytes'] for f in reps)<=plan['largestReplyBytes'],'Actual reply exceeds prospective codec-derived upper bound')
+@@ -196,12 +205,14 @@
+         f = request_by_correlation[int(row['correlation_id'])]
+         require(int(row['wire_offset']) == f['offset'] and int(row['offset_ns']) >= f['at'], 'Offer raw offset mismatch')
+         if int(row['return_code']) >= 0: admissions[int(row['correlation_id'])] += 1
++    require(all(1<=admissions[c]<=plan['maximumPhysicalOffersPerRpc']==4 for c in request_by_correlation),'Every original physical RPC needs1..4 possible admissions')
++    require(sum(v-1 for v in admissions.values())<=plan['maximumExtraPositiveOffers']
++        and sum(int(r['return_code'])<0 for r in offers)<=plan['maximumNegativeOfferAttempts'],'Global finite physical offer budgets exceeded')
+     lateness=[]; latencies=[]; within=0; identities=set(); accepted_ids=set(); command_seqs=set(); batch_distribution=collections.Counter()
+     for index,row in enumerate(arrivals):
+         require(int(row['arrival_index']) == index and int(row['worker']) == index%128 and row['producer'] == 'load-w%d'%(index%128)
+                 and int(row['request_seq']) == 1+index//128 and int(row['scheduled_offset_ns']) == index*2_000_000, 'Open-loop identity/schedule mismatch')
+-        require(row['status'] == 'APPLIED' and row['result_code'] == 'ACCEPTED' and row['unknown_observed_offset_ns'] == ''
+-                and row['not_sent_reason'] == '0' and row['reply_replayed'] == 'false' and row['initial_server_admission_status'] == '', 'Unexpected terminal/UNKNOWN/rejection')
++        validate_terminal_row(row)
+         timing = [int(row[k]) for k in ('scheduled_offset_ns','arrival_offset_ns','dispatch_offset_ns','submit_offset_ns',
+                     'first_wire_offer_call_offset_ns','first_successful_offer_return_offset_ns','reply_completion_offset_ns')]
+         require(timing == sorted(timing), 'Arrival timing order invalid')
+@@ -212,44 +223,58 @@
+         member = frame['decoded']['members'][batch]; answer = reply_by_correlation[correlation]['decoded']['members'][batch]
+         require(member['producer'] == answer['producer'] == row['producer'] and member['seq'] == answer['seq'] == int(row['request_seq'])
+                 and member['account'] == answer['account'] == 2 and member['sha'] == answer['sha'] == row['command_sha256'], 'Arrival-to-wire identity mismatch')
+-        require(answer['index'] == batch and answer['status'] == 0 and answer['result']['code'] == 0 and not answer['replayed'], 'Batch reply status mismatch')
++        validate_business_answer(answer,batch)
+         for column,key in [('command_seq','commandSeq'),('order_id','orderId'),('remaining_quantity','remaining'),('trade_count','trades')]:
+             require(int(row[column]) == answer['result'][key], 'CSV versus wire result differs')
+         require(int(row['admitted_physical_offers']) == admissions[correlation], 'Admission count mismatch')
+         identity=(row['producer'],int(row['request_seq'])); require(identity not in identities,'Duplicate logical identity'); identities.add(identity)
+         require(int(row['order_id']) not in accepted_ids and int(row['command_seq']) not in command_seqs, 'Duplicate accepted result')
+         accepted_ids.add(int(row['order_id'])); command_seqs.add(int(row['command_seq']))
+-    require(accepted_ids == set(range(2,6402)) and command_seqs == set(range(4,6404)), 'Exact order/command frontier range')
++    require(accepted_ids == set(range(2,planned+2)) and command_seqs == set(range(4,workload.final_business+1)), 'Exact long order/command frontier range')
+     for f in reqs:
+         if f['decoded']['kind'] == 'BusinessBatch': batch_distribution[len(f['decoded']['members'])] += 1
+     rpc_rows=rows(maint/'logical-rpc-timings.csv'); logical_requests=frames(maint/'logical-rpc-requests.bin',False,request)
+     logical_replies=frames(maint/'logical-rpc-replies.bin',False,reply)
+     require(len(rpc_rows) == len(logical_requests) == len(logical_replies) and len(rpc_rows)>0, 'Logical RPC count closure')
+-    phase_report=audit_rpc_phases(rpc_rows,logical_requests,logical_replies,reqs,reps,offers,origin,selected_window)
++    phase_report=audit_rpc_phases(rpc_rows,logical_requests,logical_replies,reqs,reps,offers,origin,selected_window,
++        maximum_read_phases=expected_phases,expected_phase_count=expected_phases)
+     logical_request_by_correlation=correlation_map(logical_requests)
+     logical_reply_by_correlation=correlation_map(logical_replies)
+     rpc_kinds=collections.defaultdict(list)
+     for row in rpc_rows:
+         rpc_kinds[row['kind']].append(int(row['elapsed_ns']))
+-    require(set(rpc_kinds)=={'PrepareArchive','ArchiveChunk','FetchEvents','ArchiveCommit','EventAck'} and all(len(rpc_kinds[k])==3 for k in ['PrepareArchive','ArchiveCommit','EventAck']), 'Actual complete cycle/barrier inventory differs')
++    require(set(rpc_kinds)=={'PrepareArchive','ArchiveChunk','FetchEvents','ArchiveCommit','EventAck'} and all(len(rpc_kinds[k])==workload.cycles for k in ['PrepareArchive','ArchiveCommit','EventAck']), 'Actual long complete cycle/barrier inventory differs')
+     cycles=[]
+-    for number in range(1,4):
++    previous_high=0
++    for number in range(1,workload.cycles+1):
+         row=properties(maint/('cycle-%d.verified.txt'%number)); start,end=int(row['cycleStartedMonotonicNs']),int(row['cycleEndedMonotonicNs'])
+         low,high=int(row['logicalRpcCountAtStart']),int(row['logicalRpcCountAtEnd'])
+         subset=rpc_rows[low:high]
++        require(low==previous_high and high>low and high<=len(rpc_rows),'Cycle RPC slices must exactly partition logical inventory')
++        previous_high=high
+         require(int(row['cycle']) == number and subset and start <= int(subset[0]['start_monotonic_ns'])
+                 and end >= int(subset[-1]['end_monotonic_ns']) and row['forceAndReadbackBeforeBothAcks'] == 'true', 'Cycle timing closure')
+         released=sum(start-origin <= int(x['arrival_offset_ns']) < end-origin for x in arrivals)
+         cycles.append({'cycle':number,'durationNs':end-start,'rpcCount':high-low,'startOffsetNs':start-origin,'endOffsetNs':end-origin,
+                        'arrivalsReleasedDuringCycle':released,'throughCommandSeq':int(row['throughCommandSeq'])})
+-    prefix_checks=audit_prefixes(arm,cap,cycles,rpc_rows,logical_requests,logical_replies,offers,request_by_correlation,origin,phase_report)
+-    raw_metrics={'scheduledArrivals':6400,'releasedArrivals':len(arrivals),'notSent':0,'unknownObserved':0,'unknownFinal':0,
++    require(previous_high==len(rpc_rows),'Trailing logical RPCs outside all cycle receipts')
++    validate_cycle_frontiers(cycles,phase_report,workload)
++    prefix_checks=audit_prefixes(arm,cap,cycles,rpc_rows,logical_requests,logical_replies,offers,request_by_correlation,origin,phase_report,workload=workload)
++    homogeneous=[]
++    for cycle,prefix in zip(cycles,prefix_checks):
++        if 2<=cycle['cycle']<=11:
++            require(prefix['eventCount']==6144,'Setup-free full load cut must contain exactly3072two-event IOC commands')
++            homogeneous.append({'cycle':cycle['cycle'],'firstCommandSeq':3072*(cycle['cycle']-1)+1,
++                'throughCommandSeq':cycle['throughCommandSeq'],'businessCommands':3072,'events':prefix['eventCount'],'setupCommandsIncluded':False})
++    require(len(homogeneous)==10,'Exactly10 homogeneous setup-free full load cuts required')
++    raw_metrics={'scheduledArrivals':planned,'releasedArrivals':len(arrivals),'notSent':0,'unknownObserved':0,'unknownFinal':0,
+         'serverRejected':0,'confirmedAcceptedUniqueOrders':len(accepted_ids),'acceptedOrdersInArrivalWindow':within,
+-        'arrivalWindowGoodputPerSecond':within/12.8,'allArrivalP99Ns':nearest(latencies),
++        'arrivalWindowGoodputPerSecond':within/window_seconds,'allArrivalP99Ns':nearest(latencies),
+         'lastKnownReplyDrainNs':max(0,max(int(x['reply_completion_offset_ns']) for x in arrivals)-window),
+         'schedulerLatenessOver20ms':sum(v>20_000_000 for v in lateness),'schedulerMaxLatenessNs':max(lateness)}
+     for key,value in raw_metrics.items(): require(summary[key] == value, 'Raw versus reported metric differs: '+key)
+-    scheduler_timing_valid = raw_metrics['schedulerLatenessOver20ms'] == 0  # Diagnostic only for local functional validation; never a capacity admission.
++    timing_gate=scheduler_gate(raw_metrics['schedulerLatenessOver20ms'],summary['schedulerTimingValid'],local_functional_only=local_functional_only)
++    scheduler_timing_valid=timing_gate['schedulerTimingValid']
+     require(summary['totalSourceDrainNs'] >= raw_metrics['lastKnownReplyDrainNs'], 'Source drain before final reply')
+     require(window+summary['totalSourceDrainNs'] >= cycles[-1]['endOffsetNs'], 'Source drain before final maintenance end')
+     per_kind={k:{'count':len(v),'totalElapsedNs':sum(v),'maxElapsedNs':max(v),'p99Ns':nearest(v),'failed':0,'sumIsWallTime':False,'readIntervalsMayOverlap':k in ('ArchiveChunk','FetchEvents')} for k,v in rpc_kinds.items()}
+@@ -259,13 +284,13 @@
+     backlog=rows(load/'backlog.csv'); previous=-10**30
+     for row in backlog:
+         require(int(row['offset_ns'])>previous and 0<=int(row['queued'])<=8192 and 0<=int(row['pending'])<=128
+-                and int(row['maintenance_phase']) in (0,1) and 0<=int(row['released'])<=6400,'Invalid backlog sample')
++                and int(row['maintenance_phase']) in (0,1) and 0<=int(row['released'])<=planned,'Invalid backlog sample')
+         previous=int(row['offset_ns'])
+     owners=[js(load/name) for name in ('owner-before-close.json','owner-after-close.json')]
+     for owner in owners:
+         require(owner['pendingLogicalCommands'] == owner['readyLogicalCommands'] == owner['activeFrames']
+                 == owner['unresolvedPossiblyExecutedLogicalCommands'] == owner['logicalNotSent'] == 0
+-                and owner['firstAcceptedLogicalCommands'] == owner['logicalAppliedResults'] == 6400
++                and owner['firstAcceptedLogicalCommands'] == owner['logicalAppliedResults'] == planned
+                 and owner['failureType'] is None, 'Final owner closure mismatch')
+     require(owners[-1]['closed'] is True and owners[-1]['ownerThreadAlive'] is False,'Owner thread close incomplete')
+     tape=summary['physicalOfferTape']
+@@ -285,7 +310,7 @@
+                 and v['profileSha256'] == cfg['profileSha256'] and v['maintenanceEnabled'] is True
+                 and v['mtuLength'] == 1248 and not v['newLeaderEvents'] for v in transport),'Fixed load leader/term observation mismatch')
+     egress_report=audit_egress(arm,cap,cfg,summary,reps,transport)
+-    final=js(arm/'final-position.json'); node_logs=[]
++    final=js(arm/'final-position.json');validate_final(final);node_logs=[]
+     for member in range(3):
+         identity=js(arm/('node-%d-identity.json'%member)); log=raw(arm/('node-%d.log'%member))
+         require(len(log)<=4*1024**2,'Node log cap exceeded'); text=log.decode('utf8','strict')
+@@ -303,12 +328,12 @@
+         'finalMaintenanceEndDrainNsFromRawCycleReceipt':max(0,cycles[-1]['endOffsetNs']-window),
+         'batchSizePhysicalFrameCounts':dict(batch_distribution),'physicalRequests':len(reqs),'physicalReplies':len(reps),
+         'physicalOfferAttempts':len(offers),'negativeOffers':sum(int(x['return_code'])<0 for x in offers),
+-        'logicalMaintenanceRpcs':len(rpc_rows),'rpcKinds':per_kind,'cycles':cycles,
++        'logicalMaintenanceRpcs':len(rpc_rows),'rpcKinds':per_kind,'cycles':cycles,'equivalentFullLoadCuts':homogeneous,
+         'totalMaintenanceCycleNs':sum(x['durationNs'] for x in cycles),'sumOverlappingCoordinatorRpcElapsedNsNotWallTime':sum(sum(v) for v in rpc_kinds.values()),
+-        'schedulerTimingValidFromRaw':scheduler_timing_valid,'localFunctionalOnly':True,'capacityTimingAdmissionClaimed':False,'backlogSamples':len(backlog),'observedBacklogHighWater':max(int(x['queued']) for x in backlog),
++        'schedulerTimingValidFromRaw':scheduler_timing_valid,'schedulerAdmission':timing_gate,'localFunctionalOnly':local_functional_only,'capacityTimingAdmissionClaimed':False,'backlogSamples':len(backlog),'observedBacklogHighWater':max(int(x['queued']) for x in backlog),
+         'sampledMaintenanceRows':sum(int(x['maintenance_phase']) == 1 for x in backlog),
+         'nodeLogs':node_logs,'loadTransportObservations':len(transport),'finalOwnerUnknownUnresolvedCount':0,'readOwnerCapacityScope':'Source-enforced bound and runtime high-water; exact retained/consume intervals cannot be independently reconstructed from timing CSV.',
+-        'classification':('VALID_FINITE_WINDOW_WITH_OUTSTANDING_REPLIES' if within<6400 else 'VALID_FINITE_WINDOW_OBSERVATION'),'classificationReason':'One finite exposure with3maintenancecycles; replies outstanding atwindow end and trailing maintenance/drain do not prove unbounded500/s queue growth or sustained capacity. Equivalent-cut backlog drift over a separately registered longer exposure is still needed; no capacity promotion from one pair.'}
++        'classification':('LOCAL_FUNCTIONAL_SCHEDULER_INVALID' if not scheduler_timing_valid else 'FUNCTIONAL_FINITE_LONG_WINDOW_OBSERVATION'),'classificationReason':'Explicit33792 preset with12maintenancecycles/24readphases. Local functional opt-in cannot admit a CPU timing/capacity result; all observed scheduler lateness remains reported.'}
+ 
+ def utc(value):
+     # Coarse labels only: Python may reject Java Instant's 7..9 fractional digits.
+@@ -372,9 +397,10 @@
+         'fineJavaPythonMonotonicAlignmentValidated':False,'phaseMethod':'Coarse UTC labels only, Java origin Instant is approximate and Python UTC sampling is not atomic. CPU deltas use only Python monotonic times on identical PID/startTicks/argv SHA.',
+         'scope':'1 Hz sampled owned process CPU/RSS/kernel IO; observed spans include startup/load/maintenance/shutdown. Missing/exited counters are explicit; no zeros invented. No pure force/fsync latency or independent storage saturation inference.'}
+ 
+-def terminal_inventory(selected_window):
+-    load=JOB/'read-window-pair'/('window-'+str(selected_window))/'load'
+-    table=rows(load/'arrivals.csv');require(len(table)==6400,'All planned arrival rows required, including failures')
++def terminal_inventory(selected_window,arm_override=None,*,workload=LONG):
++    workload=contract(workload);planned=workload.arrivals;window=planned*1000000000//workload.rate
++    load=(pathlib.Path(arm_override)if arm_override is not None else JOB/'read-window-pair'/('window-'+str(selected_window)))/'load'
++    table=rows(load/'arrivals.csv');require(len(table)==planned,'All explicit long planned arrival rows required, including failures')
+     counts=collections.Counter();accepted=[];reply_times=[];order_ids=set();duplicates=0;within=0
+     for index,row in enumerate(table):
+         require(int(row['arrival_index'])==index and int(row['worker'])==index%128 and row['producer']=='load-w%d'%(index%128) and int(row['request_seq'])==1+index//128 and int(row['scheduled_offset_ns'])==index*2000000,'Every planned identity/schedule must close')
+@@ -383,18 +409,20 @@
+         if row['unknown_observed_offset_ns']!='':counts['initialUNKNOWN']+=1
+         if row['status'] in ('UNKNOWN_FINAL','PENDING'):counts['finalUNKNOWN']+=1
+         if row['status']=='NOT_SENT':counts['notSent']+=1
++        if row['reply_replayed']=='true':counts['replyReplayed']+=1
+         if row['initial_server_admission_status']=='ADMISSION_REJECTED':counts['initialAdmissionRejected']+=1
+         if row['status']=='APPLIED':
+             if row['result_code']!='ACCEPTED':counts['businessRejected']+=1
+             if row['reply_completion_offset_ns']!='':reply_times.append(int(row['reply_completion_offset_ns'])-int(row['scheduled_offset_ns']))
+             if row['result_code']=='ACCEPTED':
+-                oid=int(row['order_id']);duplicates+=oid in order_ids or not 2<=oid<=6401;order_ids.add(oid)
++                oid=int(row['order_id']);duplicates+=oid in order_ids or not 2<=oid<=planned+1;order_ids.add(oid)
+                 if row['reply_completion_offset_ns']!='':
+-                    end=int(row['reply_completion_offset_ns']);accepted.append(end-int(row['scheduled_offset_ns']));within+=end<=12800000000
+-    all_accepted=len(accepted)==6400 and len(order_ids)==6400 and duplicates==0
+-    return {'rows':len(table),'allIdentitiesAndSchedulesVerified':True,'counts':dict(counts),'acceptedUniqueOrders':len(order_ids),'duplicateOrOutOfRangeAcceptedOrderIds':duplicates,'acceptedRepliesInsideWindow':within,'arrivalWindowGoodputPerSecond':within/12.8,'allArrivalAcceptedP99Ns':nearest(accepted) if all_accepted else None,'acceptedConditionalP99Ns':nearest(accepted),'completedReplyConditionalP99Ns':nearest(reply_times),'policy':'All-arrival accepted p99 is null unless every planned arrival has one distinct accepted result; unknown/notSent/rejected rows remain counted.'}
+-
+-def audit_prefixes(arm,chunk,cycles,rpc_rows,requests,replies,offers,physical_q,origin,phase_report):
++                    end=int(row['reply_completion_offset_ns']);accepted.append(end-int(row['scheduled_offset_ns']));within+=end<=window
++    all_accepted=len(accepted)==planned and len(order_ids)==planned and duplicates==0 and not any(counts[k]for k in ('initialUNKNOWN','finalUNKNOWN','notSent','businessRejected','replyReplayed','initialAdmissionRejected'))
++    return {'rows':len(table),'allIdentitiesAndSchedulesVerified':True,'counts':dict(counts),'acceptedUniqueOrders':len(order_ids),'duplicateOrOutOfRangeAcceptedOrderIds':duplicates,'acceptedRepliesInsideWindow':within,'arrivalWindowGoodputPerSecond':within/(planned/workload.rate),'allArrivalAcceptedP99Ns':nearest(accepted) if all_accepted else None,'acceptedConditionalP99Ns':nearest(accepted),'completedReplyConditionalP99Ns':nearest(reply_times),'policy':'All-arrival accepted p99 is null unless every planned arrival has one distinct accepted result; unknown/notSent/rejected/replayed rows remain counted.'}
++
++def audit_prefixes(arm,chunk,cycles,rpc_rows,requests,replies,offers,physical_q,origin,phase_report,*,workload=LONG):
++    workload=contract(workload)
+     from bisect import bisect_left
+     maint=arm/'load/maintenance';reply_blob=raw(maint/'logical-rpc-replies.bin')
+     qmap=correlation_map(requests);vmap=correlation_map(replies)
+@@ -442,7 +470,8 @@
+             require(raw(arm/'load/writer'/name)==expected,'Logical transfer versus durable writer differs')
+         previous_chain=acknowledgement[5];previous_command=acknowledgement[3];previous_event=int(row['throughEventSeq'])
+         reports.append({'cycle':cycle['cycle'],'readPhases':phases,'archiveBytes':total,'archiveChunkRpcs':len(chunk_pairs),'eventCount':len(event_values),'eventFetchRpcs':len(event_pairs),'archivePayloadSha256':acknowledgement[6],'durableWriterBytesEqualRawTransfers':True,'businessOffersExcludedAcrossCompleteCycle':True})
+-    require(len(reports)==3 and len(all_phases)==6 and all_phases=={p['generation'] for p in phase_report['readPhases']},'Exactly three complete cycles / six read phases required')
++    require(len(reports)==workload.cycles and len(all_phases)==workload.phases and all_phases=={p['generation'] for p in phase_report['readPhases']},'Exact admitted long cycles / read phases required')
++    require(previous_command==workload.final_business and previous_event==workload.final_events,'Complete long final exported command/event prefix differs')
+     require(sum(x['archiveChunkRpcs'] for x in reports)==sum(r['kind']=='ArchiveChunk' for r in rpc_rows) and sum(x['eventFetchRpcs'] for x in reports)==sum(r['kind']=='FetchEvents' for r in rpc_rows),'Actual descriptor/event-derived inventory differs')
+     return reports
+ 
+@@ -481,4 +510,4 @@
+     except BaseException as error:
+         (HERE/'failure.json').write_text(json.dumps({'passed':False,'error':repr(error),'traceback':traceback.format_exc(),'inputs':INPUTS,'rawInputsUnchanged':True,'partialReportsRetained':True},indent=2)+'\n');raise
+ 
+-if __name__=='__main__':main()
++if __name__=='__main__':raise SystemExit('Use the explicit closed-native long runner or import audit_arm with a strict scheduler gate; this is not the legacy6400 collector CLI.')
+--- baseline/read_phase_audit.py
++++ source/read_phase_audit.py
+@@ -48,8 +48,9 @@
+ 
+ 
+ def audit_rpc_phases(rows, logical_requests, logical_replies, physical_requests,
+-                     physical_replies, offers, origin, selected_window):
++                     physical_replies, offers, origin, selected_window, *, maximum_read_phases=8, expected_phase_count=None):
+     require(type(selected_window) is int and selected_window in (1,8), 'Selected read window must be1 or8')
++    require(type(maximum_read_phases)is int and 1<=maximum_read_phases<=24,'Prospectively bounded phase cap required')
+     require(rows and len(rows) == len(logical_requests) == len(logical_replies), 'Logical RPC count closure')
+     requests=correlation_map(logical_requests);replies=correlation_map(logical_replies)
+     physical_q=correlation_map(physical_requests);physical_r=correlation_map(physical_replies,False)
+@@ -106,7 +107,10 @@
+             serial.append((start,end,corr,kind))
+         report_rows.append({'correlation':corr,'kind':kind,'coordinatorElapsedNs':elapsed,'physicalCallbacks':len(callbacks),'physicalErrorCallbacksRetained':sum(bool(f['decoded'].get('error','')) for f in callbacks),'positiveOffers':positive_counts[corr]})
+     require(set(physical_q)-used_physical=={c for c,f in physical_q.items() if f['decoded']['kind']=='BusinessBatch'},'Nonbusiness physical RPC omitted from logical inventory')
+-    require(phases and len(phases)<=8,'Bounded read phase inventory required')
++    require(phases and len(phases)<=maximum_read_phases,'Bounded read phase inventory required')
++    if expected_phase_count is not None:
++        require(type(expected_phase_count)is int and expected_phase_count==maximum_read_phases
++                and len(phases)==expected_phase_count,'Exact workload read phase inventory required')
+     phase_reports=[];previous_end=None;previous_generation=0
+     for generation,items in sorted(phases.items()):
+         require(generation>previous_generation and len({r['kind'] for r in items})==1,'Read phase generation/kind closure')
