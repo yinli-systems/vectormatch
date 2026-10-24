@@ -14,6 +14,8 @@ public final class RetentionCapacityPlanV3 {
     public static final int MAX_ARRIVALS = 350_000, WORKERS = 128, COMMANDS_PER_CYCLE = 3072;
     public static final int MAXIMUM_OFFERS_PER_RPC = 4;
     public static final int MAX_READ_ONLY_IN_FLIGHT = 8;
+    /** Experimental opt-in only: original 1/8 profiles preserve their eight-credit envelope. */
+    public static final int MAX_EXPERIMENTAL_READ_WINDOW = 32;
     public static final long WRITER_PAYLOAD_LIMIT = 1024L*1024*1024;
     public static final int WRITER_TOTAL_FILE_LIMIT = 1024;
     public static final long RAW_TRACE_LIMIT = 2L*1024*1024*1024;
@@ -95,6 +97,7 @@ public final class RetentionCapacityPlanV3 {
             out.put("archiveChunkBytes",archiveChunkBytes);out.put("eventFetchCount",eventFetchCount);out.put("commonChunkEnvelope",commonChunkEnvelope);
             if(commonEventFetchEnvelope){out.put("commonEventFetchEnvelope",true);out.put("selectedMaximumEventFetchRpcs",selectedMaximumEventFetchRpcs);}
             out.put("requestedReadWindow",requestedReadWindow);out.put("maxReadOnlyInFlight",maxReadOnlyInFlight);out.put("commonReadWindowEnvelope",commonReadWindowEnvelope);
+            if(commonReadWindowEnvelope&&maxReadOnlyInFlight==MAX_EXPERIMENTAL_READ_WINDOW)out.put("commonReadWindow32Envelope",true);
             out.put("readOnlyStagingBytes",readOnlyStagingBytes);out.put("readOnlyFailureTraceReserveBytes",readOnlyFailureTraceReserveBytes);
             out.put("selectedMaximumLogicalMaintenanceRpcs",selectedMaximumLogicalMaintenanceRpcs);out.put("selectedMaximumArchiveChunkRpcs",selectedMaximumArchiveChunkRpcs);
             out.put("maximumSupportedArchiveChunkBytes",MAX_SUPPORTED_ARCHIVE_CHUNK);out.put("maximumEncodedChunkReplyBytes",maxEncodedArchiveChunkReplyBytes(MAX_SUPPORTED_ARCHIVE_CHUNK));
@@ -151,26 +154,43 @@ public final class RetentionCapacityPlanV3 {
                 Math.max(a.maximumArchiveChunkRpcs(),b.maximumArchiveChunkRpcs()),a.maximumEventFetchRpcs(),Math.max(a.largestReplyBytes(),b.largestReplyBytes()),archiveChunkBytes,true,selected.maximumLogicalMaintenanceRpcs(),selected.maximumArchiveChunkRpcs(),rejected);
     }
     public static int requireReadWindow(int readWindow) {
-        if(readWindow!=1&&readWindow!=MAX_READ_ONLY_IN_FLIGHT)
-            throw new IllegalArgumentException("read window must be1 or8");
+        if(readWindow!=1&&readWindow!=MAX_READ_ONLY_IN_FLIGHT&&readWindow!=MAX_EXPERIMENTAL_READ_WINDOW)
+            throw new IllegalArgumentException("read window must be1,8 or32");
         return readWindow;
     }
     /** Fixed cap4/chunk6144/fetch16 experiment; both selected windows reserve the complete common eight-read envelope. */
     public static Plan commonReadWindowPlan(int arrivals,int batchCap,RetentionServiceV3.Profile profile,int readWindow,long extras,long negatives) {
+        if(readWindow!=1&&readWindow!=MAX_READ_ONLY_IN_FLIGHT)
+            throw new IllegalArgumentException("legacy common read-window plan permits only1 or8");
         return readWindowPlan(arrivals,batchCap,profile,readWindow,extras,negatives,DEFAULT_EVENT_FETCH_COUNT);
     }
+    /**
+     * Opt-in single-factor comparison on the best observed 32-event page.
+     * Both 8 and 32 credits use the same full 32-credit finite storage/trace envelope;
+     * legacy 1/8 and page16/32 experiments are unchanged.
+     */
+    public static Plan commonReadWindow32Plan(int arrivals,int batchCap,RetentionServiceV3.Profile profile,int readWindow,long extras,long negatives) {
+        if(readWindow!=MAX_READ_ONLY_IN_FLIGHT&&readWindow!=MAX_EXPERIMENTAL_READ_WINDOW)
+            throw new IllegalArgumentException("extended read-window comparison requires8 or32");
+        return readWindowPlan(arrivals,batchCap,profile,readWindow,extras,negatives,MAX_SUPPORTED_EVENT_FETCH_COUNT,MAX_EXPERIMENTAL_READ_WINDOW);
+    }
     private static Plan readWindowPlan(int arrivals,int batchCap,RetentionServiceV3.Profile profile,int readWindow,long extras,long negatives,int eventFetchCount) {
+        return readWindowPlan(arrivals,batchCap,profile,readWindow,extras,negatives,eventFetchCount,MAX_READ_ONLY_IN_FLIGHT);
+    }
+    private static Plan readWindowPlan(int arrivals,int batchCap,RetentionServiceV3.Profile profile,int readWindow,long extras,long negatives,int eventFetchCount,int envelopeCredits) {
         requireReadWindow(readWindow);
+        if((envelopeCredits!=MAX_READ_ONLY_IN_FLIGHT&&envelopeCredits!=MAX_EXPERIMENTAL_READ_WINDOW)||readWindow>envelopeCredits)
+            throw new IllegalArgumentException("read credit envelope must cover the selected read window");
         if(batchCap!=MAX_BUSINESS_BATCH)throw new IllegalArgumentException("common read-window plan requires fixed batch cap4");
         if(extras<0||negatives<0)throw new IllegalArgumentException("explicit common offer budgets required");
         Plan selected=calculate(arrivals,batchCap,profile,extras,negatives,MAX_SUPPORTED_ARCHIVE_CHUNK,true,eventFetchCount);
         Probe p=probe(profile,batchCap,MAX_SUPPORTED_ARCHIVE_CHUNK,true,eventFetchCount);
         // Cover original owner wires, caller originals, offer/failure clones, and complete reply staging.
         // This is a finite wire-copy reserve, not an assertion that Java/native heap usage is fully predicted.
-        long staging=4L*MAX_READ_ONLY_IN_FLIGHT*(p.readOnlyRequest+p.readOnlyReply)+READ_ONLY_FAILURE_METADATA_BYTES;
+        long staging=4L*envelopeCredits*(p.readOnlyRequest+p.readOnlyReply)+READ_ONLY_FAILURE_METADATA_BYTES;
         // On the first failed window preserve every original, including tickets that may already have been admitted.
         // The bounded metadata document and one timing row per read are additional to the ordinary RPC inventory.
-        long failureTrace=MAX_READ_ONLY_IN_FLIGHT*(p.readOnlyRequest+(long)RAW_FRAME_PREFIX_BYTES+256L)+READ_ONLY_FAILURE_METADATA_BYTES;
+        long failureTrace=envelopeCredits*(p.readOnlyRequest+(long)RAW_FRAME_PREFIX_BYTES+256L)+READ_ONLY_FAILURE_METADATA_BYTES;
         long base=Math.addExact(selected.noRetryRawTraceBytes(),failureTrace);
         long allFour=Math.addExact(selected.worstFourOfferRawTraceBytes(),failureTrace);
         long raw=Math.addExact(selected.maximumRawTraceBytes(),failureTrace);
@@ -185,7 +205,7 @@ public final class RetentionCapacityPlanV3 {
                 selected.minimumFreeRuntimeBytes(),selected.maximumJournalRecords(),selected.maximumJournalBytes(),selected.maximumArchiveEntryBytes(),selected.archiveHeaderBytes(),
                 selected.maximumArchivePayloadBytes(),selected.maximumEventPayloadBytes(),selected.maximumArchiveChunkRpcs(),selected.maximumEventFetchRpcs(),Math.max(selected.largestReplyBytes(),p.readOnlyReply),
                 MAX_SUPPORTED_ARCHIVE_CHUNK,false,selected.selectedMaximumLogicalMaintenanceRpcs(),selected.selectedMaximumArchiveChunkRpcs(),rejected,
-                readWindow,MAX_READ_ONLY_IN_FLIGHT,true,staging,failureTrace,eventFetchCount,false,selected.maximumEventFetchRpcs());
+                readWindow,envelopeCredits,true,staging,failureTrace,eventFetchCount,false,selected.maximumEventFetchRpcs());
     }
     /** One page-size factor; both pages use the union of real16/32 codec/storage inventories, fixed read8/cap4/chunk6144. */
     public static Plan commonEventFetchPlan(int arrivals,int batchCap,RetentionServiceV3.Profile profile,int eventFetchCount,long extras,long negatives) {
