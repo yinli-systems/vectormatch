@@ -147,7 +147,18 @@ B两轮完成canonical终态、逐条业务回复和资产验证，且初次/最
 
 平均活跃请求仍约127.94–127.96/128槽位；B2平均API执行从B1的8.605ms升至11.183ms。核对169项input/tool SHA的[正式归因](../evidence/2026-10-23/runpod-optimization/pipeline-capacity/analysis/attribution-summary.json)显示，B2匹配的owned UDP drops均0，但node0 NAK sent从B1的54升至41,364；约18秒窗口内node0相关线程累计runqueue等待也增加，cgroup限流仍0。这些支持检验传输恢复与调度等待，不能唯一定位丢包、宿主机或持久化瓶颈，也不能把累计等待当作单请求p99。multiplexed的CPU/FD/socket节省仍重复出现，资源收益与稳定容量分别验收。
 
-下一node-only试验只改变节点最大park：1ms与100µs，双方固定multiplexed负载及其余配置。新节点87ad通过132项Java测试和三节点不可变上传校验。100µs的严格10k/s、350k pilot已完整通过：全部接受，窗口goodput9998.771/s，全量p9923.711ms，drain8.759ms，初次/最终unknown、未发送、拒绝和server error全0。独立归因核对63项input/tool SHA；该pilot没有同新artifact的A控制组，不能单凭旧pilot的差异声称单因子收益。26k/s正式A/B/A/B随后登记并启动，结果另报。实际方法、独立node/load/analysis身份及审计工具失败记录见[idle报告](../evidence/2026-10-23/runpod-optimization/idle/README.md)。
+下一node-only试验只改变节点最大park：1ms与100µs，双方固定multiplexed负载及其余配置。新节点87ad通过132项Java测试和三节点不可变上传校验。100µs的严格10k/s、350k pilot已完整通过：全部接受，窗口goodput9998.771/s，全量p9923.711ms，drain8.759ms，初次/最终unknown、未发送、拒绝和server error全0。独立归因核对63项input/tool SHA；该pilot没有同新artifact的A控制组，不能单凭旧pilot的差异声称单因子收益。26k/s正式A/B/A/B只完成A1/B1/A2三轮，随后按用户的GPU停机迁移要求取消，B2未运行。三轮goodput分别为14395.903/18423.080/14635.697每秒，均过载；条件p99为646.965/537.573/656.745ms，不是全量到达p99。A2原始结果与独立逐行审计保留，原控制器后处理收据缺失；不能当作完整四轮因果结论。实际方法、独立node/load/analysis身份及审计工具失败记录见[idle报告](../evidence/2026-10-23/runpod-optimization/idle/README.md)。
+
+
+## CPU 迁移与新的测量范围
+
+按用户要求，原项目三台GPU Pod已停止，停止时UI显示三台均为$0.00/hr；新鲜离线备份已逐文件校验并保存在本地，见[停机与备份收据](../evidence/2026-10-23/runpod-optimization/gpu-to-cpu/gpu-shutdown-summary.json)。原应用与PostgreSQL尚未在CPU恢复，旧状态保留在备份；不能宣称原站点已恢复。
+
+用户提供并确认持续使用已有免费或包月额度的CPU Pod，未开新实例。[预检](../evidence/2026-10-24/runpod-cpu/preflight.json)实际观测32个可用逻辑线程（16个SMT核对）、约64GB cgroup内存、无CPU quota上限、无GPU设备。可见资源不代表独占物理核。容器本地overlay根盘只有5GiB；/workspace为FUSE挂载，不标作本地NVMe。
+
+复制路径的首次[实际CPU smoke及独立校验](../evidence/2026-10-24/runpod-cpu/replicated-smoke/cpu-replicated-smoke-433-r1/independent-verification.json)通过：三个独立JVM、loopback UDP、sync2、全部1002个新业务命令接受、334笔成交、unknown和拒绝0，规范状态/资产/事件检查通过。单在途闭环122.181/s、API RTT p99 10.101286ms只代表该smoke，不能作为吞吐上限。原wrapper因误读summary.json而失败，实际Java退出0并写result.json；原失败收据不改写，独立collector核对全部样本后单独记录通过。
+
+CPU容量测试是新的单机三进程loopback cohort，不能与旧三台GPU Pod的跨机器结果直接相减当作优化收益。当前源433保留实际W128、多路复用单session/driver、2GiB heap、leader0及完整350k正确性检查。具体协议见[CPU容量协议](../evidence/2026-10-24/runpod-cpu/CAPACITY_PROTOCOL.md)。内核另用[JMH测量合同](CORE_JMH.md)，固定三fork并做预热敏感性检查；内核批均值与复制链路p99分别报告。
 
 ## 已完成的代码验证
 

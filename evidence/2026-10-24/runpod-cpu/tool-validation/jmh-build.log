@@ -1,0 +1,74 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :bench
+e: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/build-22c1ce90cbb9cae9f7a33af037b88a67fd25ed95/bench/build.gradle.kts:62:65: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+e: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/build-22c1ce90cbb9cae9f7a33af037b88a67fd25ed95/bench/build.gradle.kts:63:20: Operator call corresponds to a dot-qualified call 'args.contains("-foe")' which is not allowed on a nullable receiver 'args'.
+e: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/build-22c1ce90cbb9cae9f7a33af037b88a67fd25ed95/bench/build.gradle.kts:64:27: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+e: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/build-22c1ce90cbb9cae9f7a33af037b88a67fd25ed95/bench/build.gradle.kts:65:35: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+e: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/build-22c1ce90cbb9cae9f7a33af037b88a67fd25ed95/bench/build.gradle.kts:65:44: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+e: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/build-22c1ce90cbb9cae9f7a33af037b88a67fd25ed95/bench/build.gradle.kts:66:19: Operator call corresponds to a dot-qualified call 'args.contains("-rf")' which is not allowed on a nullable receiver 'args'.
+e: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/build-22c1ce90cbb9cae9f7a33af037b88a67fd25ed95/bench/build.gradle.kts:67:26: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+e: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/build-22c1ce90cbb9cae9f7a33af037b88a67fd25ed95/bench/build.gradle.kts:68:34: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+e: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/build-22c1ce90cbb9cae9f7a33af037b88a67fd25ed95/bench/build.gradle.kts:68:43: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+e: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/build-22c1ce90cbb9cae9f7a33af037b88a67fd25ed95/bench/build.gradle.kts:69:20: Operator call corresponds to a dot-qualified call 'args.contains("-rff")' which is not allowed on a nullable receiver 'args'.
+e: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/build-22c1ce90cbb9cae9f7a33af037b88a67fd25ed95/bench/build.gradle.kts:70:26: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+e: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/build-22c1ce90cbb9cae9f7a33af037b88a67fd25ed95/bench/build.gradle.kts:71:34: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+e: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/build-22c1ce90cbb9cae9f7a33af037b88a67fd25ed95/bench/build.gradle.kts:72:39: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file '/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/build-22c1ce90cbb9cae9f7a33af037b88a67fd25ed95/bench/build.gradle.kts' line: 62
+
+* What went wrong:
+Script compilation errors:
+
+  Line 62:         require(listOf("-rff", "-rf", "-foe").all { flag -> args.count { it == flag } <= 1 }) { "Duplicate JMH result/failure options" }
+                                                                           ^ Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+
+  Line 63:         if ("-foe" !in args) args("-foe", "true")
+                              ^ Operator call corresponds to a dot-qualified call 'args.contains("-foe")' which is not allowed on a nullable receiver 'args'.
+
+  Line 64:         val failure = args.indexOf("-foe")
+                                     ^ Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+
+  Line 65:         require(failure + 1 < args.size && args[failure + 1] == "true") { "JMH must fail on fixture/benchmark errors" }
+                                             ^ Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+
+  Line 65:         require(failure + 1 < args.size && args[failure + 1] == "true") { "JMH must fail on fixture/benchmark errors" }
+                                                      ^ Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+
+  Line 66:         if ("-rf" !in args) args("-rf", "json")
+                             ^ Operator call corresponds to a dot-qualified call 'args.contains("-rf")' which is not allowed on a nullable receiver 'args'.
+
+  Line 67:         val format = args.indexOf("-rf")
+                                    ^ Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+
+  Line 68:         require(format + 1 < args.size && args[format + 1] == "json") { "Structured JMH JSON output is required" }
+                                            ^ Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+
+  Line 68:         require(format + 1 < args.size && args[format + 1] == "json") { "Structured JMH JSON output is required" }
+                                                     ^ Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+
+  Line 69:         if ("-rff" !in args) args("-rff", layout.buildDirectory.file("reports/jmh/run-${System.currentTimeMillis()}.json").get().asFile.absolutePath)
+                              ^ Operator call corresponds to a dot-qualified call 'args.contains("-rff")' which is not allowed on a nullable receiver 'args'.
+
+  Line 70:         val output = args.indexOf("-rff")
+                                    ^ Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+
+  Line 71:         require(output + 1 < args.size) { "JMH -rff requires an output path" }
+                                            ^ Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+
+  Line 72:         val target = rootProject.file(args[output + 1])
+                                                 ^ Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type (Mutable)List<String!>?
+
+13 errors
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 6s
