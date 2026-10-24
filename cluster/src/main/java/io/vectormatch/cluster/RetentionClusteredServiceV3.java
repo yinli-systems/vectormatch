@@ -6,6 +6,7 @@ import io.aeron.cluster.service.*;
 import io.aeron.logbuffer.Header;
 import org.agrona.DirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
+import io.vectormatch.core.RetentionEngineV3;
 
 import java.util.*;
 
@@ -19,11 +20,26 @@ public final class RetentionClusteredServiceV3 implements ClusteredService {
     private RetentionServiceV3 state;
     private Cluster cluster;
     private boolean batchReplyTextChecked;
+    private final boolean preparedArchiveCacheEnabled;
+    private PreparedArchive preparedArchive;
+    private long preparedArchiveEncodingCount;
+    /** Only this service writer owns the private byte array; chunks always copy their slice. */
+    private record PreparedArchive(RetentionEngineV3.ArchiveAck acknowledgement, byte[] bytes) {}
     public RetentionClusteredServiceV3(RetentionServiceV3.Profile profile, String lineage) {
+        this(profile, lineage, false);
+    }
+    /**
+     * Explicit opt-in: one ephemeral canonical prefix, bounded by pending bytes + 1024 header bytes.
+     * The cache is excluded from snapshots and the state hash. Building it temporarily also holds the
+     * bounded ArchiveBatch source payload before its defensive copy; the original constructor stays uncached.
+     */
+    public RetentionClusteredServiceV3(RetentionServiceV3.Profile profile, String lineage, boolean preparedArchiveCacheEnabled) {
         this.profile = Objects.requireNonNull(profile); this.lineage = new Scope(profile.fingerprint(), lineage).lineageId();
+        this.preparedArchiveCacheEnabled = preparedArchiveCacheEnabled;
     }
     @Override public void onStart(Cluster cluster, Image snapshotImage) {
         this.cluster = cluster; batchReplyTextChecked = false;
+        preparedArchive = null; preparedArchiveEncodingCount = 0;
         state = snapshotImage == null ? new RetentionServiceV3(profile, lineage)
                 : RetentionServiceV3.restore(RetentionSnapshotTransportV3.read(snapshotImage, cluster.idleStrategy(), profile.maxCombinedSnapshotBytes()), profile, lineage);
         System.out.printf("VECTOR_V3_SERVICE_READY profile=%s lineage=%s restored=%s hash=%s%n",
@@ -57,19 +73,22 @@ public final class RetentionClusteredServiceV3 implements ClusteredService {
                 // A malformed historical event cannot turn into an unbounded response.
                 payload = new Events(state.fetchEvents(fetch.fromEventSeq(), fetch.count()));
             } else if (request.operation() instanceof PrepareArchive prepare) {
-                var batch = state.archiveThrough(prepare.throughCommandSeq());
-                payload = new Descriptor(batch.acknowledgementAfterExternalVerification(), batch.canonicalBytes().length);
+                var prefix = prepareArchive(prepare.throughCommandSeq());
+                payload = new Descriptor(prefix.acknowledgement(), prefix.bytes().length);
             } else if (request.operation() instanceof ArchiveChunk chunk) {
                 var ack = chunk.acknowledgement();
                 if (ack.firstCommandSeq() <= state.archivedThroughCommandSeq()) return error(request.correlationId(), "ARCHIVE_STALE");
-                var batch = state.archiveThrough(ack.throughCommandSeq());
-                byte[] full = batch.canonicalBytes();
-                if (!batch.acknowledgementAfterExternalVerification().equals(ack) || full.length != chunk.totalBytes())
+                var prefix = preparedArchiveCacheEnabled ? preparedArchive : prepareArchive(ack.throughCommandSeq());
+                if (prefix == null || !prefix.acknowledgement().equals(ack) || prefix.bytes().length != chunk.totalBytes())
                     return error(request.correlationId(), "ARCHIVE_DESCRIPTOR_MISMATCH");
+                byte[] full = prefix.bytes();
                 payload = new Chunk(ack, full.length, chunk.offset(), Arrays.copyOfRange(full, chunk.offset(),
                         Math.min(full.length, chunk.offset() + chunk.count())));
             } else {
+                long archivedBefore = state.archivedThroughCommandSeq();
                 var reply = state.handle(request);
+                if (preparedArchiveCacheEnabled && state.archivedThroughCommandSeq() != archivedBefore)
+                    preparedArchive = null;
                 payload = new State(reply.execution() == null ? null : reply.execution().result(),
                         reply.execution() != null && reply.execution().replayed(), reply.maintenance());
             }
@@ -81,6 +100,27 @@ public final class RetentionClusteredServiceV3 implements ClusteredService {
             return error(request.correlationId(), "INVALID_REQUEST_OR_RESPONSE_BOUND");
         }
     }
+    private PreparedArchive prepareArchive(long through) {
+        if (through <= state.archivedThroughCommandSeq() || through > state.businessSeq())
+            throw new IllegalArgumentException("archive cut must be a nonempty current pending prefix");
+        if (preparedArchiveCacheEnabled && preparedArchive != null
+                && preparedArchive.acknowledgement().throughCommandSeq() == through)
+            return preparedArchive;
+        // Validate the range above before discarding a valid prefix. Do not retain two cached prefixes.
+        if (preparedArchiveCacheEnabled) preparedArchive = null;
+        var batch = state.archiveThrough(through);
+        preparedArchiveEncodingCount = Math.addExact(preparedArchiveEncodingCount, 1L);
+        byte[] bytes = batch.canonicalBytes();
+        long maximum = Math.min(RetentionEngineV3.MAX_SNAPSHOT_BYTES - 32L,
+                profile.core().maxPendingSerializedBytes() + 1024L);
+        if (bytes.length > maximum) throw new IllegalArgumentException("prepared archive exceeds bounded profile");
+        var prefix = new PreparedArchive(batch.acknowledgementAfterExternalVerification(), bytes);
+        if (preparedArchiveCacheEnabled) preparedArchive = prefix;
+        return prefix;
+    }
+    /** Completed adapter read-prefix encodings; excludes the core's existing ArchiveCommit ACK verification. */
+    long preparedArchiveEncodingCount() { return preparedArchiveEncodingCount; }
+    long preparedArchiveCachedBytes() { return preparedArchive == null ? 0 : preparedArchive.bytes().length; }
     private Batch executeBatch(Request request, BusinessBatch batch) {
         List<BatchEntry> entries = new ArrayList<>(batch.commands().size());
         boolean blocked = false;

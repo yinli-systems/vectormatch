@@ -93,6 +93,144 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
         public String commandSha256() { return slot.commandSha; }
         public boolean admissionObserved() { synchronized (lock) { return slot.admissionObserved; } }
     }
+    /** Exactly one bounded maintenance RPC shares this owner's session and correlation space. */
+    public final class MaintenanceTicket {
+        private final MaintenanceSlot slot;
+        private MaintenanceTicket(MaintenanceSlot slot) { this.slot = slot; }
+        public Reply await(Duration timeout) {
+            if (timeout == null || timeout.isZero() || timeout.isNegative() || timeout.compareTo(Duration.ofMinutes(2)) > 0)
+                throw new IllegalArgumentException("bounded positive maintenance wait required");
+            try { return slot.completion.get(timeout.toNanos(), TimeUnit.NANOSECONDS); }
+            catch (InterruptedException interrupted) { Thread.currentThread().interrupt(); throw maintenanceUnknown(slot, interrupted); }
+            catch (ExecutionException | TimeoutException error) { throw maintenanceUnknown(slot, error); }
+        }
+        public byte[] originalWire() { return slot.bytes.clone(); }
+    }
+    public static final class UnknownMaintenanceException extends IllegalStateException {
+        private static final long serialVersionUID = 1L;
+        private final byte[] originalWire;
+        private final boolean mayHaveExecuted;
+        UnknownMaintenanceException(MaintenanceSlot slot, Throwable cause) {
+            super("V3_MAINTENANCE_UNKNOWN: retain exact original wire/maintenance identity; no implicit ACK success or fresh-key reissue", cause);
+            originalWire = slot.bytes.clone(); mayHaveExecuted = slot.possiblyOffered;
+        }
+        public byte[] originalWire() { return originalWire.clone(); }
+        public boolean mayHaveExecuted() { return mayHaveExecuted; }
+    }
+    private static final class MaintenanceSlot {
+        final Request request;
+        final byte[] bytes;
+        final long deadline, mutationReserveBytes;
+        final boolean mutating;
+        final CompletableFuture<Reply> completion = new CompletableFuture<>();
+        long nextOffer;
+        int possibleOffers;
+        boolean possiblyOffered, disabled;
+        MaintenanceSlot(Request request, long now, long deadline) {
+            this.request = request; this.deadline = deadline; nextOffer = now;
+            bytes = RetentionWireV3.encode(request);
+            mutating = request.operation() instanceof ArchiveCommit || request.operation() instanceof EventAck;
+            mutationReserveBytes = mutating ? RetentionWireV3.encodeOperation(request.operation()).length + 1024L : 0;
+        }
+    }
+    private UnknownMaintenanceException maintenanceUnknown(MaintenanceSlot slot, Throwable cause) {
+        synchronized (lock) { return new UnknownMaintenanceException(slot, cause); }
+    }
+    public MaintenanceTicket submitMaintenance(Operation operation, long absoluteOfferDeadlineNs) {
+        synchronized (lock) {
+            healthy();
+            if (closing || maintenanceStopped) throw new IllegalStateException("maintenance closed; preserve unresolved evidence");
+            Objects.requireNonNull(operation);
+            if (operation instanceof Business || operation instanceof BusinessBatch)
+                throw new IllegalArgumentException("business must use producer-bound logical slots");
+            long now = clock.getAsLong(), remaining = absoluteOfferDeadlineNs - now;
+            if (remaining <= 0 || remaining > MAX_PERMIT_NS) throw new IllegalArgumentException("bounded absolute maintenance permit required");
+            if (maintenance != null) {
+                if (!maintenance.request.operation().equals(operation)) throw new IllegalStateException("one unresolved maintenance RPC; cannot change payload/identity");
+                return new MaintenanceTicket(maintenance); // No implicit permit renewal.
+            }
+            if (nextCorrelation == Long.MAX_VALUE) throw new IllegalStateException("transport correlation exhausted");
+            maintenance = new MaintenanceSlot(new Request(scope, ++nextCorrelation, operation), now, absoluteOfferDeadlineNs);
+            wake(); return new MaintenanceTicket(maintenance);
+        }
+    }
+    public Reply exchangeMaintenance(Operation operation, Duration timeout) {
+        if (timeout == null || timeout.isNegative() || timeout.isZero() || timeout.compareTo(Duration.ofMinutes(2)) > 0)
+            throw new IllegalArgumentException("bounded maintenance timeout required");
+        return submitMaintenance(operation, clock.getAsLong() + timeout.toNanos()).await(timeout);
+    }
+    private int offerMaintenance(RetentionBatchOwnerIOV3 io, long now) {
+        MaintenanceSlot slot = maintenance;
+        if (slot == null || slot.disabled) return 0;
+        if (now - slot.deadline >= 0 || slot.possibleOffers >= 4) {
+            slot.disabled = true; maintenanceStopped = true;
+            slot.completion.completeExceptionally(new UnknownMaintenanceException(slot, null)); return 0;
+        }
+        if (now - slot.nextOffer < 0) return 0;
+        if (slot.mutating && (maintenanceMutationOffers >= Math.min(1024, config.profile().maxMaintenanceJournalRecords())
+                || slot.mutationReserveBytes > config.profile().maxMaintenanceJournalBytes() - maintenanceMutationReserveBytes)) {
+            slot.disabled = true; maintenanceStopped = true;
+            slot.completion.completeExceptionally(new UnknownMaintenanceException(slot, null)); return 0;
+        }
+        byte[] offerBytes = slot.bytes.clone();
+        now = clock.getAsLong(); if (closing || now - slot.deadline >= 0) return 0;
+        boolean earlierPossible = slot.possiblyOffered;
+        slot.possiblyOffered = true; slot.possibleOffers++;
+        if (slot.mutating) { maintenanceMutationOffers++; maintenanceMutationReserveBytes += slot.mutationReserveBytes; }
+        long result = io.offer(offerBytes); // Throwing offers remain possibly executed and consume journal budget.
+        if (result < 0) {
+            slot.possibleOffers--; slot.possiblyOffered = earlierPossible;
+            if (slot.mutating) { maintenanceMutationOffers--; maintenanceMutationReserveBytes -= slot.mutationReserveBytes; }
+            maintenanceNegativeOffers++; slot.nextOffer = now + NEGATIVE_RETRY_NS;
+            if (result == Publication.CLOSED || result == Publication.MAX_POSITION_EXCEEDED)
+                throw new IllegalStateException("fatal maintenance offer code " + result);
+            return 0;
+        }
+        maintenanceAcceptedOffers++; slot.nextOffer = now + RESEND_NS; return 1;
+    }
+    private void receiveMaintenance(Reply reply) {
+        MaintenanceSlot slot = maintenance;
+        if (!slot.possiblyOffered) throw new IllegalStateException("maintenance reply precedes offer");
+        if (!reply.error().isEmpty()) {
+            if (slot.mutating) throw new IllegalStateException("maintenance mutation error remains unresolved: " + reply.error());
+        } else {
+            Operation operation = slot.request.operation(); Payload payload = reply.payload();
+            if (operation instanceof PrepareArchive prepare) {
+                if (!(payload instanceof Descriptor descriptor) || descriptor.acknowledgement().throughCommandSeq() != prepare.throughCommandSeq()
+                        || !descriptor.acknowledgement().profileHash().equals(config.profile().core().fingerprint())
+                        || !descriptor.acknowledgement().lineageId().equals(scope.lineageId())) throw new IllegalStateException("maintenance descriptor binding differs");
+            } else if (operation instanceof ArchiveChunk requested) {
+                if (!(payload instanceof Chunk chunk) || !chunk.acknowledgement().equals(requested.acknowledgement())
+                        || chunk.totalBytes() != requested.totalBytes() || chunk.offset() != requested.offset()
+                        || chunk.data().length != Math.min(requested.count(), requested.totalBytes() - requested.offset()))
+                    throw new IllegalStateException("maintenance chunk binding differs");
+            } else if (operation instanceof FetchEvents requested) {
+                if (!(payload instanceof Events events) || events.batch().events().size() > requested.count()
+                        || (!events.batch().events().isEmpty() && events.batch().events().getFirst().eventSeq() != requested.fromEventSeq()))
+                    throw new IllegalStateException("maintenance event prefix binding differs");
+            } else if (!(payload instanceof State state) || state.result() != null || state.replayed()
+                    || (slot.mutating && state.maintenance() == null) || (!slot.mutating && state.maintenance() != null))
+                throw new IllegalStateException("maintenance state reply binding differs");
+            if (slot.mutating) {
+                var result = ((State)payload).maintenance();
+                if (result.exportedEventSeq() > reply.counters().exportedEventSeq()) throw new IllegalStateException("maintenance exported frontier exceeds counters");
+                if (result.code() == RetentionServiceV3.MaintenanceCode.APPLIED) {
+                    if (!result.error().isEmpty()) throw new IllegalStateException("applied maintenance cannot claim error");
+                    if (operation instanceof ArchiveCommit archive) {
+                        var compact = result.compaction();
+                        if (compact == null || compact.archivedThroughCommandSeq() != archive.acknowledgement().throughCommandSeq()
+                                || compact.maintenanceSeq() > reply.counters().coreMaintenanceSeq()
+                                || (!result.replayed() && compact.maintenanceSeq() != reply.counters().coreMaintenanceSeq()))
+                            throw new IllegalStateException("archive ACK result target differs");
+                    } else if (operation instanceof EventAck event && (result.compaction() != null
+                            || result.exportedEventSeq() < event.throughEventSeq()
+                            || (!result.replayed() && result.exportedEventSeq() != reply.counters().exportedEventSeq())))
+                        throw new IllegalStateException("event ACK result target/shape differs");
+                } else if (result.compaction() != null || result.error().isEmpty()) throw new IllegalStateException("failed maintenance shape differs");
+            }
+        }
+        maintenanceReplies++; slot.completion.complete(reply); maintenance = null;
+    }
     private static final class Slot {
         final int worker;
         final Command command;
@@ -138,7 +276,9 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
     private final NavigableMap<Long, Slot> unresolvedOrdinals = new TreeMap<>();
     private final CompletableFuture<Void> started = new CompletableFuture<>();
     private final Thread owner;
-    private boolean closing, admissionStopped;
+    private boolean closing, admissionStopped, maintenanceStopped;
+    private MaintenanceSlot maintenance;
+    private long maintenanceMutationOffers, maintenanceMutationReserveBytes, maintenanceAcceptedOffers, maintenanceNegativeOffers, maintenanceReplies;
     private Throwable failure;
     private Map<String, Object> transportObservation = Map.of("available", false, "reason", "not_ready");
     private long nextCorrelation, lastOrdinal, acceptedLogical, acceptedPhysical, resends, unaccepted,
@@ -160,7 +300,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
     public Ticket submit(int worker, Command command, long absoluteOfferDeadlineNs) {
         synchronized (lock) {
             healthy();
-            if (closing || admissionStopped) throw new IllegalStateException("owner closed to new business; retained unknowns require explicit closure");
+            if (closing || admissionStopped || maintenanceStopped) throw new IllegalStateException("owner closed to new business; retained unknowns require explicit closure");
             if (worker < 0 || worker >= slots.length) throw new IllegalArgumentException("invalid logical worker");
             long now = clock.getAsLong(), remaining = absoluteOfferDeadlineNs - now;
             if (remaining <= 0 || remaining > MAX_PERMIT_NS) throw new IllegalArgumentException("absolute offer permit must be within two minutes");
@@ -192,7 +332,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
     private void healthy() { if (failure != null) throw new OwnerFailure(failure); }
     private UnresolvedCommandException unresolved(Slot slot, Throwable cause) {
         long now = clock.getAsLong();
-        boolean canOffer = !closing && !admissionStopped && slot.terminal == null && permitted(slot, now)
+        boolean canOffer = !closing && !admissionStopped && !maintenanceStopped && slot.terminal == null && permitted(slot, now)
                 && (slot.frame == null || (!slot.frame.disabled && framePermitted(slot.frame, now)));
         return new UnresolvedCommandException(slot, canOffer, cause);
     }
@@ -235,6 +375,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
     private void receive(Reply reply) {
         synchronized (lock) {
             if (!scope.equals(reply.scope())) throw new IllegalStateException("reply scope differs");
+            if (maintenance != null && maintenance.request.correlationId() == reply.correlationId()) { receiveMaintenance(reply); return; }
             Frame frame = frames.get(reply.correlationId());
             if (frame == null) { lateReplies++; return; }
             if (!frame.mayHaveExecuted) throw new IllegalStateException("reply precedes any possibly accepted offer");
@@ -264,7 +405,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
             Slot slot = iterator.next();
             if (!permitted(slot, now)) { iterator.remove(); notSent(slot, "PERMIT_REVOKED_OR_EXPIRED_BEFORE_FRAME"); }
         }
-        while (!admissionStopped && !ready.isEmpty() && frames.size() < slots.length) {
+        while (!admissionStopped && !maintenanceStopped && !ready.isEmpty() && frames.size() < slots.length) {
             Slot first = ready.peekFirst();
             if (ready.size() < config.batchCap() && now - first.readyNs < config.flushDelayNs()) break;
             int count = Math.min(config.batchCap(), ready.size()); var group = new ArrayList<Slot>(count);
@@ -277,7 +418,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
     private int offerFrames(RetentionBatchOwnerIOV3 io) {
         int work = 0;
         for (Frame frame : frames.values()) {
-            if (closing || admissionStopped || frame.disabled || frame.slots.stream().allMatch(s -> s.terminal != null)) continue;
+            if (closing || admissionStopped || maintenanceStopped || frame.disabled || frame.slots.stream().allMatch(s -> s.terminal != null)) continue;
             long now = clock.getAsLong();
             if (!framePermitted(frame, now)) {
                 frame.disabled = true;
@@ -314,13 +455,14 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
     }
     private long parkDuration(long now) {
         long delay = MAX_PARK_NS;
-        if (!admissionStopped && !ready.isEmpty()) delay = Math.min(delay, Math.max(0, config.flushDelayNs() - (now - ready.peekFirst().readyNs)));
+        if (!admissionStopped && !maintenanceStopped && !ready.isEmpty()) delay = Math.min(delay, Math.max(0, config.flushDelayNs() - (now - ready.peekFirst().readyNs)));
         for (Slot slot : ready) delay = Math.min(delay, Math.max(0, slot.permitDeadline - now));
         for (Frame frame : frames.values()) {
-            if (frame.disabled) continue;
+            if (frame.disabled || maintenanceStopped) continue;
             if (frame.mayHaveExecuted || creditAllows(frame.slots.size())) delay = Math.min(delay, Math.max(0, frame.nextOffer - now));
             for (Slot slot : frame.slots) delay = Math.min(delay, Math.max(0, slot.permitDeadline - now));
         }
+        if (maintenance != null && !maintenance.disabled) delay = Math.min(delay, Math.max(0, Math.min(maintenance.nextOffer, maintenance.deadline) - now));
         return Math.max(1, delay);
     }
     private void own(IOFactory factory) {
@@ -332,7 +474,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
                 synchronized (lock) { if (closing) break; }
                 int work = io.poll(this::receive); long pause;
                 synchronized (lock) {
-                    long now = clock.getAsLong(); build(now); work += offerFrames(io);
+                    long now = clock.getAsLong(); build(now); work += offerMaintenance(io, now); work += offerFrames(io);
                     for (var iterator = frames.entrySet().iterator(); iterator.hasNext();) {
                         Frame f = iterator.next().getValue();
                         if (f.slots.stream().allMatch(s -> s.terminal != null)) { iterator.remove(); retiredFrames++; }
@@ -347,6 +489,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
         } finally {
             synchronized (lock) {
                 closing = true;
+                if (maintenance != null) maintenance.completion.completeExceptionally(new UnknownMaintenanceException(maintenance, failure));
                 for (Slot slot : slots) if (slot != null) {
                     if (slot.ordinal == 0) notSent(slot, "OWNER_CLOSED_BEFORE_ACCEPTED_OFFER");
                     else slot.completion.completeExceptionally(failure == null ? unresolved(slot, null) : new OwnerFailure(failure));
@@ -377,6 +520,12 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
             out.put("retiredFrames", retiredFrames); out.put("pendingHighWater", pendingHighWater); out.put("frameHighWater", frameHighWater);
             out.put("newBusinessAdmissionStopped", admissionStopped); out.put("closed", closing); out.put("ownerThreadAlive", owner.isAlive());
             out.put("failureType", failure == null ? null : failure.getClass().getName()); out.put("transportObservation", transportObservation);
+            out.put("maintenanceRpcCapacity", 1); out.put("maintenancePending", maintenance != null);
+            out.put("maintenanceStopped", maintenanceStopped); out.put("maintenanceAcceptedOffers", maintenanceAcceptedOffers);
+            out.put("maintenanceNegativeOffers", maintenanceNegativeOffers); out.put("maintenanceReplies", maintenanceReplies);
+            out.put("possibleMaintenanceMutationOffers", maintenanceMutationOffers); out.put("maintenanceMutationReserveBytes", maintenanceMutationReserveBytes);
+            out.put("maintenanceMutationOfferLimit", Math.min(1024, config.profile().maxMaintenanceJournalRecords()));
+            out.put("maintenancePossibleOfferLimitPerRpc", 4);
             out.put("scope", "Bounded singleowner functional contract; no persistence/cold recovery/arrival scheduler/capacity or endurance proof");
             return Collections.unmodifiableMap(out);
         }

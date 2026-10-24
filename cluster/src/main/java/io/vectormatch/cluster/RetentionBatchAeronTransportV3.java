@@ -25,9 +25,15 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
     private final AeronCluster cluster;
     private long nextKeepAlive;
     private boolean closed;
+    private final boolean maintenanceEnabled;
 
     public RetentionBatchAeronTransportV3(Path driverDirectory, int portBase,
                                           RetentionServiceV3.Profile profile, String lineage) {
+        this(driverDirectory, portBase, profile, lineage, false);
+    }
+    public RetentionBatchAeronTransportV3(Path driverDirectory, int portBase,
+                                          RetentionServiceV3.Profile profile, String lineage, boolean maintenanceEnabled) {
+        this.maintenanceEnabled = maintenanceEnabled;
         // All validation precedes driver creation or a filesystem/network side effect.
         if (driverDirectory == null || profile == null) throw new IllegalArgumentException("V3 batch transport path/profile required");
         scope = new Scope(profile.fingerprint(), lineage);
@@ -58,7 +64,7 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
 
     @Override public long offer(byte[] completeRequestBytes) {
         requireOpen();
-        byte[] bytes = validatedRequestBytes(completeRequestBytes, scope);
+        byte[] bytes = validatedRequestBytes(completeRequestBytes, scope, maintenanceEnabled);
         // Original Aeron offer code is returned; owner alone decides retry/deadline/UNKNOWN policy.
         return cluster.offer(new UnsafeBuffer(bytes), 0, bytes.length);
     }
@@ -80,6 +86,7 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
         var context = driver.context();
         var idle = Objects.requireNonNull(context.sharedIdleStrategy(), "actual shared idle strategy");
         Map<String, Object> actual = new LinkedHashMap<>();
+        actual.put("maintenanceEnabled", maintenanceEnabled);
         actual.put("source", "actual-sole-owner-aeron-cluster-and-owned-driver");
         actual.put("driverDirectory", context.aeronDirectoryName());
         actual.put("threadingMode", context.threadingMode().name());
@@ -119,14 +126,15 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
         if (closed) throw new IllegalStateException("V3 batch transport closed");
     }
 
-    static byte[] validatedRequestBytes(byte[] input, Scope expected) {
+    static byte[] validatedRequestBytes(byte[] input, Scope expected) { return validatedRequestBytes(input, expected, false); }
+    static byte[] validatedRequestBytes(byte[] input, Scope expected, boolean maintenanceEnabled) {
         if (input == null || input.length < 1 || input.length > MAX_REQUEST_BYTES)
             throw new IllegalArgumentException("invalid V3 batch transport request length");
         byte[] bytes = input.clone();
         Request request = RetentionWireV3.decode(bytes);
         if (!Objects.requireNonNull(expected).equals(request.scope())) throw new IllegalArgumentException("V3 batch transport request scope differs");
-        if (!(request.operation() instanceof BusinessBatch) && !(request.operation() instanceof Position))
-            throw new IllegalArgumentException("V3 batch transport only accepts BusinessBatch or Position");
+        if (request.operation() instanceof Business || (!maintenanceEnabled && !(request.operation() instanceof BusinessBatch) && !(request.operation() instanceof Position)))
+            throw new IllegalArgumentException("V3 owner transport requires producer-bound BusinessBatch or explicitly enabled maintenance");
         if (request.operation() instanceof BusinessBatch) RetentionReplyV3.validateBatchReplyBudget(request);
         return bytes;
     }

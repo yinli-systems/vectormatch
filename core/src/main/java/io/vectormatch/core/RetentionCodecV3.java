@@ -69,6 +69,98 @@ final class RetentionCodecV3 {
         });
     }
 
+    /** Standalone read-only archive validation; the snapshot/legacy decoding paths are unchanged. */
+    static RetentionArchiveVerifierV3.Verified verifyArchive(byte[] bytes, Profile expectedProfile,
+                                                            String expectedLineage, ArchiveAck expected) {
+        Objects.requireNonNull(bytes, "bytes"); Objects.requireNonNull(expectedProfile, "profile");
+        Objects.requireNonNull(expected, "expected acknowledgement"); requireNamespace(expectedLineage);
+        // The canonical header is at most 480 bytes for the permitted profile/lineage names.
+        long maximum = Math.min(MAX_SNAPSHOT_BYTES - 32L, expectedProfile.maxPendingSerializedBytes() + 1024L);
+        if (bytes.length < 80 || bytes.length > maximum)
+            throw new IllegalArgumentException("invalid bounded V3 archive length");
+        byte[] stable = bytes.clone();
+        if (!expected.profileHash().equals(expectedProfile.fingerprint())
+                || !expected.lineageId().equals(expectedLineage) || !hash(stable).equals(expected.payloadSha256()))
+            throw new IllegalArgumentException("V3 archive acknowledgement scope/digest mismatch");
+        try {
+            DataInputStream in = new DataInputStream(new ByteArrayInputStream(stable));
+            if (in.readInt() != ARCHIVE_MAGIC || in.readInt() != SNAPSHOT_VERSION)
+                throw new IllegalArgumentException("unsupported V3 archive format");
+            Profile profile = readProfile(in); String lineage = readString(in);
+            if (!profile.equals(expectedProfile) || !Objects.equals(lineage, expectedLineage))
+                throw new IllegalArgumentException("V3 archive profile/lineage mismatch");
+            long archivedThrough = nonnegative(in.readLong()), previousAccepted = nonnegative(in.readLong());
+            long previousEvents = nonnegative(in.readLong()), previousMarket = nonnegative(in.readLong());
+            String previousHash = readHash(in);
+            if (previousAccepted > archivedThrough || previousMarket > previousEvents
+                    || Math.addExact(archivedThrough, 1L) != expected.firstCommandSeq()
+                    || !previousHash.equals(expected.previousChainHash()))
+                throw new IllegalArgumentException("V3 archive predecessor/range mismatch");
+            if (archivedThrough == 0 && (previousAccepted != 0 || previousEvents != 0 || previousMarket != 0
+                    || !previousHash.equals(genesisHash(profile, lineage))))
+                throw new IllegalArgumentException("V3 archive genesis anchor mismatch");
+            int size = count(in, profile.maxPendingCommands());
+            if (size == 0 || Math.addExact(archivedThrough, (long) size) != expected.throughCommandSeq())
+                throw new IllegalArgumentException("V3 archive nonempty prefix range mismatch");
+            List<HistoryEntry> entries = new ArrayList<>(size);
+            Set<Long> terminalIds = new HashSet<>();
+            long commandSeq = archivedThrough, accepted = previousAccepted, eventSeq = previousEvents;
+            long marketSeq = previousMarket, retainedBytes = 0, totalEvents = 0;
+            String chainHash = previousHash;
+            for (int index = 0; index < size; index++) {
+                byte[] payload = readBlob(in, (int) profile.maxPendingSerializedBytes());
+                retainedBytes = Math.addExact(retainedBytes, payload.length + 36L);
+                if (retainedBytes > profile.maxPendingSerializedBytes())
+                    throw new IllegalArgumentException("V3 archive serialized history bound");
+                String storedHash = readHash(in);
+                HistoryEntry entry = readEntry(payload, chainHash, profile);
+                Command command = entry.command(); Result result = entry.execution().result();
+                if (entry.commandSeq() != (commandSeq = Math.addExact(commandSeq, 1L))
+                        || !validIdentity(command)
+                        || (command instanceof Place place && !Objects.equals(place.clientOrderId(),
+                            structuredClientOrderId(place.accountId(), place.producerId(), place.requestSeq()))))
+                    throw new IllegalArgumentException("V3 archive command continuity/identity mismatch");
+                if (command instanceof Place && result.accepted()) {
+                    accepted = Math.addExact(accepted, 1L);
+                    if (result.orderId() != accepted)
+                        throw new IllegalArgumentException("V3 archive accepted order ID mismatch");
+                }
+                if (entry.acceptedPlaceTotal() != accepted)
+                    throw new IllegalArgumentException("V3 archive accepted counter mismatch");
+                long trades = 0;
+                for (Event event : entry.execution().events()) {
+                    if (event.eventSeq() != (eventSeq = Math.addExact(eventSeq, 1L))
+                            || event.detail() == null || event.accountId() <= 0 || event.quantityLots() <= 0
+                            || (event.type() == EventType.DEPOSIT ? event.marketSeq() != 0
+                                : event.marketSeq() != (marketSeq = Math.addExact(marketSeq, 1L))))
+                        throw new IllegalArgumentException("V3 archive event/market continuity mismatch");
+                    if (event.type() == EventType.TRADE) trades++;
+                }
+                if (trades != result.tradeCount() || entry.eventSeqAfter() != eventSeq
+                        || entry.marketSeqAfter() != marketSeq)
+                    throw new IllegalArgumentException("V3 archive event/result counter mismatch");
+                for (OrderView order : entry.terminalOrders()) {
+                    if (order.orderId() <= 0 || order.orderId() > accepted || order.accountId() <= 0
+                            || order.acceptedCommandSeq() <= 0 || order.acceptedCommandSeq() > commandSeq
+                            || order.priceTicks() <= 0 || order.originalQuantity() <= 0
+                            || order.remainingQuantity() < 0 || order.remainingQuantity() > order.originalQuantity()
+                            || !terminalIds.add(order.orderId()) || terminalIds.size() > profile.limits().maxRetainedOrders())
+                        throw new IllegalArgumentException("V3 archive terminal history mismatch");
+                }
+                totalEvents = Math.addExact(totalEvents, entry.execution().events().size());
+                if (totalEvents > profile.maxPendingEvents() || !storedHash.equals(entry.chainHash()))
+                    throw new IllegalArgumentException("V3 archive event bound/hash chain mismatch");
+                entries.add(entry); chainHash = entry.chainHash();
+            }
+            if (in.available() != 0 || commandSeq != expected.throughCommandSeq()
+                    || !chainHash.equals(expected.chainHash()))
+                throw new IllegalArgumentException("V3 archive trailing bytes/final chain mismatch");
+            return new RetentionArchiveVerifierV3.Verified(expected, entries, previousEvents, previousAccepted, previousMarket);
+        } catch (IOException | ArithmeticException error) {
+            throw new IllegalArgumentException("corrupt V3 archive", error);
+        }
+    }
+
     static byte[] snapshotBytes(RetentionEngineV3 engine) {
         engine.checkInvariants();
         byte[] payload = encode(out -> {

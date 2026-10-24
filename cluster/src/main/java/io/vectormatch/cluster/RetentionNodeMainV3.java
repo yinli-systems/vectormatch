@@ -64,7 +64,10 @@ public final class RetentionNodeMainV3 {
     }
     @SuppressWarnings("try")
     public static void main(String[] args) throws Exception {
-        if (args.length != 8) throw new IllegalArgumentException("RetentionNodeMainV3 <node> <state-root> <ports> <sync:0|2> <local-smoke-v3|finite-batch-load-v3-v1> <lineage> <expected-profile-sha> <expected-code-sha>");
+        if (args.length != 8 && args.length != 9) throw new IllegalArgumentException("RetentionNodeMainV3 <node> <state-root> <ports> <sync:0|2> <local-smoke-v3|finite-batch-load-v3-v1> <lineage> <expected-profile-sha> <expected-code-sha> [bounded-maintenance-v1]");
+        boolean preparedCache = args.length == 9;
+        if (preparedCache && (!"bounded-maintenance-v1".equals(args[8]) || !RetentionBatchProfilesV3.PROFILE_ID.equals(args[4])))
+            throw new IllegalArgumentException("explicit finite profile and bounded-maintenance-v1 opt-in required");
         int node = Integer.parseInt(args[0]), portBase = Integer.parseInt(args[2]), sync = Integer.parseInt(args[3]);
         if (sync != 0 && sync != 2) throw new IllegalArgumentException("invalid V3 sync level");
         var profile = profile(args[4]); var scope = new RetentionWireV3.Scope(profile.fingerprint(), args[5]);
@@ -104,12 +107,12 @@ public final class RetentionNodeMainV3 {
                 .replicationChannel(transport.withMtu(topology.responseChannel(node))).archiveContext(localArchive.clone()).errorHandler(errors);
         var service = new ClusteredServiceContainer.Context().aeronDirectoryName(driverDir).archiveContext(localArchive.clone()).clusterDir(clusterDir)
                 .snapshotChannel(transport.withRecordingMtu(ClusteredServiceContainer.Configuration.snapshotChannel()))
-                .clusteredService(new RetentionClusteredServiceV3(profile, scope.lineageId())).errorHandler(errors);
+                .clusteredService(new RetentionClusteredServiceV3(profile, scope.lineageId(), preparedCache)).errorHandler(errors);
         try (ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
              ClusteredMediaDriver driver = ClusteredMediaDriver.launch(media.terminationHook(barrier::signalAll), archive, consensus.terminationHook(barrier::signalAll));
              ClusteredServiceContainer container = ClusteredServiceContainer.launch(service.terminationHook(barrier::signalAll))) {
-            System.out.printf("VECTOR_V3_NODE_READY node=%d pid=%d profile=%s lineage=%s code=%s members=%s sync=%d mtu=1248%n",
-                    node, ProcessHandle.current().pid(), scope.profileHash(), scope.lineageId(), code, topology.members(), sync);
+            System.out.printf("VECTOR_V3_NODE_READY node=%d pid=%d profile=%s lineage=%s code=%s members=%s sync=%d mtu=1248 preparedArchiveCacheEnabled=%s%n",
+                    node, ProcessHandle.current().pid(), scope.profileHash(), scope.lineageId(), code, topology.members(), sync, preparedCache);
             barrier.await();
         }
     }
