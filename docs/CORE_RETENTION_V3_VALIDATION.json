@@ -1,0 +1,140 @@
+{
+  "schema": "vectormatch-core-retention-v3-local-validation-v1",
+  "recordedAtUtc": "2026-10-24T03:53:47.293401+00:00",
+  "baseSourceCommit": "433f02bebe2f3109ec363291fa562d5c509c0723",
+  "branch": "codex/core-retention-v3",
+  "executionScope": "LOCAL_MAC_CORE_PROTOTYPE_ONLY",
+  "tools": {
+    "jdk": "21.0.13+9",
+    "gradle": "8.14.3",
+    "dependencyResolution": "offline"
+  },
+  "command": [
+    "gradle",
+    "--offline",
+    "--no-daemon",
+    "--max-workers=2",
+    ":core:test",
+    ":cluster:compileJava",
+    ":server:compileJava",
+    ":projector:compileJava",
+    ":bench:compileJava"
+  ],
+  "exitCode": 0,
+  "buildResult": "BUILD SUCCESSFUL",
+  "totals": {
+    "tests": 29,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "testSuites": [
+    {
+      "name": "io.vectormatch.core.LegacyV2CompatibilityTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "core/build/test-results/test/TEST-io.vectormatch.core.LegacyV2CompatibilityTest.xml",
+        "bytes": 492,
+        "sha256": "9f2bb0e280658fbddcb82e3b5d596006fc0b00e8a2ad10745d8da8983d67f263"
+      }
+    },
+    {
+      "name": "io.vectormatch.core.MatchingEngineProperties",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "core/build/test-results/test/TEST-io.vectormatch.core.MatchingEngineProperties.xml",
+        "bytes": 1301,
+        "sha256": "084ebfe27ba45808d144a12b89a76c3d75b470d84075a0a7d1def382ff50c3ba"
+      }
+    },
+    {
+      "name": "io.vectormatch.core.MatchingEngineTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "core/build/test-results/test/TEST-io.vectormatch.core.MatchingEngineTest.xml",
+        "bytes": 2186,
+        "sha256": "def2f8280042e2c21e3b67cc410c92dae911511397a6d54a41a764a93c089fc5"
+      }
+    },
+    {
+      "name": "io.vectormatch.core.RetentionEngineV3Test",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "core/build/test-results/test/TEST-io.vectormatch.core.RetentionEngineV3Test.xml",
+        "bytes": 2519,
+        "sha256": "89d96383a461101be469f7476be19c559ac897ea055f8b0111ff5210262ea8d3"
+      }
+    }
+  ],
+  "additionalCoverage": {
+    "propertyTraces": 150,
+    "legacyGolden": "Original 433 source captured independently: 89 commands, complete execution and snapshot bytes at every prefix; suffix replay after restore.",
+    "v3Boundary": "14 tests including bounded repeated compaction, FIFO/assets/reference traces, retry/conflict/permanent producer high-water, nullable rejected payloads, corruption and maximum identity plus multi-maker terminal fanout."
+  },
+  "files": [
+    {
+      "path": "core/src/main/java/io/vectormatch/core/MatchingEngine.java",
+      "bytes": 40050,
+      "sha256": "7cccf2dad657f8bc64c4a1ebbcaa3482038c79d9c85f56815d48ab665a6fca05"
+    },
+    {
+      "path": "core/src/main/java/io/vectormatch/core/RetentionEngineV3.java",
+      "bytes": 30206,
+      "sha256": "8b78121cfe28d7eeec561cc7ea127621ba3f4d93dbedc88f1952f6a321ac5e22"
+    },
+    {
+      "path": "core/src/main/java/io/vectormatch/core/RetentionCodecV3.java",
+      "bytes": 19189,
+      "sha256": "c3de62904d2875d9ab74ee61c955ca11f309286e9890be26a05aa8efb8d211a5"
+    },
+    {
+      "path": "core/src/test/java/io/vectormatch/core/LegacyV2CompatibilityTest.java",
+      "bytes": 12553,
+      "sha256": "29dd1b631f71f9e7a80845584a67a702cf485d680d199d54108e067c689b4d19"
+    },
+    {
+      "path": "core/src/test/java/io/vectormatch/core/RetentionEngineV3Test.java",
+      "bytes": 27878,
+      "sha256": "48060304e211ff342bdd0ca0a6b4d6fce7c7b1a4569c34d8bb2b4f53c266dc93"
+    },
+    {
+      "path": "core/src/test/resources/io/vectormatch/core/legacy-v2-prefix-golden.txt",
+      "bytes": 350108,
+      "sha256": "b24955f5e391649fdf7f4865ea0c3ae80e0aea3812a7afc3666f9308d6c38505"
+    },
+    {
+      "path": "core/src/test/resources/io/vectormatch/core/legacy-v2-prefix-golden.provenance.json",
+      "bytes": 3978,
+      "sha256": "724f260e36b3f02b101265fae64bd5acc7c68de985a7154aad728f0ee7c8fd60"
+    },
+    {
+      "path": "docs/CORE_RETENTION_V3.md",
+      "bytes": 8774,
+      "sha256": "a216b4905cff6e1962734ac324a73eefd127398cffbb82cacfdfcad53fafa008"
+    }
+  ],
+  "log": {
+    "path": "runtime/cloud/cpu-20261024/retention-v3-core-test-final.log",
+    "bytes": 848,
+    "sha256": "6703af8f31cdf5708bd016fc60f853f19a0d0fd69c1eea70c8b3fa75f8c67be1"
+  },
+  "limits": [
+    "No cluster V3 integration, wire protocol, external exporter durability or million/100M workload has been demonstrated.",
+    "The 64 MiB V3 snapshot uses whole byte arrays, not streaming.",
+    "Producer high-water slots are permanently retained and never reclaimed; the configured producer cap is a lifetime admission bound.",
+    "ArchiveAck verifies an explicit deterministic digest assertion inside the core; it does not prove external storage persistence.",
+    "Full repository check and cluster installDist are pending independent root validation."
+  ]
+}
