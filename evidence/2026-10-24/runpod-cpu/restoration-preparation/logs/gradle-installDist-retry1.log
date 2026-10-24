@@ -1,0 +1,27 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :cluster:processResources NO-SOURCE
+> Task :projector:processResources
+> Task :server:processResources NO-SOURCE
+> Task :core:compileJava FROM-CACHE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar
+> Task :cluster:compileJava FROM-CACHE
+> Task :cluster:classes UP-TO-DATE
+> Task :cluster:jar
+> Task :projector:compileJava FROM-CACHE
+> Task :projector:classes
+> Task :projector:jar
+> Task :server:compileJava FROM-CACHE
+> Task :server:classes UP-TO-DATE
+> Task :server:jar
+> Task :cluster:startScripts
+> Task :server:startScripts
+> Task :cluster:installDist
+> Task :projector:startScripts
+> Task :projector:installDist
+> Task :server:installDist
+
+BUILD SUCCESSFUL in 3s
+15 actionable tasks: 11 executed, 4 from cache
