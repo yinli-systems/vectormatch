@@ -24,6 +24,13 @@ The original XML and HTML reports from the green run were archived to `/workspac
 
 The overlay is suitable for functional test isolation; it **does not** establish device-level SSD durability. The four earlier 8-credit/32-credit native ABAB arms used `/dev/shm` (tmpfs) and likewise provide **RAM-backed** latency evidence only.
 
+### Additional validation on the same isolated source snapshot
+
+- `./gradlew :cluster:failoverSmoke --no-daemon --console=plain --max-workers=4`: **PASS, 30 seconds**. Three local, sync-level-2 node processes; leader 2 was terminated and leader 1 took over; next confirmed command arrived **11,342.035 ms** after kill. Snapshot/cold-restart checks, outbox backpressure/recovery and chunked-core-snapshot verification were reported true. This is single-host process failover, **not** multi-machine partition/power-loss testing. Its complete run directory is preserved in `/workspace/vectormatch-read32-native-r1/overlay-failover-smoke-pass-2026-10-24-r1.tar.zst` (SHA-256 `856f6a6c277ac5b3f8c6cbe4b50639019297f1d70b644b735b750f9df35d125f`; `zstd -t` passed).
+- Portable, SHA-256-verified toolchain bootstrap succeeded for Temurin 21.0.13+9, Node **24.22.1** and Gradle **8.14.3**. `npm --prefix web ci --no-audit --no-fund`, `npm --prefix web run build` (TypeScript + Vite) and `npm --prefix web run format:check` (Prettier) all succeeded.
+- Python scope: the new SSD preflight has **11/11** unit tests passing; the existing independent preflight/launcher-lock tests have **8/8** passing; the UDP preflight tests have **6/6** passing. These are three separately executed suites, not a claim that the entire Python suite passed.
+- Attempting the complete historical Python suite in this intentionally partial source copy ran **170 tests**, with **26 errors and one failure**. The copy had no `evidence/` directory; multiple errors were `FileNotFoundError` for required checked-in historical fixtures, and the single failure observed zero fixture-backed identities. Do **not** treat the full Python suite as green. Re-run it from a complete checkout with its tracked `evidence/` files; do not suppress, auto-skip or alter assertions to hide these failures.
+
 ## Fail-closed block-device candidate check
 
 On a Linux host with an **existing empty test directory** on the proposed experiment mount, run:
