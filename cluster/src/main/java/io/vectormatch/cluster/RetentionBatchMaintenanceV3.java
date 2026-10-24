@@ -53,6 +53,7 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
     private final long maximumLogicalRpcs;
     private final int archiveChunkBytes,readWindow,eventFetchCount;
     private final boolean commonReadWindow32Envelope;
+    private final boolean commonReadWindow128Envelope;
     private final Map<String,long[]> rpcKinds=new LinkedHashMap<>();
     private long rpcCount,cycleCount;
     private byte[] latestOriginalWire;
@@ -114,11 +115,18 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
     /** Explicit isolated experiment; legacy constructors retain their original1|8 window admission. */
     public RetentionBatchMaintenanceV3(RetentionBatchOwnerV3 owner,RetentionDurableWriterV3 writer,
                                       RetentionServiceV3.Profile profile,String lineage,Path newRawDir,RunBudget budget,long maximumLogicalRpcs,int archiveChunkBytes,int readWindow,int eventFetchCount,boolean commonReadWindow32Envelope)throws IOException{
+        this(owner,writer,profile,lineage,newRawDir,budget,maximumLogicalRpcs,archiveChunkBytes,readWindow,eventFetchCount,commonReadWindow32Envelope,false);
+    }
+    /** Explicit128-credit common envelope; both compared windows retain identical resource bounds. */
+    public RetentionBatchMaintenanceV3(RetentionBatchOwnerV3 owner,RetentionDurableWriterV3 writer,
+                                      RetentionServiceV3.Profile profile,String lineage,Path newRawDir,RunBudget budget,long maximumLogicalRpcs,int archiveChunkBytes,int readWindow,int eventFetchCount,boolean commonReadWindow32Envelope,boolean commonReadWindow128Envelope)throws IOException{
+        if(commonReadWindow32Envelope&&commonReadWindow128Envelope)throw new IllegalArgumentException("ambiguous read envelope");
+        this.commonReadWindow128Envelope=commonReadWindow128Envelope;
         this.commonReadWindow32Envelope=commonReadWindow32Envelope;
         this.eventFetchCount=requireEventFetchCount(eventFetchCount);
         this.archiveChunkBytes=requireArchiveChunkBytes(archiveChunkBytes);
-        this.readWindow=commonReadWindow32Envelope?RetentionCapacityPlanV3.requireReadWindow32(readWindow):RetentionCapacityPlanV3.requireReadWindow(readWindow);
-        if(commonReadWindow32Envelope&&archiveChunkBytes!=MAX_SUPPORTED_ARCHIVE_CHUNK)throw new IllegalArgumentException("read-window32 requires unchanged chunk6144");
+        this.readWindow=commonReadWindow128Envelope?RetentionCapacityPlanV3.requireReadWindow128(readWindow):commonReadWindow32Envelope?RetentionCapacityPlanV3.requireReadWindow32(readWindow):RetentionCapacityPlanV3.requireReadWindow(readWindow);
+        if((commonReadWindow32Envelope||commonReadWindow128Envelope)&&archiveChunkBytes!=MAX_SUPPORTED_ARCHIVE_CHUNK)throw new IllegalArgumentException("read-window32 requires unchanged chunk6144");
         if(maximumLogicalRpcs<1||maximumLogicalRpcs>250000)throw new IllegalArgumentException("explicit finite logical RPC cap1..250000 required");this.maximumLogicalRpcs=maximumLogicalRpcs;
         this.owner=Objects.requireNonNull(owner);this.writer=Objects.requireNonNull(writer);this.profile=Objects.requireNonNull(profile);
         this.lineage=lineage;scope=new Scope(profile.fingerprint(),lineage);this.budget=Objects.requireNonNull(budget);
@@ -221,7 +229,7 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
         long fileLimit=profile.core().maxPendingSerializedBytes()+1024L;
         if(descriptor.totalBytes()>fileLimit)throw new IOException("archive exceeds explicit per-prefix allocation cap");
         byte[] payload=new byte[descriptor.totalBytes()];
-        activeReadBank=commonReadWindow32Envelope?owner.openReadBank32(readWindow):owner.openReadBank(readWindow);
+        activeReadBank=commonReadWindow128Envelope?owner.openReadBank128(readWindow):commonReadWindow32Envelope?owner.openReadBank32(readWindow):owner.openReadBank(readWindow);
         for(int offset=0;offset<payload.length;){
             var wave=new ArrayList<Operation>(readWindow);
             for(int i=0;i<readWindow&&offset<payload.length;i++){
@@ -243,7 +251,7 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
         if(throughEvent-budget.lastEvent!=expectedEvents.size())throw new IOException("archive event total/gap differs");
         if(!expectedEvents.isEmpty()){
             ByteArrayOutputStream bytes=new ByteArrayOutputStream();DataOutputStream out=new DataOutputStream(bytes);int index=0;
-            activeReadBank=commonReadWindow32Envelope?owner.openReadBank32(readWindow):owner.openReadBank(readWindow);
+            activeReadBank=commonReadWindow128Envelope?owner.openReadBank128(readWindow):commonReadWindow32Envelope?owner.openReadBank32(readWindow):owner.openReadBank(readWindow);
             while(index<expectedEvents.size()){
                 var wave=new ArrayList<Operation>(readWindow);int next=index;
                 for(int i=0;i<readWindow&&next<expectedEvents.size();i++){
@@ -277,6 +285,6 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
         Files.writeString(rawRoot.resolve("cycle-"+cycleCount+".verified.txt"),receipt,StandardOpenOption.CREATE_NEW);
         return new Cycle(ack,archiveFile.path(),eventFile,verified.entries(),throughEvent);
     }
-    public Map<String,Object> snapshot(){affinity();var result=new LinkedHashMap<String,Object>(budget.snapshot());if(commonReadWindow32Envelope)result.put("commonReadWindow32Envelope",true);result.put("archiveChunkBytes",archiveChunkBytes);result.put("eventFetchCount",eventFetchCount);result.put("readWindow",readWindow);result.put("logicalRpcCount",rpcCount);result.put("maximumLogicalRpcs",maximumLogicalRpcs);var kinds=new LinkedHashMap<String,Object>();for(var entry:rpcKinds.entrySet()){long[] v=entry.getValue();kinds.put(entry.getKey(),Map.of("count",v[0],"totalElapsedNs",v[1],"maxElapsedNs",v[2],"failed",v[3]));}result.put("rpcKinds",kinds);result.put("completedCycles",cycleCount);result.put("failed",failed);return Collections.unmodifiableMap(result);}
+    public Map<String,Object> snapshot(){affinity();var result=new LinkedHashMap<String,Object>(budget.snapshot());if(commonReadWindow32Envelope)result.put("commonReadWindow32Envelope",true);if(commonReadWindow128Envelope)result.put("commonReadWindow128Envelope",true);result.put("archiveChunkBytes",archiveChunkBytes);result.put("eventFetchCount",eventFetchCount);result.put("readWindow",readWindow);result.put("logicalRpcCount",rpcCount);result.put("maximumLogicalRpcs",maximumLogicalRpcs);var kinds=new LinkedHashMap<String,Object>();for(var entry:rpcKinds.entrySet()){long[] v=entry.getValue();kinds.put(entry.getKey(),Map.of("count",v[0],"totalElapsedNs",v[1],"maxElapsedNs",v[2],"failed",v[3]));}result.put("rpcKinds",kinds);result.put("completedCycles",cycleCount);result.put("failed",failed);return Collections.unmodifiableMap(result);}
     @Override public void close()throws IOException{affinity();closed=true;try{requests.close();}finally{try{replies.close();}finally{timings.close();}}}
 }

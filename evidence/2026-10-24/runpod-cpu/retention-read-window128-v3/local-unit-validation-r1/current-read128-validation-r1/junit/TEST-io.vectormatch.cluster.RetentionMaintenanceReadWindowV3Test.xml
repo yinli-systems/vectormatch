@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test" tests="14" skipped="0" failures="2" errors="0" timestamp="2026-10-24T21:01:08.102Z" hostname="Mac" time="1.381">
+  <properties/>
+  <testcase name="originalSinkFailurePreservesAllEightUnarmedWiresWithoutAnyReadOffer()" classname="io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test" time="0.031"/>
+  <testcase name="replySinkAndFailureFileErrorsStillExposeEightOriginalsAndNeverClaimPersistence()" classname="io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test" time="0.028"/>
+  <testcase name="common128BothSelectedWindowsProduceIdenticalCanonicalPrefix()" classname="io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test" time="0.274">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;128&gt; but was: &lt;120&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;128&gt; but was: &lt;120&gt;
+	at app//org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+	at app//org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at app//org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+	at app//org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+	at app//org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+	at app//org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+	at app//io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test.common128BothSelectedWindowsProduceIdenticalCanonicalPrefix(RetentionMaintenanceReadWindowV3Test.java:427)
+	at java.base@21.0.13/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base@21.0.13/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base@21.0.13/java.util.ArrayList.forEach(ArrayList.java:1596)
+</failure>
+  </testcase>
+  <testcase name="common128WriterFailureFencesBothAcksAndEventPhase()" classname="io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test" time="0.052"/>
+  <testcase name="bothEventPagesExportIdenticalCanonicalPrefixesAndConsumeAllReadCreditsBeforeAcks()" classname="io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test" time="0.108"/>
+  <testcase name="common32WindowsExportIdenticalFullPrefixesWithReverseDuplicatesAndBothForcedReceipts()" classname="io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test" time="0.321"/>
+  <testcase name="semanticallyWrongEventAmongEightCompletedSiblingsCannotAuthorizeEitherAck()" classname="io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test" time="0.036"/>
+  <testcase name="firstMiddleLastFailuresPreserveAll128OriginalsAcrossConsumedTapeAndOutstandingBundle()" classname="io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test" time="0.038">
+    <failure message="org.opentest4j.AssertionFailedError: expected: &lt;128&gt; but was: &lt;120&gt;" type="org.opentest4j.AssertionFailedError">org.opentest4j.AssertionFailedError: expected: &lt;128&gt; but was: &lt;120&gt;
+	at app//org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+	at app//org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at app//org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+	at app//org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+	at app//org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+	at app//org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+	at app//io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test.firstMiddleLastFailuresPreserveAll128OriginalsAcrossConsumedTapeAndOutstandingBundle(RetentionMaintenanceReadWindowV3Test.java:382)
+	at java.base@21.0.13/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base@21.0.13/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base@21.0.13/java.util.ArrayList.forEach(ArrayList.java:1596)
+</failure>
+  </testcase>
+  <testcase name="common32WriterFailureAfterReadsCannotStartEventsOrAuthorizeEitherAck()" classname="io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test" time="0.031"/>
+  <testcase name="timingSinkFailureRetainsCompletedUnconsumedCreditsAndAllOriginals()" classname="io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test" time="0.027"/>
+  <testcase name="firstMiddleLastRequestReplyAndTimingFailuresPreserveAll32OriginalsAcrossConsumedTapeAndOutstandingBundle()" classname="io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test" time="0.283"/>
+  <testcase name="bothWindowsExportExactPrefixesDespiteReversedDuplicateRepliesAndFenceBothAcks()" classname="io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test" time="0.099"/>
+  <testcase name="page32SemanticFailurePreservesAllEightOriginalsAndFencesBothAcks()" classname="io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test" time="0.038"/>
+  <testcase name="writerFailureAfterAllReadsConsumedKeepsLeaseFencedAndStartsNoEventReadOrAck()" classname="io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test" time="0.012"/>
+  <system-out><![CDATA[READ_WINDOW_TEST_ROOT=/private/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-17061591703036387134
+READ_WINDOW_TEST_ROOT=/private/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-1120881209334924663
+READ_WINDOW_TEST_ROOT=/private/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-10848750939346761373
+READ_WINDOW_TEST_ROOT=/private/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-12043381220219529262
+READ_WINDOW_TEST_ROOT=/private/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-16415171770617885083
+READ_WINDOW_TEST_ROOT=/private/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-13782701139888662446
+READ_WINDOW_TEST_ROOT=/private/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-677760894026450822
+READ_WINDOW_TEST_ROOT=/private/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-11789841900419945255
+READ_WINDOW_TEST_ROOT=/private/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-573406612569583928
+READ_WINDOW_TEST_ROOT=/private/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-6071248608293895338
+READ_WINDOW_TEST_ROOT=/private/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-3670823205081372757
+READ_WINDOW_TEST_ROOT=/private/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-14251862561453368351
+READ_WINDOW_TEST_ROOT=/private/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-5097254782624595910
+READ_WINDOW_TEST_ROOT=/private/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-485897282514330984
+]]></system-out>
+  <system-err><![CDATA[Oct 25, 2026 1:01:08 AM org.junit.jupiter.engine.extension.TempDirectory$CloseablePath close
+INFO: Skipping cleanup of temp dir /var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-17061591703036387134 due to cleanup mode configuration.
+Oct 25, 2026 1:01:08 AM org.junit.jupiter.engine.extension.TempDirectory$CloseablePath close
+INFO: Skipping cleanup of temp dir /var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-1120881209334924663 due to cleanup mode configuration.
+Oct 25, 2026 1:01:08 AM org.junit.jupiter.engine.extension.TempDirectory$CloseablePath close
+INFO: Skipping cleanup of temp dir /var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-10848750939346761373 due to cleanup mode configuration.
+Oct 25, 2026 1:01:08 AM org.junit.jupiter.engine.extension.TempDirectory$CloseablePath close
+INFO: Skipping cleanup of temp dir /var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-12043381220219529262 due to cleanup mode configuration.
+Oct 25, 2026 1:01:08 AM org.junit.jupiter.engine.extension.TempDirectory$CloseablePath close
+INFO: Skipping cleanup of temp dir /var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-16415171770617885083 due to cleanup mode configuration.
+Oct 25, 2026 1:01:08 AM org.junit.jupiter.engine.extension.TempDirectory$CloseablePath close
+INFO: Skipping cleanup of temp dir /var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-13782701139888662446 due to cleanup mode configuration.
+Oct 25, 2026 1:01:08 AM org.junit.jupiter.engine.extension.TempDirectory$CloseablePath close
+INFO: Skipping cleanup of temp dir /var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-677760894026450822 due to cleanup mode configuration.
+Oct 25, 2026 1:01:08 AM org.junit.jupiter.engine.extension.TempDirectory$CloseablePath close
+INFO: Skipping cleanup of temp dir /var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-11789841900419945255 due to cleanup mode configuration.
+Oct 25, 2026 1:01:09 AM org.junit.jupiter.engine.extension.TempDirectory$CloseablePath close
+INFO: Skipping cleanup of temp dir /var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-573406612569583928 due to cleanup mode configuration.
+Oct 25, 2026 1:01:09 AM org.junit.jupiter.engine.extension.TempDirectory$CloseablePath close
+INFO: Skipping cleanup of temp dir /var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-6071248608293895338 due to cleanup mode configuration.
+Oct 25, 2026 1:01:09 AM org.junit.jupiter.engine.extension.TempDirectory$CloseablePath close
+INFO: Skipping cleanup of temp dir /var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-3670823205081372757 due to cleanup mode configuration.
+Oct 25, 2026 1:01:09 AM org.junit.jupiter.engine.extension.TempDirectory$CloseablePath close
+INFO: Skipping cleanup of temp dir /var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-14251862561453368351 due to cleanup mode configuration.
+Oct 25, 2026 1:01:09 AM org.junit.jupiter.engine.extension.TempDirectory$CloseablePath close
+INFO: Skipping cleanup of temp dir /var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-5097254782624595910 due to cleanup mode configuration.
+Oct 25, 2026 1:01:09 AM org.junit.jupiter.engine.extension.TempDirectory$CloseablePath close
+INFO: Skipping cleanup of temp dir /var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/junit-485897282514330984 due to cleanup mode configuration.
+]]></system-err>
+</testsuite>

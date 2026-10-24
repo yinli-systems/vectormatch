@@ -1,0 +1,42 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :cluster:processResources NO-SOURCE
+> Task :cluster:processTestResources NO-SOURCE
+> Task :core:compileJava UP-TO-DATE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar UP-TO-DATE
+> Task :cluster:compileJava UP-TO-DATE
+> Task :cluster:classes UP-TO-DATE
+> Task :cluster:jar
+
+> Task :cluster:compileTestJava
+
+> Task :cluster:testClasses
+
+> Task :cluster:test
+
+RetentionMaintenanceReadWindowV3Test > common128BothSelectedWindowsProduceIdenticalCanonicalPrefix() FAILED
+    org.opentest4j.AssertionFailedError: expected: <128> but was: <120>
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+        at app//org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+        at app//org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+        at app//org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+        at app//org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+        at app//io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test.common128BothSelectedWindowsProduceIdenticalCanonicalPrefix(RetentionMaintenanceReadWindowV3Test.java:427)
+
+RetentionMaintenanceReadWindowV3Test > firstMiddleLastFailuresPreserveAll128OriginalsAcrossConsumedTapeAndOutstandingBundle() FAILED
+    org.opentest4j.AssertionFailedError: expected: <128> but was: <120>
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+        at app//org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:197)
+        at app//org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:150)
+        at app//org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:145)
+        at app//org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:531)
+        at app//io.vectormatch.cluster.RetentionMaintenanceReadWindowV3Test.firstMiddleLastFailuresPreserveAll128OriginalsAcrossConsumedTapeAndOutstandingBundle(RetentionMaintenanceReadWindowV3Test.java:382)
+
+> Task :cluster:test FAILED
+
+[Incubating] Problems report is available at: file:///Users/kevin/Documents/ChatGPT/App%202/build/reports/problems/problems-report.html
+6 actionable tasks: 3 executed, 3 up-to-date

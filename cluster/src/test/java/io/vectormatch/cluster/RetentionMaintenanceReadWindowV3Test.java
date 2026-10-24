@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Timeout(45)
 class RetentionMaintenanceReadWindowV3Test {
     @TempDir Path root;
-    @BeforeEach void canonicalParent()throws IOException{root=root.toRealPath();}
+    @BeforeEach void canonicalParent()throws IOException{root=root.toRealPath();System.out.println("READ_WINDOW_TEST_ROOT="+root);}
     private static final String LINEAGE="coordinator-read-window";
     private static final int COMMANDS=512;
 
@@ -35,6 +35,7 @@ class RetentionMaintenanceReadWindowV3Test {
         final List<Reply> held=new ArrayList<>();
         final Path writerRoot;
         final int window,eventPage,commands;
+        final boolean full128Wave;
         Thread thread;
         RetentionServiceV3 service;
         RetentionEngineV3.ArchiveAck ack;
@@ -44,13 +45,15 @@ class RetentionMaintenanceReadWindowV3Test {
         int readOffers,chunkReplies,eventReplies;
         IO(Path writerRoot,int window){this(writerRoot,window,16);}
         IO(Path writerRoot,int window,int eventPage){this(writerRoot,window,eventPage,COMMANDS);}
-        IO(Path writerRoot,int window,int eventPage,int commands){this.writerRoot=writerRoot;this.window=window;this.eventPage=eventPage;this.commands=commands;}
+        IO(Path writerRoot,int window,int eventPage,int commands){this(writerRoot,window,eventPage,commands,false);}
+        IO(Path writerRoot,int window,int eventPage,int commands,boolean full128Wave){this.writerRoot=writerRoot;this.window=window;this.eventPage=eventPage;this.commands=commands;this.full128Wave=full128Wave;}
         void affinity(){
             if(thread==null){
                 thread=Thread.currentThread();service=new RetentionServiceV3(profile,LINEAGE);var scope=new Scope(profile.fingerprint(),LINEAGE);
-                for(int i=1;i<=commands;i++)assertTrue(service.handle(new Request(scope,i,new Business(new Deposit(1,"seed",i,Asset.BASE,1)))).execution().result().accepted());
+                for(int i=1;i<=commands;i++)assertTrue(service.handle(new Request(scope,i,new Business(new Deposit(1,full128Wave?"s".repeat(48):"seed",i,Asset.BASE,1)))).execution().result().accepted());
                 var batch=service.archiveThrough(commands);archive=batch.canonicalBytes();ack=batch.acknowledgementAfterExternalVerification();
                 assertTrue(archive.length>8*6144,"fixture must exercise a full eight-read wave");
+                if(full128Wave)assertTrue(archive.length>=128*6144,"long-identity fixture must support a complete128-original wave");
             }
             assertSame(thread,Thread.currentThread());
         }
@@ -107,16 +110,17 @@ class RetentionMaintenanceReadWindowV3Test {
         final boolean failWriter;
         Fixture(String name,int window,boolean failWriter)throws Exception{this(name,window,failWriter,16);}
         Fixture(String name,int window,boolean failWriter,int eventPage)throws Exception{this(name,window,failWriter,eventPage,false,COMMANDS);}
-        Fixture(String name,int window,boolean failWriter,int eventPage,boolean window32,int commands)throws Exception{
+        Fixture(String name,int window,boolean failWriter,int eventPage,boolean window32,int commands)throws Exception{this(name,window,failWriter,eventPage,window32,commands,false);}
+        Fixture(String name,int window,boolean failWriter,int eventPage,boolean window32,int commands,boolean window128)throws Exception{
             directory=Files.createDirectory(root.resolve(name));this.failWriter=failWriter;
-            io=new IO(directory.resolve("writer"),window,eventPage,commands);
+            io=new IO(directory.resolve("writer"),window,eventPage,commands,window128);
             owner=new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(io.profile,LINEAGE,4),()->io);
             writer=new RetentionDurableWriterV3(directory.resolve("writer"),io.profile.core().maxPendingSerializedBytes()+1024L,1024L*1024*1024,4,path->{
                 assertEquals(true,owner.snapshot().get("readBankOpen"),"lease survives force/readback verification");
                 assertEquals(0,io.controls(),"neither ACK may precede durable verification");
                 if(failWriter)throw new IOException("injected failure after force before readback");
             });
-            coordinator=new RetentionBatchMaintenanceV3(owner,writer,io.profile,LINEAGE,directory.resolve("raw"),new RetentionBatchMaintenanceV3.RunBudget(io.profile),1000,6144,window,eventPage,window32);
+            coordinator=new RetentionBatchMaintenanceV3(owner,writer,io.profile,LINEAGE,directory.resolve("raw"),new RetentionBatchMaintenanceV3.RunBudget(io.profile),1000,6144,window,eventPage,window32,window128);
         }
         public void close()throws Exception{
             try{coordinator.close();}finally{try{owner.close();}finally{
@@ -354,6 +358,82 @@ class RetentionMaintenanceReadWindowV3Test {
             }
             RetentionCapacityJsonV3.writeNew(f.directory.resolve("raw/TEST_ONLY_WAVE_PROOF.json"),Map.of("sink",sink,"injectedZeroBasedIndex",selected,"originalWaveSize",32,"outstandingOriginals",outstanding,
                     "requestFlushes",requestSpy.flushes,"replyFlushes",replySpy.flushes,"timingFlushes",timingSpy.flushes,"readOffersBoundToFlushedOriginals",checkedOffers.get(),"controlOffers",f.io.controls(),"testOnly",true));
+        }
+    }
+    @Test void firstMiddleLastFailuresPreserveAll128OriginalsAcrossConsumedTapeAndOutstandingBundle()throws Exception{
+        for(String sink:new String[]{"requests","replies","timings"})for(int selected:new int[]{0,63,127})try(var f=new Fixture("common128-"+sink+"-"+selected,128,false,32,false,3072,true)){
+            var requestSpy=spy(f.coordinator,"requests",sink.equals("requests")?selected:-1);
+            var replySpy=spy(f.coordinator,"replies",sink.equals("replies")?selected:-1);
+            var timingSpy=spy(f.coordinator,"timings",sink.equals("timings")?selected:-1);
+            var checkedOffers=new java.util.concurrent.atomic.AtomicInteger();
+            var failureBoundary=new java.util.concurrent.atomic.AtomicReference<List<byte[]>>();
+            Runnable boundary=()->assertTrue(failureBoundary.compareAndSet(null,List.of(requestSpy.flushed.clone(),replySpy.flushed.clone(),timingSpy.flushed.clone())),"one injected failure boundary");
+            requestSpy.beforeFailure=boundary;replySpy.beforeFailure=boundary;timingSpy.beforeFailure=boundary;
+            f.io.beforeReadOffer=request->{
+                try{
+                    var all=chunkRequests(requestSpy.flushed);assertEquals(128,all.size(),"all128 complete originals must be flushed before even the first offer");
+                    assertTrue(requestSpy.flushes>=2);var ids=new HashSet<Long>();
+                    for(int i=0;i<all.size();i++){
+                        Request original=RetentionWireV3.decode(all.get(i));assertTrue(ids.add(original.correlationId()));
+                        ArchiveChunk chunk=(ArchiveChunk)original.operation();assertEquals(i*6144,chunk.offset());assertEquals(6144,chunk.count());
+                    }
+                    assertTrue(all.stream().anyMatch(wire->Arrays.equals(wire,RetentionWireV3.encode(request))),"offered correlation and payload must exactly match its flushed original");checkedOffers.incrementAndGet();
+                }catch(IOException error){throw new UncheckedIOException(error);}
+            };
+            var error=assertThrows(RetentionBatchMaintenanceV3.ReadPhaseFailureException.class,()->f.coordinator.exportThrough(3072));
+            assertNotNull(failureBoundary.get());int outstanding=sink.equals("requests")?128:128-selected;
+            assertEquals(outstanding,error.originalWires().size());assertEquals(outstanding,error.observations().size());assertEquals(0,f.io.controls());
+            assertEquals(true,f.owner.snapshot().get("maintenanceStopped"));assertThrows(IllegalStateException.class,()->f.coordinator.exportThrough(3072));
+            assertThrows(IllegalStateException.class,()->f.owner.submitMaintenance(new Position(),System.nanoTime()+1_000_000_000));
+            var failureWires=framed(f.directory.resolve("raw/failure-original-requests.bin"));assertEquals(outstanding,failureWires.size());
+            var identities=new HashSet<Long>();
+            for(int i=0;i<outstanding;i++){
+                byte[] wire=error.originalWires().get(i);assertArrayEquals(wire,failureWires.get(i));Request request=RetentionWireV3.decode(wire);
+                assertTrue(identities.add(request.correlationId()));var observation=error.observations().get(i);assertEquals(request.correlationId(),observation.get("correlationId"));
+                assertEquals(java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(wire)),observation.get("wireSha256"));
+                error.originalWires().get(i)[0]^=1;assertArrayEquals(wire,error.originalWires().get(i),"returned arrays cannot mutate authoritative originals");
+                assertThrows(UnsupportedOperationException.class,()->observation.put("correlationId",0));
+            }
+            assertThrows(UnsupportedOperationException.class,()->error.originalWires().clear());
+            if(sink.equals("requests")){
+                assertEquals(0,f.io.readOffers);assertEquals(0,checkedOffers.get());assertTrue(error.observations().stream().noneMatch(row->Boolean.TRUE.equals(row.get("armed"))));
+                for(int i=0;i<128;i++)assertEquals(i*6144,((ArchiveChunk)RetentionWireV3.decode(failureWires.get(i)).operation()).offset());
+            }else{
+                var waveOriginals=chunkRequests(failureBoundary.get().get(0));assertEquals(128,waveOriginals.size());assertEquals(128,checkedOffers.get());
+                var diskRequests=framed(f.directory.resolve("raw/logical-rpc-requests.bin"));assertEquals(129,diskRequests.size());
+                var flushedReplies=completeFrames(failureBoundary.get().get(1)).stream().map(RetentionReplyV3::decode).filter(reply->reply.payload() instanceof Chunk).toList();
+                var flushedTimings=new String(failureBoundary.get().get(2),java.nio.charset.StandardCharsets.US_ASCII).lines().filter(row->row.contains(",ArchiveChunk,")).toList();
+                assertEquals(selected,flushedTimings.size(),"every consumed item has an individually flushed success timing");
+                assertEquals(sink.equals("replies")?selected:selected+1,flushedReplies.size());
+                for(int i=0;i<128;i++){
+                    byte[] original=waveOriginals.get(i);assertArrayEquals(original,diskRequests.get(i+1));Request request=RetentionWireV3.decode(original);
+                    if(i<selected){
+                        assertTrue(identities.add(request.correlationId()));Reply reply=flushedReplies.get(i);assertEquals(request.correlationId(),reply.correlationId());
+                        ArchiveChunk requested=(ArchiveChunk)request.operation();Chunk received=(Chunk)reply.payload();assertEquals(requested.offset(),received.offset());
+                        assertArrayEquals(Arrays.copyOfRange(f.io.archive,requested.offset(),requested.offset()+requested.count()),received.data());
+                        String[] timing=flushedTimings.get(i).split(",",-1);assertEquals(request.correlationId(),Long.parseLong(timing[2]));assertEquals("true",timing[6]);
+                    }else assertArrayEquals(original,failureWires.get(i-selected));
+                }
+                assertEquals(128,identities.size(),"consumed and outstanding identities partition the exact128-original wave without gaps or replacement");
+            }
+            RetentionCapacityJsonV3.writeNew(f.directory.resolve("raw/TEST_ONLY_WAVE_PROOF.json"),Map.of("sink",sink,"injectedZeroBasedIndex",selected,"originalWaveSize",128,"outstandingOriginals",outstanding,
+                    "requestFlushes",requestSpy.flushes,"replyFlushes",replySpy.flushes,"timingFlushes",timingSpy.flushes,"readOffersBoundToFlushedOriginals",checkedOffers.get(),"controlOffers",f.io.controls(),"testOnly",true));
+        }
+    }
+    @Test void common128BothSelectedWindowsProduceIdenticalCanonicalPrefix()throws Exception{
+        byte[] reference=null;
+        for(int window:new int[]{32,128})try(var f=new Fixture("common128-success-"+window,window,false,32,false,3072,true)){
+            var cycle=f.coordinator.exportThrough(3072);byte[] bytes=Files.readAllBytes(cycle.archiveFile());
+            assertEquals(3072,cycle.entries().size());if(reference==null)reference=bytes;else assertArrayEquals(reference,bytes);
+            assertEquals(3072,cycle.throughEventSeq());assertEquals(2,f.io.controls());assertEquals(128,f.owner.snapshot().get("readOnlyHardCapacity"));
+            assertEquals(true,f.coordinator.snapshot().get("commonReadWindow128Envelope"));assertFalse(f.coordinator.snapshot().containsKey("commonReadWindow32Envelope"));
+            assertEquals(window,((Number)f.owner.snapshot().get("readOnlyOfferedAwaitingReplyHighWater")).intValue());
+        }
+    }
+    @Test void common128WriterFailureFencesBothAcksAndEventPhase()throws Exception{
+        try(var f=new Fixture("common128-writer",128,true,32,false,3072,true)){
+            var error=assertThrows(RetentionBatchMaintenanceV3.ReadPhaseFailureException.class,()->f.coordinator.exportThrough(3072));assertTrue(error.originalWires().isEmpty());
+            assertEquals(0,f.io.controls());assertTrue(f.io.offers.stream().noneMatch(r->r.operation() instanceof FetchEvents));assertEquals(true,f.owner.snapshot().get("maintenanceStopped"));
         }
     }
     @Test void common32WriterFailureAfterReadsCannotStartEventsOrAuthorizeEitherAck()throws Exception{

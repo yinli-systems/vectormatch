@@ -203,6 +203,10 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
     public ReadBank openReadBank32(int window){
         RetentionCapacityPlanV3.requireReadWindow32(window);return openReadBank(window,32);
     }
+    /** Isolated32/128 experiment; existing1/8 and8/32 APIs retain their ceilings. */
+    public ReadBank openReadBank128(int window){
+        RetentionCapacityPlanV3.requireReadWindow128(window);return openReadBank(window,128);
+    }
     private ReadBank openReadBank(int window,int hardCapacity){synchronized(lock){healthy();
         if(closing||maintenanceStopped||readBank!=null||maintenance!=null||pendingCount()!=0)throw new IllegalStateException("read bank requires definite business/control closure");
         readBank=new ReadBank(window);selectedReadWindow=window;readOnlyHardCapacity=hardCapacity;return readBank;
