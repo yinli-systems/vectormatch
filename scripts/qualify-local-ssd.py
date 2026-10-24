@@ -9,6 +9,7 @@ provider/operator evidence and fault-injection experiments.
 import argparse
 import datetime
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -41,7 +42,8 @@ def _not_rotational(value):
             or (type(value) is int and value == 0) or value == "0")
 
 
-def classify(mounts, devices, free_bytes, required_growth_bytes, minimum_reserve_bytes):
+def classify(mounts, devices, free_bytes, required_growth_bytes, minimum_reserve_bytes,
+             actual_path_device_id):
     """Pure conservative classifier; does not trust disk names or FS types alone."""
     failures = []
     mount = {}
@@ -60,6 +62,10 @@ def classify(mounts, devices, free_bytes, required_growth_bytes, minimum_reserve
         failures.append("mount is not confirmed read-write")
     if not isinstance(source, str) or not source.startswith("/dev/") or "[" in source or "]" in source:
         failures.append("source is not a direct, unambiguous /dev block device")
+    mount_device_id = mount.get("maj:min")
+    if (not isinstance(mount_device_id, str) or not mount_device_id.replace(":", "").isdigit()
+            or mount_device_id.count(":") != 1 or mount_device_id != actual_path_device_id):
+        failures.append("findmnt device major:minor does not match the actual experiment path")
 
     nodes = devices.get("blockdevices") if isinstance(devices, dict) else None
     lookup = {}
@@ -80,6 +86,8 @@ def classify(mounts, devices, free_bytes, required_growth_bytes, minimum_reserve
         failures.append("mount source is missing from lsblk")
     elif leaf.get("type") not in ("part", "disk"):
         failures.append("mount is backed by a virtual/mapped device, not a direct NVMe partition")
+    if leaf is not None and leaf.get("maj:min") != mount_device_id:
+        failures.append("lsblk device major:minor does not match mounted filesystem")
 
     disk = leaf
     seen = set()
@@ -127,7 +135,8 @@ def classify(mounts, devices, free_bytes, required_growth_bytes, minimum_reserve
 
     return {
         "schema": "vectormatch.local-nvme-candidate.v1",
-        "mount": {field: mount.get(field) for field in ("target", "source", "fstype", "options")},
+        "mount": {field: mount.get(field) for field in ("target", "source", "fstype", "options", "maj:min")},
+        "actualPathDeviceId": actual_path_device_id,
         "parentDevice": identified_device,
         "capacity": {"freeBytes": free_bytes, "maximumAllocatedGrowthBytes": required_growth_bytes,
                      "minimumFreeRuntimeBytes": minimum_reserve_bytes},
@@ -154,10 +163,12 @@ def main(argv=None):
         if not path.is_dir():
             raise ValueError("experiment path must be an existing directory")
         mounts = command_json(["findmnt", "--json", "--first-only", "--target", str(path),
-                               "--output", "TARGET,SOURCE,FSTYPE,OPTIONS"])
-        devices = command_json(["lsblk", "--json", "--list", "--output", "NAME,PATH,TYPE,PKNAME,TRAN,ROTA,MODEL"])
+                               "--output", "TARGET,SOURCE,FSTYPE,OPTIONS,MAJ:MIN"])
+        devices = command_json(["lsblk", "--json", "--list", "--output", "NAME,PATH,TYPE,PKNAME,TRAN,ROTA,MODEL,MAJ:MIN"])
+        disk_device_id = os.stat(path).st_dev
         report.update(classify(mounts, devices, shutil.disk_usage(path).free,
-                               args.required_growth_bytes, args.minimum_reserve_bytes))
+                               args.required_growth_bytes, args.minimum_reserve_bytes,
+                               str(os.major(disk_device_id)) + ":" + str(os.minor(disk_device_id))))
     except (OSError, ValueError, subprocess.TimeoutExpired) as error:
         report.update({"candidateForDiskBackedExperiment": False,
                        "rejectionReasons": [type(error).__name__ + ": " + str(error)]})
