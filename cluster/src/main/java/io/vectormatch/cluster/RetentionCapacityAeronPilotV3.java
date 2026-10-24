@@ -314,7 +314,9 @@ public final class RetentionCapacityAeronPilotV3 {
                 "reference","same candidate adapter in actual positive-offer order; not independent algorithm","performedOutsideArrivalWindow",true));
     }
     private void startOwned()throws Exception{
-        var classpath=new LinkedHashSet<String>();for(Class<?> type:List.of(RetentionNodeMainV3.class,MatchingEngine.class,MediaDriver.class,DirectBuffer.class))
+        // aeron-all bundles Agrona classes; resolve the same Agrona code source as the parent
+        // before Aeron, or duplicate classes make the child code fingerprint differ.
+        var classpath=new LinkedHashSet<String>();for(Class<?> type:List.of(RetentionNodeMainV3.class,MatchingEngine.class,DirectBuffer.class,MediaDriver.class))
             classpath.add(Path.of(type.getProtectionDomain().getCodeSource().getLocation().toURI()).toString());
         for(int member=0;member<3;member++){
             Path log=root.resolve("node-"+member+".log");List<String> argv=List.of(Path.of(System.getProperty("java.home"),"bin/java").toString(),
