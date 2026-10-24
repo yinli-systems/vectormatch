@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "sourceVersion": "18.6",
+  "source": "/opt/vectormatch-cpu/preparation/pg18-source-r1/postgresql-18.6.tar.bz2",
+  "sourceSha256": "555610c24d53e4316da5b7d3fc25c279d96856d5e0e23ee308c328c5fa881d9f",
+  "sourceBytes": 22632314,
+  "workDir": "/opt/vectormatch-cpu/tool-builds/pg18-two-tools-r3",
+  "jobs": 2,
+  "minimumFreeBytes": 3221225472,
+  "configureArgv": [
+    "/opt/vectormatch-cpu/tool-builds/pg18-two-tools-r3/source/postgresql-18.6/configure",
+    "--prefix=/opt/vectormatch-cpu/tool-builds/pg18-two-tools-r3/install",
+    "--without-readline",
+    "--without-zlib",
+    "--without-icu",
+    "--without-perl",
+    "--without-python",
+    "--without-tcl",
+    "--without-llvm",
+    "--without-lz4",
+    "--without-zstd",
+    "--disable-nls",
+    "--with-blocksize=8",
+    "--with-wal-blocksize=8",
+    "--with-segsize=1"
+  ],
+  "preparatoryMakeTargets": [
+    [
+      "make",
+      "-j2",
+      "-C",
+      "src/backend",
+      "generated-headers"
+    ]
+  ],
+  "makeTargets": [
+    [
+      "make",
+      "-j2",
+      "-C",
+      "src/bin/pg_controldata",
+      "all"
+    ],
+    [
+      "make",
+      "-j2",
+      "-C",
+      "src/bin/pg_config",
+      "all"
+    ]
+  ],
+  "formatMacrosRequired": {
+    "PG_VERSION": "\"18.6\"",
+    "PG_VERSION_NUM": "180006",
+    "BLCKSZ": "8192",
+    "XLOG_BLCKSZ": "8192",
+    "RELSEG_SIZE": "131072",
+    "SIZEOF_VOID_P": "8",
+    "MAXIMUM_ALIGNOF": "8"
+  },
+  "pgControlVersionRequired": 1800,
+  "intendedOutputPrograms": [
+    "pg_controldata",
+    "pg_config"
+  ],
+  "doesNotDescribeOriginalZonkyBuild": true,
+  "noDatabaseDataArgument": true,
+  "noServerOrInitdbTarget": true,
+  "networkOrPackageInstallCommands": [],
+  "scriptSha256": "80307e6b10cc18bbdb1b70a4d43c76f5b15841f9c77da4846b2c8027613b039a",
+  "startedAtUtc": "2026-10-24T04:23:11.978630+00:00"
+}

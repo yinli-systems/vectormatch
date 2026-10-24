@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/opt/vectormatch-cpu/preparation/pg18-builder-r2/build-pg18-tools.py", line 409, in <module>
+    main()
+  File "/opt/vectormatch-cpu/preparation/pg18-builder-r2/build-pg18-tools.py", line 400, in main
+    print(json.dumps(execute(build_plan, args.benchmark_idle_confirmed), indent=2))
+  File "/opt/vectormatch-cpu/preparation/pg18-builder-r2/build-pg18-tools.py", line 353, in execute
+    run_step('make-' + name, [tools['make'], '-j2', '-C', 'src/bin/' + name, 'all'],
+  File "/opt/vectormatch-cpu/preparation/pg18-builder-r2/build-pg18-tools.py", line 291, in run_step
+    raise RuntimeError('bounded command failed or cleanup unproven: ' + name)
+RuntimeError: bounded command failed or cleanup unproven: make-pg_controldata

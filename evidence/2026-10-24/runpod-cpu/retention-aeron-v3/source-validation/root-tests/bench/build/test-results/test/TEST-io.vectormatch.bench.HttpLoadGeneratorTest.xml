@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.vectormatch.bench.HttpLoadGeneratorTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-24T04:06:06.348Z" hostname="Mac" time="2.915">
+  <properties/>
+  <testcase name="saturationPreservesArrivalAccountingAndCancelsOnlyRealAcceptedOrders()" classname="io.vectormatch.bench.HttpLoadGeneratorTest" time="1.927"/>
+  <testcase name="unknownOutcomeRetiresLaneAndStillSavesReportWhenFinalStateIsUnavailable()" classname="io.vectormatch.bench.HttpLoadGeneratorTest" time="0.986"/>
+  <system-out><![CDATA[{
+  "scope" : "HTTP_LOOPBACK_LOCAL_JOURNALED_WORKBENCH",
+  "includesNetwork" : true,
+  "includesLocalJournalForce" : true,
+  "includesReplicatedQuorum" : false,
+  "runId" : "http-d9526276-b0b",
+  "startedAt" : "2026-10-24T04:06:06.556Z",
+  "url" : "http://127.0.0.1:54085",
+  "java" : "21.0.13",
+  "os" : "Mac OS X",
+  "arch" : "aarch64",
+  "workload" : "account 1 BUY GTC price=1 quantity=1; cancel accepted residual after its order response",
+  "rateScope" : "fixed-arrival NEW ORDER placements per second; dependent cancellations are not an open-loop arrival stream",
+  "targetOrderRate" : 50,
+  "durationSeconds" : 1,
+  "sendWindowSeconds" : 0.983887125,
+  "completionWindowSeconds" : 1.061337833,
+  "acceptedCommandsPerSecond" : 13.190898849263954,
+  "maxInFlightPairs" : 1,
+  "maximumHttpRequestsPerPair" : 2,
+  "plannedOrders" : 50,
+  "ordersSent" : 7,
+  "scheduledNotSentOrders" : 43,
+  "dependentCancelsSent" : 7,
+  "httpRequestsSent" : 14,
+  "httpResponses" : 14,
+  "businessAcceptedOrders" : 7,
+  "businessAcceptedCancels" : 7,
+  "actualTradeCountFromOrderResults" : 0,
+  "outcomes" : {
+    "BUSINESS_ACCEPTED" : 14,
+    "BUSINESS_REJECTED" : 0,
+    "HTTP_REJECTED" : 0,
+    "UNKNOWN" : 0
+  },
+  "httpStatusCounts" : {
+    "200" : 14
+  },
+  "replayedResponses" : 0,
+  "unresolvedRequests" : 0,
+  "automaticRetries" : 0,
+  "unknownHandling" : "lane retired; original producerId/requestSeq/payload retained in unresolved.json; reconcile or retry that exact identity",
+  "syntheticFlowPaused" : true,
+  "latency" : {
+    "place-scheduled" : {
+      "p95Micros" : 150655,
+      "p50Micros" : 133119,
+      "samples" : 7,
+      "maxMicros" : 150655,
+      "p999Micros" : 150655,
+      "p99Micros" : 150655
+    },
+    "place-sent" : {
+      "p95Micros" : 148351,
+      "p50Micros" : 132223,
+      "samples" : 7,
+      "maxMicros" : 148351,
+      "p999Micros" : 148351,
+      "p99Micros" : 148351
+    },
+    "place-dispatch" : {
+      "p95Micros" : 3897,
+      "p50Micros" : 2267,
+      "samples" : 7,
+      "maxMicros" : 3897,
+      "p999Micros" : 3897,
+      "p99Micros" : 3897
+    },
+    "place-accepted-scheduled" : {
+      "p95Micros" : 150655,
+      "p50Micros" : 133119,
+      "samples" : 7,
+      "maxMicros" : 150655,
+      "p999Micros" : 150655,
+      "p99Micros" : 150655
+    },
+    "place-accepted-sent" : {
+      "p95Micros" : 148351,
+      "p50Micros" : 132223,
+      "samples" : 7,
+      "maxMicros" : 148351,
+      "p999Micros" : 148351,
+      "p99Micros" : 148351
+    },
+    "cancel-scheduled" : {
+      "p95Micros" : 34559,
+      "p50Micros" : 2203,
+      "samples" : 7,
+      "maxMicros" : 34559,
+      "p999Micros" : 34559,
+      "p99Micros" : 34559
+    },
+    "cancel-sent" : {
+      "p95Micros" : 33887,
+      "p50Micros" : 1973,
+      "samples" : 7,
+      "maxMicros" : 33887,
+      "p999Micros" : 33887,
+      "p99Micros" : 33887
+    },
+    "cancel-dispatch" : {
+      "p95Micros" : 1327,
+      "p50Micros" : 242,
+      "samples" : 7,
+      "maxMicros" : 1327,
+      "p999Micros" : 1327,
+      "p99Micros" : 1327
+    },
+    "cancel-accepted-scheduled" : {
+      "p95Micros" : 34559,
+      "p50Micros" : 2203,
+      "samples" : 7,
+      "maxMicros" : 34559,
+      "p999Micros" : 34559,
+      "p99Micros" : 34559
+    },
+    "cancel-accepted-sent" : {
+      "p95Micros" : 33887,
+      "p50Micros" : 1973,
+      "samples" : 7,
+      "maxMicros" : 33887,
+      "p999Micros" : 33887,
+      "p99Micros" : 33887
+    }
+  },
+  "latencyScopes" : "scheduled/sent/dispatch include all sent attempts, including rejections and unknowns; accepted-* include only BUSINESS_ACCEPTED responses",
+  "initialJournalBytes" : 0,
+  "finalJournalBytes" : 0,
+  "countingInvariantPassed" : true
+}
+{
+  "scope" : "HTTP_LOOPBACK_LOCAL_JOURNALED_WORKBENCH",
+  "includesNetwork" : true,
+  "includesLocalJournalForce" : true,
+  "includesReplicatedQuorum" : false,
+  "runId" : "http-514b585a-27d",
+  "startedAt" : "2026-10-24T04:06:08.286Z",
+  "url" : "http://127.0.0.1:54090",
+  "java" : "21.0.13",
+  "os" : "Mac OS X",
+  "arch" : "aarch64",
+  "workload" : "account 1 BUY GTC price=1 quantity=1; cancel accepted residual after its order response",
+  "rateScope" : "fixed-arrival NEW ORDER placements per second; dependent cancellations are not an open-loop arrival stream",
+  "targetOrderRate" : 20,
+  "durationSeconds" : 1,
+  "sendWindowSeconds" : 0.959746625,
+  "completionWindowSeconds" : 0.011939042,
+  "acceptedCommandsPerSecond" : 0.0,
+  "maxInFlightPairs" : 1,
+  "maximumHttpRequestsPerPair" : 2,
+  "plannedOrders" : 20,
+  "ordersSent" : 1,
+  "scheduledNotSentOrders" : 19,
+  "dependentCancelsSent" : 0,
+  "httpRequestsSent" : 1,
+  "httpResponses" : 1,
+  "businessAcceptedOrders" : 0,
+  "businessAcceptedCancels" : 0,
+  "actualTradeCountFromOrderResults" : 0,
+  "outcomes" : {
+    "BUSINESS_ACCEPTED" : 0,
+    "BUSINESS_REJECTED" : 0,
+    "HTTP_REJECTED" : 0,
+    "UNKNOWN" : 1
+  },
+  "httpStatusCounts" : {
+    "503" : 1
+  },
+  "replayedResponses" : 0,
+  "unresolvedRequests" : 1,
+  "automaticRetries" : 0,
+  "unknownHandling" : "lane retired; original producerId/requestSeq/payload retained in unresolved.json; reconcile or retry that exact identity",
+  "syntheticFlowPaused" : true,
+  "latency" : {
+    "place-scheduled" : {
+      "p95Micros" : 11943,
+      "p50Micros" : 11943,
+      "samples" : 1,
+      "maxMicros" : 11943,
+      "p999Micros" : 11943,
+      "p99Micros" : 11943
+    },
+    "place-sent" : {
+      "p95Micros" : 11703,
+      "p50Micros" : 11703,
+      "samples" : 1,
+      "maxMicros" : 11703,
+      "p999Micros" : 11703,
+      "p99Micros" : 11703
+    },
+    "place-dispatch" : {
+      "p95Micros" : 236,
+      "p50Micros" : 236,
+      "samples" : 1,
+      "maxMicros" : 236,
+      "p999Micros" : 236,
+      "p99Micros" : 236
+    },
+    "place-accepted-scheduled" : {
+      "p95Micros" : 0,
+      "p50Micros" : 0,
+      "samples" : 0,
+      "maxMicros" : 0,
+      "p999Micros" : 0,
+      "p99Micros" : 0
+    },
+    "place-accepted-sent" : {
+      "p95Micros" : 0,
+      "p50Micros" : 0,
+      "samples" : 0,
+      "maxMicros" : 0,
+      "p999Micros" : 0,
+      "p99Micros" : 0
+    },
+    "cancel-scheduled" : {
+      "p95Micros" : 0,
+      "p50Micros" : 0,
+      "samples" : 0,
+      "maxMicros" : 0,
+      "p999Micros" : 0,
+      "p99Micros" : 0
+    },
+    "cancel-sent" : {
+      "p95Micros" : 0,
+      "p50Micros" : 0,
+      "samples" : 0,
+      "maxMicros" : 0,
+      "p999Micros" : 0,
+      "p99Micros" : 0
+    },
+    "cancel-dispatch" : {
+      "p95Micros" : 0,
+      "p50Micros" : 0,
+      "samples" : 0,
+      "maxMicros" : 0,
+      "p999Micros" : 0,
+      "p99Micros" : 0
+    },
+    "cancel-accepted-scheduled" : {
+      "p95Micros" : 0,
+      "p50Micros" : 0,
+      "samples" : 0,
+      "maxMicros" : 0,
+      "p999Micros" : 0,
+      "p99Micros" : 0
+    },
+    "cancel-accepted-sent" : {
+      "p95Micros" : 0,
+      "p50Micros" : 0,
+      "samples" : 0,
+      "maxMicros" : 0,
+      "p999Micros" : 0,
+      "p99Micros" : 0
+    }
+  },
+  "latencyScopes" : "scheduled/sent/dispatch include all sent attempts, including rejections and unknowns; accepted-* include only BUSINESS_ACCEPTED responses",
+  "initialJournalBytes" : 0,
+  "finalJournalBytes" : 0,
+  "finalStateFetchError" : "java.io.IOException: /api/state returned HTTP 503",
+  "countingInvariantPassed" : true
+}
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

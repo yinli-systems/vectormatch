@@ -1,0 +1,514 @@
+{
+  "schema": "vectormatch-retention-aeron-v3-local-validation-v1",
+  "recordedAtUtc": "2026-10-24T04:20:34.542146+00:00",
+  "baseCommit": "71199b16beea2ccad406bca98d4966faf3d8d0e2",
+  "branch": "codex/retention-aeron-v3",
+  "preservedRefs": {
+    "codex/core-retention-v3": "109ae1800f0b76620af344a3dd7543849ffffd69",
+    "codex/cluster-retention-v3": "71199b16beea2ccad406bca98d4966faf3d8d0e2"
+  },
+  "scope": "LOCAL_THREE_JVM_LOOPBACK_V3_CORRECTNESS_ONLY",
+  "tools": {
+    "jdk": "21.0.13+9",
+    "gradle": "8.14.3",
+    "dependencyResolution": "offline"
+  },
+  "command": [
+    "gradle",
+    "--offline",
+    "--no-daemon",
+    "--max-workers=2",
+    ":core:test",
+    ":cluster:test",
+    "--tests",
+    "*Retention*",
+    "--tests",
+    "*MatchingClusteredService*",
+    "--tests",
+    "*CommandCodecTest",
+    "--tests",
+    "*ReplicatedOutboxTest",
+    "--tests",
+    "*ClusterStateProfileSnapshotTest",
+    "--tests",
+    "*SnapshotTransportTest",
+    ":cluster:installDist",
+    ":server:compileJava",
+    ":projector:compileJava",
+    ":bench:compileJava"
+  ],
+  "exitCode": 0,
+  "buildResult": "BUILD SUCCESSFUL",
+  "finalExecution": "16 actionable tasks: 6 executed, 10 up-to-date. All selected cluster tests, including the fresh local three-JVM smoke, executed. Unchanged core results remain valid and are hashed below.",
+  "totals": {
+    "tests": 94,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "testSuites": [
+    {
+      "module": "core",
+      "name": "io.vectormatch.core.LegacyV2CompatibilityTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "core/build/test-results/test/TEST-io.vectormatch.core.LegacyV2CompatibilityTest.xml",
+        "bytes": 492,
+        "sha256": "7e7697dd6b16da7606a581a6adef53b7e27737c75ad611c5151671a29ed7bae4"
+      }
+    },
+    {
+      "module": "core",
+      "name": "io.vectormatch.core.MatchingEngineProperties",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "core/build/test-results/test/TEST-io.vectormatch.core.MatchingEngineProperties.xml",
+        "bytes": 1301,
+        "sha256": "8f2dda0a21a39841446edf31ff87a7f792389b2e629953b1941a346003222ffc"
+      }
+    },
+    {
+      "module": "core",
+      "name": "io.vectormatch.core.MatchingEngineTest",
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "core/build/test-results/test/TEST-io.vectormatch.core.MatchingEngineTest.xml",
+        "bytes": 2196,
+        "sha256": "af8b86f8c72a56e06d545129ede111cadbd4d29039acc6bdad86c863708bfa90"
+      }
+    },
+    {
+      "module": "core",
+      "name": "io.vectormatch.core.RetentionAdmissionV3Test",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "core/build/test-results/test/TEST-io.vectormatch.core.RetentionAdmissionV3Test.xml",
+        "bytes": 895,
+        "sha256": "10698d2d239cef0749e88d3b3b855650bb0e5ed733a72f678bff533084e5924d"
+      }
+    },
+    {
+      "module": "core",
+      "name": "io.vectormatch.core.RetentionEngineV3Test",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "core/build/test-results/test/TEST-io.vectormatch.core.RetentionEngineV3Test.xml",
+        "bytes": 2515,
+        "sha256": "95bc2615707dd9921ea4331a723b804c8536706b9889ccf257de630b48a63d77"
+      }
+    },
+    {
+      "module": "cluster",
+      "name": "io.vectormatch.cluster.ClusterStateProfileSnapshotTest",
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "cluster/build/test-results/test/TEST-io.vectormatch.cluster.ClusterStateProfileSnapshotTest.xml",
+        "bytes": 1336,
+        "sha256": "27cae9c8c3cc47ba3915f049ef2b780ffb7fc9e47d168597c80062f294ae831d"
+      }
+    },
+    {
+      "module": "cluster",
+      "name": "io.vectormatch.cluster.CommandCodecTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "cluster/build/test-results/test/TEST-io.vectormatch.cluster.CommandCodecTest.xml",
+        "bytes": 1018,
+        "sha256": "97301241683c502fcb41ca41de7391452a2692cd9e4f5ad6252d3013d0cee06c"
+      }
+    },
+    {
+      "module": "cluster",
+      "name": "io.vectormatch.cluster.MatchingClusteredServiceEgressRotationTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "cluster/build/test-results/test/TEST-io.vectormatch.cluster.MatchingClusteredServiceEgressRotationTest.xml",
+        "bytes": 1210,
+        "sha256": "db0908375726e2806615668fae894a53cc780df4c8474926427c02af0edf17fb"
+      }
+    },
+    {
+      "module": "cluster",
+      "name": "io.vectormatch.cluster.MatchingClusteredServiceResponseBoundTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "cluster/build/test-results/test/TEST-io.vectormatch.cluster.MatchingClusteredServiceResponseBoundTest.xml",
+        "bytes": 1004,
+        "sha256": "b06d119f2201ee3d2acf54e309850f88b24800b66e03fda072226324016fde42"
+      }
+    },
+    {
+      "module": "cluster",
+      "name": "io.vectormatch.cluster.MatchingClusteredServiceTest",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "cluster/build/test-results/test/TEST-io.vectormatch.cluster.MatchingClusteredServiceTest.xml",
+        "bytes": 501,
+        "sha256": "0a19dc3db6c4589ab12c75f03329dea64f3ad9a9eab2c7002ba33c1e353462a4"
+      }
+    },
+    {
+      "module": "cluster",
+      "name": "io.vectormatch.cluster.ReplicatedOutboxTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "cluster/build/test-results/test/TEST-io.vectormatch.cluster.ReplicatedOutboxTest.xml",
+        "bytes": 777,
+        "sha256": "b2929dffc1af0d26f03935108640bec4dc069aa248d41d81273c12c0eb304114"
+      }
+    },
+    {
+      "module": "cluster",
+      "name": "io.vectormatch.cluster.RetentionAeronAdapterV3Test",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "cluster/build/test-results/test/TEST-io.vectormatch.cluster.RetentionAeronAdapterV3Test.xml",
+        "bytes": 2196,
+        "sha256": "76c617b45cfcef77374c0dc8d9135ece2b06b6f453e1e12acddd69b63b45b18c"
+      }
+    },
+    {
+      "module": "cluster",
+      "name": "io.vectormatch.cluster.RetentionReplyAndSnapshotV3Test",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "cluster/build/test-results/test/TEST-io.vectormatch.cluster.RetentionReplyAndSnapshotV3Test.xml",
+        "bytes": 1197,
+        "sha256": "9e92bf689b2701193164bbef431cd46c27b1fec0820459d174a994809ce19625"
+      }
+    },
+    {
+      "module": "cluster",
+      "name": "io.vectormatch.cluster.RetentionServiceV3Test",
+      "tests": 14,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "cluster/build/test-results/test/TEST-io.vectormatch.cluster.RetentionServiceV3Test.xml",
+        "bytes": 2664,
+        "sha256": "f168ac9b03e6d623ca5f32dc68b7126884098baeca17f4fde101570514693b9d"
+      }
+    },
+    {
+      "module": "cluster",
+      "name": "io.vectormatch.cluster.RetentionThreeJvmV3Test",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "cluster/build/test-results/test/TEST-io.vectormatch.cluster.RetentionThreeJvmV3Test.xml",
+        "bytes": 711,
+        "sha256": "245c3be80572285f885b1993d82a2b54c83659e38eeedfbd17dbf6ce07f45785"
+      }
+    },
+    {
+      "module": "cluster",
+      "name": "io.vectormatch.cluster.RetentionWireV3Test",
+      "tests": 9,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "cluster/build/test-results/test/TEST-io.vectormatch.cluster.RetentionWireV3Test.xml",
+        "bytes": 1737,
+        "sha256": "bfb8222b507f7dfcc9d58d6e33431a9a3b535e2943f3303bfff40e91ef5db9cb"
+      }
+    },
+    {
+      "module": "cluster",
+      "name": "io.vectormatch.cluster.SnapshotTransportTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "xml": {
+        "path": "cluster/build/test-results/test/TEST-io.vectormatch.cluster.SnapshotTransportTest.xml",
+        "bytes": 1054,
+        "sha256": "6e03e181927fb841453b5dda62f491a3c6c8517b524f214b93cb3e286fa275d7"
+      }
+    }
+  ],
+  "files": [
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/RetentionServiceV3.java",
+      "bytes": 34091,
+      "sha256": "476a44ede5f81784ac3b4bec3775a99514183cc5e8d8cd2e63a5d496abe625f0"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/RetentionWireV3.java",
+      "bytes": 13893,
+      "sha256": "3c18c874238c92014468291169fb152a5540f9112b0f35c55f678d47ae54bb1a"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/RetentionReplyV3.java",
+      "bytes": 13472,
+      "sha256": "37ead053b111369eebcad84cff0fb3679d01f25c94d18ab864dc7dc34ca6cd1a"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/RetentionClusteredServiceV3.java",
+      "bytes": 6305,
+      "sha256": "3ed0f09a3795b4af58933b001e1e29500e37fda1267c60604ec3347a2a9c3364"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/RetentionSnapshotTransportV3.java",
+      "bytes": 5943,
+      "sha256": "c418287e1ec557ce777916917a686ed8ad856cc9d87c678089f0820f7be1e2a4"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/RetentionNodeMainV3.java",
+      "bytes": 9005,
+      "sha256": "6472216ddc41beb87c6eac0834ebd180076546237bf125dfc3c26621694aa375"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/RetentionClientV3.java",
+      "bytes": 6194,
+      "sha256": "6c29aa57a926db6b1e83ffba615a0e304a9168b88e3d8e3ac087507d9608f4da"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/RetentionAeronSmokeV3.java",
+      "bytes": 19402,
+      "sha256": "614d9c712e9f4ab3186cb40c61cae0e57668fead39580ca77dec96624af38206"
+    },
+    {
+      "path": "cluster/src/test/java/io/vectormatch/cluster/RetentionAeronAdapterV3Test.java",
+      "bytes": 6883,
+      "sha256": "1b9542d318bf9ed7f575d632c6f27103d294d8c90a8f993989a8e7846d65ce41"
+    },
+    {
+      "path": "cluster/src/test/java/io/vectormatch/cluster/RetentionReplyAndSnapshotV3Test.java",
+      "bytes": 6361,
+      "sha256": "41cd766474aa449611cfc677da547a1f6fd0dec73ff2d3c6dd87913e325b906d"
+    },
+    {
+      "path": "cluster/src/test/java/io/vectormatch/cluster/RetentionThreeJvmV3Test.java",
+      "bytes": 923,
+      "sha256": "b8bc6e8447104d1a70e01cb687c7d1c91aa31f6ed8e573ab1f8c30c0bf3489b3"
+    },
+    {
+      "path": "docs/RETENTION_AERON_V3.md",
+      "bytes": 8594,
+      "sha256": "85d215ef4c221794d7f21be4b85576025ab1e9d030363c8d38226c0899141294"
+    }
+  ],
+  "unchangedAgainstBase": [
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/ClusterNodeMain.java",
+      "bytes": 17461,
+      "sha256": "5e5a6624b39b819946f98f3f86d3460621cdd21d8256925786e345e224999a2c"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/MatchingClusteredService.java",
+      "bytes": 8366,
+      "sha256": "c1734bc47d17e49852ca1b6bb1aba3342abc6ec7de59368804f369eeba828dee"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/CommandCodec.java",
+      "bytes": 13141,
+      "sha256": "8548feb40b4fe30931ea697f8fcf424c3e946c38a3177171d64f2534688b822f"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/ReplicatedOutbox.java",
+      "bytes": 3671,
+      "sha256": "ad25cef47423776e20e17db19d8e09dd752e8dd3e0a619f949a5dafd02405fed"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/ClusterStateSnapshot.java",
+      "bytes": 3449,
+      "sha256": "bbcb9617e57b3b6369111b4589043a0018e0f3f37e2653ffca857d321b93b3ef"
+    },
+    {
+      "path": "cluster/src/main/java/io/vectormatch/cluster/SnapshotTransport.java",
+      "bytes": 5975,
+      "sha256": "6fb4ec7bab7deb3d62e8e1b44d010954137f6bb5f879f26bf62e6cd072016df6"
+    },
+    {
+      "path": "core/src/main/java/io/vectormatch/core/RetentionEngineV3.java",
+      "bytes": 32498,
+      "sha256": "8df4a2b0a6629d5e138de70a59421dc4454ff62bd00627b07ecc8e1a3b065834"
+    }
+  ],
+  "distributionLibraries": [
+    {
+      "path": "cluster/build/install/cluster/lib/aeron-all-1.53.3.jar",
+      "bytes": 3544128,
+      "sha256": "4c6c8a5014a2b67424051170392a005daa9a998ac963302d2819d0f3db749ef2"
+    },
+    {
+      "path": "cluster/build/install/cluster/lib/agrona-2.6.1.jar",
+      "bytes": 491990,
+      "sha256": "84c07eb02695c06bfda3d6c3a20c1984e3ff1bbd617b2f8e678140baf973fa28"
+    },
+    {
+      "path": "cluster/build/install/cluster/lib/cluster-0.1.0-SNAPSHOT.jar",
+      "bytes": 276350,
+      "sha256": "22b272ca316c2f186ca0c061dad2ff1375f7b8042f3f16180986de63be9e6a3c"
+    },
+    {
+      "path": "cluster/build/install/cluster/lib/core-0.1.0-SNAPSHOT.jar",
+      "bytes": 77244,
+      "sha256": "b649680c1f836d64ca569ca530ef42ce07e5ef2c1172cdf130ee5f0e1bc6b9ff"
+    }
+  ],
+  "logs": [
+    {
+      "path": "runtime/cloud/cpu-20261024/retention-aeron-v3-compile-r1.log",
+      "bytes": 415,
+      "sha256": "66a6ca2fcc5dd045e8623d2798b9f0dd99228c993efa72d184a93fe354304c82"
+    },
+    {
+      "path": "runtime/cloud/cpu-20261024/retention-aeron-v3-unit-r1.log",
+      "bytes": 860,
+      "sha256": "2b256a06485689c99167c28976f56f268738d9db9cb53f36afbce0c502802626"
+    },
+    {
+      "path": "runtime/cloud/cpu-20261024/retention-aeron-v3-local-smoke-r1.log",
+      "bytes": 710,
+      "sha256": "9afdd07f16296acd9ae8a54ad3f6f343abd9fde027a5c81dc351e21ffe788d7d"
+    },
+    {
+      "path": "runtime/cloud/cpu-20261024/retention-aeron-v3-local-final.log",
+      "bytes": 1172,
+      "sha256": "3d85e0df65040cf294bb952297d14b38c05a0a0093ba06eeb6423bacf332a8d1"
+    }
+  ],
+  "nativeArchiveEvidence": [
+    {
+      "phase": "smoke-r1",
+      "manifest": {
+        "path": "runtime/cloud/cpu-20261024/retention-aeron-v3/smoke-r1/manifest.json",
+        "bytes": 11053,
+        "sha256": "ecf6502b3ebc40e57d40aaae19d30288878435094953d663c3f15dab9c0cdda8"
+      },
+      "archiveVerification": {
+        "path": "runtime/cloud/cpu-20261024/retention-aeron-v3/smoke-r1/archive-verification.json",
+        "bytes": 425,
+        "sha256": "e880bcfa1dc6efd9029da00d2fff759c184859e726e6f74e4651c6e557f298fb"
+      },
+      "archive": {
+        "path": "native-tree.tar.gz",
+        "bytes": 8891905,
+        "sha256": "9aaf2b5f1cecde825f8cd42edac5e58dfecb546edf5026069bd9ef4d9ecdb892"
+      },
+      "logicalBytes": 2029091781,
+      "files": 54
+    },
+    {
+      "phase": "smoke-final",
+      "manifest": {
+        "path": "runtime/cloud/cpu-20261024/retention-aeron-v3/smoke-final/manifest.json",
+        "bytes": 12053,
+        "sha256": "ae68fcf0eff99960d317517ca4bba38a6022aea5e45ff4ba949c2eadbe5d194c"
+      },
+      "archiveVerification": {
+        "path": "runtime/cloud/cpu-20261024/retention-aeron-v3/smoke-final/archive-verification.json",
+        "bytes": 425,
+        "sha256": "36f5bee26f3b848593d492fecff2754a20fb48a73f0256dd1ea988f869b58b73"
+      },
+      "archive": {
+        "path": "native-tree.tar.gz",
+        "bytes": 8902340,
+        "sha256": "76db7320df97df73e3c73d4ac73dbbad282f740530fd03b6197645b21fea78f3"
+      },
+      "logicalBytes": 2029148020,
+      "files": 59
+    }
+  ],
+  "finalSmoke": {
+    "passed": true,
+    "scope": "LOCAL_THREE_JVM_LOOPBACK_V3_CORRECTNESS",
+    "profileSha256": "950a962aaa33a96b15295b720929d736dfc588c6467647af89b68b7823a2fa0d",
+    "codeSha256": "402cf5403432dc39f57cb53466d0c25b0c05a3e5e3c2b049f04bb750a89bdd33",
+    "lineage": "local-a46815b4-41fa-4bf7-a108-e98f3b47ae7c",
+    "businessSeq": 47,
+    "eventSeq": 49,
+    "firstAcceptedPlaces": 4,
+    "preparedArchiveBytes": 11373,
+    "checkpointSha256": "10303a082e3f277f790cb185efee63ac409f691a497009f1a319ca358dc6d350",
+    "finalCombinedSha256": "177a3b9a4818cb36b3c2d7fab18540a5703979754c2e3b45fddcc99907b54812",
+    "allThreeNodeSnapshotsMatched": true,
+    "externalArchiveDurabilityProven": false,
+    "independentHosts": false
+  },
+  "finalCompletion": {
+    "scope": "LOCAL_THREE_JVM_LOOPBACK_V3_CORRECTNESS",
+    "passed": true,
+    "allOwnedStopped": true,
+    "independentHosts": false,
+    "externalArchiveDurabilityProven": false
+  },
+  "finalSmokeArtifacts": {
+    "artifactInventory": {
+      "path": "runtime/cloud/cpu-20261024/retention-aeron-v3/smoke-final/artifact-inventory.sha256",
+      "bytes": 24692,
+      "sha256": "743f2f476a0248b8ea0e15f996acffaf42ae29c47b2566f97a1cbef9c158f400"
+    },
+    "referenceInputs": {
+      "path": "runtime/cloud/cpu-20261024/retention-aeron-v3/smoke-final/reference-inputs-v2.bin",
+      "bytes": 2756,
+      "sha256": "56ba8b0a788ee78f96b9e7cccf172bff3a5f6b34e2d0854803e39286e9a21df1"
+    },
+    "referenceBeforeCheckpoint": {
+      "path": "runtime/cloud/cpu-20261024/retention-aeron-v3/smoke-final/reference-before-checkpoint-v2.bin",
+      "bytes": 1998,
+      "sha256": "be2ef7f14ec69d418be39d68c95a052b1e47d637883d3e052f62967817ace1fe"
+    },
+    "referenceFinal": {
+      "path": "runtime/cloud/cpu-20261024/retention-aeron-v3/smoke-final/reference-final-v2.bin",
+      "bytes": 2209,
+      "sha256": "c39b3bf3e385f100342a8bea2e15d8c2b1d5f4720b5fe596d106ab170d035ee2"
+    }
+  },
+  "review": "Root initial read-only production review found no blocker; final source awaits independent full repository validation.",
+  "limits": [
+    "Actual local smoke uses sync2, -Xmx256m, appointed leader0, MTU1248, three localhost JVMs; sync0 is supported but not smoke-tested.",
+    "No cloud node, original controller, default service or capacity workload was changed.",
+    "Only four first accepted Places in one small synthetic lineage, not a throughput or endurance result.",
+    "No leader-loss, external exporter/storage failure, cross-machine replication or archive durability proof.",
+    "Core/archive/checkpoint payloads remain bounded whole byte arrays; not an unbounded streaming exporter.",
+    "Native archives have about 2.03GB logical sparse content per phase; require logical-space or sparse-safe restoration guard. Full streaming archive readback verified every path/length/SHA without extraction.",
+    "The first successful smoke is explicitly pre-final guards; final smoke is separate fresh state after client-slot/evidence guards. No failed or timed-out smoke was retried or hidden.",
+    "readArchive enforces a strict allocation bound before allocation and checks timeout on subsequent exchange.",
+    "Full repository check is pending independent root validation."
+  ]
+}
