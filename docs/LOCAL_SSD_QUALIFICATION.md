@@ -41,6 +41,7 @@ The preflight checks:
 
 - Exact `findmnt` target resolves to a read-write ext4 or XFS mount with a direct `/dev/...` block-device source. `fuse.*`, MFS, NFS, overlay, tmpfs, bind-source ambiguity and other filesystems fail.
 - `lsblk` identifies a direct disk or partition rooted in a nonrotational **NVMe** disk with a known model; obvious network/virtual-block models such as **Amazon Elastic Block Store** fail even when named `/dev/nvme`.
+- `findmnt` and `lsblk` **major:minor device IDs must agree** with each other and with `os.stat()` of the actual test directory; a plausible device name alone is never enough.
 - Real free space is at least maximum allocated growth **plus** the runtime reserve. This is point-in-time eligibility, **not a quota**; the in-run allocated-byte guard still applies.
 - Missing commands, non-JSON output, unmapped devices, ambiguous ancestry, absent fields, unknown models or read-only mounts fail closed.
 
