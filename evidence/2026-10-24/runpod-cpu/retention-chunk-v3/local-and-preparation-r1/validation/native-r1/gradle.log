@@ -1,0 +1,44 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :cluster:processResources NO-SOURCE
+> Task :cluster:processTestResources NO-SOURCE
+> Task :core:compileJava UP-TO-DATE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar UP-TO-DATE
+> Task :cluster:compileJava UP-TO-DATE
+> Task :cluster:classes UP-TO-DATE
+> Task :cluster:compileTestJava UP-TO-DATE
+> Task :cluster:testClasses UP-TO-DATE
+
+> Task :cluster:test FAILED
+
+RetentionArchiveChunkAeronPilotV3Test > fixedCapFourBothChunkPoliciesCrossMaintenanceWithActualEgressEvidence() FAILED
+    io.vectormatch.cluster.RetentionBatchOwnerV3$OwnerFailure: V3 batch network owner failed; retain all identities and evidence
+        at app//io.vectormatch.cluster.RetentionBatchOwnerV3.own(RetentionBatchOwnerV3.java:515)
+        at app//io.vectormatch.cluster.RetentionBatchOwnerV3.lambda$new$0(RetentionBatchOwnerV3.java:310)
+        at java.base@21.0.13/java.lang.Thread.run(Thread.java:1583)
+
+        Caused by:
+        java.lang.IllegalStateException: actual egress Image set drift
+            at io.vectormatch.cluster.RetentionEgressBoundsV3.observe(RetentionEgressBoundsV3.java:44)
+            at io.vectormatch.cluster.RetentionBatchAeronTransportV3.observeImages(RetentionBatchAeronTransportV3.java:142)
+            at io.vectormatch.cluster.RetentionBatchAeronTransportV3.observation(RetentionBatchAeronTransportV3.java:98)
+            at io.vectormatch.cluster.RetentionCapacityExperimentV3$Tape.observation(RetentionCapacityExperimentV3.java:234)
+            at io.vectormatch.cluster.RetentionBatchOwnerV3.captureTransport(RetentionBatchOwnerV3.java:525)
+            at io.vectormatch.cluster.RetentionBatchOwnerV3.own(RetentionBatchOwnerV3.java:495)
+            ... 2 more
+
+1 test completed, 1 failed
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':cluster:test'.
+> There were failing tests. See the report at: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/retention-chunk-v3-worktree/cluster/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 6s
+5 actionable tasks: 1 executed, 4 up-to-date

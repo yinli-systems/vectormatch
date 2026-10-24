@@ -1,0 +1,57 @@
+"""Pure local validation shared by the closed-round collector/auditors. No network at import."""
+from pathlib import Path, PurePosixPath
+import argparse, hashlib, json, re
+PREP='/opt/vectormatch-cpu/preparation/chunk-cloud-abab-r1'
+CHUNKS=(3072,6144)
+def require(value,message):
+    if not value: raise AssertionError(message)
+def sha(path):
+    h=hashlib.sha256()
+    with Path(path).open('rb') as f:
+        for data in iter(lambda:f.read(1024*1024),b''):h.update(data)
+    return h.hexdigest()
+def hexsha(value):return isinstance(value,str) and re.fullmatch('[0-9a-f]{64}',value) is not None
+def relative(value):
+    p=PurePosixPath(value)
+    require(isinstance(value,str) and value and str(p)==value and not p.is_absolute() and '..' not in p.parts and '.' not in p.parts,'Unsafe noncanonical relative path')
+    return value
+def load_config(path):
+    c=json.loads(Path(path).read_text());require(c['schemaVersion']==1 and type(c['round']) is int and c['round'] in (1,2),'Round/config version')
+    require(c['remotePrep']==PREP and c['host']=='ed6c0673f5cb','Fixed remote preparation/host')
+    require(hexsha(c['releaseSha256']) and hexsha(c['stagingReceiptSha256']) and hexsha(c['protectedReferenceSha256']),'Explicit frozen input SHA values required')
+    for key,h in [('releaseLocal','releaseSha256'),('stagingReceipt','stagingReceiptSha256'),('protectedReference','protectedReferenceSha256')]:require(sha(c[key])==c[h],'Frozen local input differs: '+key)
+    release=json.loads(Path(c['releaseLocal']).read_text());require(release['releaseReady'] is True and release['host']==c['host'],'Final root-frozen release required')
+    require(hexsha(release['codeFingerprint']) and hexsha(release['profileFingerprint']) and hexsha(release['controllerSha256']) and re.fullmatch('[0-9a-f]{40}',release['sourceCommit']),'Frozen actual source/artifact fingerprints')
+    require(release['rounds'][str(c['round'])]=={'job':PREP+'/round-'+str(c['round']),'pairRoot':PREP+'/round-'+str(c['round'])+'/chunk-pair'},'Release round paths differ')
+    fixed=release['configuration'];require(all(fixed[k]==v for k,v in {'arrivals':6400,'ratePerSecond':500,'batchCap':4,'eventFetchCount':16,'appointedLeader':0,'sync':2,'workers':128,'queuePerWorker':64,'preparedArchiveCache':True,'samePortsAcrossArms':True,'fixedBasePorts':42000,'commonChunkEnvelope':True,'mtu':1248}.items()),'Fixed experiment configuration differs')
+    require(fixed['archiveChunkBytesOrder']==[3072,6144,3072,6144],'Registered ABAB order differs')
+    staged=json.loads(Path(c['stagingReceipt']).read_text());require(staged['passed'] is True and isinstance(staged['stagedFiles'],dict),'Successful exact staged receipt required')
+    expected=staged['stagedFiles'];require(8<=len(expected)<=64,'Bounded explicit source allowlist required')
+    for name,row in expected.items():
+        relative(name);require(not name.startswith(('round-1/','round-2/')) and name not in ('round-1','round-2'),'Cannot allow source job tree')
+        require(type(row['bytes']) is int and 0<=row['bytes']<=32*1024**2 and hexsha(row['sha256']),'Invalid frozen source file row')
+    require('release/release.json' in expected and expected['release/release.json']['sha256']==c['releaseSha256'],'Actual source release binding differs')
+    metadata=c['executionMetadata'];require(isinstance(metadata,list) and len(metadata)==3 and len(set(metadata))==3,'Exactly three execution metadata names')
+    for name in metadata:relative(name);require('/' not in name and name not in expected,'Execution metadata must be explicit root file names')
+    allow=sorted(set(expected)|set(metadata));require(len(allow)==len(expected)+3,'Source whitelist collision')
+    return c,release,expected,allow
+
+def audit_arguments(description):
+    p=argparse.ArgumentParser(description=description);p.add_argument('--config',required=True,type=Path);p.add_argument('--collection',required=True,type=Path);p.add_argument('--out',required=True,type=Path)
+    a=p.parse_args();c,r,e,allow=load_config(a.config);require(a.collection.is_dir(),'Closed local collection missing');a.out.mkdir(parents=True,exist_ok=False)
+    return a,c,r
+
+def egress(bounds):
+    require(bounds['requiredApplicationReplyBytes']==6919 and bounds['aeronSessionHeaderBytes']==32 and bounds['requiredCompleteMessageBytes']==6951,'Common supported complete reply envelope')
+    require(bounds['defaultMetadataSubstituted'] is False and bounds['sameOwnerThreadRequired'] is True and bounds['actualImageObservations']>=1,'Actual owner Image observations required')
+    geometry={};count=0;limits=[]
+    require(1<=len(bounds['images'])<=16,'Bounded actual Images')
+    for row in bounds['images']:
+        term=row['actualTermBufferLength'];require(type(term) is int and term>=65536 and term&(term-1)==0 and row['actualMtuLength']==1248,'Actual receiver geometry invalid')
+        maximum=min(term//8,16*1024**2);require(row['derivedMaxMessageLength']==maximum and maximum>=6951,'Actual receiver cannot fit common complete reply')
+        key=row['imageCorrelationId'];require(type(key) is int and key>=0 and key not in geometry,'Duplicate Image correlation')
+        geometry[key]={k:row[k] for k in ['imageCorrelationId','publicationSessionId','streamId','actualTermBufferLength','actualMtuLength','derivedMaxMessageLength']}
+        n=row['associatedApplicationReplies'];largest=row['largestObservedApplicationReplyBytes'];require(type(n) is int and n>=0 and type(largest) is int and 0<=largest<=8192 and largest+32<=maximum,'Per-Image association/size bounds')
+        count+=n;limits.append(maximum)
+    require(count==bounds['replyHeaderImageAssociations'] and min(limits)==bounds['minimumActualDerivedMaxMessageLength'],'Image aggregate count/geometry mismatch')
+    return geometry

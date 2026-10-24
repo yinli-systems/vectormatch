@@ -1,0 +1,36 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :cluster:processResources NO-SOURCE
+> Task :cluster:processTestResources NO-SOURCE
+> Task :core:compileJava UP-TO-DATE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar UP-TO-DATE
+> Task :cluster:compileJava UP-TO-DATE
+> Task :cluster:classes UP-TO-DATE
+> Task :cluster:compileTestJava UP-TO-DATE
+> Task :cluster:testClasses UP-TO-DATE
+
+> Task :cluster:test FAILED
+
+RetentionAeronAdapterV3Test > newReadOperationsAreBoundedCanonicalAndDoNotEnterMaintenanceNamespace() FAILED
+    org.opentest4j.AssertionFailedError: Expected java.lang.IllegalArgumentException to be thrown, but nothing was thrown.
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:152)
+        at app//org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:73)
+        at app//org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35)
+        at app//org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3128)
+        at app//io.vectormatch.cluster.RetentionAeronAdapterV3Test.newReadOperationsAreBoundedCanonicalAndDoNotEnterMaintenanceNamespace(RetentionAeronAdapterV3Test.java:89)
+
+108 tests completed, 1 failed
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':cluster:test'.
+> There were failing tests. See the report at: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/retention-chunk-v3-worktree/cluster/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 4s
+5 actionable tasks: 1 executed, 4 up-to-date

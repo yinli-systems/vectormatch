@@ -1,0 +1,278 @@
+{
+  "schema": "retention-chunk-local-validation-v1",
+  "createdAtUTC": "2026-10-24T06:24:16.405526+00:00",
+  "sourceCommit": "e3c4885a8854c3edfbfdea4848633efc75951894",
+  "scope": "LOCAL only fixedcap4 single pair functional validation; not CPU ABAB, stability, speedup, sustained capacity, persistent client restart recovery or100M proof",
+  "unitValidation": {
+    "path": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-chunk-v3-worktree/build/chunk-validation/legacy-r4/receipt.json",
+    "sha256": "5578218c1246b2a46c537e0276d7f6346b3bb247e1249b27e9eac714ae96eb91",
+    "actualTests": 110,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "exactCommandRegistration": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-chunk-v3-worktree/build/chunk-validation/legacy-r4/registration.json",
+    "exactCommandRegistrationSha256": "39501024187b9e3a0b4b562f61cb6a2778d2ddef6fb9baa29423df580f1816ea"
+  },
+  "nativeValidation": {
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "command": [
+      "/Users/kevin/Documents/ChatGPT/App 2/.tools/gradle/bin/gradle",
+      ":cluster:test",
+      "--tests",
+      "io.vectormatch.cluster.RetentionArchiveChunkAeronPilotV3Test",
+      "--no-daemon"
+    ],
+    "environment": {
+      "JAVA_HOME": "/Users/kevin/Documents/ChatGPT/App 2/.tools/jdk",
+      "GRADLE_USER_HOME": "/Users/kevin/Documents/ChatGPT/App 2/.tools/gradle-user-home"
+    },
+    "stdoutSha256": "0354c170c6081cf16174556c940ee33924ba1f3210c301378f43e80d440adfc8",
+    "xmlSha256": "a17082ccff97e04b21c941cbdab948b2023ee7f805a6730469206468ad2267a0"
+  },
+  "preNativeArtifactManifest": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-chunk-v3-worktree/build/chunk-validation/native-r2/artifact-state/manifest.json",
+  "preNativeArtifactManifestSha256": "902395f7a1a0d9902840bb1c0a5112c444af2741a531b72f3ac197f8db426369",
+  "actualCurrentSourceClassesJarsStillEqualPreNativeCapture": true,
+  "sourceCommitCreatedAfterNativeR2StartedBeforeCompleted": true,
+  "distributionManifest": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-chunk-v3-worktree/build/chunk-validation/distribution-r1/manifest.json",
+  "distributionManifestSha256": "60294aa58621cdf9f18e26462d797a9ff42dddfe9225fbf504eb2a7f20239aa8",
+  "failedAttemptsRetained": [
+    {
+      "name": "legacy-r1",
+      "status": "108tests1obsolete3073-boundary-fixturefailure",
+      "receiptSha256": "294003a1b4f24ae69e8dbf0e80a4fbfa3017df1e68367721e4cf04c3b771267d",
+      "sourceClassesJarCaptureSha256": "62a54d6c78b6ed8d86ff28232d6af9813f261b53b86a729662184f5e55d97211"
+    },
+    {
+      "name": "native-r1",
+      "status": "strictImage-set observer failure;491completed9UNKNOWN5900unreleased;second-arm-not-started",
+      "closure": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-chunk-v3-worktree/build/chunk-validation/native-r1/failure-closure.json",
+      "closureSha256": "87fd973ab7e298a06a244ca10af4edd4ac496b2835bb19bd191f8429a547919f",
+      "sourceClassesJarCaptureSha256": "0ceb21f5b8ab2d52afe1c6b5e658cb528985d39a05b5382105a1a5d8ba8bd0b8",
+      "notAttributedToCurrentLifecycleFixSource": true
+    }
+  ],
+  "independentCsvValidation": {
+    "path": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-chunk-v3-worktree/build/chunk-validation/native-r2/independent-csv-validation.json",
+    "sha256": "0422db2e1d919c5d7adb56d85ba38d8f8de606599e0ab4b8709a42a54a72c0c7"
+  },
+  "independentChunkEvidenceValidation": {
+    "path": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-chunk-v3-worktree/build/chunk-validation/native-r2/chunk-evidence-validation.json",
+    "sha256": "f803ea405835d5d1c6e38ed9987655dece43f52b6df3fac82d55e6713c4b8fe7",
+    "perReplyRawImageAssociationIndependentlyAvailable": false,
+    "scope": "everyreply bound by pinned source; raw independently verifies matching aggregate header association counters, geometry and known request correlations"
+  },
+  "arms": [
+    {
+      "archiveChunkBytes": 3072,
+      "arrivals": 6400,
+      "uniqueAcceptedOrders": 6400,
+      "notSent": 0,
+      "unknownFinal": 0,
+      "schedulerTimingValid": true,
+      "allArrivalAcceptedP99Ns": 23449545791,
+      "totalSourceDrainNs": 24431532500,
+      "actualMaintenanceRpcs": 1785,
+      "actualMaintenanceRpcKinds": {
+        "PrepareArchive": {
+          "failed": 0,
+          "count": 3,
+          "maxElapsedNs": 27064708,
+          "totalElapsedNs": 64110542
+        },
+        "ArchiveChunk": {
+          "failed": 0,
+          "count": 975,
+          "maxElapsedNs": 84884625,
+          "totalElapsedNs": 16283197674
+        },
+        "FetchEvents": {
+          "failed": 0,
+          "count": 801,
+          "maxElapsedNs": 42401250,
+          "totalElapsedNs": 13364870776
+        },
+        "ArchiveCommit": {
+          "failed": 0,
+          "count": 3,
+          "maxElapsedNs": 79995666,
+          "totalElapsedNs": 145507625
+        },
+        "EventAck": {
+          "failed": 0,
+          "count": 3,
+          "maxElapsedNs": 24016500,
+          "totalElapsedNs": 56417458
+        }
+      },
+      "actualDiskGuardAtSourceEnd": {
+        "ownedRoot": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-chunk-v3-worktree/cluster/build/retention-chunk-native-attempts/attempt-eab8c8a7-1980-4c12-a04d-80b82d219014/chunk-3072",
+        "accounting": "POSIX st_blocks * 512 from bounded no-symlink owned-directory walk",
+        "baselineAllocatedBytes": 0,
+        "latestAllocatedBytes": 242626560,
+        "latestLogicalBytes": 1946976582,
+        "allocatedGrowthBytes": 242626560,
+        "latestFiles": 96,
+        "latestDirectories": 25,
+        "maximumEntries": 2048,
+        "maximumAllocatedGrowthBytes": 586250529,
+        "minimumFreeRuntimeBytes": 1073741824,
+        "minimumObservedFreeBytes": 8529866752,
+        "checks": 40
+      },
+      "actualWriterAfterClose": {
+        "queuedCapacity": 1,
+        "maximumOutstanding": 2,
+        "outstandingHighWater": 1,
+        "submitted": 6,
+        "completed": 6,
+        "reservedPayloadBytes": 4158149,
+        "completedPayloadBytes": 4158149,
+        "maxFileBytes": 25166848,
+        "maxTotalPayloadBytes": 1073741824,
+        "maxPayloadFiles": 512,
+        "maxReceiptFiles": 512,
+        "maxReceiptBytesEach": 1024,
+        "failureType": null,
+        "writerAlive": false
+      },
+      "actualTapeCounters": {
+        "recordedReplies": 5668,
+        "uniqueRecordedRequests": 5668,
+        "negativePhysicalOffers": 33,
+        "boundedActiveRegistry": 129,
+        "extraSuccessfulPhysicalAdmissions": 0,
+        "successfulPhysicalAdmissions": 5668,
+        "physicalOfferAttempts": 5701
+      },
+      "nativeInputSha256": {
+        "completion.json": "dfe7bd615a4b790fef322b0a6105c5f88f611fefe0b0f0362976b7cb2a656537",
+        "owned-stop.json": "2d33b6b5161ca23f262a9d29d85e49432ee1f441dfcb183556743ac3e8bfd94b",
+        "registration.json": "d18fc36c79351261900cc60a5775e12c4f3e984ac06957ad7977f788bf1ace66",
+        "load/load-result.json": "da5ad9a25294dfbea6cc1f8da837f0be051b0c81a475fff677c72f77551f1136",
+        "load/arrivals.csv": "e323d034e18cbb9c5a5d8eafd96045a01589e7705ca482639487ef4c4c4bd632",
+        "functional-result.json": "b82b90858fa48c68496c664e4f4a519233df1cf9352b1aad7497c43d52b75df3",
+        "physical-reference-reconciliation.json": "05e2aac13439b7f7969ab323b62202cf1d350b827193b1ad1bba840fccc470cb"
+      }
+    },
+    {
+      "archiveChunkBytes": 6144,
+      "arrivals": 6400,
+      "uniqueAcceptedOrders": 6400,
+      "notSent": 0,
+      "unknownFinal": 0,
+      "schedulerTimingValid": true,
+      "allArrivalAcceptedP99Ns": 14316341917,
+      "totalSourceDrainNs": 14887865459,
+      "actualMaintenanceRpcs": 1298,
+      "actualMaintenanceRpcKinds": {
+        "PrepareArchive": {
+          "failed": 0,
+          "count": 3,
+          "maxElapsedNs": 25143583,
+          "totalElapsedNs": 64254042
+        },
+        "ArchiveChunk": {
+          "failed": 0,
+          "count": 488,
+          "maxElapsedNs": 36881250,
+          "totalElapsedNs": 7687601120
+        },
+        "FetchEvents": {
+          "failed": 0,
+          "count": 801,
+          "maxElapsedNs": 68855792,
+          "totalElapsedNs": 12795536496
+        },
+        "ArchiveCommit": {
+          "failed": 0,
+          "count": 3,
+          "maxElapsedNs": 63269708,
+          "totalElapsedNs": 126110582
+        },
+        "EventAck": {
+          "failed": 0,
+          "count": 3,
+          "maxElapsedNs": 21965542,
+          "totalElapsedNs": 49890001
+        }
+      },
+      "actualDiskGuardAtSourceEnd": {
+        "ownedRoot": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-chunk-v3-worktree/cluster/build/retention-chunk-native-attempts/attempt-eab8c8a7-1980-4c12-a04d-80b82d219014/chunk-6144",
+        "accounting": "POSIX st_blocks * 512 from bounded no-symlink owned-directory walk",
+        "baselineAllocatedBytes": 0,
+        "latestAllocatedBytes": 237944832,
+        "latestLogicalBytes": 1945827233,
+        "allocatedGrowthBytes": 237944832,
+        "latestFiles": 96,
+        "latestDirectories": 25,
+        "maximumEntries": 2048,
+        "maximumAllocatedGrowthBytes": 586250529,
+        "minimumFreeRuntimeBytes": 1073741824,
+        "minimumObservedFreeBytes": 8501956608,
+        "checks": 31
+      },
+      "actualWriterAfterClose": {
+        "queuedCapacity": 1,
+        "maximumOutstanding": 2,
+        "outstandingHighWater": 1,
+        "submitted": 6,
+        "completed": 6,
+        "reservedPayloadBytes": 4158149,
+        "completedPayloadBytes": 4158149,
+        "maxFileBytes": 25166848,
+        "maxTotalPayloadBytes": 1073741824,
+        "maxPayloadFiles": 512,
+        "maxReceiptFiles": 512,
+        "maxReceiptBytesEach": 1024,
+        "failureType": null,
+        "writerAlive": false
+      },
+      "actualTapeCounters": {
+        "recordedReplies": 5177,
+        "uniqueRecordedRequests": 5177,
+        "negativePhysicalOffers": 29,
+        "boundedActiveRegistry": 129,
+        "extraSuccessfulPhysicalAdmissions": 0,
+        "successfulPhysicalAdmissions": 5177,
+        "physicalOfferAttempts": 5206
+      },
+      "nativeInputSha256": {
+        "completion.json": "5e3b41d6b8cf9940a29b7c879d384fefb0fba1d24492cc4e76e9d7bceec72cd5",
+        "owned-stop.json": "a553e52606be9eebc06b5f68971674e564cc955e03ad8708d67aa6544f29c47a",
+        "registration.json": "f1c211c6b1c7eae82feac2b83f27bf96458903742980eb34e67f86e9cd561dbe",
+        "load/load-result.json": "91ea450aa1d7cee8fff2e39457cbafda6678047c7105f1eda6679e2faa98cb38",
+        "load/arrivals.csv": "d23c9cb8ab2bcedcd15a699622b9918350c968eee914a088eec96a36f6e9bf21",
+        "functional-result.json": "fe4ec3b259af1921d400d4851535d679a1da7e6420e7f3fd98560edeb3403ab6",
+        "physical-reference-reconciliation.json": "bcfa314c6ae6afac04762ff454c2860b48e1a283497570c12f1597e9f4edf504"
+      }
+    }
+  ],
+  "nativeArchives": [
+    {
+      "manifest": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-chunk-v3-worktree/build/chunk-validation/native-failed-r1-archives/attempt-f327d788-34e5-499f-aa24-8ded447513d8/manifest.json",
+      "manifestSha256": "c48d744a06a68c8dfa16bbb5de9b7fc9027b34e1a45ab69aaefcef55e606ff5a",
+      "files": 54,
+      "directories": 13,
+      "logicalBytes": 419862847,
+      "gzipBytes": 2333967,
+      "gzipSha256": "81cea3d662868c6f19d01ca97a879fe3022183aaf8795d808194c89922c79ecc",
+      "allFileBytesModesDirectoriesReadbackPassed": true,
+      "status": "FAILED-first-arm-second-arm-not-started"
+    },
+    {
+      "manifest": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-chunk-v3-worktree/build/chunk-validation/native-success-archives/attempt-eab8c8a7-1980-4c12-a04d-80b82d219014/manifest.json",
+      "manifestSha256": "348b0df0429c2e767df1ee87826e120d883faf9d0cbf46dbf8c6d2154dee391b",
+      "files": 159,
+      "directories": 26,
+      "logicalBytes": 2487352423,
+      "gzipBytes": 19898048,
+      "gzipSha256": "b1758a36d08bca43e83a6d9ba9d0d4754f5c52a2ac66a4ccc074a001811e86d7",
+      "allFileBytesModesDirectoriesReadbackPassed": true,
+      "status": "PASSED-local-functional"
+    }
+  ],
+  "cloudCallsOrResourceCreation": false
+}

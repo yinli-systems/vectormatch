@@ -1,0 +1,63 @@
+test_absent_process_never_signalled (test_chunk_cloud_abab.IdentityGuards) ... ok
+test_exact_base_source_sha_checked (test_chunk_cloud_abab.IdentityGuards) ... ok
+test_foreign_or_reused_process_no_signal (test_chunk_cloud_abab.IdentityGuards) ... ok
+test_json_start_ticks_sha_and_full_argv_required (test_chunk_cloud_abab.IdentityGuards) ... ok
+test_linux_stat_start_time_parenthesized_comm (test_chunk_cloud_abab.IdentityGuards) ... ok
+test_pidfd_identity_rechecked_before_signal (test_chunk_cloud_abab.IdentityGuards) ... ok
+test_raw_argv_includes_executable_and_nul_boundaries (test_chunk_cloud_abab.IdentityGuards) ... ok
+test_timeout_never_escalates (test_chunk_cloud_abab.IdentityGuards) ... ok
+test_actual_finite_plan_change_rejected (test_chunk_cloud_abab.RegistryGuards) ... ok
+test_already_exited_json_record_retained (test_chunk_cloud_abab.RegistryGuards) ... ok
+test_cleanup_parent_before_final_discovery_and_each_node (test_chunk_cloud_abab.RegistryGuards) ... ok
+test_during_load_foreign_leader_rejected (test_chunk_cloud_abab.RegistryGuards) ... ok
+test_evidence_symlink_refused (test_chunk_cloud_abab.RegistryGuards) ... ok
+test_live_json_kernel_mismatch_persisted_but_not_owned (test_chunk_cloud_abab.RegistryGuards) ... ok
+test_other_java_vm_or_pg_blocks_without_signal (test_chunk_cloud_abab.RegistryGuards) ... ok
+test_oversized_log_refused_by_metadata (test_chunk_cloud_abab.RegistryGuards) ... ok
+test_recover_live_node_before_json_write (test_chunk_cloud_abab.RegistryGuards) ... ok
+test_registration_mutation_or_different_ports_refused (test_chunk_cloud_abab.RegistryGuards) ... FAIL
+test_result_requires_actual_loaded_artifacts_and_codec_plan (test_chunk_cloud_abab.RegistryGuards) ... ok
+test_same_lineage_across_arms_refused (test_chunk_cloud_abab.RegistryGuards) ... FAIL
+test_template_mismatch_not_owned (test_chunk_cloud_abab.RegistryGuards) ... ok
+test_untrusted_observation_does_not_become_owned (test_chunk_cloud_abab.RegistryGuards) ... ok
+test_artifact_closure_and_path_guard (test_chunk_cloud_abab.ReleaseGuards) ... ok
+test_complete_fixture_contract_only (test_chunk_cloud_abab.ReleaseGuards) ... ok
+test_configuration_changes_rejected (test_chunk_cloud_abab.ReleaseGuards) ... ok
+test_draft_never_executable (test_chunk_cloud_abab.ReleaseGuards) ... ok
+test_explicit_frozen_manifest_sha_required (test_chunk_cloud_abab.ReleaseGuards) ... ok
+test_host_or_attempt_change_rejected (test_chunk_cloud_abab.ReleaseGuards) ... ok
+test_missing_actual_fingerprint_rejected (test_chunk_cloud_abab.ReleaseGuards) ... ok
+test_node_classpath_not_assumed_equal_to_parent (test_chunk_cloud_abab.ReleaseGuards) ... ok
+test_noncommit_and_noncanonical_java_rejected (test_chunk_cloud_abab.ReleaseGuards) ... ok
+test_pair_bound_is_sum_plus_explicit_monitor_budget (test_chunk_cloud_abab.ReleaseGuards) ... ok
+test_parent_flags_are_fixed (test_chunk_cloud_abab.ReleaseGuards) ... ok
+test_rejected_or_wrong_derived_plan_refused (test_chunk_cloud_abab.ReleaseGuards) ... ok
+test_unknown_or_duplicate_class_source_rejected (test_chunk_cloud_abab.ReleaseGuards) ... ok
+test_1hz_bounded_timestamped_raw_flush_without_load_fsync (test_chunk_cloud_abab.TelemetryGuards) ... ok
+test_cpu_rss_io_exact_typed_counters_and_double_identity_check (test_chunk_cloud_abab.TelemetryGuards) ... ok
+test_finite_byte_cap_and_unconfirmed_stop_skip_force (test_chunk_cloud_abab.TelemetryGuards) ... ok
+test_global_aggregate_only_no_per_cpu_or_process_details (test_chunk_cloud_abab.TelemetryGuards) ... ok
+test_io_permission_or_missing_field_is_explicit_partial_failure (test_chunk_cloud_abab.TelemetryGuards) ... ok
+test_process_exit_during_metrics_does_not_get_valid_label (test_chunk_cloud_abab.TelemetryGuards) ... ok
+test_signal_interruption_not_swallowed_by_metric_collection (test_chunk_cloud_abab.TelemetryGuards) ... ok
+
+======================================================================
+FAIL: test_registration_mutation_or_different_ports_refused (test_chunk_cloud_abab.RegistryGuards)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/chunk-cloud-abab-preparation/guard-attempt-r1/test_chunk_cloud_abab.py", line 255, in test_registration_mutation_or_different_ports_refused
+    with self.assertRaisesRegex(RuntimeError, 'changed UDP ports'): self.registry.discover()
+AssertionError: RuntimeError not raised
+
+======================================================================
+FAIL: test_same_lineage_across_arms_refused (test_chunk_cloud_abab.RegistryGuards)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/chunk-cloud-abab-preparation/guard-attempt-r1/test_chunk_cloud_abab.py", line 259, in test_same_lineage_across_arms_refused
+    with self.assertRaisesRegex(RuntimeError, 'distinct fresh lineages'): self.registry.discover()
+AssertionError: RuntimeError not raised
+
+----------------------------------------------------------------------
+Ran 42 tests in 0.087s
+
+FAILED (failures=2)

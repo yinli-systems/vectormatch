@@ -1,0 +1,11 @@
+# Retained failed native attempt r1
+
+This is the first actual local chunk-candidate native attempt, not a passed pilot. Only `chunk-3072` started; `chunk-6144` did not start. The test exited1 after the initial observer required the complete egress Image identity set to remain unchanged. At approximately one second into the source window that assumption failed. The changed Image set was not retained by the original observer, so this evidence does not establish whether an Image was added, removed, or replaced.
+
+The source released500 of6400 planned arrivals before aborting:491 logical replies completed,9 identities remained UNKNOWN,0 released arrivals were marked NOT_SENT. The remaining5900 planned arrivals were unreleased due to abort. No UNKNOWN identity was reissued. The9 unknown commands may already have executed; no successful canonical final state, capacity result, or business rollback is asserted. Last successful saved actual egress metadata included two16MiB-term Images at MTU1248, leader0/term0. Saved Image reply counters are stale pre-failure snapshots and are not a complete terminal association proof.
+
+`artifact-state/manifest.json` SHA256 `0ceb21f5b8ab2d52afe1c6b5e658cb528985d39a05b5382105a1a5d8ba8bd0b8` binds the exact pre-attempt Java sources, actual compiled main classes and four runtime JARs. It is the original capture, not a reconstruction. Later lifecycle-observer fixes require a new source/artifact capture and new attempt ID; they must not be attributed to this attempt.
+
+The native tree `cluster/build/retention-chunk-native-attempts/attempt-f327d788-34e5-499f-aa24-8ded447513d8` remains in place. Its completion and owned-stop receipts report all three explicitly owned nodes stopped; `load/owner-after-close.json` reports the owner thread stopped. The complete stopped partial tree was compressed and read back:54files,419862847 logical bytes,2333967 gzip bytes. Every file hash/size/mode and directory mode matched. Native archive manifest SHA256 `c48d744a06a68c8dfa16bbb5de9b7fc9027b34e1a45ab69aaefcef55e606ff5a` is in `../native-failed-r1-archives/attempt-f327d788-34e5-499f-aa24-8ded447513d8/manifest.json`.
+
+No live cloud resource, original application state or existing frozen cohort was changed by this local attempt.

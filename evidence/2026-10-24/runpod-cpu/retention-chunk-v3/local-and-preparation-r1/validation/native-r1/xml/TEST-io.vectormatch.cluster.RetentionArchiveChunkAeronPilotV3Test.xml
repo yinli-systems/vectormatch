@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.vectormatch.cluster.RetentionArchiveChunkAeronPilotV3Test" tests="1" skipped="0" failures="1" errors="0" timestamp="2026-10-24T06:17:10.208Z" hostname="Mac" time="3.509">
+  <properties/>
+  <testcase name="fixedCapFourBothChunkPoliciesCrossMaintenanceWithActualEgressEvidence()" classname="io.vectormatch.cluster.RetentionArchiveChunkAeronPilotV3Test" time="3.509">
+    <failure message="io.vectormatch.cluster.RetentionBatchOwnerV3$OwnerFailure: V3 batch network owner failed; retain all identities and evidence" type="io.vectormatch.cluster.RetentionBatchOwnerV3$OwnerFailure">io.vectormatch.cluster.RetentionBatchOwnerV3$OwnerFailure: V3 batch network owner failed; retain all identities and evidence
+	at app//io.vectormatch.cluster.RetentionBatchOwnerV3.own(RetentionBatchOwnerV3.java:515)
+	at app//io.vectormatch.cluster.RetentionBatchOwnerV3.lambda$new$0(RetentionBatchOwnerV3.java:310)
+	at java.base@21.0.13/java.lang.Thread.run(Thread.java:1583)
+	Suppressed: io.vectormatch.cluster.RetentionBatchOwnerV3$OwnerFailure: V3 batch network owner failed; retain all identities and evidence
+		at app//io.vectormatch.cluster.RetentionBatchOwnerV3.healthy(RetentionBatchOwnerV3.java:349)
+		at app//io.vectormatch.cluster.RetentionBatchOwnerV3.close(RetentionBatchOwnerV3.java:569)
+		at app//io.vectormatch.cluster.RetentionCapacityExperimentV3.execute(RetentionCapacityExperimentV3.java:89)
+		at app//io.vectormatch.cluster.RetentionCapacityExperimentV3.run(RetentionCapacityExperimentV3.java:65)
+		at app//io.vectormatch.cluster.RetentionCapacityAeronPilotV3.exercise(RetentionCapacityAeronPilotV3.java:109)
+		at app//io.vectormatch.cluster.RetentionCapacityAeronPilotV3.runArchiveChunks(RetentionCapacityAeronPilotV3.java:79)
+		at app//io.vectormatch.cluster.RetentionCapacityAeronPilotV3.runArchiveChunks(RetentionCapacityAeronPilotV3.java:72)
+		at app//io.vectormatch.cluster.RetentionArchiveChunkAeronPilotV3Test.fixedCapFourBothChunkPoliciesCrossMaintenanceWithActualEgressEvidence(RetentionArchiveChunkAeronPilotV3Test.java:10)
+		at java.base@21.0.13/java.lang.reflect.Method.invoke(Method.java:580)
+		at java.base@21.0.13/java.util.ArrayList.forEach(ArrayList.java:1596)
+		at java.base@21.0.13/java.util.ArrayList.forEach(ArrayList.java:1596)
+	Caused by: java.lang.IllegalStateException: actual egress Image set drift
+		at io.vectormatch.cluster.RetentionEgressBoundsV3.observe(RetentionEgressBoundsV3.java:44)
+		at io.vectormatch.cluster.RetentionBatchAeronTransportV3.observeImages(RetentionBatchAeronTransportV3.java:142)
+		at io.vectormatch.cluster.RetentionBatchAeronTransportV3.observation(RetentionBatchAeronTransportV3.java:98)
+		at io.vectormatch.cluster.RetentionCapacityExperimentV3$Tape.observation(RetentionCapacityExperimentV3.java:234)
+		at io.vectormatch.cluster.RetentionBatchOwnerV3.captureTransport(RetentionBatchOwnerV3.java:525)
+		at io.vectormatch.cluster.RetentionBatchOwnerV3.own(RetentionBatchOwnerV3.java:495)
+		at io.vectormatch.cluster.RetentionBatchOwnerV3.lambda$new$0(RetentionBatchOwnerV3.java:310)
+		at java.base/java.lang.Thread.run(Thread.java:1583)
+		Suppressed: java.lang.IllegalStateException: actual egress Image set drift
+			at io.vectormatch.cluster.RetentionEgressBoundsV3.observe(RetentionEgressBoundsV3.java:44)
+			at io.vectormatch.cluster.RetentionBatchAeronTransportV3.observeImages(RetentionBatchAeronTransportV3.java:142)
+			at io.vectormatch.cluster.RetentionBatchAeronTransportV3.observation(RetentionBatchAeronTransportV3.java:98)
+			at io.vectormatch.cluster.RetentionCapacityExperimentV3$Tape.observation(RetentionCapacityExperimentV3.java:234)
+			at io.vectormatch.cluster.RetentionBatchOwnerV3.captureTransport(RetentionBatchOwnerV3.java:525)
+			at io.vectormatch.cluster.RetentionBatchOwnerV3.own(RetentionBatchOwnerV3.java:518)
+			... 2 more
+Caused by: java.lang.IllegalStateException: actual egress Image set drift
+	at io.vectormatch.cluster.RetentionEgressBoundsV3.observe(RetentionEgressBoundsV3.java:44)
+	at io.vectormatch.cluster.RetentionBatchAeronTransportV3.observeImages(RetentionBatchAeronTransportV3.java:142)
+	at io.vectormatch.cluster.RetentionBatchAeronTransportV3.observation(RetentionBatchAeronTransportV3.java:98)
+	at io.vectormatch.cluster.RetentionCapacityExperimentV3$Tape.observation(RetentionCapacityExperimentV3.java:234)
+	at io.vectormatch.cluster.RetentionBatchOwnerV3.captureTransport(RetentionBatchOwnerV3.java:525)
+	at io.vectormatch.cluster.RetentionBatchOwnerV3.own(RetentionBatchOwnerV3.java:495)
+	... 2 more
+	Suppressed: java.lang.IllegalStateException: actual egress Image set drift
+		at io.vectormatch.cluster.RetentionEgressBoundsV3.observe(RetentionEgressBoundsV3.java:44)
+		at io.vectormatch.cluster.RetentionBatchAeronTransportV3.observeImages(RetentionBatchAeronTransportV3.java:142)
+		at io.vectormatch.cluster.RetentionBatchAeronTransportV3.observation(RetentionBatchAeronTransportV3.java:98)
+		at io.vectormatch.cluster.RetentionCapacityExperimentV3$Tape.observation(RetentionCapacityExperimentV3.java:234)
+		at io.vectormatch.cluster.RetentionBatchOwnerV3.captureTransport(RetentionBatchOwnerV3.java:525)
+		at io.vectormatch.cluster.RetentionBatchOwnerV3.own(RetentionBatchOwnerV3.java:518)
+		... 2 more
+</failure>
+  </testcase>
+  <system-out><![CDATA[VECTOR_V3_SERVICE_READY profile=732201775469861083f9dd0798a465dec1d0ed6bff39ed281dbef58c28b9fc68 lineage=capacity-pilot-6e4964e8-6d87-44df-9645-dba68b8d7ae1 restored=false hash=91e8c56b863c6edda7686a536e8cfe940d7566125cfbcc437cb159af1a4b759d
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
