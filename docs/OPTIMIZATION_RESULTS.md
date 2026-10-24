@@ -147,7 +147,7 @@ B两轮完成canonical终态、逐条业务回复和资产验证，且初次/最
 
 平均活跃请求仍约127.94–127.96/128槽位；B2平均API执行从B1的8.605ms升至11.183ms。核对169项input/tool SHA的[正式归因](../evidence/2026-10-23/runpod-optimization/pipeline-capacity/analysis/attribution-summary.json)显示，B2匹配的owned UDP drops均0，但node0 NAK sent从B1的54升至41,364；约18秒窗口内node0相关线程累计runqueue等待也增加，cgroup限流仍0。这些支持检验传输恢复与调度等待，不能唯一定位丢包、宿主机或持久化瓶颈，也不能把累计等待当作单请求p99。multiplexed的CPU/FD/socket节省仍重复出现，资源收益与稳定容量分别验收。
 
-下一node-only试验只改变节点最大park：1ms与100µs，双方固定multiplexed负载及其余配置。新节点87ad通过132项Java测试和三节点不可变上传校验；严格10k/s、350k pilot已登记提交，尚未据此声称性能改善。实际进度和独立node/load/analysis身份见[idle报告](../evidence/2026-10-23/runpod-optimization/idle/README.md)。
+下一node-only试验只改变节点最大park：1ms与100µs，双方固定multiplexed负载及其余配置。新节点87ad通过132项Java测试和三节点不可变上传校验。100µs的严格10k/s、350k pilot已完整通过：全部接受，窗口goodput9998.771/s，全量p9923.711ms，drain8.759ms，初次/最终unknown、未发送、拒绝和server error全0。独立归因核对63项input/tool SHA；该pilot没有同新artifact的A控制组，不能单凭旧pilot的差异声称单因子收益。26k/s正式A/B/A/B随后登记并启动，结果另报。实际方法、独立node/load/analysis身份及审计工具失败记录见[idle报告](../evidence/2026-10-23/runpod-optimization/idle/README.md)。
 
 ## 已完成的代码验证
 
@@ -176,6 +176,12 @@ B两轮完成canonical终态、逐条业务回复和资产验证，且初次/最
 3. 明确 producer high-water、幂等结果保留窗及过期请求语义。已过重试保留窗的旧请求可拒绝或查询持久审计记录，不能被误当作新命令再执行；恢复后规则必须保持。
 
 真正验收应在持续运行、跨越多次清理/checkpoint 和至少一次故障恢复的情况下，由独立审计游标与唯一业务身份核对 **≥100,000,000 个 accepted new commands**，同时证明资产守恒、事件连续、无重复执行、最终未知结果归零，保留拒绝/丢弃/重试与窗口吞吐曲线。有限 isolated epochs 的累计量可单独报告，不能称作不间断服务运行。
+
+代码级复核给出的最小后续方案是显式版本化的long-run-v2合同，目前尚未实现。现有[orders/clientIds](../core/src/main/java/io/vectormatch/core/MatchingEngine.java)同时承担全历史client-order唯一性，直接删终态记录会改变业务语义。v2可限定client-order-id由account/固定producer/requestSeq规范派生，永久保留producer high-water；旧任意字符串ID接口继续保留原合同。完整command/result审计记录必须与状态机同次提交，覆盖新请求的业务拒绝；当前Event尚无producer/request身份，不足以单独审计一亿新命令。
+
+已有[projector](../projector/src/main/java/io/vectormatch/projector/ReliableProjector.java)和[PostgreSQL事务](../projector/src/main/java/io/vectormatch/projector/PostgresEventStore.java)遵循commit后ACK，可扩展为结果账本、历史订单和cursor同事务提交。随后新增绑定stream lineage与受信consumer的durable watermark，以及确定性的有界replicated prune：只清理closedEventSeq不大于durableAck的终态，保留活跃book、余额、FIFO、订单/事件序列和幂等high-water，并版本化checkpoint。缓存外的STALE_SEQUENCE代表这次未重新执行，不能推断原结果失败；须按原身份查持久账本，不能换ID补单。这些均为待实现事项，现有数字ACK自身不是独立的外部持久化证明。
+
+应先以小retained/outbox/cache连续跨越多轮上限、GC、checkpoint和冷恢复，并在数据库commit前后、ACK丢失、GC前后注入故障，对照不GC参考的每个新业务结果、active book和资产，验证旧身份及冲突载荷永不二次执行。通过后才运行单stream、不reset的一亿fresh accepted Place+trade审计。当前fixture仅380k maker lots与64买家各1.9B quote，也必须更换：同单价/单lot工作负载至少需100000100 maker lots及每买家15.625B quote，另计预热与分配余量。控制命令、重试、缓存回复不计入一亿成功新订单。
 
 仅按历史 13k/s 估算，纯发送一亿条也需约 2.14 小时；这是算术下界，未含当前大约分钟级的准备、快照和终态验证，更不是已测可持续吞吐或完整费用报价。现有逐 190k 轮次流程不能据此承诺在总预算 20 美元内完成该验收。
 
