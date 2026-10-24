@@ -59,19 +59,21 @@ tasks.register<JavaExec>("jmh") {
     mainClass.set("org.openjdk.jmh.Main")
     workingDir = rootProject.projectDir
     doFirst {
-        require(listOf("-rff", "-rf", "-foe").all { flag -> args.count { it == flag } <= 1 }) { "Duplicate JMH result/failure options" }
-        if ("-foe" !in args) args("-foe", "true")
-        val failure = args.indexOf("-foe")
-        require(failure + 1 < args.size && args[failure + 1] == "true") { "JMH must fail on fixture/benchmark errors" }
-        if ("-rf" !in args) args("-rf", "json")
-        val format = args.indexOf("-rf")
-        require(format + 1 < args.size && args[format + 1] == "json") { "Structured JMH JSON output is required" }
-        if ("-rff" !in args) args("-rff", layout.buildDirectory.file("reports/jmh/run-${System.currentTimeMillis()}.json").get().asFile.absolutePath)
-        val output = args.indexOf("-rff")
-        require(output + 1 < args.size) { "JMH -rff requires an output path" }
-        val target = rootProject.file(args[output + 1])
+        val arguments = args?.toMutableList() ?: mutableListOf()
+        require(listOf("-rff", "-rf", "-foe").all { flag -> arguments.count { it == flag } <= 1 }) { "Duplicate JMH result/failure options" }
+        if ("-foe" !in arguments) arguments.addAll(listOf("-foe", "true"))
+        val failure = arguments.indexOf("-foe")
+        require(failure + 1 < arguments.size && arguments[failure + 1] == "true") { "JMH must fail on fixture/benchmark errors" }
+        if ("-rf" !in arguments) arguments.addAll(listOf("-rf", "json"))
+        val format = arguments.indexOf("-rf")
+        require(format + 1 < arguments.size && arguments[format + 1] == "json") { "Structured JMH JSON output is required" }
+        if ("-rff" !in arguments) arguments.addAll(listOf("-rff", layout.buildDirectory.file("reports/jmh/run-${System.currentTimeMillis()}.json").get().asFile.absolutePath))
+        val output = arguments.indexOf("-rff")
+        require(output + 1 < arguments.size) { "JMH -rff requires an output path" }
+        val target = rootProject.file(arguments[output + 1])
         require(!target.exists()) { "Refusing to overwrite existing JMH evidence: $target" }
         target.parentFile.mkdirs()
+        setArgs(arguments)
     }
 }
 
