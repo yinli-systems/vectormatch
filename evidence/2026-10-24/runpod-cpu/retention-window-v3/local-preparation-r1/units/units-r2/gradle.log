@@ -1,0 +1,113 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :core:compileJava
+> Task :core:processResources NO-SOURCE
+> Task :core:classes
+> Task :core:jar
+> Task :core:compileTestJava
+> Task :core:processTestResources
+> Task :core:testClasses
+> Task :core:test
+
+> Task :cluster:compileJava
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchOwnerV3.java:144: warning: [serial] non-transient instance field of a serializable class declared with a non-serializable type
+        private final List<byte[]> wires;
+                                   ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchOwnerV3.java:145: warning: [serial] non-transient instance field of a serializable class declared with a non-serializable type
+        private final List<Map<String,Object>> observations;
+                                               ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchMaintenanceV3.java:77: warning: [serial] non-transient instance field of a serializable class declared with a non-serializable type
+        private final List<byte[]> wires;
+                                   ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchMaintenanceV3.java:78: warning: [serial] non-transient instance field of a serializable class declared with a non-serializable type
+        private final List<Map<String,Object>> observations;
+                                               ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/main/java/io/vectormatch/cluster/MultiplexedLoadTransports.java:32: warning: [serial] serializable class OwnerFailure has no definition of serialVersionUID
+    static final class OwnerFailure extends Error {
+                 ^
+5 warnings
+
+> Task :cluster:processResources NO-SOURCE
+> Task :cluster:classes
+> Task :cluster:jar
+
+> Task :cluster:compileTestJava
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:98: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+    private final class Fixture implements AutoCloseable {
+                  ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:162: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        for(int window:new int[]{1,8})try(var f=new Fixture("success-"+window,window,false)){
+                                              ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:180: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture("request-failure",8,false)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:189: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture("reply-failure",8,false)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:199: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture("timing-failure",8,false)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:207: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture("event-mismatch",8,false)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:217: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture("writer-failure",8,true)){
+                ^
+7 warnings
+
+> Task :cluster:processTestResources NO-SOURCE
+> Task :cluster:testClasses
+
+> Task :cluster:test
+
+RetentionCapacityPlanV3Test > readWindowsShareTheCompleteEightReadEnvelopeAndAllRuntimeCaps() FAILED
+    org.opentest4j.AssertionFailedError: [derived payload/trace/native-reserve allocation exceeds 2.5GiB growth cap] ==> expected: <true> but was: <false>
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+        at app//org.junit.jupiter.api.AssertTrue.failNotTrue(AssertTrue.java:63)
+        at app//org.junit.jupiter.api.AssertTrue.assertTrue(AssertTrue.java:36)
+        at app//org.junit.jupiter.api.Assertions.assertTrue(Assertions.java:214)
+        at app//io.vectormatch.cluster.RetentionCapacityPlanV3Test.readWindowsShareTheCompleteEightReadEnvelopeAndAllRuntimeCaps(RetentionCapacityPlanV3Test.java:104)
+
+RetentionReadBankV3Test > firstReadErrorOrMalformedBindingFailsAllSiblingsAndCannotReachAck() FAILED
+    org.opentest4j.AssertionFailedError: Unexpected exception type thrown, expected: <java.lang.IllegalStateException> but was: <io.vectormatch.cluster.RetentionBatchOwnerV3.OwnerFailure>
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+        at app//org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:67)
+        at app//org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35)
+        at app//org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3128)
+        at app//io.vectormatch.cluster.RetentionReadBankV3Test.firstReadErrorOrMalformedBindingFailsAllSiblingsAndCannotReachAck(RetentionReadBankV3Test.java:267)
+
+        Caused by:
+        io.vectormatch.cluster.RetentionBatchOwnerV3$OwnerFailure: V3 batch network owner failed; retain all identities and evidence
+            at app//io.vectormatch.cluster.RetentionBatchOwnerV3.healthy(RetentionBatchOwnerV3.java:466)
+            at app//io.vectormatch.cluster.RetentionBatchOwnerV3.submitMaintenance(RetentionBatchOwnerV3.java:238)
+            at app//io.vectormatch.cluster.RetentionReadBankV3Test.lambda$firstReadErrorOrMalformedBindingFailsAllSiblingsAndCannotReachAck$43(RetentionReadBankV3Test.java:267)
+            at app//org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:53)
+            ... 3 more
+
+            Caused by:
+            java.lang.IllegalStateException: maintenance chunk binding differs
+                at io.vectormatch.cluster.RetentionBatchOwnerV3.receiveMaintenance(RetentionBatchOwnerV3.java:312)
+                at io.vectormatch.cluster.RetentionBatchOwnerV3.receive(RetentionBatchOwnerV3.java:514)
+                at io.vectormatch.cluster.RetentionReadBankV3Test$FakeIO.poll(RetentionReadBankV3Test.java:71)
+                at io.vectormatch.cluster.RetentionBatchOwnerV3.own(RetentionBatchOwnerV3.java:615)
+                at io.vectormatch.cluster.RetentionBatchOwnerV3.lambda$new$0(RetentionBatchOwnerV3.java:427)
+                at java.base/java.lang.Thread.run(Thread.java:1583)
+
+132 tests completed, 2 failed
+
+> Task :cluster:test FAILED
+
+[Incubating] Problems report is available at: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/retention-window-v3-worktree/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':cluster:test'.
+> There were failing tests. See the report at: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 14s
+9 actionable tasks: 9 executed

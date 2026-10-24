@@ -1,0 +1,192 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :core:compileJava
+> Task :core:processResources NO-SOURCE
+> Task :core:classes
+> Task :core:jar
+> Task :core:compileTestJava
+> Task :core:processTestResources
+> Task :core:testClasses
+> Task :core:test
+
+> Task :cluster:compileJava
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchOwnerV3.java:144: warning: [serial] non-transient instance field of a serializable class declared with a non-serializable type
+        private final List<byte[]> wires;
+                                   ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchOwnerV3.java:145: warning: [serial] non-transient instance field of a serializable class declared with a non-serializable type
+        private final List<Map<String,Object>> observations;
+                                               ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchMaintenanceV3.java:77: warning: [serial] non-transient instance field of a serializable class declared with a non-serializable type
+        private final List<byte[]> wires;
+                                   ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchMaintenanceV3.java:78: warning: [serial] non-transient instance field of a serializable class declared with a non-serializable type
+        private final List<Map<String,Object>> observations;
+                                               ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/main/java/io/vectormatch/cluster/MultiplexedLoadTransports.java:32: warning: [serial] serializable class OwnerFailure has no definition of serialVersionUID
+    static final class OwnerFailure extends Error {
+                 ^
+5 warnings
+
+> Task :cluster:processResources NO-SOURCE
+> Task :cluster:classes
+> Task :cluster:jar
+
+> Task :cluster:compileTestJava
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:98: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+    private final class Fixture implements AutoCloseable {
+                  ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:162: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        for(int window:new int[]{1,8})try(var f=new Fixture("success-"+window,window,false)){
+                                              ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:180: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture("request-failure",8,false)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:189: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture("reply-failure",8,false)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:199: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture("timing-failure",8,false)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:207: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture("event-mismatch",8,false)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:217: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture("writer-failure",8,true)){
+                ^
+7 warnings
+
+> Task :cluster:processTestResources NO-SOURCE
+> Task :cluster:testClasses
+
+> Task :cluster:test
+
+RetentionArchiveChunkPolicyV3Test > defaultRequestPolicyIsStillThreeKiBAndUnsupportedFactorsAreRejected() FAILED
+    java.lang.IllegalArgumentException: event response counters disagree
+        at io.vectormatch.cluster.RetentionReplyV3$Reply.<init>(RetentionReplyV3.java:182)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.probe(RetentionCapacityPlanV3.java:295)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:175)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:168)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.plan(RetentionCapacityPlanV3.java:109)
+        at io.vectormatch.cluster.RetentionArchiveChunkPolicyV3Test.defaultRequestPolicyIsStillThreeKiBAndUnsupportedFactorsAreRejected(RetentionArchiveChunkPolicyV3Test.java:34)
+
+RetentionArchiveChunkPolicyV3Test > selectedChunkCountsDifferButEveryRuntimeStopEnvelopeAndEventBudgetIsCommon() FAILED
+    java.lang.IllegalArgumentException: event response counters disagree
+        at io.vectormatch.cluster.RetentionReplyV3$Reply.<init>(RetentionReplyV3.java:182)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.probe(RetentionCapacityPlanV3.java:295)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:175)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:168)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.plan(RetentionCapacityPlanV3.java:109)
+        at io.vectormatch.cluster.RetentionCapacityExperimentV3.boundedPlan(RetentionCapacityExperimentV3.java:75)
+        at io.vectormatch.cluster.RetentionArchiveChunkPolicyV3Test.selectedChunkCountsDifferButEveryRuntimeStopEnvelopeAndEventBudgetIsCommon(RetentionArchiveChunkPolicyV3Test.java:43)
+
+RetentionCapacityDiskGuardV3Test > allocatedGrowthAndCurrentFreeSpaceIndependentlyStopTheRun() FAILED
+    java.lang.IllegalArgumentException: event response counters disagree
+        at io.vectormatch.cluster.RetentionReplyV3$Reply.<init>(RetentionReplyV3.java:182)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.probe(RetentionCapacityPlanV3.java:295)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:175)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:168)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.plan(RetentionCapacityPlanV3.java:109)
+        at io.vectormatch.cluster.RetentionCapacityDiskGuardV3Test.plan(RetentionCapacityDiskGuardV3Test.java:16)
+        at io.vectormatch.cluster.RetentionCapacityDiskGuardV3Test.allocatedGrowthAndCurrentFreeSpaceIndependentlyStopTheRun(RetentionCapacityDiskGuardV3Test.java:20)
+
+RetentionCapacityDiskGuardV3Test > rejectsUnavailableAccountingNonfreshRootLowInitialFreeAndChangedIdentity() FAILED
+    java.lang.IllegalArgumentException: event response counters disagree
+        at io.vectormatch.cluster.RetentionReplyV3$Reply.<init>(RetentionReplyV3.java:182)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.probe(RetentionCapacityPlanV3.java:295)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:175)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:168)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.plan(RetentionCapacityPlanV3.java:109)
+        at io.vectormatch.cluster.RetentionCapacityDiskGuardV3Test.plan(RetentionCapacityDiskGuardV3Test.java:16)
+        at io.vectormatch.cluster.RetentionCapacityDiskGuardV3Test.rejectsUnavailableAccountingNonfreshRootLowInitialFreeAndChangedIdentity(RetentionCapacityDiskGuardV3Test.java:34)
+
+RetentionCapacityPlanV3Test > readWindowReservesCoverRealCodecOriginalsRepliesAndFailureMetadata() FAILED
+    java.lang.IllegalArgumentException: event response counters disagree
+        at io.vectormatch.cluster.RetentionReplyV3$Reply.<init>(RetentionReplyV3.java:182)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.probe(RetentionCapacityPlanV3.java:295)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:175)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.commonReadWindowPlan(RetentionCapacityPlanV3.java:143)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3Test.readWindowReservesCoverRealCodecOriginalsRepliesAndFailureMetadata(RetentionCapacityPlanV3Test.java:133)
+
+RetentionCapacityPlanV3Test > cap4CannotAssumePackedFramesAndExplicitGlobalRetryBudgetIsAccounted() FAILED
+    java.lang.IllegalArgumentException: event response counters disagree
+        at io.vectormatch.cluster.RetentionReplyV3$Reply.<init>(RetentionReplyV3.java:182)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.probe(RetentionCapacityPlanV3.java:295)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:175)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:168)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.plan(RetentionCapacityPlanV3.java:109)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3Test.cap4CannotAssumePackedFramesAndExplicitGlobalRetryBudgetIsAccounted(RetentionCapacityPlanV3Test.java:35)
+
+RetentionCapacityPlanV3Test > readWindowsShareTheCompleteEightReadEnvelopeAndAllRuntimeCaps() FAILED
+    java.lang.IllegalArgumentException: event response counters disagree
+        at io.vectormatch.cluster.RetentionReplyV3$Reply.<init>(RetentionReplyV3.java:182)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.probe(RetentionCapacityPlanV3.java:295)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:175)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:168)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.plan(RetentionCapacityPlanV3.java:109)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3Test.readWindowsShareTheCompleteEightReadEnvelopeAndAllRuntimeCaps(RetentionCapacityPlanV3Test.java:101)
+
+RetentionCapacityPlanV3Test > invalidInputsAndInsufficientFiniteJournalAreExplicitlyRejected() FAILED
+    java.lang.IllegalArgumentException: event response counters disagree
+        at io.vectormatch.cluster.RetentionReplyV3$Reply.<init>(RetentionReplyV3.java:182)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.probe(RetentionCapacityPlanV3.java:295)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:175)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:168)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.plan(RetentionCapacityPlanV3.java:109)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3Test.invalidInputsAndInsufficientFiniteJournalAreExplicitlyRejected(RetentionCapacityPlanV3Test.java:94)
+
+RetentionCapacityPlanV3Test > readWindowInputsAndLegacyDefaultsRetainExistingFiniteHardCaps() FAILED
+    java.lang.IllegalArgumentException: event response counters disagree
+        at io.vectormatch.cluster.RetentionReplyV3$Reply.<init>(RetentionReplyV3.java:182)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.probe(RetentionCapacityPlanV3.java:295)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:175)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:168)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.plan(RetentionCapacityPlanV3.java:109)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3Test.readWindowInputsAndLegacyDefaultsRetainExistingFiniteHardCaps(RetentionCapacityPlanV3Test.java:145)
+
+RetentionCapacityPlanV3Test > realSerializedPrefixesWithSequenceGapsFitTheCodecWitnessBound() FAILED
+    java.lang.IllegalArgumentException: event response counters disagree
+        at io.vectormatch.cluster.RetentionReplyV3$Reply.<init>(RetentionReplyV3.java:182)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.probe(RetentionCapacityPlanV3.java:295)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:175)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:168)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.plan(RetentionCapacityPlanV3.java:109)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3Test.realSerializedPrefixesWithSequenceGapsFitTheCodecWitnessBound(RetentionCapacityPlanV3Test.java:54)
+
+RetentionCapacityPlanV3Test > prospective350kInventoryIncludesSeparateSetupAndAllFetchChunkAndAckRpcs() FAILED
+    java.lang.IllegalArgumentException: event response counters disagree
+        at io.vectormatch.cluster.RetentionReplyV3$Reply.<init>(RetentionReplyV3.java:182)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.probe(RetentionCapacityPlanV3.java:295)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:175)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.calculate(RetentionCapacityPlanV3.java:168)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3.plan(RetentionCapacityPlanV3.java:109)
+        at io.vectormatch.cluster.RetentionCapacityPlanV3Test.prospective350kInventoryIncludesSeparateSetupAndAllFetchChunkAndAckRpcs(RetentionCapacityPlanV3Test.java:17)
+
+RetentionReadBankV3Test > firstReadErrorOrMalformedBindingFailsAllSiblingsAndCannotReachAck() FAILED
+    java.lang.NullPointerException
+        at java.base/java.util.Objects.requireNonNull(Objects.java:233)
+        at io.vectormatch.cluster.RetentionReplyV3$Reply.<init>(RetentionReplyV3.java:166)
+        at io.vectormatch.cluster.RetentionReadBankV3Test.firstReadErrorOrMalformedBindingFailsAllSiblingsAndCannotReachAck(RetentionReadBankV3Test.java:263)
+
+RetentionReadBankV3Test > lateCallbacksStayHarmlessAfterRetirementEvictionAndLaterArchiveAck() FAILED
+    java.lang.NullPointerException
+        at java.base/java.util.Objects.requireNonNull(Objects.java:233)
+        at io.vectormatch.cluster.RetentionReplyV3$Reply.<init>(RetentionReplyV3.java:166)
+        at io.vectormatch.cluster.RetentionReadBankV3Test.lateCallbacksStayHarmlessAfterRetirementEvictionAndLaterArchiveAck(RetentionReadBankV3Test.java:306)
+
+132 tests completed, 13 failed
+
+> Task :cluster:test FAILED
+
+[Incubating] Problems report is available at: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/retention-window-v3-worktree/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':cluster:test'.
+> There were failing tests. See the report at: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/retention-window-v3-worktree/cluster/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 13s
+9 actionable tasks: 9 executed
