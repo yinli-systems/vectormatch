@@ -1,6 +1,6 @@
 # Read-only maintenance credit experiment: 8 vs 32
 
-Status: **candidate implementation / no native performance result yet**. All values below are experiment settings or pass criteria, not achieved measurements.
+Status: **predeclared experiment plan, retained verbatim below**. Four exploratory, single-host, RAM-backed native ABAB runs were subsequently completed on 2026-10-24; see [measured results and limitations](READ_WINDOW32_RAMDISK_ABAB_2026-10-24.md). **Disk-backed qualification remains outstanding.** All numeric values and gates in the sections below are original settings or pass criteria, not claimed measurements.
 
 ## Why this factor
 
