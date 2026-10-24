@@ -1,0 +1,26 @@
+{
+  "method": "Reproduce exact loaded code fingerprint using native artifact-inventory.sha256 sources: cluster sorted class paths/bytes; core JAR; Aeron-all full JAR twice because actual DirectBuffer resolves from Aeron-all, not the separate Agrona JAR",
+  "sources": [
+    {
+      "type": "io.vectormatch.cluster.RetentionNodeMainV3",
+      "actualSource": "cluster"
+    },
+    {
+      "type": "io.vectormatch.core.MatchingEngine",
+      "actualSource": "core-0.1.0-SNAPSHOT.jar"
+    },
+    {
+      "type": "io.aeron.driver.MediaDriver",
+      "actualSource": "aeron-all-1.53.3.jar"
+    },
+    {
+      "type": "org.agrona.DirectBuffer",
+      "actualSource": "aeron-all-1.53.3.jar"
+    }
+  ],
+  "recomputed": "3cd46307eb53baf35404643cdac5795e98c294a5b7e93d6f1ecc66bdcc72844b",
+  "nativeReported": "3cd46307eb53baf35404643cdac5795e98c294a5b7e93d6f1ecc66bdcc72844b",
+  "passed": true,
+  "noLiveClassFilesRequired": true,
+  "initialLocalVerificationFailure": "First offline assumption used core classes and separate Agrona JAR; actual native inventory showed core JAR and bundled DirectBuffer. No input or runtime artifacts changed; corrected actual-source mapping matches exactly."
+}

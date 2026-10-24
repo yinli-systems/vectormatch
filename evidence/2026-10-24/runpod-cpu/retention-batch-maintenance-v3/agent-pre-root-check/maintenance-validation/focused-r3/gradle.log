@@ -1,0 +1,65 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :cluster:processResources NO-SOURCE
+> Task :cluster:processTestResources NO-SOURCE
+> Task :core:compileJava UP-TO-DATE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar UP-TO-DATE
+> Task :core:compileTestJava
+> Task :core:processTestResources UP-TO-DATE
+> Task :core:testClasses
+> Task :cluster:compileJava
+> Task :cluster:classes
+> Task :core:test
+> Task :cluster:compileTestJava
+> Task :cluster:testClasses
+
+> Task :cluster:test FAILED
+
+RetentionDurableWriterV3Test > postForceCorruptionLeavesRawFileWithoutSuccessReceiptOrAckAuthorization() FAILED
+    java.io.IOException: symlink writer path refused
+        at io.vectormatch.cluster.RetentionDurableWriterV3.<init>(RetentionDurableWriterV3.java:65)
+        at io.vectormatch.cluster.RetentionDurableWriterV3Test.postForceCorruptionLeavesRawFileWithoutSuccessReceiptOrAckAuthorization(RetentionDurableWriterV3Test.java:42)
+
+RetentionDurableWriterV3Test > malformedEventPrefixAndByteBudgetsFailWithoutVerifiedSuccess() FAILED
+    java.io.IOException: symlink writer path refused
+        at io.vectormatch.cluster.RetentionDurableWriterV3.<init>(RetentionDurableWriterV3.java:65)
+        at io.vectormatch.cluster.RetentionDurableWriterV3.<init>(RetentionDurableWriterV3.java:58)
+        at io.vectormatch.cluster.RetentionDurableWriterV3Test.malformedEventPrefixAndByteBudgetsFailWithoutVerifiedSuccess(RetentionDurableWriterV3Test.java:65)
+
+RetentionDurableWriterV3Test > oneActivePlusOneQueuedIsBoundedAndOriginalCallerBytesCannotMutateJob() FAILED
+    java.io.IOException: symlink writer path refused
+        at io.vectormatch.cluster.RetentionDurableWriterV3.<init>(RetentionDurableWriterV3.java:65)
+        at io.vectormatch.cluster.RetentionDurableWriterV3Test.oneActivePlusOneQueuedIsBoundedAndOriginalCallerBytesCannotMutateJob(RetentionDurableWriterV3Test.java:56)
+
+RetentionDurableWriterV3Test > forceAndFullReadbackProduceSeparateVerifiedPrefixAndExactEventReceipts() FAILED
+    java.io.IOException: symlink writer path refused
+        at io.vectormatch.cluster.RetentionDurableWriterV3.<init>(RetentionDurableWriterV3.java:65)
+        at io.vectormatch.cluster.RetentionDurableWriterV3.<init>(RetentionDurableWriterV3.java:58)
+        at io.vectormatch.cluster.RetentionDurableWriterV3Test.forceAndFullReadbackProduceSeparateVerifiedPrefixAndExactEventReceipts(RetentionDurableWriterV3Test.java:32)
+
+RetentionDurableWriterV3Test > extendedReadbackIsRejectedBeforeAllocatingUnexpectedFileSize() FAILED
+    java.io.IOException: symlink writer path refused
+        at io.vectormatch.cluster.RetentionDurableWriterV3.<init>(RetentionDurableWriterV3.java:65)
+        at io.vectormatch.cluster.RetentionDurableWriterV3Test.extendedReadbackIsRejectedBeforeAllocatingUnexpectedFileSize(RetentionDurableWriterV3Test.java:49)
+
+RetentionMaintenanceBudgetV3Test > functionalCoordinatorRejectsOversizedCutBeforeAnyRpcAndKeepsFailureEvidence() FAILED
+    java.io.IOException: symlink writer path refused
+        at io.vectormatch.cluster.RetentionDurableWriterV3.<init>(RetentionDurableWriterV3.java:65)
+        at io.vectormatch.cluster.RetentionDurableWriterV3.<init>(RetentionDurableWriterV3.java:58)
+        at io.vectormatch.cluster.RetentionMaintenanceBudgetV3Test.functionalCoordinatorRejectsOversizedCutBeforeAnyRpcAndKeepsFailureEvidence(RetentionMaintenanceBudgetV3Test.java:32)
+
+35 tests completed, 6 failed
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':cluster:test'.
+> There were failing tests. See the report at: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/retention-batch-maintenance-v3-worktree/cluster/build/reports/tests/test/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+BUILD FAILED in 4s
+8 actionable tasks: 5 executed, 3 up-to-date

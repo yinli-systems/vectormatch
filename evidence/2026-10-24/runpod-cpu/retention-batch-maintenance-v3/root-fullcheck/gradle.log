@@ -1,0 +1,92 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :check UP-TO-DATE
+> Task :bench:processResources NO-SOURCE
+> Task :bench:processTestResources NO-SOURCE
+> Task :cluster:processResources NO-SOURCE
+> Task :cluster:processTestResources NO-SOURCE
+> Task :projector:processResources
+> Task :projector:processTestResources NO-SOURCE
+> Task :server:processResources NO-SOURCE
+> Task :server:processTestResources NO-SOURCE
+> Task :core:compileJava
+> Task :core:processResources NO-SOURCE
+> Task :core:classes
+> Task :core:jar
+> Task :bench:compileJava
+> Task :bench:classes
+> Task :bench:compileTestJava
+> Task :bench:testClasses
+
+> Task :cluster:compileJava
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-batch-maintenance-v3-worktree/cluster/src/main/java/io/vectormatch/cluster/MultiplexedLoadTransports.java:32: warning: [serial] serializable class OwnerFailure has no definition of serialVersionUID
+    static final class OwnerFailure extends Error {
+                 ^
+1 warning
+
+> Task :cluster:classes
+> Task :cluster:jar
+> Task :cluster:compileTestJava
+> Task :cluster:testClasses
+> Task :bench:test
+> Task :bench:check
+> Task :core:compileTestJava
+> Task :core:processTestResources
+> Task :core:testClasses
+> Task :core:test
+> Task :core:check
+> Task :projector:compileJava
+> Task :projector:classes
+> Task :projector:jar
+> Task :projector:compileTestJava
+> Task :projector:testClasses
+
+> Task :projector:test
+
+PostgresProjectorIntegrationTest > publicMarketGapRollsBackAndNoAckIsSent() SKIPPED
+
+PostgresProjectorIntegrationTest > sourceResetBetweenDatabaseCommitAndAckIsTerminalWithoutRetry() SKIPPED
+
+PostgresProjectorIntegrationTest > commitThenLostAckRecoversFromDatabaseCursorWithoutDuplicateEffects() SKIPPED
+
+PostgresProjectorIntegrationTest > identicalBatchIsDeduplicatedButConflictingPayloadIsTerminal() SKIPPED
+
+PostgresProjectorIntegrationTest > commitIsVisibleBeforeAckAndCountersAreDurable() SKIPPED
+
+PostgresProjectorIntegrationTest > publicViewOmitsDepositsAndAllAccountOrderIdentityAndDetail() SKIPPED
+
+PostgresProjectorIntegrationTest > sourceRollbackUnderReusedClusterIdIsTerminal() SKIPPED
+
+PostgresProjectorIntegrationTest > eventGapRollsBackEarlierRowsAndCursorInSameTransaction() SKIPPED
+
+PostgresProjectorIntegrationTest > acknowledgementRaceRereadsAdvancedDatabaseCursorBeforeRetry() SKIPPED
+
+PostgresProjectorIntegrationTest > concurrentProjectorsSerializeAtCursorAndVerifyDuplicates() SKIPPED
+
+PostgresProjectorIntegrationTest > sourceReclaimedBeforeDatabaseCommitIsDetectedAsGap() SKIPPED
+
+> Task :projector:check
+
+> Task :server:compileJava
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-batch-maintenance-v3-worktree/server/src/main/java/io/vectormatch/server/WorkbenchServer.java:32: warning: [deprecation] NioEventLoopGroup in io.netty.channel.nio has been deprecated
+    private final EventLoopGroup acceptor = new NioEventLoopGroup(1);
+                                                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-batch-maintenance-v3-worktree/server/src/main/java/io/vectormatch/server/WorkbenchServer.java:33: warning: [deprecation] NioEventLoopGroup in io.netty.channel.nio has been deprecated
+    private final EventLoopGroup workers = new NioEventLoopGroup(2);
+                                               ^
+2 warnings
+
+> Task :server:classes
+> Task :server:compileTestJava
+> Task :server:testClasses
+> Task :server:test
+> Task :server:check
+> Task :cluster:test
+> Task :cluster:check
+> Task :cluster:startScripts
+> Task :cluster:installDist
+
+[Incubating] Problems report is available at: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/retention-batch-maintenance-v3-worktree/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 2m 10s
+22 actionable tasks: 22 executed
