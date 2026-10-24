@@ -29,6 +29,11 @@ public final class RetentionWireV3 {
     private static final int BUSINESS = 1, ARCHIVE_COMMIT = 2, EVENT_ACK = 3, POSITION = 4,
             FETCH_EVENTS = 5, PREPARE_ARCHIVE = 6, ARCHIVE_CHUNK = 7, BUSINESS_BATCH = 8;
     public static final int MAX_BUSINESS_BATCH = 4;
+    public static final int DEFAULT_EVENT_FETCH_COUNT = 16, MAX_SUPPORTED_EVENT_FETCH_COUNT = 32;
+    public static int requireEventFetchCount(int count) {
+        if(count!=DEFAULT_EVENT_FETCH_COUNT && count!=MAX_SUPPORTED_EVENT_FETCH_COUNT)throw new IllegalArgumentException("event fetch page must be16 or32");
+        return count;
+    }
     public static final int DEFAULT_ARCHIVE_CHUNK = 3072;
     public static final int MAX_ARCHIVE_CHUNK = 3072; // legacy/default requested chunk, retained for API compatibility
     public static final int MAX_SUPPORTED_ARCHIVE_CHUNK = 6144;
@@ -130,7 +135,7 @@ public final class RetentionWireV3 {
 
     public record Position() implements Operation {}
     public record FetchEvents(long fromEventSeq, int count) implements Operation {
-        public FetchEvents { if (fromEventSeq < 1 || count < 1 || count > 16) throw new IllegalArgumentException("invalid event fetch bounds"); }
+        public FetchEvents { if (fromEventSeq < 1 || count < 1 || count > MAX_SUPPORTED_EVENT_FETCH_COUNT) throw new IllegalArgumentException("invalid event fetch bounds"); }
     }
     public record PrepareArchive(long throughCommandSeq) implements Operation {
         public PrepareArchive { if (throughCommandSeq < 1) throw new IllegalArgumentException("invalid archive prefix cut"); }

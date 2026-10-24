@@ -42,7 +42,18 @@ final class ReplicatedOutbox {
         if (requestedCount < 1) throw new IllegalArgumentException("event batch count must be positive");
         if (fromSeq <= exportedSeq) throw new IllegalArgumentException("EVENTS_ALREADY_ACKNOWLEDGED");
         if (fromSeq < 1 || fromSeq > lastEventSeq + 1) throw new IllegalArgumentException("EVENT_SEQUENCE_OUT_OF_RANGE");
-        int count = Math.min(requestedCount, CommandCodec.MAX_EVENTS_PER_BATCH);
+        return fetchPrefix(fromSeq,Math.min(requestedCount,CommandCodec.MAX_EVENTS_PER_BATCH));
+    }
+
+    /** V3 alone permits32; legacy fetch/codec retain their16-event clamp and envelope. */
+    EventBatch fetchV3(long fromSeq,int requestedCount) {
+        if(requestedCount<1 || requestedCount>RetentionWireV3.MAX_SUPPORTED_EVENT_FETCH_COUNT)
+            throw new IllegalArgumentException("V3 event batch count must be1..32");
+        if(fromSeq<=exportedSeq)throw new IllegalArgumentException("EVENTS_ALREADY_ACKNOWLEDGED");
+        if(fromSeq<1 || fromSeq>lastEventSeq+1)throw new IllegalArgumentException("EVENT_SEQUENCE_OUT_OF_RANGE");
+        return fetchPrefix(fromSeq,requestedCount);
+    }
+    private EventBatch fetchPrefix(long fromSeq,int count) {
         List<Event> batch = new ArrayList<>(count);
         for (Event event : events) {
             if (event.eventSeq() >= fromSeq) {

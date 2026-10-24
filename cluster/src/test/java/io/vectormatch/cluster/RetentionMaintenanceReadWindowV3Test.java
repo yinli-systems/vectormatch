@@ -34,14 +34,15 @@ class RetentionMaintenanceReadWindowV3Test {
         final Queue<Reply> replies=new ConcurrentLinkedQueue<>();
         final List<Reply> held=new ArrayList<>();
         final Path writerRoot;
-        final int window;
+        final int window,eventPage;
         Thread thread;
         RetentionServiceV3 service;
         RetentionEngineV3.ArchiveAck ack;
         byte[] archive;
         volatile boolean corruptEvents;
         int readOffers,chunkReplies,eventReplies;
-        IO(Path writerRoot,int window){this.writerRoot=writerRoot;this.window=window;}
+        IO(Path writerRoot,int window){this(writerRoot,window,16);}
+        IO(Path writerRoot,int window,int eventPage){this.writerRoot=writerRoot;this.window=window;this.eventPage=eventPage;}
         void affinity(){
             if(thread==null){
                 thread=Thread.currentThread();service=new RetentionServiceV3(profile,LINEAGE);var scope=new Scope(profile.fingerprint(),LINEAGE);
@@ -66,7 +67,7 @@ class RetentionMaintenanceReadWindowV3Test {
                     changed.set(0,new Event(e.eventSeq(),e.marketSeq(),e.type(),e.accountId()+1,e.orderId(),e.makerOrderId(),e.takerOrderId(),e.side(),e.priceTicks(),e.quantityLots(),e.detail()));
                     batch=new EventBatch(batch.exportedSeq(),batch.lastEventSeq(),changed);
                 }
-                payload=new Events(batch);remaining=(COMMANDS+15)/16-eventReplies;
+                payload=new Events(batch);remaining=(COMMANDS+eventPage-1)/eventPage-eventReplies;
             }else{
                 assertTrue(Files.isRegularFile(writerRoot.resolve("0001-archive.bin.verified.txt")),"archive receipt precedes either ACK");
                 assertTrue(Files.isRegularFile(writerRoot.resolve("0002-events.bin.verified.txt")),"event receipt precedes either ACK");
@@ -102,16 +103,17 @@ class RetentionMaintenanceReadWindowV3Test {
         final RetentionDurableWriterV3 writer;
         final RetentionBatchMaintenanceV3 coordinator;
         final boolean failWriter;
-        Fixture(String name,int window,boolean failWriter)throws Exception{
+        Fixture(String name,int window,boolean failWriter)throws Exception{this(name,window,failWriter,16);}
+        Fixture(String name,int window,boolean failWriter,int eventPage)throws Exception{
             directory=Files.createDirectory(root.resolve(name));this.failWriter=failWriter;
-            io=new IO(directory.resolve("writer"),window);
+            io=new IO(directory.resolve("writer"),window,eventPage);
             owner=new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(io.profile,LINEAGE,4),()->io);
             writer=new RetentionDurableWriterV3(directory.resolve("writer"),io.profile.core().maxPendingSerializedBytes()+1024L,1024L*1024*1024,4,path->{
                 assertEquals(true,owner.snapshot().get("readBankOpen"),"lease survives force/readback verification");
                 assertEquals(0,io.controls(),"neither ACK may precede durable verification");
                 if(failWriter)throw new IOException("injected failure after force before readback");
             });
-            coordinator=new RetentionBatchMaintenanceV3(owner,writer,io.profile,LINEAGE,directory.resolve("raw"),new RetentionBatchMaintenanceV3.RunBudget(io.profile),1000,6144,window);
+            coordinator=new RetentionBatchMaintenanceV3(owner,writer,io.profile,LINEAGE,directory.resolve("raw"),new RetentionBatchMaintenanceV3.RunBudget(io.profile),1000,6144,window,eventPage);
         }
         public void close()throws Exception{
             try{coordinator.close();}finally{try{owner.close();}finally{
@@ -218,6 +220,31 @@ class RetentionMaintenanceReadWindowV3Test {
             var error=assertThrows(RetentionBatchMaintenanceV3.ReadPhaseFailureException.class,()->f.coordinator.exportThrough(COMMANDS));assertEquals(0,error.originalWires().size());f.assertFailedFence();
             assertTrue(f.io.offers.stream().noneMatch(r->r.operation() instanceof FetchEvents));assertEquals(true,f.owner.snapshot().get("readBankOpen"));
             assertTrue(Files.size(f.directory.resolve("raw/logical-rpc-requests.bin"))>0);assertTrue(Files.size(f.directory.resolve("raw/logical-rpc-replies.bin"))>0);
+        }
+    }
+
+    @Test void bothEventPagesExportIdenticalCanonicalPrefixesAndConsumeAllReadCreditsBeforeAcks()throws Exception{
+        byte[] expectedArchive=null;List<io.vectormatch.core.MatchingEngine.Event> expectedEvents=null;
+        for(int page:new int[]{16,32})try(var f=new Fixture("event-page-"+page,8,false,page)){
+            var cycle=f.coordinator.exportThrough(COMMANDS);byte[] archive=Files.readAllBytes(cycle.archiveFile());
+            if(expectedArchive==null)expectedArchive=archive;else assertArrayEquals(expectedArchive,archive);
+            List<io.vectormatch.core.MatchingEngine.Event> events=new ArrayList<>();
+            try(var input=new DataInputStream(Files.newInputStream(cycle.eventFile()))){while(input.available()>0){int length=input.readInt();var reply=RetentionReplyV3.decode(input.readNBytes(length));events.addAll(((Events)reply.payload()).batch().events());}}
+            if(expectedEvents==null)expectedEvents=events;else assertEquals(expectedEvents,events);
+            assertEquals(COMMANDS,events.size());assertEquals(COMMANDS,cycle.throughEventSeq());assertEquals(2,f.io.controls());
+            assertEquals(COMMANDS/page,f.io.offers.stream().filter(r->r.operation() instanceof FetchEvents).count());
+            assertTrue(f.io.offers.stream().filter(r->r.operation() instanceof FetchEvents).allMatch(r->((FetchEvents)r.operation()).count()==page));
+            assertEquals(0,((Number)f.owner.snapshot().get("readOnlyRetained")).intValue());
+            assertEquals(page,f.coordinator.snapshot().get("eventFetchCount"));
+            assertTrue(Files.readString(f.directory.resolve("raw/cycle-1.verified.txt")).contains("eventFetchCount="+page));
+        }
+    }
+    @Test void page32SemanticFailurePreservesAllEightOriginalsAndFencesBothAcks()throws Exception{
+        try(var f=new Fixture("page32-bad-event",8,false,32)){
+            f.io.corruptEvents=true;var error=assertThrows(RetentionBatchMaintenanceV3.ReadPhaseFailureException.class,()->f.coordinator.exportThrough(COMMANDS));
+            assertImmutableEight(error);f.assertFailedFence();
+            for(byte[] wire:error.originalWires())assertEquals(32,((FetchEvents)RetentionWireV3.decode(wire).operation()).count());
+            assertFalse(Files.exists(f.directory.resolve("writer/0002-events.bin.verified.txt")));
         }
     }
 }

@@ -19,6 +19,12 @@ public final class RetentionReplyV3 {
         if(chunkBytes<1 || chunkBytes>MAX_SUPPORTED_ARCHIVE_CHUNK)throw new IllegalArgumentException("invalid complete chunk reply bound");
         return 4+2+2*(4+64)+8+7*8+(4+64)+(4+128)+1+5*(4+64)+2*8+3*4+chunkBytes;
     }
+    /** Codec upper bound, including maximal outer scope/hash/error/counters and complete event details. */
+    public static int maxEncodedEventsReplyBytes(int count) {
+        if(count<0 || count>MAX_SUPPORTED_EVENT_FETCH_COUNT)throw new IllegalArgumentException("invalid event reply count");
+        int outer=4+2+2*(4+64)+8+7*8+(4+64)+(4+128)+1+2*8+4;
+        return outer+count*(8*8+2+4+128);
+    }
     public record Counters(long applicationMutation, long businessSeq, long eventSeq, long marketSeq,
                            long coreMaintenanceSeq, long acceptedPlaceCount, long exportedEventSeq, String stateHash) {
         public Counters {
@@ -136,7 +142,7 @@ public final class RetentionReplyV3 {
     public record Events(EventBatch batch) implements Payload {
         public Events {
             Objects.requireNonNull(batch);
-            if (batch.exportedSeq() < 0 || batch.lastEventSeq() < batch.exportedSeq() || batch.events().size() > 16)
+            if (batch.exportedSeq() < 0 || batch.lastEventSeq() < batch.exportedSeq() || batch.events().size() > MAX_SUPPORTED_EVENT_FETCH_COUNT)
                 throw new IllegalArgumentException("invalid V3 event batch");
             long previous = 0;
             for (Event e : batch.events()) {
@@ -144,6 +150,11 @@ public final class RetentionReplyV3 {
                         || e.accountId() <= 0 || e.quantityLots() <= 0 || e.marketSeq() < 0 || e.marketSeq() > e.eventSeq()
                         || e.eventSeq() <= batch.exportedSeq() || e.eventSeq() > batch.lastEventSeq()
                         || (previous != 0 && e.eventSeq() != previous + 1)) throw new IllegalArgumentException("invalid V3 event continuity");
+                try {
+                    var detail=StandardCharsets.UTF_8.newEncoder().onMalformedInput(CodingErrorAction.REPORT)
+                            .onUnmappableCharacter(CodingErrorAction.REPORT).encode(java.nio.CharBuffer.wrap(e.detail()));
+                    if(detail.remaining()>128)throw new IllegalArgumentException("event detail exceeds128 UTF-8 bytes");
+                }catch(java.nio.charset.CharacterCodingException invalid){throw new IllegalArgumentException("invalid event detail UTF-8",invalid);}
                 previous = e.eventSeq();
             }
         }
@@ -249,7 +260,7 @@ public final class RetentionReplyV3 {
                 }
                 case 2 -> {
                     long exported = in.readLong(), last = in.readLong(); int count = in.readInt();
-                    if (count < 0 || count > 16) throw new IOException("bad event count");
+                    if (count < 0 || count > MAX_SUPPORTED_EVENT_FETCH_COUNT) throw new IOException("bad event count");
                     List<Event> events = new ArrayList<>(count); for (int i = 0; i < count; i++) events.add(CommandCodec.readEvent(in));
                     payload = new Events(new EventBatch(exported, last, events));
                 }
