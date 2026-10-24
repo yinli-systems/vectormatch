@@ -144,6 +144,37 @@ class RetentionReadBankV3Test {
         }
     }
 
+    @Test void optInThirtyTwoCreditsPreserveUnarmedAndCompletedUnconsumedFences()throws Exception{
+        try(var f=new Fixture()){
+            var bank=f.owner.openReadBank(32);var tickets=new ArrayList<RetentionBatchOwnerV3.MaintenanceTicket>();
+            for(int i=0;i<32;i++)tickets.add(bank.reserve(f.read(i,false),f.deadline()));
+            f.ownerTurns();assertEquals(0,f.io.offerCount.get(),"all original wires must be retained before arm");
+            assertEquals(32,f.snapshot("readOnlyRetained"));
+            assertEquals(32,f.snapshot("readOnlyRetainedHighWater"));
+            assertThrows(IllegalStateException.class,()->bank.reserve(f.read(32,false),f.deadline()));
+            assertThrows(IllegalStateException.class,bank::close);
+            assertThrows(IllegalStateException.class,()->f.owner.submitMaintenance(new Position(),f.deadline()));
+            for(var ticket:tickets)ticket.arm();
+            eventually(()->f.io.offerCount.get()==32);f.release(true);
+            for(var ticket:tickets)assertBoundRead(f,ticket,ticket.await(WAIT));
+            f.ownerTurns();
+            assertEquals(32,f.snapshot("readOnlyCompleted"));
+            assertEquals(32,f.snapshot("readOnlyCompletedUnconsumed"));
+            assertEquals(32,f.snapshot("readOnlyOfferedAwaitingReplyHighWater"));
+            assertEquals(32,f.snapshot("readOnlyHardCapacity"));
+            assertThrows(IllegalStateException.class,()->bank.reserve(f.read(32,false),f.deadline()));
+            bank.consume(tickets.getFirst());bank.consume(tickets.getFirst());
+            var replacement=bank.reserve(f.read(32,false),f.deadline());
+            assertEquals(32,f.snapshot("readOnlyRetained"));
+            replacement.arm();eventually(()->f.io.offerCount.get()==33);f.release(false);
+            assertBoundRead(f,replacement,replacement.await(WAIT));bank.consume(replacement);
+            for(var ticket:tickets)bank.consume(ticket);
+            assertEquals(0,f.snapshot("readOnlyRetained"));bank.close();
+            f.io.openGate=true;
+            assertInstanceOf(State.class,f.owner.submitMaintenance(new Position(),f.deadline()).await(WAIT).payload());
+        }
+    }
+
     @Test void unsupportedWindowsOperationsMixedPhasesAndForeignCreditsAreRejected()throws Exception{
         try(var f=new Fixture();var other=new Fixture()){
             for(int window:new int[]{0,2,9})assertThrows(IllegalArgumentException.class,()->f.owner.openReadBank(window));
