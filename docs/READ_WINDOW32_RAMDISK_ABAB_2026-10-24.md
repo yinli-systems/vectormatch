@@ -69,6 +69,30 @@ At source snapshot `8f65c256d0e28e2d08d22720a511fd48a62f07b0`, the same Java tes
 
 The earlier **306/315** report above is still the exact historical FUSE-run result and is not removed. The filesystem-isolation result supports an environmental explanation for those nine failures, but does not identify a unique causal mechanism or prove disk durability. Full successful XML/HTML reports are preserved as `/workspace/vectormatch-read32-native-r1/overlay-full-test-315-pass-2026-10-24-r1.tar.zst` (SHA-256 `6e6b0d630a8f8ec40988f099541b3f796ff463943b3dca44982b6ff5fd146f84`; `zstd -t` passed). The new [fail-closed local SSD preflight](LOCAL_SSD_QUALIFICATION.md) rejects MFS/FUSE, tmpfs and overlay instead of allowing any to masquerade as physical NVMe evidence.
 
+## Independently executable raw-archive performance audit
+
+The new `scripts/audit-read-window-abab.py` reads the **original 66 MiB compressed archive in streaming mode**, without extracting its large Aeron files, and independently recomputes nearest-rank P50/P95/P99 from every complete, unique, accepted arrival. It independently sums the twelve source cycle durations and checks original load/completion/reference receipts against that recomputation. Missing, duplicated, out-of-range, rejected, unknown, late or otherwise invalid evidence fails closed. Six synthetic-unit tests include positive, missing, duplicate and tampered cases.
+
+```bash
+python3 scripts/audit-read-window-abab.py \
+  /workspace/vectormatch-read32-native-r1/read32-shm-abab-r1.tar.zst
+```
+
+The audit **passed against the unmodified archived four-arm data**, reproducing the following *descriptive* values directly from the raw files:
+
+| Independently recomputed quantity | Raw-archive result |
+| --- | ---: |
+| Read8 two-run mean P99 | 189.1876675 ms |
+| Read32 two-run mean P99 | 140.437654 ms |
+| P99 relative change | −25.7680715367% |
+| Pair 1 P99 change | −26.7499466397% |
+| Pair 2 P99 change | −24.8231482514% |
+| Read8 two-run mean complete maintenance wall | 2.7596301065 s |
+| Read32 two-run mean complete maintenance wall | 2.2429819235 s |
+| Maintenance wall relative change | −18.7216461287% |
+
+This auditor deliberately **does not** claim independence from the candidate matching algorithm, statistical significance, persistent SSD backing or multi-host performance. It validates the numbers and selected protocol/receipt invariants of the existing experiment.
+
 ## Limits and next acceptance gate
 
 1. **Disk qualification still required.** These runs executed journal/files under tmpfs, where `force()` and readback do not demonstrate real nonvolatile flush, device tail latency or power-loss durability. They are not comparable to earlier disk-backed page-size experiments.
