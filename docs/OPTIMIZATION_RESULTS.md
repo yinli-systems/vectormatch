@@ -160,6 +160,8 @@ B两轮完成canonical终态、逐条业务回复和资产验证，且初次/最
 
 CPU首个350k严格pilot已完成并独立逐行核验：10k/s×35s全部接受，窗口goodput9998.057/s、全量scheduled→confirmed p9918.516650ms、API RTT p9912.680527ms、drain6.422952ms，未发送/拒绝/错误/unknown均0。完整规范状态、逐reply、资金、outbox、leader与配置均通过，分析分类为OBSERVED_STABLE_WINDOW；它只是单个有限窗口，不是容量上限。[完整CPU基线与原始证据](../evidence/2026-10-24/runpod-cpu/capacity/cpu-pilot-10000-w128-r2/README.md)。
 
+CPU固定配置阶梯实际完成5/6点：13k/s两轮均有限窗口稳定（全量p9922.420911/48.816346ms），18k第一轮有效过载（33条未发送、条件p99440.412489ms），26k第一轮有效过载（111798条未发送、条件p99533.999613ms）。18k第二轮全部350k接受但发生器调度迟到超过20ms，判INVALID并自动停止，26k第二轮未启动。全部初次/最终unknown为0，完整规范状态和归档通过。当前只建立13k稳定点与18k有效过载点，尚无精确持续上限。[CPU容量曲线与所有失败数据](../evidence/2026-10-24/runpod-cpu/capacity-summary/README.md)。
+
 CPU容量测试是新的单机三进程loopback cohort，不能与旧三台GPU Pod的跨机器结果直接相减当作优化收益。当前源433保留实际W128、多路复用单session/driver、2GiB heap、leader0及完整350k正确性检查。具体协议见[CPU容量协议](../evidence/2026-10-24/runpod-cpu/CAPACITY_PROTOCOL.md)。内核另用[JMH测量合同](CORE_JMH.md)，固定三fork并做预热敏感性检查；内核批均值与复制链路p99分别报告。
 
 ## 已完成的代码验证

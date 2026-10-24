@@ -1,0 +1,32 @@
+{
+  "passed": true,
+  "verifierSha256": "e41416942f3baf6a1a6836a1f76289a599d50887973b905ae7a008fe55fbe0c0",
+  "controllerSha256": "99f093d87c9aa342b9bbc6c1f558faa1e4385786754e7413142beab15ab2d824",
+  "mapping": "Pinned verifier unchanged. Replace only load_generator_arguments in memory with the registered CPU Java/release/evidence paths; retain all node/startup/transport/prepared checks, and require actual pendingCapacity=workers.",
+  "loadArguments": [
+    "/opt/vectormatch-cpu/tools/jdk/bin/java",
+    "--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED",
+    "--add-opens=java.base/java.util.zip=ALL-UNNAMED",
+    "-Dvectormatch.capacity.client.driver=shared",
+    "-Daeron.nak.unicast.delay=1000",
+    "-Dvectormatch.capacity.client.transport=multiplexed",
+    "-Xmx2g",
+    "-cp",
+    "/opt/vectormatch-cpu/releases/433f02bebe2f3109ec363291fa562d5c509c0723/dist/cluster/lib/*",
+    "io.vectormatch.cluster.RemoteCapacityExperiment",
+    "/opt/vectormatch-cpu/runs/cpu-capacity-26000-w128-r1/evidence/runs/cpu-capacity-26000-w128-r1",
+    "23000",
+    "26000",
+    "350000",
+    "128",
+    "64",
+    "2000",
+    "30000",
+    "0",
+    "20",
+    "extended-350k-256"
+  ],
+  "pendingCapacityVerified": 128,
+  "targetArrivalRateVerified": 26000,
+  "configurationVerificationSha256": "d38b3d6c3347838b13ae388ecafac52ea6faa7d6a84523e03032c2c09dbc8c55"
+}
