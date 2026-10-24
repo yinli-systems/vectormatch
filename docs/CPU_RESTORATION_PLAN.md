@@ -1,6 +1,6 @@
 # 原应用迁移至 CPU：进展与恢复计划（业务恢复尚未验收）
 
-准备进展：原e1db源的85路径应用包已同源重建；固定Linux PostgreSQL18.6制品已在CPU上通过file/readelf/ldd及`postgres --version`。收据在[恢复准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/root-scope.json)和[实际加载探针](../evidence/2026-10-24/runpod-cpu/restoration-preparation/loader-probe-r1/receipt.json)。此减缩PG制品没有`pg_controldata`/`pg_config`，已另行原生构建两工具。数据库已完成一次实际启动及正常关闭，但只读审计停在首个设置断言；原集群、gateway与projector仍未启动，业务恢复尚未完成。
+准备进展：原e1db源的85路径应用包已同源重建；固定Linux PostgreSQL18.6制品已在CPU上通过file/readelf/ldd及`postgres --version`。收据在[恢复准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/root-scope.json)和[实际加载探针](../evidence/2026-10-24/runpod-cpu/restoration-preparation/loader-probe-r1/receipt.json)。此减缩PG制品没有`pg_controldata`/`pg_config`，已另行原生构建两工具。数据库已完成两次实际启动及正常关闭，第二次通过6214条事件的内部ledger审计；原集群、gateway与projector仍未启动，业务恢复尚未完成。
 
 隔离原生副本已实际恢复到`/opt/vectormatch-cpu/restorations/original-native-r1`：三份固定SHA备份的1041文件、3,701,302,583逻辑字节全部通过源内容及完整恢复文件SHA校验；初始稀疏分配93,749,248字节。原备份保留。随后只将已完整验证的PGDATA迁移到专用963:963，并对五个固定父目录授予该UID执行权限；[访问准备证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg-access-r1/README.md)记录全部前后置检查及一次局部失败。只读`pg_controldata18.6`验证控制版本1800、原数据库systemId7699920832388303129和`shut down`，检查前后关键SHA不变。[完整副本和控制检查证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-native-clone-r1/README.md)。
 
