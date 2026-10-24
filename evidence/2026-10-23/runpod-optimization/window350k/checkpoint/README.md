@@ -1,0 +1,30 @@
+The preserved `w-pilot-10000-w128` state passed a real full-service checkpoint and three-node cold JVM restart on **2026-10-23 UTC**. Job `p-checkpoint-pilot350k-v1` completed successfully; the [terminal verification](runs/p-checkpoint-pilot350k-v1/verification.json) and [independent offline audit](independent-audit.json) agree. The audit rechecked 172 assertions across 123 hashed inputs without changing the original evidence or connecting to the cloud.
+
+The immutable node release remained `52fbf7fa46ed274891a2bbf0d9fba9d87456d1f5`, bundle SHA-256 `cfed7303d46fd69e65f190022cecacfcf4135a7c7732ef6fc20a90182bb71cd6`. This is a separate recovery check outside every capacity measurement window. It uses the original pilot directories with `capacity-350k-v1`, 2 GiB heap, sync level 2, SHARED driver, requested receive buffer 131072 bytes, 256 session limit, 360000 retained-order limit and 800000 outbox capacity. No new node artifact replaced this release.
+
+| Check | Observed result |
+| --- | --- |
+| Snapshot request | Exactly one official `ClusterTool snapshot` attempt; exit 0, no ambiguous timeout |
+| Snapshot writing | New exact `VECTOR_SNAPSHOT_WRITTEN` line on each of the three owned JVMs |
+| Official recording metadata | Each node changed from no valid snapshot entries to service `0` recording `1` and consensus `-1` recording `2`; both at snapshot term `1`, log position `70271616`, timestamp `1792799194632` |
+| Cold JVM identities | Node 0: `14707 → 14938`; node 1: `12664 → 12841`; node 2: `114550 → 114807`; start ticks also changed and node argv/configuration digests stayed identical |
+| Restoration | Three new exact `VECTOR_SNAPSHOT_RESTORED` lines; the selected snapshot entries remained unchanged |
+| Membership | Leader remained member `0`; a normal new leadership term followed restart (`1 → 2`) |
+| Full post-restart core read | All `57682277` bytes compared equal to the pinned core; invariant and replicated sequence/hash checks passed in `174.006143403` seconds under the unchanged 600-second probe deadline |
+| Outbox | Exported cursor `0`, derived pending count `700267`, first/last pending event sequences `1 / 700267`; unchanged before and after restart |
+| Cleanup | All three pre-checkpoint JVMs and all three replacement JVMs have identity-matched stopped receipts |
+
+The canonical core SHA-256 is `2295cdc63e603aa5a225e6e39fbb9f7316c47daf1faf7b064b8345045dc28c06`. Command/event/market sequences remained `350167 / 700267 / 700201`, with `350101` retained orders and per-producer cache size `1024`. The [full post-read receipt](runs/p-checkpoint-pilot350k-v1/node2/post-core.json) records the exact values. The precheck read replicated state/hash and outbox watermarks only; it deliberately did **not** claim a second full core read before snapshotting.
+
+The evidence chain is [one administrative request](runs/p-checkpoint-pilot350k-v1/node0/snapshot-attempt.json), [its receipt](runs/p-checkpoint-pilot350k-v1/snapshot-command-receipt.json), [three written logs](runs/p-checkpoint-pilot350k-v1/snapshot-written-logs.json), [new official metadata](runs/p-checkpoint-pilot350k-v1/new-snapshot-metadata.json), [old-process stops](runs/p-checkpoint-pilot350k-v1/snapshot-owner-stop.json), [fresh process identities](runs/p-checkpoint-pilot350k-v1/cold-restart-processes.json), [three restored logs](runs/p-checkpoint-pilot350k-v1/snapshot-restored-logs.json), [post-verification](runs/p-checkpoint-pilot350k-v1/post-verification.json), and [final stops](runs/p-checkpoint-pilot350k-v1/final-owner-stop.json). Appended log prefixes, embedded byte counts/SHA values, exported helper JSON/stdout/receipts, argument digests and the original pilot/prerequisite hashes were independently rechecked. The official Aeron `RecordingLog` parser operated on private temporary copies because its constructor opens READ+WRITE; it did not modify member recording files.
+
+The [registered plan](plan.json) pinned helper source/class, archived controller hashes, original pilot state, and the completed NAK matrix/cleanup evidence. The separately compiled inspector was transferred on an additional classpath; matching core, node binaries and directories stayed fixed. Existing local/remote job markers prevent replay. The recorded entry points were:
+
+```sh
+python3 -B runtime/cloud/optimization-20261024/window350k/checkpoint/register.py
+python3 -B runtime/cloud/optimization-20261024/window350k/checkpoint/run.py
+```
+
+These commands describe the completed operation; this job ID must not be resubmitted. [Archived controller sources](tool-validation/controllers/run.py), [inspector source](tool-validation/source/CapacityCheckpointProbe.java) and the [earlier local validation](tool-validation/local-validation.json) preserve the implementation. The fixed limits were 900 seconds for the job, 180 seconds for the single official administrative request, and 600 seconds for the full post-read. The checkpoint-end [budget estimate](runs/p-checkpoint-pilot350k-v1/budget-after.json) was USD `9.688634277512222` accrued as of `2026-10-23T23:51:27.591403+00:00`, or USD `11.688634277512222` including the USD 2 recovery reserve, under the USD 20 project cap. This is a launch-time/rate estimate, not a reconciled bill or a final cost for later experiments.
+
+This proves successful application decoding of the full core-plus-outbox service checkpoint in three cold JVMs, complete canonical **core** equality through the public protocol, and outbox cursor/count/endpoint preservation. The inspector did not independently enumerate all `700267` historical outbox payloads; the offline audit checked the pinned inspector implementation and exported proof chain rather than performing another network read. This was neither a Pod restart, a power-loss durability test nor a backup restoration test. No business/retry command, export acknowledgement, native/PG backup export or Pod stop was performed. Actual Aeron archive payloads stayed on their Pods; only the job's logs and metadata receipts were exported. Earlier failed capacity rounds remain failed and unchanged.

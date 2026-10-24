@@ -95,6 +95,8 @@ node0 JVM CPU 由 S 的 2.528 / 2.577 核增加为 D 的 3.055 / 2.992 核，线
 
 35秒 pilot 已完成：350,000 个计划到达全部最终接受，窗口内 goodput **9,998.086/s**，全量计划到达至确认 p99 **38.016ms**，drain **6.901ms**，未发送、unknown、业务拒绝和 server error 均为0。该点符合现有 `OBSERVED_STABLE_WINDOW` 判定，只证明这个有限窗口；不表示已找到上限或已达成长稳 SLA。准备 SHA 为 `2c6847a5eb5bbdf0674a74c63f92dfb274fdc626ddfbcd540866596979e46bc4`，相对旧 profile 已变化，不能把新旧点直接拼成同一配置曲线。正式四轮已登记为26,000/s、每轮350,000个到达，结果另列。
 
+另行登记的[完整checkpoint与冷JVM恢复](../evidence/2026-10-23/runpod-optimization/window350k/checkpoint/README.md)已实际完成。三节点均写入匹配的官方service/consensus snapshot，原PID停止后以相同argv启动三个新JVM，均报告恢复所选快照；再通过公开协议完整读取57,682,277字节core，174.006秒内逐字节匹配固定SHA。业务序列350167/700267/700201、outbox exported0/pending700267和端点1..700267保持一致。独立审计通过172项断言与123个输入SHA，最终六次精确进程停止均通过。它验证完整应用checkpoint解码、core及outbox游标/数量/端点，没有独立逐条枚举700267个outbox payload，也不是断电、Pod重启或backup恢复测试；174秒是完整core读取校验耗时，不是服务恢复RTO。
+
 第一轮W128完成验证但过载：窗口goodput14,942.200/s，已接受条件p99643.155ms，140,563条未发送，初次与最终unknown均为0。同步槽位平均占用99.9625%，FIFO等待p99634.229ms，初次API执行p9914.207ms。第二轮W256出现563个初次unknown，307个在原轮次内恢复，256个最终unresolved；只返回3,307个已接受回复，346,437条明确未发送。该轮验证失败、分类INVALID，后两轮未提交，不能给出四轮并发收益结论。
 
 独立[全量缓存审计](../evidence/2026-10-23/runpod-optimization/window350k/tool-validation/unknown-audit.json)核对了原350k行与完整终态core：全部3,307个已知回复的业务结果逐字段等于终态缓存；256个unresolved中252个已缓存为accepted，另外4个只是在该snapshot中缺席，不能据此推断未执行。原校验器先重放confirmed-only集合，再检查allKnown；漏掉已执行但未确认的命令会使后续订单号/commandSeq错位，产生误导的business mismatch。修复将完整结果集合检查移到重放之前，保持unresolved失败与原始CSV，不将离线缓存发现回填成客户端确认。独立同身份恢复及其结果另存。
