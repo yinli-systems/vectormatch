@@ -1,0 +1,66 @@
+--- frozen-long/launch_long_cuts.py
++++ new-owner-poll/launch_owner_poll.py
+@@ -1,6 +1,6 @@
+ """Explicit root-controlled one-shot launch. Requires a hash-reviewed successful stage; never stages or retries."""
+ import argparse,hashlib,json,pathlib,shlex,shutil
+-import stage_long_cuts as stage
++import stage_owner_poll as stage
+ 
+ def validate_stage(directory,expected_sha):
+  directory=stage.no_links(pathlib.Path(directory).absolute()).resolve();receipt=stage.load(stage.reference({'path':str(directory/'STAGE_SUCCESS.json'),'sha256':expected_sha}))
+@@ -18,21 +18,49 @@
+  return receipt,checked
+ 
+ 
++
++def launch_arguments(arm,release_sha,prior_sha=None):
++ stage.require(type(arm)is int and arm in (1,2,3,4) and stage.hexsha(release_sha),'Exact one manual owner arm/release SHA required')
++ stage.require((arm==1 and prior_sha is None) or (arm>1 and stage.hexsha(prior_sha)),'Only arms2..4 require the actual previous closed/private-push gate')
++ args=['/usr/bin/python3','-B',stage.PREP+'/cpu_owner_poll_abab.py','--arm',str(arm),'--release-sha256',release_sha]
++ if arm>1:args+=['--prior-collection-sha256',prior_sha]
++ return args+['--start-new']
++
++
++def validate_prior(arm,gate_path,gate_sha,push_path,checked,release_sha):
++ if arm==1:
++  stage.require(gate_path is gate_sha is push_path is None,'Arm1 has no prior gate or private-push inputs')
++  return {}
++ stage.require(type(arm)is int and arm in (2,3,4) and gate_path is not None and push_path is not None,'Actual prior gate and private-push original inputs required')
++ gate_path=stage.reference({'path':str(stage.no_links(pathlib.Path(gate_path).absolute()).resolve()),'sha256':gate_sha});gate=stage.load(gate_path)
++ push_path=stage.reference({'path':str(stage.no_links(pathlib.Path(push_path).absolute()).resolve()),'sha256':gate['privatePushReceiptSha256']});push=stage.load(push_path)
++ source=pathlib.Path(checked['gate']['preparationDirectory']);stage.sys.path.insert(0,str(source))
++ try:
++  controller=stage.module(source/'cpu_owner_poll_abab.py','frozen_owner_prior_gate')
++  controller.configure_arm(arm);controller.FROZEN_RELEASE_SHA=release_sha
++  controller.validate_prior_gate(gate,checked['ready'],arm-1);controller.validate_private_push(push,gate)
++ finally:stage.sys.path.pop(0)
++ return {'release/arm-%d-collection-gate.json'%(arm-1):gate_path,'release/arm-%d-private-push.json'%(arm-1):push_path}
++
++
+ def main():
+- p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--arm',type=int,choices=[1],required=True);p.add_argument('--staging',type=pathlib.Path,required=True);p.add_argument('--stage-success-sha256',required=True);p.add_argument('--output',type=pathlib.Path,required=True);o=p.parse_args()
++ p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--arm',type=int,choices=[1,2,3,4],required=True);p.add_argument('--staging',type=pathlib.Path,required=True);p.add_argument('--stage-success-sha256',required=True);p.add_argument('--output',type=pathlib.Path,required=True);p.add_argument('--prior-collection',type=pathlib.Path);p.add_argument('--prior-collection-sha256');p.add_argument('--prior-private-push',type=pathlib.Path);o=p.parse_args()
+  receipt,checked=validate_stage(o.staging,o.stage_success_sha256)
++ prior_files=validate_prior(o.arm,o.prior_collection,o.prior_collection_sha256,o.prior_private_push,checked,receipt['releaseSha256'])
++ args=launch_arguments(o.arm,receipt['releaseSha256'],o.prior_collection_sha256)
++ rows=dict(receipt['stagedFiles'])
++ for name,path in prior_files.items():rows[name]={'bytes':path.stat().st_size,'sha256':stage.sha(path),'mode':path.stat().st_mode&0o777}
+  out=stage.no_links(o.output.absolute());out.mkdir(mode=0o700,exist_ok=False)
+- args=['/usr/bin/python3','-B',stage.PREP+'/cpu_long_cuts.py','--arm',str(o.arm),'--release-sha256',receipt['releaseSha256'],'--start-new']
+- stage.save(out/'LAUNCH_ATTEMPT.json',{'arm':o.arm,'rootReviewedStageSuccessSha256':o.stage_success_sha256,'releaseSha256':receipt['releaseSha256'],'expectedArguments':args,'oneAttemptOnly':True,'remoteOutcomeInitiallyUnknown':True})
+- program='prep_name='+repr(stage.PREP)+'\nrows='+repr(receipt['stagedFiles'])+'\nargs='+repr(args)+'\narm_number='+repr(o.arm)+'\nrelease_sha='+repr(receipt['releaseSha256'])+'\n'+r'''
++ stage.save(out/'LAUNCH_ATTEMPT.json',{'arm':o.arm,'rootReviewedStageSuccessSha256':o.stage_success_sha256,'releaseSha256':receipt['releaseSha256'],'expectedArguments':args,'priorCollectionGateSha256':o.prior_collection_sha256,'privatePushOriginalPins':{name:rows[name]for name in prior_files},'oneAttemptOnly':True,'remoteOutcomeInitiallyUnknown':True})
++ program='prep_name='+repr(stage.PREP)+'\nrows='+repr(rows)+'\nargs='+repr(args)+'\narm_number='+repr(o.arm)+'\nrelease_sha='+repr(receipt['releaseSha256'])+'\n'+r'''
+ import hashlib,json,os,pathlib,stat,subprocess,time,platform,shutil
+ assert platform.system()=='Linux' and platform.machine()=='x86_64' and platform.node()=='ed6c0673f5cb' and os.geteuid()==0
+-assert shutil.disk_usage('/opt/vectormatch-cpu').free>=1024**3
++assert shutil.disk_usage('/opt/vectormatch-cpu').free>=2116076873,'Exact per-arm growth/archive/floor reserve required before launch intent'
+ source=pathlib.Path(prep_name)
+ for name,row in rows.items():
+  path=source/name
+  for parent in (path,*path.parents):assert not parent.is_symlink()
+- assert path.is_file() and path.stat().st_size==row['bytes'] and hashlib.sha256(path.read_bytes()).hexdigest()==row['sha256'] and stat.S_IMODE(path.stat().st_mode)==row['mode']
++ assert path.is_file() and path.stat().st_nlink==1 and path.stat().st_size==row['bytes'] and hashlib.sha256(path.read_bytes()).hexdigest()==row['sha256'] and stat.S_IMODE(path.stat().st_mode)==row['mode']
+ assert not (source/('arm-'+str(arm_number))).exists(),'Arm job already exists; inspect original attempt, never resubmit'
+ prefix='arm-'+str(arm_number)+'-execution'
+ with (source/(prefix+'-register.json')).open('x') as register:

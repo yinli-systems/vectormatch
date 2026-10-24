@@ -1,0 +1,23 @@
+--- historical-owner-r1/test_stage_launch.py
++++ final-parser-owner-r2/test_stage_launch.py
+@@ -27,7 +27,7 @@
+   for key in stage.PROOFS:
+    value={'syntheticFixtureOnly':True,'proof':key}
+    if key=='ownerPollRawParserFreeze':
+-    p=self.root/(key+'.json');shutil.copy2(BASE/'owner-poll-native-preparation-r1/PARSER_SOURCE_FROZEN.json',p)
++    p=self.root/(key+'.json');shutil.copy2(BASE/'owner-poll-native-preparation-r1/PARSER_SOURCE_FROZEN_R2.json',p)
+    else:p=self.write(self.root/(key+'.json'),value)
+    proofs[key]=self.ref(p);refs[key]={'path':stage.PREP+'/release/proofs/'+key+'.json','bytes':p.stat().st_size,'sha256':stage.sha(p)}
+   self.ready={'ownerPollValidatorSha256':stage.OWNER_VALIDATOR_SHA,'releaseReady':True,'sourceCommit':stage.SOURCE_COMMIT,'controllerSha256':stage.sha(self.source/'cpu_owner_poll_abab.py'),'codeFingerprint':stage.CODE_SHA,'protectedOriginalState':{'manifest':stage.PREP+'/release/current-stopped-original-state.json','manifestSha256':stage.PROTECTED_SHA},'artifacts':artifacts,'evidenceReferences':refs}
+@@ -45,6 +45,11 @@
+   p=self.write(self.root/'ready.json',self.ready);self.gate['readyRelease']=self.ref(p)
+  def test_complete_synthetic_fixture_closes_files_and_calls_shared_semantic_gate(self):
+   got=self.validate();self.assertEqual(39,len(got['rows']));self.assertEqual(self.groups,got['guardGroups']);self.semantic.validate_release.assert_called_once_with(self.ready);self.semantic.validate_prerequisite_proofs.assert_called_once();self.assertEqual(stage.PROOFS,set(self.semantic.validate_prerequisite_proofs.call_args.args[0]))
++ def test_historical_a918_parser_cannot_replace_final_r2_stream_closure(self):
++  path=self.root/'historical-parser.json';shutil.copy2(BASE/'owner-poll-native-preparation-r1/PARSER_SOURCE_FROZEN.json',path)
++  self.gate['proofs']['ownerPollRawParserFreeze']=self.ref(path)
++  self.ready['evidenceReferences']['ownerPollRawParserFreeze'].update(bytes=path.stat().st_size,sha256=stage.sha(path));self.rewrite_ready()
++  self.rejected();self.semantic.validate_release.assert_not_called()
+  def test_false_template_root_rejected_before_any_execution(self):
+   self.gate['rootVerified']=False;self.rejected();self.semantic.validate_release.assert_not_called()
+  def test_source_native_attestation_required(self):self.gate['sourceCompiledNativeAndFocusedProofVerified']=False;self.rejected()

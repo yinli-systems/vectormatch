@@ -1,0 +1,20 @@
+--- historical-owner-r1/stage_owner_poll.py
++++ final-parser-owner-r2/stage_owner_poll.py
+@@ -9,7 +9,7 @@
+ PREPARATION_SHA='81dcd4e06feaeff1871f25bf9517eb51027bc1ea6740c57ae28de51476e411af'
+ CONTROLLER_SHA='33db61a0a48d64158ae3ed49af8dc59edd2bc56fbb6ebc5bcd91fb2524718edf'
+ OWNER_VALIDATOR_SHA='868b1f426906e16602e2ad9a0e7c7bba33bb5e80ea950af171a9903ac5dc4fdd'
+-PARSER_FREEZE_SHA='a918ccfea558ea67c993910d1dcdbe12d15e5c0b9f81afda4bd3f6013a2df85a'
++PARSER_FREEZE_SHA='60d87ebc26752615d7f28fd25d72c8f6f5b4e41c08eb6665d9c81cdb11cd8b6d'
+ LIMIT=32*1024**2
+ MAX_FILES=64
+ PROOFS={'ownerPollNativeAudit','ownerPollRawParserFreeze','linuxMetadataObservation','linuxMetadataReceipt','rootEvidenceReview'}
+@@ -96,7 +96,7 @@
+   path=reference(gate['proofs'][key]);row=ready['evidenceReferences'][key]
+   require(row['path']==PREP+'/release/proofs/'+key+'.json' and row['sha256']==sha(path) and row['bytes']==path.stat().st_size<=1024**2,'Actual proof closure differs: '+key)
+   files['release/proofs/'+key+'.json']=path;values[key]=load(path)
+- require(sha(files['release/proofs/ownerPollRawParserFreeze.json'])==PARSER_FREEZE_SHA,'Actual frozen25source owner parser receipt differs')
++ require(sha(files['release/proofs/ownerPollRawParserFreeze.json'])==PARSER_FREEZE_SHA,'Actual frozen33source R2 owner parser receipt differs')
+  # Import definitions only; execute the same pure semantic proof gate used by preflight.
+  sys.path.insert(0,str(source))
+  try:

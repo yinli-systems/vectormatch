@@ -1,0 +1,153 @@
+--- frozen-long/inspect_closed_long_arm.py
++++ owner-poll/inspect_closed_owner_arm.py
+@@ -13,13 +13,15 @@
+ import stat
+ import time
+ 
+-PREP=pathlib.Path('/opt/vectormatch-cpu/preparation/cpu-long-cuts-cloud-r1')
++PREP=pathlib.Path('/opt/vectormatch-cpu/preparation/cpu-owner-poll-cloud-abab-r1')
+ PROTECTED_SHA='6769aa2590668ba69692b17565c3463cc274b1fa2a777129d742c1e04899f753'
+ MAX_PROC=4096
+ FILES={}
+ MAXIMUM_PARK_NS=100000
+-SOURCE_COMMIT='bcf49c10b77a14708b53d3fc6c115a6a3b834408'
+-CODE_SHA='6033c9ebfc2a7b1836c45f858784a4930540b469eb136635761fd3217733edc8'
++OWNER_PARK_ORDER=(1000000,100000,1000000,100000)
++CONTROLLER_SHA='33db61a0a48d64158ae3ed49af8dc59edd2bc56fbb6ebc5bcd91fb2524718edf'
++SOURCE_COMMIT='977197616ade0283174f2ea6ddfaa700547f6d15'
++CODE_SHA='23586ccc5b9ad88aef2eba48a4eeceb15e64fdc62142bd2971c23e028724b884'
+ PROFILE_SHA='732201775469861083f9dd0798a465dec1d0ed6bff39ed281dbef58c28b9fc68'
+ 
+ 
+@@ -95,21 +97,22 @@
+ 
+ 
+ def expected_parent(release,root,maximum):
+-    return [release['java'],'-Dvectormatch.retention.idleMaxParkNs='+str(maximum)]+release['parentJvmArguments']+[
++    return [release['java'],'-Dvectormatch.retention.idleMaxParkNs=100000','-Dvectormatch.retention.ownerPollMaxParkNs='+str(maximum)]+release['parentJvmArguments']+[
+         '-cp',':'.join(release['classPath']),'io.vectormatch.cluster.RetentionCapacityAeronPilotV3',str(root),'idle-window8-long-cuts','42000']
+ 
+ 
+ def expected_node(release,root,reg,node,maximum):
+-    return [release['java'],'-Dvectormatch.retention.idleMaxParkNs='+str(maximum),
++    return [release['java'],'-Dvectormatch.retention.idleMaxParkNs=100000',
+         '--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED','--add-opens=java.base/java.util.zip=ALL-UNNAMED',
+         '-Xmx256m','-Daeron.cluster.appointed.leader.id=0','-cp',':'.join(release['nodeClassPath']),
+         'io.vectormatch.cluster.RetentionNodeMainV3',str(node),str(root),'42000','2',release['profileId'],
+         reg['lineage'],release['profileFingerprint'],release['codeFingerprint'],'bounded-maintenance-v1']
+ 
+ 
+-def inspect(arm_number,release_sha,controller_sha,expected_controller):
++def inspect(arm_number,release_sha,controller_sha,expected_controller,prior_gate_sha=None):
+     require(platform.system()=='Linux' and platform.machine()=='x86_64' and platform.node()=='ed6c0673f5cb' and os.geteuid()==0,'Exact CPU/Linux/x86_64/root required')
+-    require(type(arm_number) is int and arm_number==1,'Exactly one manual long-cut arm required')
++    require(type(arm_number) is int and arm_number in (1,2,3,4),'Exactly one explicit owner-poll manual arm1..4 required')
++    require((arm_number==1 and prior_gate_sha is None) or (arm_number>1 and isinstance(prior_gate_sha,str) and len(prior_gate_sha)==64 and all(c in '0123456789abcdef' for c in prior_gate_sha)), 'Exact prior closed/private-push gate SHA required only for arms2..4')
+     for value in (release_sha,controller_sha):
+         require(isinstance(value,str) and len(value)==64 and all(c in '0123456789abcdef' for c in value),'Explicit actual root-frozen release/controller SHA required')
+     require(set(expected_controller)=={'pid','startTicks','commandSha256'}
+@@ -117,8 +120,11 @@
+             and type(expected_controller['startTicks']) is int and expected_controller['startTicks']>0
+             and isinstance(expected_controller['commandSha256'],str) and len(expected_controller['commandSha256'])==64
+             and all(c in '0123456789abcdef' for c in expected_controller['commandSha256']), 'Explicit actual launch identity required')
+-    maximum=MAXIMUM_PARK_NS
+-    expected_args=['/usr/bin/python3','-B',str(PREP/'cpu_long_cuts.py'),'--arm',str(arm_number),'--release-sha256',release_sha,'--start-new']
++    require(controller_sha==CONTROLLER_SHA,'Exact frozen owner-poll controller SHA required')
++    maximum=OWNER_PARK_ORDER[arm_number-1]
++    expected_args=['/usr/bin/python3','-B',str(PREP/'cpu_owner_poll_abab.py'),'--arm',str(arm_number),'--release-sha256',release_sha]
++    if arm_number>1:expected_args+=['--prior-collection-sha256',prior_gate_sha]
++    expected_args+=['--start-new']
+     require(argv_sha(expected_args)==expected_controller['commandSha256'], 'Actual controller argv SHA does not bind exact one long-cut arm')
+     register=PREP/('arm-%d-execution-register.json'%arm_number)
+     data=bounded(register,65536,True)
+@@ -148,17 +154,14 @@
+             and release['sourceCommit']==SOURCE_COMMIT
+             and release['codeFingerprint']==CODE_SHA and release['profileFingerprint']==PROFILE_SHA,
+             'Actual ready source/code/controller differs')
+-    require(hashlib.sha256(bounded(PREP/'cpu_long_cuts.py',1024**2)).hexdigest()==controller_sha,
++    require(hashlib.sha256(bounded(PREP/'cpu_owner_poll_abab.py',1024**2)).hexdigest()==controller_sha,
+             'Actual frozen controller source differs')
+     job=PREP/('arm-%d'%arm_number)
+-    blocked=js(job/'BENCHMARK_BLOCKED.json',optional=True)
+-    completion=js(job/'completion.json',optional=True)
++    # While any registered JVM is not strictly absent, never read completion or source summary.
+     stop=js(job/'python-owned-stop.json',optional=True)
+-    if blocked is not None:return {'state':'BLOCKED_STOP_UNCONFIRMED','closedGate':False,'controller':observed,'blockedReason':blocked.get('reason'),'neverResubmit':True}
+-    if completion is None or stop is None:return {'state':'CONTROLLER_EXITED_CLOSE_RECEIPTS_INCOMPLETE','closedGate':False,'controller':observed,'completionPresent':completion is not None,'stopReceiptPresent':stop is not None,'neverResubmit':True}
+-    require(completion['arm']==arm_number and completion['maximumParkNs']==maximum and completion['frozenReleaseSha256']==release_sha,'Completion scope mismatch')
+-    if not completion.get('allOwnedStopped') or not stop.get('allOwnedStopped') or stop.get('errors') or stop.get('forcedKill') is not False or stop.get('numericPidSignalFallback') is not False:
+-        return {'state':'CONTROLLER_EXITED_OWNED_STOP_NOT_CLOSED','closedGate':False,'controller':observed,'neverResubmit':True}
++    if stop is None:return {'state':'CONTROLLER_EXITED_STOP_RECEIPT_INCOMPLETE','closedGate':False,'controller':observed,'neverResubmit':True,'completionOrSummaryRead':False}
++    if not stop.get('allOwnedStopped') or stop.get('errors') or stop.get('forcedKill') is not False or stop.get('numericPidSignalFallback') is not False:
++        return {'state':'CONTROLLER_EXITED_OWNED_STOP_NOT_CLOSED','closedGate':False,'controller':observed,'neverResubmit':True,'completionOrSummaryRead':False}
+     parent=js(job/'identity-observation-000.json',65536)
+     require(parent['role']=='pilot-parent' and parent['origin']=='independent-direct-child-proc','Java parent launch identity origin differs')
+     identities=[dict(role='pilot-parent',identity=parent['kernelIdentity'])]
+@@ -174,7 +177,8 @@
+     root=job/'idle-arm';reg=js(root/'registration.json')
+     require(reg['ports']==42000 and reg['readWindow']==8 and reg['appointedLeader']==0 and reg['sync']==2
+             and reg['profileSha256']==release['profileFingerprint'] and reg['codeSha256']==release['codeFingerprint']
+-            and reg['retentionIdleSelection']['maximumParkNs']==maximum
++            and reg['retentionIdleSelection']['maximumParkNs']==100000
++            and reg['ownerPollSelection']=={'schema':'retention-owner-poll-selection-v1','property':'vectormatch.retention.ownerPollMaxParkNs','maximumParkNs':maximum,'factor':'owner poll requested park cap only','hardRealtimeGuaranteed':False}
+             and reg['arrivals']==33792 and reg['rate']==500 and reg['batchCap']==4 and reg['archiveChunkBytes']==6144
+             and reg['eventFetchCount']==16 and reg['commonReadWindowEnvelope'] is True and reg['commonChunkEnvelope'] is False
+             and reg['workloadPreset']=='long-cuts-33792-v1' and reg['expectedFullCommandCuts']==11
+@@ -193,15 +197,22 @@
+     foreign,proc_count=live_jvm_pg()
+     if any(x['observation']!='PID_ABSENT' for x in ownership) or foreign:
+         return {'state':'CONTROLLER_EXITED_LIVE_JVM_OR_PG','closedGate':False,'controller':observed,'ownership':ownership,'liveJavaPg':foreign,'neverSignalOrResubmit':True}
++    # Controller and all four registered JVM PIDs are now strictly absent; only now read outcome/summary.
++    blocked=js(job/'BENCHMARK_BLOCKED.json',optional=True)
++    completion=js(job/'completion.json',optional=True)
++    if blocked is not None:return {'state':'BLOCKED_STOP_UNCONFIRMED','closedGate':False,'controller':observed,'blockedReason':blocked.get('reason'),'neverResubmit':True}
++    if completion is None:return {'state':'CONTROLLER_EXITED_COMPLETION_INCOMPLETE','closedGate':False,'controller':observed,'neverResubmit':True}
++    require(completion['arm']==arm_number and completion['ownerPollMaximumParkNs']==maximum and completion['serverDriverMaximumParkNs']==100000 and completion['frozenReleaseSha256']==release_sha,'Completion scope mismatch')
++    require(completion.get('allOwnedStopped') is True,'Completion must confirm all registered JVMs stopped')
+     if completion.get('passed') is not True or completion.get('errors'):
+         return {'state':'CLOSED_FAILED_OUTCOME','closedGate':False,'safeForReadOnlyFailureCollection':True,'controller':observed,'ownership':ownership,'errors':completion.get('errors'),'allOwnedStoppedAtObservation':True}
+     before=js(job/'before.json',4*1024**2);after=js(job/'after-clean-stop.json',4*1024**2)
+     require(before['controllerSha256']==controller_sha and before['baseSha256']=='8eeb10c14d6e5a9aa3895fbb674fc5c59ceac7fd3b15a6e3e11da325f444ab87',
+             'Actual before/preflight frozen controller/ownership source differs')
+-    require(before['arm']==1 and before['singleManualArmOnly'] is True and before['noJavaStarted'] is True,'One manual arm default-preflight receipt differs')
++    require(before['arm']==arm_number and before['ownerPollMaximumParkNs']==maximum and before['serverDriverMaximumParkNs']==100000 and before['singleManualArmOnly'] is True and before['noJavaStarted'] is True,'One manual arm default-preflight receipt differs')
+     result=completion['result'];require(result['passed'] is True and len(result['arms'])==1,'Full successful single-arm controller result required')
+     arm=result['arms'][0];summary=arm['functional']['actualSourceSummary'];logs=arm['nodeLogClassifications']
+-    require(arm['maximumParkNs']==maximum and arm['readWindow']==8 and arm['functional']['passed'] is True
++    require(arm['ownerPollMaximumParkNs']==maximum and arm['serverDriverMaximumParkNs']==100000 and arm['readWindow']==8 and arm['functional']['passed'] is True
+             and summary['confirmedAcceptedUniqueOrders']==33792 and summary['notSent']==0 and summary['unknownObserved']==0 and summary['unknownFinal']==0
+             and summary['scheduledArrivals']==33792 and summary['releasedArrivals']==33792 and summary['completedLogicalReplies']==33792
+             and summary['ratePerSecond']==500 and summary['batchCap']==4 and summary['archiveChunkBytes']==6144 and summary['readWindow']==8
+@@ -210,6 +221,15 @@
+             and len(logs)==3 and {v['node'] for v in logs}=={0,1,2}
+             and arm['retainedPostCheckpointEosWarningPairs']==sum(v['warningPairCount'] for v in logs)<=2,
+             'Controller full success/warning receipt differs; no raw audit performed here')
++    actual_owner=summary['ownerPollActual'];owner_report=arm['ownerPollAttestation']
++    require(summary['ownerPollSelection']==reg['ownerPollSelection'] and actual_owner['available'] is True
++            and actual_owner['source']=='actual-constructed-owner-snapshot' and actual_owner['ownerPollMaxParkNs']==maximum
++            and actual_owner['requestedSleepOnly'] is True and actual_owner['osLatenessBounded'] is False
++            and owner_report['passed'] is True and owner_report['ownerPollMaximumParkNs']==maximum
++            and owner_report['serverDriverMaximumParkNs']==100000 and owner_report['ownerPropertyParentOnly'] is True
++            and owner_report['selectionIntentAndConstructedOwnerSnapshotReconciled'] is True
++            and owner_report['actualConfiguredIdleFactoryCreations']==22 and owner_report['hardRealtimeOrPerformanceClaimed'] is False,
++            'Controller actual owner/unchanged driver evidence report differs; raw binding remains independent collector responsibility')
+     require(all(v['afterSigtermWallTimeProven'] is False and v['allLogLinesClassifiedAndRetained'] is True for v in logs),
+             'Warning qualification/log closure metadata differs')
+     protected=before['protectedOriginal']
+@@ -219,13 +239,13 @@
+     st=expected_archive.lstat();require(stat.S_ISREG(st.st_mode) and not expected_archive.is_symlink() and st.st_size==advertised['bytes']<=256*1024**2,'Stopped archive metadata differs')
+     require(identity_state(controller)['observation']=='PID_ABSENT','Controller observation changed')
+     require(all(identity_state(value)['observation']=='PID_ABSENT' for value in unique.values()),'Owned JVM absence changed during metadata inspection')
+-    return {'state':'CLOSED_PASS_CONTROL_PLANE','closedGate':True,'safeForIndependentClosedCollection':True,'controller':observed,'controllerExitCodeIndependentlyObserved':False,'javaParentNormalExitBasis':'Frozen controller passed only after parent.returncode==0 and parent.wait; not a separately observed controller exit code.','ownership':ownership,'processesObserved':proc_count,'allOwnedStoppedAtObservation':True,'allFourOwnedJvmsStrictlyPidAbsent':True,'protectedNative57Pg989ReceiptsExact':True,'protectedFinalValues':protected,'archiveMetadataOnly':advertised,'archiveFullHashReadHere':False,'fullNativeOrRawEvidenceRead':False,'independentRawAndFullArchiveCollectionStillRequired':True,'nextArmExists':False,'benchmarkOrBusinessCommandStartedByProbe':False,'arm':arm_number,'maximumParkNs':maximum,'frozenReleaseSha256':release_sha,'controllerSha256':controller_sha,'controllerOriginalIdentity':controller,'controllerFullSuccessReceiptPassed':True,'schedulerTimingValidReported':summary['schedulerTimingValid'],'retainedPostCheckpointEosWarningPairs':arm['retainedPostCheckpointEosWarningPairs'],'afterSigtermWallTimeProven':False}
++    return {'state':'CLOSED_PASS_CONTROL_PLANE','closedGate':True,'safeForIndependentClosedCollection':True,'controller':observed,'controllerExitCodeIndependentlyObserved':False,'javaParentNormalExitBasis':'Frozen controller passed only after parent.returncode==0 and parent.wait; not a separately observed controller exit code.','ownership':ownership,'processesObserved':proc_count,'allOwnedStoppedAtObservation':True,'allFourOwnedJvmsStrictlyPidAbsent':True,'protectedNative57Pg989ReceiptsExact':True,'protectedFinalValues':protected,'archiveMetadataOnly':advertised,'archiveFullHashReadHere':False,'fullNativeOrRawEvidenceRead':False,'independentRawAndFullArchiveCollectionStillRequired':True,'nextArmStartedByProbe':False,'benchmarkOrBusinessCommandStartedByProbe':False,'arm':arm_number,'job':str(job),'ownerPollMaximumParkNs':maximum,'serverDriverMaximumParkNs':100000,'frozenReleaseSha256':release_sha,'controllerSha256':controller_sha,'controllerOriginalIdentity':controller,'controllerFullSuccessReceiptPassed':True,'schedulerTimingValidReported':summary['schedulerTimingValid'],'retainedPostCheckpointEosWarningPairs':arm['retainedPostCheckpointEosWarningPairs'],'afterSigtermWallTimeProven':False}
+ 
+ 
+ if __name__=='__main__':
+-    p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--arm',type=int,choices=(1,),required=True);p.add_argument('--release-sha256',required=True);p.add_argument('--controller-sha256',required=True);p.add_argument('--controller-pid',type=int,required=True);p.add_argument('--controller-start-ticks',type=int,required=True);p.add_argument('--controller-argv-sha256',required=True);args=p.parse_args()
++    p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--arm',type=int,choices=(1,2,3,4),required=True);p.add_argument('--release-sha256',required=True);p.add_argument('--controller-sha256',required=True);p.add_argument('--controller-pid',type=int,required=True);p.add_argument('--controller-start-ticks',type=int,required=True);p.add_argument('--controller-argv-sha256',required=True);p.add_argument('--prior-collection-sha256');args=p.parse_args()
+     try:
+-        result=inspect(args.arm,args.release_sha256,args.controller_sha256,{'pid':args.controller_pid,'startTicks':args.controller_start_ticks,'commandSha256':args.controller_argv_sha256})
++        result=inspect(args.arm,args.release_sha256,args.controller_sha256,{'pid':args.controller_pid,'startTicks':args.controller_start_ticks,'commandSha256':args.controller_argv_sha256},args.prior_collection_sha256)
+         result.update(observedAtUnixNs=time.time_ns(),controlPlaneInputs=FILES,readOnly=True,networkOrSignalsOrWritesPerformed=False)
+         print(json.dumps(result,sort_keys=True));raise SystemExit(0)
+     except Exception as error:
