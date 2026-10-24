@@ -1,5 +1,7 @@
 # 原应用迁移至 CPU：进展与恢复计划（业务恢复尚未验收）
 
+最新完成：[三副本当前快照R3](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-current-checkpoint-r3/README.md)在CPU上触发一次维护快照后清停，分别解码实际service9/consensus10记录（term12，position7630592）。三份完整engine与combined core/outbox字节均相同，command4609/event6214/market6194/export6214/pending0；combined SHA `457ca2b28e1c47a3d7a860813b87409dcde94ae7212b2ebc748504d4fe3ffe8c`。全部原生文件、所选完整段及零尾部已独立逐字节核验，PG基线未变。尚未从这个新快照再次冷启动，gateway/projector/HTTP/WS及完整历史对应仍待验收。
+
 准备进展：原e1db源的85路径应用包已同源重建；固定Linux PostgreSQL18.6制品已在CPU上通过file/readelf/ldd及`postgres --version`。收据在[恢复准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/root-scope.json)和[实际加载探针](../evidence/2026-10-24/runpod-cpu/restoration-preparation/loader-probe-r1/receipt.json)。此减缩PG制品没有`pg_controldata`/`pg_config`，已另行原生构建两工具。数据库已完成两次实际启动及正常关闭，第二次通过6214条事件的内部ledger审计。原三节点已实际启动、重放尾部并完成leader只读探针，随后全部清停；gateway与projector仍未启动，业务恢复尚未完成。
 
 最新实际恢复：[原三节点CPU启动及完整停止态证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-cluster-recovery-r1/README.md)。leader2实际command4609/event6214/market6194/exported6214/pending0，canonical SHA `ea7b98a23a30b5ddde84db4520e3e915fd07a73900e2c3aa41ee28c8614b5b65`。两次完整canonical字节相同，PG停止态基线未变，57个原生/探针文件的3,643,108,467逻辑字节逐一读回验证。此证明尚未覆盖三份当前replica canonical，也没有提交业务或ACK，不能据此宣称HTTP/WS恢复或性能改善。
@@ -76,4 +78,4 @@ GPU 主机虽是 Ubuntu 24，**实际 PG 并不是 Ubuntu 24 编译件**。`runp
 
 可参考最后已验证历史 checkpoint（`runpod-egress/final-release-verification.json`，2026-10-23 18:35）：core command4539/event6106/market6086，PG6106 events/1519 trades/lag0，state hash `4450df5dc1a6662fec3c8addd55452657ee6fd1ccd0aeae92cc6dbb7e18c780b`。**这不是 fresh物理备份 tip 的独立证明**；最终必须以实际恢复的原始 canonical 与 PG 状态核验，不能硬套旧的2896events/722trades等过期数字。
 
-只有 native恢复、三节点canonical、PG lineage、HTTP幂等和WS验收全部有新收据，才能声明 CPU 应用恢复完成。
+当前native恢复、PG内部ledger及三节点当前canonical均已有新收据；完整source历史对应、被动gateway/projector、HTTP幂等和WS验收仍需完成，之后才能声明 CPU 应用恢复完成。

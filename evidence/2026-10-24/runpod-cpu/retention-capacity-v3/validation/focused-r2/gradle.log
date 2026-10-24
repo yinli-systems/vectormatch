@@ -1,0 +1,45 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :cluster:processResources NO-SOURCE
+> Task :cluster:processTestResources NO-SOURCE
+> Task :core:compileJava UP-TO-DATE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar UP-TO-DATE
+
+> Task :cluster:compileJava FAILED
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-capacity-v3-worktree/cluster/src/main/java/io/vectormatch/cluster/MultiplexedLoadTransports.java:32: warning: [serial] serializable class OwnerFailure has no definition of serialVersionUID
+    static final class OwnerFailure extends Error {
+                 ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-capacity-v3-worktree/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityExperimentV3.java:149: error: cannot find symbol
+                else{rows.status[index]=APPLIED;var result=outcome.result();rows.resultCode[index]=(byte)result.code().ordinal();rows.replayed[index]=(byte)(outcome.replayed()?1:0);rows.commandSeq[index]=result.commandSeq();rows.orderId[index]=result.orderId();rows.filled[index]=result.filled();rows.tradeCount[index]=result.tradeCount();latestBusiness=Math.max(latestBusiness,outcome.frontier().businessSeq());}
+                                                                                                                                                                                                                                                                                              ^
+  symbol:   method filled()
+  location: variable result of type Result
+1 error
+1 warning
+
+[Incubating] Problems report is available at: file:///Users/kevin/Documents/ChatGPT/App%202/runtime/cloud/cpu-20261024/retention-capacity-v3-worktree/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':cluster:compileJava'.
+> Compilation failed; see the compiler output below.
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-capacity-v3-worktree/cluster/src/main/java/io/vectormatch/cluster/MultiplexedLoadTransports.java:32: warning: [serial] serializable class OwnerFailure has no definition of serialVersionUID
+      static final class OwnerFailure extends Error {
+                   ^
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/retention-capacity-v3-worktree/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityExperimentV3.java:149: error: cannot find symbol
+                  else{rows.status[index]=APPLIED;var result=outcome.result();rows.resultCode[index]=(byte)result.code().ordinal();rows.replayed[index]=(byte)(outcome.replayed()?1:0);rows.commandSeq[index]=result.commandSeq();rows.orderId[index]=result.orderId();rows.filled[index]=result.filled();rows.tradeCount[index]=result.tradeCount();latestBusiness=Math.max(latestBusiness,outcome.frontier().businessSeq());}
+                                                                                                                                                                                                                                                                                                ^
+    symbol:   method filled()
+    location: variable result of type Result
+  1 error
+  1 warning
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights.
+
+BUILD FAILED in 3s
+3 actionable tasks: 1 executed, 2 up-to-date
