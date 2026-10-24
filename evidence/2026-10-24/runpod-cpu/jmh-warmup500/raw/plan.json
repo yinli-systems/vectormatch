@@ -1,0 +1,32 @@
+{
+  "jobId": "cpu-jmh-987-warmup500-r1",
+  "sourceRevision": "987f6526b8a0b3c3516ee668a239990cc79fbd8f",
+  "workerSha256": "6dafb2de411fa10e613e343db10d526f999e85f510f40ad8697f2e6dee577404",
+  "registeredAtUtc": "2026-10-24T01:58:35.712109+00:00",
+  "distributionFiles": {
+    "lib/commons-math3-3.6.1.jar": "1e56d7b058d28b65abd256b8458e3885b674c1d588fa43cd7d1cbb9c7ef2b308",
+    "lib/core-0.1.0-SNAPSHOT.jar": "0a4baf0e875fe324838db12d2db84d80e7cf6f9f87669ffdb50f4370389c51d1",
+    "lib/jmh-core-1.37.jar": "dc0eaf2bbf0036a70b60798c785d6e03a9daf06b68b8edb0f1ba9eb3421baeb3",
+    "lib/jopt-simple-5.0.4.jar": "df26cc58f235f477db07f753ba5a3ab243ebe5789d9f89ecf68dd62ea9a66c28",
+    "lib/vectormatch-core-jmh-0.1.0-SNAPSHOT.jar": "5905be73e935f92cdcaf85f985fd15c93d438040a5cd0d2f90d573a7046523a8"
+  },
+  "scope": "In-memory single-thread core only. Fresh scores are64-command batch means, not per-order p99; cached retries explicitly separate. No -prof gc. No network, durability or sustained-system-throughput claim.",
+  "stages": [
+    {
+      "id": "fresh-warmup500",
+      "arguments": [
+        "io.vectormatch.bench.jmh.Fresh.*",
+        "-wi",
+        "500"
+      ],
+      "expectedCases": 15,
+      "expectedBenchmarks": [
+        "io.vectormatch.bench.jmh.FreshMatchingBenchmark.matchBatch",
+        "io.vectormatch.bench.jmh.FreshPlaceCancelBenchmark.lifecycleBatch"
+      ],
+      "forks": 3,
+      "warmup": 500,
+      "measurement": 10
+    }
+  ]
+}
