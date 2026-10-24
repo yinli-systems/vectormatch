@@ -1,0 +1,4344 @@
+{
+  "scope": "Single-host three-JVM loopback UDP. One host/cgroup/namespace observation only; never sum it three times. Approximate UTC chooses the load window, monotonic deltas compute rates. Process/CnC samples do not establish per-order causes or one-way latency. Missing metrics remain unavailable. Approximate selection by recorded scheduledOriginUtcApproximate and each observer's UTC timestamps. No verified cross-host clock synchronization; this is not precise distributed alignment or one-way latency. Rates use monotonic deltas on the same host. cgroup/network are shared container observations. CnC counters are sequential, non-atomic reads; registration identity is preserved. Instantaneous position differences are signed observations, not exact queue/replication lag. Archive write-time includes write, configured force and descheduling elapsed time; it is not a pure fsync histogram.",
+  "sourceSha256": "4e420596e9ef60bacee6306e508451b073c7bb60dca61194c95b03a1abf51f7e",
+  "commonSourceSha256": "21f77b02b872051906f284d9d0709d768ba681d0dce648fb27d7bc28b1d0b0b0",
+  "inputSha256": {
+    "configuration.json": "3d6e57d93d3367d3da3aaa82c52f3bff5bcf4186397d37ae3b6a1e0fc63b4b30",
+    "load-result.json": "7b98fbccde58bb996dbc2c9e86dffbe836e554c1ad21222adfb85a08897d4095",
+    "result.json": "76eccdfc4d0c0f0a7c4d7fd42c52de9931307ff19985afa2e5531ffc37a11ead",
+    "telemetry.jsonl": "18294362bf7b05da99583a2d9604dc0ea9963b315523ad79ef2679345620474c",
+    "node0-counters.jsonl": "f9cada75dcd2f2ba0f56979e5fcc39ad0f91e5c86db48381251e5862346d110c",
+    "node1-counters.jsonl": "dfc1fb03fcee3585a00f07609f3c8da3f2e8a0e169e001e51a7e6bad3202cfb0",
+    "node2-counters.jsonl": "5416143021b4165c77290d35ec83de37a8797b6bc0432b6123eeb586b44f309e"
+  },
+  "arrivalOriginUtcApproximate": "2026-10-24T04:03:02.205551164Z",
+  "arrivalWindowSeconds": 15.909090909,
+  "host": {
+    "file": "evidence/2026-10-24/runpod-cpu/capacity/cpu-capacity-clientpark-a2-22000-w128-r1/raw/evidence/runs/cpu-capacity-clientpark-a2-22000-w128-r1/telemetry.jsonl",
+    "readErrors": [],
+    "coverage": {
+      "observerSamples": 123,
+      "selectedSamples": 16,
+      "selectionStartUtcApproximate": "2026-10-24T04:03:02.205551+00:00",
+      "selectionEndUtcApproximate": "2026-10-24T04:03:18.114642+00:00",
+      "invalidTimestampSampleIndices": [],
+      "firstSelectedUtc": "2026-10-24T04:03:02.315852+00:00",
+      "lastSelectedUtc": "2026-10-24T04:03:17.315923+00:00",
+      "firstSelectedMonotonic": 23096944027245,
+      "lastSelectedMonotonic": 23111944095638,
+      "monotonicField": "monotonicNs",
+      "monotonicUnits": "nanoseconds",
+      "selectedWallSpanSeconds": 15.000071048736572,
+      "wallMinusMonotonicSpanSeconds": 2.6557365728763216e-06,
+      "selectedMonotonicSpanSeconds": 15.000068393,
+      "fractionOfArrivalWindowCoveredByDelta": 0.9428614367075272
+    },
+    "completion": {
+      "elapsedSeconds": 122.70373799899971,
+      "monotonicNs": 23204647502883,
+      "reason": "signal",
+      "samples": 123,
+      "signal": 15,
+      "type": "complete",
+      "wallTimeUtc": "2026-10-24T04:04:50.019344+00:00"
+    },
+    "hardware": {
+      "architecture": "x86_64",
+      "clockMetadata": {
+        "monotonic": {
+          "adjustable": false,
+          "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+          "monotonic": true,
+          "resolution": 1e-09
+        },
+        "perf_counter": {
+          "adjustable": false,
+          "implementation": "clock_gettime(CLOCK_MONOTONIC)",
+          "monotonic": true,
+          "resolution": 1e-09
+        },
+        "time": {
+          "adjustable": true,
+          "implementation": "clock_gettime(CLOCK_REALTIME)",
+          "monotonic": false,
+          "resolution": 1e-09
+        }
+      },
+      "clockTicksPerSecond": 100,
+      "cpuModel": {
+        "value": "AMD EPYC 9575F 64-Core Processor"
+      },
+      "kernel": "6.8.0-147-generic",
+      "logicalCpuCount": 128,
+      "pageSizeBytes": 4096,
+      "samplerAllowedCpuIds": [
+        2,
+        5,
+        12,
+        13,
+        16,
+        23,
+        24,
+        26,
+        29,
+        40,
+        48,
+        51,
+        52,
+        53,
+        54,
+        61,
+        66,
+        69,
+        76,
+        77,
+        80,
+        87,
+        88,
+        90,
+        93,
+        104,
+        112,
+        115,
+        116,
+        117,
+        118,
+        125
+      ],
+      "system": "Linux"
+    },
+    "cgroup": {
+      "version": 2,
+      "directory": "/sys/fs/cgroup",
+      "quotaStable": true,
+      "firstRawQuota": {
+        "periodMicros": 100000,
+        "quotaCpuUpperBound": null,
+        "quotaMicros": null
+      },
+      "lastRawQuota": {
+        "periodMicros": 100000,
+        "quotaCpuUpperBound": null,
+        "quotaMicros": null
+      },
+      "visibleQuotaCores": null,
+      "cpuUsageNanos": {
+        "first": 4640076977000,
+        "last": 4691008057000,
+        "delta": 50931080000
+      },
+      "averageLogicalCores": 3.395389851940124,
+      "cpuPeriods": {
+        "first": 0,
+        "last": 0,
+        "delta": 0
+      },
+      "throttledPeriods": {
+        "first": 0,
+        "last": 0,
+        "delta": 0
+      },
+      "throttledNanos": {
+        "first": 0,
+        "last": 0,
+        "delta": 0
+      },
+      "memoryBytes": {
+        "first": 4018704384,
+        "last": 5370458112,
+        "minObserved": 4018704384,
+        "maxObserved": 5370458112,
+        "observations": 16
+      },
+      "memoryEvents": {
+        "high": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        "low": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        "max": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        "oom": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        "oom_group_kill": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        "oom_kill": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        }
+      },
+      "scope": "Sampler's shared current leaf; quota is a visible upper bound, not dedicated CPU. Hidden ancestors are not measured. v1 under_oom/oom_kill_disable are state gauges; allocationFailures are not OOM kills.",
+      "percentOfVisibleQuota": null
+    },
+    "udpAvailableAtBothBoundaries": true,
+    "udpReadStatusAtBoundaries": {
+      "first": {
+        "value": {
+          "IgnoredMulti": 0,
+          "InCsumErrors": 0,
+          "InDatagrams": 14005320,
+          "InErrors": 0,
+          "MemErrors": 0,
+          "NoPorts": 5380,
+          "OutDatagrams": 14010707,
+          "RcvbufErrors": 0,
+          "SndbufErrors": 0
+        }
+      },
+      "last": {
+        "value": {
+          "IgnoredMulti": 0,
+          "InCsumErrors": 0,
+          "InDatagrams": 14325376,
+          "InErrors": 0,
+          "MemErrors": 0,
+          "NoPorts": 5380,
+          "OutDatagrams": 14330757,
+          "RcvbufErrors": 0,
+          "SndbufErrors": 0
+        }
+      }
+    },
+    "udpCounters": {
+      "IgnoredMulti": {
+        "first": 0,
+        "last": 0,
+        "delta": 0
+      },
+      "InCsumErrors": {
+        "first": 0,
+        "last": 0,
+        "delta": 0
+      },
+      "InDatagrams": {
+        "first": 14005320,
+        "last": 14325376,
+        "delta": 320056
+      },
+      "InErrors": {
+        "first": 0,
+        "last": 0,
+        "delta": 0
+      },
+      "MemErrors": {
+        "first": 0,
+        "last": 0,
+        "delta": 0
+      },
+      "NoPorts": {
+        "first": 5380,
+        "last": 5380,
+        "delta": 0
+      },
+      "OutDatagrams": {
+        "first": 14010707,
+        "last": 14330757,
+        "delta": 320050
+      },
+      "RcvbufErrors": {
+        "first": 0,
+        "last": 0,
+        "delta": 0
+      },
+      "SndbufErrors": {
+        "first": 0,
+        "last": 0,
+        "delta": 0
+      }
+    },
+    "interface": "lo",
+    "interfaceUnchanged": true,
+    "interfaceCounters": {
+      "receive": {
+        "bytes": {
+          "first": 6278343818,
+          "last": 6461337118,
+          "delta": 182993300
+        },
+        "packets": {
+          "first": 14570063,
+          "last": 14890121,
+          "delta": 320058
+        },
+        "drop": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        "errs": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        "fifo": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        }
+      },
+      "transmit": {
+        "bytes": {
+          "first": 6278343818,
+          "last": 6461337118,
+          "delta": 182993300
+        },
+        "packets": {
+          "first": 14570063,
+          "last": 14890121,
+          "delta": 320058
+        },
+        "drop": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        "errs": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        "fifo": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        }
+      }
+    },
+    "networkScope": "Pod network namespace/interface counters, not per-process packet loss. NoPorts counts datagrams to unbound ports; do not equate it with benchmark command loss."
+  },
+  "processes": {
+    "node-0": {
+      "identityStatusCounts": {
+        "verified": 16
+      },
+      "verifiedSamples": 16,
+      "clockTicksPerSecond": 100,
+      "visibleQuotaCores": null,
+      "averageLogicalCores": 0.6746635905155369,
+      "percentOfVisibleQuota": null,
+      "identitiesObserved": [
+        {
+          "pid": 42689,
+          "startTicks": 2307969,
+          "commandSha256": "21e0ee43fdac35b7b4beb4692c8e33400ca48719422121fe9972d83cab9023ab"
+        }
+      ],
+      "firstVerifiedUtc": "2026-10-24T04:03:02.315852+00:00",
+      "lastVerifiedUtc": "2026-10-24T04:03:17.315923+00:00",
+      "spanSeconds": 15.000068393,
+      "cpuTickCounters": {
+        "userCpuTicks": {
+          "first": 399,
+          "last": 909,
+          "delta": 510
+        },
+        "systemCpuTicks": {
+          "first": 123,
+          "last": 625,
+          "delta": 502
+        }
+      },
+      "cpuSeconds": 10.12,
+      "ioCounters": {
+        "read_bytes": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        "write_bytes": {
+          "first": 53063680,
+          "last": 159019008,
+          "delta": 105955328
+        },
+        "cancelled_write_bytes": {
+          "first": 126976,
+          "last": 126976,
+          "delta": 0
+        },
+        "rchar": {
+          "first": 3313498,
+          "last": 3313839,
+          "delta": 341
+        },
+        "wchar": {
+          "first": 382374,
+          "last": 45361254,
+          "delta": 44978880
+        },
+        "syscr": {
+          "first": 2107,
+          "last": 2115,
+          "delta": 8
+        },
+        "syscw": {
+          "first": 414,
+          "last": 4183,
+          "delta": 3769
+        }
+      },
+      "rssBytes": {
+        "first": 180314112,
+        "last": 630489088,
+        "minObserved": 180314112,
+        "maxObserved": 630489088,
+        "observations": 16
+      },
+      "threadCount": {
+        "first": 28,
+        "last": 44,
+        "minObserved": 28,
+        "maxObserved": 49,
+        "observations": 16
+      },
+      "pageFaultCounters": {
+        "majorFaults": {
+          "first": 37,
+          "last": 61,
+          "delta": 24
+        },
+        "minorFaults": {
+          "first": 40505,
+          "last": 122250,
+          "delta": 81745
+        }
+      },
+      "ioScope": "Process /proc IO accounting, not device utilization, sync latency or total physical disk traffic."
+    },
+    "load": {
+      "identityStatusCounts": {
+        "verified": 16
+      },
+      "verifiedSamples": 16,
+      "clockTicksPerSecond": 100,
+      "visibleQuotaCores": null,
+      "averageLogicalCores": 1.7119921941145246,
+      "percentOfVisibleQuota": null,
+      "identitiesObserved": [
+        {
+          "pid": 42897,
+          "startTicks": 2308312,
+          "commandSha256": "f66c7878a78704d1abf3995b0c96b47a17d89daa957635eab5ec7eec6abd13dd"
+        }
+      ],
+      "firstVerifiedUtc": "2026-10-24T04:03:02.315852+00:00",
+      "lastVerifiedUtc": "2026-10-24T04:03:17.315923+00:00",
+      "spanSeconds": 15.000068393,
+      "cpuTickCounters": {
+        "userCpuTicks": {
+          "first": 224,
+          "last": 2531,
+          "delta": 2307
+        },
+        "systemCpuTicks": {
+          "first": 41,
+          "last": 302,
+          "delta": 261
+        }
+      },
+      "cpuSeconds": 25.68,
+      "ioCounters": {
+        "read_bytes": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        "write_bytes": {
+          "first": 97955840,
+          "last": 97955840,
+          "delta": 0
+        },
+        "cancelled_write_bytes": {
+          "first": 139264,
+          "last": 139264,
+          "delta": 0
+        },
+        "rchar": {
+          "first": 2433964,
+          "last": 2434259,
+          "delta": 295
+        },
+        "wchar": {
+          "first": 50283,
+          "last": 50283,
+          "delta": 0
+        },
+        "syscr": {
+          "first": 1450,
+          "last": 1454,
+          "delta": 4
+        },
+        "syscw": {
+          "first": 24,
+          "last": 24,
+          "delta": 0
+        }
+      },
+      "rssBytes": {
+        "first": 352280576,
+        "last": 622174208,
+        "minObserved": 352280576,
+        "maxObserved": 622174208,
+        "observations": 16
+      },
+      "threadCount": {
+        "first": 181,
+        "last": 172,
+        "minObserved": 172,
+        "maxObserved": 181,
+        "observations": 16
+      },
+      "pageFaultCounters": {
+        "majorFaults": {
+          "first": 10,
+          "last": 10,
+          "delta": 0
+        },
+        "minorFaults": {
+          "first": 95254,
+          "last": 172411,
+          "delta": 77157
+        }
+      },
+      "ioScope": "Process /proc IO accounting, not device utilization, sync latency or total physical disk traffic."
+    },
+    "node-1": {
+      "identityStatusCounts": {
+        "verified": 16
+      },
+      "verifiedSamples": 16,
+      "clockTicksPerSecond": 100,
+      "visibleQuotaCores": null,
+      "averageLogicalCores": 0.5026643747516946,
+      "percentOfVisibleQuota": null,
+      "identitiesObserved": [
+        {
+          "pid": 42717,
+          "startTicks": 2308001,
+          "commandSha256": "553c15d51d2e2b0019b7da2310f8a961af90e63d369e0fbae5d2f130016a9539"
+        }
+      ],
+      "firstVerifiedUtc": "2026-10-24T04:03:02.315852+00:00",
+      "lastVerifiedUtc": "2026-10-24T04:03:17.315923+00:00",
+      "spanSeconds": 15.000068393,
+      "cpuTickCounters": {
+        "userCpuTicks": {
+          "first": 352,
+          "last": 790,
+          "delta": 438
+        },
+        "systemCpuTicks": {
+          "first": 112,
+          "last": 428,
+          "delta": 316
+        }
+      },
+      "cpuSeconds": 7.54,
+      "ioCounters": {
+        "read_bytes": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        "write_bytes": {
+          "first": 52285440,
+          "last": 157245440,
+          "delta": 104960000
+        },
+        "cancelled_write_bytes": {
+          "first": 40960,
+          "last": 40960,
+          "delta": 0
+        },
+        "rchar": {
+          "first": 3302431,
+          "last": 3302510,
+          "delta": 79
+        },
+        "wchar": {
+          "first": 382726,
+          "last": 45361222,
+          "delta": 44978496
+        },
+        "syscr": {
+          "first": 2065,
+          "last": 2072,
+          "delta": 7
+        },
+        "syscw": {
+          "first": 414,
+          "last": 4074,
+          "delta": 3660
+        }
+      },
+      "rssBytes": {
+        "first": 173461504,
+        "last": 623136768,
+        "minObserved": 173461504,
+        "maxObserved": 623136768,
+        "observations": 16
+      },
+      "threadCount": {
+        "first": 28,
+        "last": 44,
+        "minObserved": 28,
+        "maxObserved": 45,
+        "observations": 16
+      },
+      "pageFaultCounters": {
+        "majorFaults": {
+          "first": 29,
+          "last": 42,
+          "delta": 13
+        },
+        "minorFaults": {
+          "first": 40179,
+          "last": 127138,
+          "delta": 86959
+        }
+      },
+      "ioScope": "Process /proc IO accounting, not device utilization, sync latency or total physical disk traffic."
+    },
+    "node-2": {
+      "identityStatusCounts": {
+        "verified": 16
+      },
+      "verifiedSamples": 16,
+      "clockTicksPerSecond": 100,
+      "visibleQuotaCores": null,
+      "averageLogicalCores": 0.4813311386879621,
+      "percentOfVisibleQuota": null,
+      "identitiesObserved": [
+        {
+          "pid": 42745,
+          "startTicks": 2308031,
+          "commandSha256": "93054a9d6fa2146a156d7128c926d235e828e0d08d4e17a5809d364316d7dedb"
+        }
+      ],
+      "firstVerifiedUtc": "2026-10-24T04:03:02.315852+00:00",
+      "lastVerifiedUtc": "2026-10-24T04:03:17.315923+00:00",
+      "spanSeconds": 15.000068393,
+      "cpuTickCounters": {
+        "userCpuTicks": {
+          "first": 385,
+          "last": 776,
+          "delta": 391
+        },
+        "systemCpuTicks": {
+          "first": 95,
+          "last": 426,
+          "delta": 331
+        }
+      },
+      "cpuSeconds": 7.22,
+      "ioCounters": {
+        "read_bytes": {
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        "write_bytes": {
+          "first": 52137984,
+          "last": 156889088,
+          "delta": 104751104
+        },
+        "cancelled_write_bytes": {
+          "first": 40960,
+          "last": 40960,
+          "delta": 0
+        },
+        "rchar": {
+          "first": 3302476,
+          "last": 3302544,
+          "delta": 68
+        },
+        "wchar": {
+          "first": 382726,
+          "last": 45366982,
+          "delta": 44984256
+        },
+        "syscr": {
+          "first": 2069,
+          "last": 2075,
+          "delta": 6
+        },
+        "syscw": {
+          "first": 414,
+          "last": 4014,
+          "delta": 3600
+        }
+      },
+      "rssBytes": {
+        "first": 173146112,
+        "last": 614068224,
+        "minObserved": 173146112,
+        "maxObserved": 614068224,
+        "observations": 16
+      },
+      "threadCount": {
+        "first": 28,
+        "last": 44,
+        "minObserved": 28,
+        "maxObserved": 45,
+        "observations": 16
+      },
+      "pageFaultCounters": {
+        "majorFaults": {
+          "first": 28,
+          "last": 29,
+          "delta": 1
+        },
+        "minorFaults": {
+          "first": 40534,
+          "last": 122187,
+          "delta": 81653
+        }
+      },
+      "ioScope": "Process /proc IO accounting, not device utilization, sync latency or total physical disk traffic."
+    }
+  },
+  "cnc": {
+    "0": {
+      "file": "evidence/2026-10-24/runpod-cpu/capacity/cpu-capacity-clientpark-a2-22000-w128-r1/raw/evidence/runs/cpu-capacity-clientpark-a2-22000-w128-r1/node0-counters.jsonl",
+      "readErrors": [],
+      "coverage": {
+        "observerSamples": 124,
+        "selectedSamples": 16,
+        "selectionStartUtcApproximate": "2026-10-24T04:03:02.205551+00:00",
+        "selectionEndUtcApproximate": "2026-10-24T04:03:18.114642+00:00",
+        "invalidTimestampSampleIndices": [],
+        "firstSelectedUtc": "2026-10-24T04:03:02.362398584Z",
+        "lastSelectedUtc": "2026-10-24T04:03:17.362538866Z",
+        "firstSelectedMonotonic": 15000221641,
+        "lastSelectedMonotonic": 30000206315,
+        "monotonicField": "elapsedNanos",
+        "monotonicUnits": "nanoseconds",
+        "selectedWallSpanSeconds": 15.000140190124512,
+        "wallMinusMonotonicSpanSeconds": 0.0001555161245114789,
+        "selectedMonotonicSpanSeconds": 14.999984674,
+        "fractionOfArrivalWindowCoveredByDelta": 0.942856174370413
+      },
+      "completion": {
+        "kind": "complete",
+        "timestamp": "2026-10-24T04:04:49.563694505Z",
+        "samples": 124,
+        "elapsedNanos": 122201966577,
+        "terminationReason": "SHUTDOWN_REQUESTED"
+      },
+      "failure": null,
+      "diagnosticCounterDeltas": [
+        {
+          "counterId": 5,
+          "registrationId": 5,
+          "typeId": 0,
+          "label": "NAKs sent",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 6,
+          "registrationId": 6,
+          "typeId": 0,
+          "label": "NAKs received",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 11,
+          "registrationId": 11,
+          "typeId": 0,
+          "label": "Retransmits sent",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 14,
+          "registrationId": 14,
+          "typeId": 0,
+          "label": "Invalid packets",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 15,
+          "registrationId": 15,
+          "typeId": 0,
+          "label": "Errors: version=1.53.3 commit=377943bcb8",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 16,
+          "registrationId": 16,
+          "typeId": 0,
+          "label": "Short sends",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 18,
+          "registrationId": 18,
+          "typeId": 0,
+          "label": "Sender flow control limits, i.e. back-pressure events",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 23,
+          "registrationId": 23,
+          "typeId": 0,
+          "label": "Loss gap fills",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 24,
+          "registrationId": 24,
+          "typeId": 0,
+          "label": "Client liveness timeouts",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 27,
+          "registrationId": 27,
+          "typeId": 0,
+          "label": "Conductor work cycle exceeded threshold count: threshold=100ms SHARED",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 29,
+          "registrationId": 29,
+          "typeId": 0,
+          "label": "Sender work cycle exceeded threshold count: threshold=100ms SHARED",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 31,
+          "registrationId": 31,
+          "typeId": 0,
+          "label": "Receiver work cycle exceeded threshold count: threshold=100ms SHARED",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 33,
+          "registrationId": 33,
+          "typeId": 0,
+          "label": "NameResolver exceeded threshold count: threshold=5s",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 36,
+          "registrationId": 36,
+          "typeId": 0,
+          "label": "Retransmitted bytes",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 37,
+          "registrationId": 37,
+          "typeId": 0,
+          "label": "Retransmit Pool Overflow count",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 38,
+          "registrationId": 38,
+          "typeId": 0,
+          "label": "Error Frames received",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 39,
+          "registrationId": 39,
+          "typeId": 0,
+          "label": "Error Frames sent",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 61,
+          "registrationId": 19,
+          "typeId": 212,
+          "label": "Cluster Errors - clusterId=0 version=1.53.3 commit=377943bcb8",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 71,
+          "registrationId": 29,
+          "typeId": 213,
+          "label": "Cluster timed out client count - clusterId=0",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 73,
+          "registrationId": 31,
+          "typeId": 217,
+          "label": "Cluster work cycle time exceeded count: threshold=100ms - clusterId=0",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 81,
+          "registrationId": 38,
+          "typeId": 215,
+          "label": "Cluster Container Errors - clusterId=0 serviceId=0 version=1.53.3 commit=377943bcb8",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 83,
+          "registrationId": 41,
+          "typeId": 219,
+          "label": "Cluster container work cycle time exceeded count: threshold=100ms - clusterId=0 serviceId=0",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        }
+      ],
+      "archiveWriteCounterDeltas": [
+        {
+          "counterId": 53,
+          "registrationId": 9,
+          "typeId": 106,
+          "label": "archive-recorder total write bytes - archiveId=1",
+          "first": 505408,
+          "last": 45455680,
+          "delta": 44950272,
+          "units": "bytes"
+        },
+        {
+          "counterId": 54,
+          "registrationId": 10,
+          "typeId": 107,
+          "label": "archive-recorder total write time in ns - archiveId=1",
+          "first": 579514573,
+          "last": 15418423157,
+          "delta": 14838908584,
+          "units": "nanoseconds-wall-time-in-write-path",
+          "elapsedWriteTimeToObservedWallRatio": 0.9892615830282014
+        }
+      ],
+      "lifetimeMaximaObserved": [
+        {
+          "counterId": 26,
+          "registrationId": 26,
+          "typeId": 0,
+          "label": "Conductor max cycle time doing its work in ns: SHARED",
+          "maxObservedNanos": 12354299,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 28,
+          "registrationId": 28,
+          "typeId": 0,
+          "label": "Sender max cycle time doing its work in ns: SHARED",
+          "maxObservedNanos": 12359409,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 30,
+          "registrationId": 30,
+          "typeId": 0,
+          "label": "Receiver max cycle time doing its work in ns: SHARED",
+          "maxObservedNanos": 12343140,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 47,
+          "registrationId": 3,
+          "typeId": 103,
+          "label": "archive-conductor max cycle time in ns: SHARED - archiveId=1",
+          "maxObservedNanos": 31359443,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 52,
+          "registrationId": 8,
+          "typeId": 105,
+          "label": "archive-recorder max write time in ns - archiveId=1",
+          "maxObservedNanos": 31355003,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 72,
+          "registrationId": 30,
+          "typeId": 216,
+          "label": "Cluster max cycle time in ns - clusterId=0",
+          "maxObservedNanos": 26000000,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 82,
+          "registrationId": 40,
+          "typeId": 218,
+          "label": "Cluster container max cycle time in ns - clusterId=0 serviceId=0",
+          "maxObservedNanos": 22489014,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        }
+      ],
+      "observedRoles": [
+        2
+      ],
+      "observedTerms": [
+        0
+      ],
+      "positionSamples": [
+        {
+          "timestamp": "2026-10-24T04:03:02.362398584Z",
+          "elapsedNanos": 15000221641,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 501760
+              }
+            ],
+            "appendPublicationPosition": [
+              {
+                "counterId": 133,
+                "registrationId": 74,
+                "typeId": 12,
+                "label": "pub-pos (exclusive): 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 526336
+              }
+            ],
+            "senderPosition": [
+              {
+                "counterId": 135,
+                "registrationId": 74,
+                "typeId": 2,
+                "label": "snd-pos: 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 526336
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 140,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=73|session-id=996889834|alias=log - archiveId=1",
+                "value": 505408
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 141,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron-spy:aeron:udp?tags=73|session-id=996889834|alias=log-sc-0 @0",
+                "value": 501760
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:03.362600385Z",
+          "elapsedNanos": 16000223604,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 3721216
+              }
+            ],
+            "appendPublicationPosition": [
+              {
+                "counterId": 133,
+                "registrationId": 74,
+                "typeId": 12,
+                "label": "pub-pos (exclusive): 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 3723328
+              }
+            ],
+            "senderPosition": [
+              {
+                "counterId": 135,
+                "registrationId": 74,
+                "typeId": 2,
+                "label": "snd-pos: 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 3723328
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 140,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=73|session-id=996889834|alias=log - archiveId=1",
+                "value": 3721216
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 141,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron-spy:aeron:udp?tags=73|session-id=996889834|alias=log-sc-0 @0",
+                "value": 3721216
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:04.362706616Z",
+          "elapsedNanos": 17000241056,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 7109440
+              }
+            ],
+            "appendPublicationPosition": [
+              {
+                "counterId": 133,
+                "registrationId": 74,
+                "typeId": 12,
+                "label": "pub-pos (exclusive): 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 7110592
+              }
+            ],
+            "senderPosition": [
+              {
+                "counterId": 135,
+                "registrationId": 74,
+                "typeId": 2,
+                "label": "snd-pos: 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 7110592
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 140,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=73|session-id=996889834|alias=log - archiveId=1",
+                "value": 7109440
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 141,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron-spy:aeron:udp?tags=73|session-id=996889834|alias=log-sc-0 @0",
+                "value": 7109440
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:05.362740579Z",
+          "elapsedNanos": 18000233739,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 10297600
+              }
+            ],
+            "appendPublicationPosition": [
+              {
+                "counterId": 133,
+                "registrationId": 74,
+                "typeId": 12,
+                "label": "pub-pos (exclusive): 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 10316800
+              }
+            ],
+            "senderPosition": [
+              {
+                "counterId": 135,
+                "registrationId": 74,
+                "typeId": 2,
+                "label": "snd-pos: 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 10316800
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 140,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=73|session-id=996889834|alias=log - archiveId=1",
+                "value": 10297600
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 141,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron-spy:aeron:udp?tags=73|session-id=996889834|alias=log-sc-0 @0",
+                "value": 10297600
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:06.362600483Z",
+          "elapsedNanos": 19000246942,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 13429120
+              }
+            ],
+            "appendPublicationPosition": [
+              {
+                "counterId": 133,
+                "registrationId": 74,
+                "typeId": 12,
+                "label": "pub-pos (exclusive): 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 13451200
+              }
+            ],
+            "senderPosition": [
+              {
+                "counterId": 135,
+                "registrationId": 74,
+                "typeId": 2,
+                "label": "snd-pos: 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 13451200
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 140,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=73|session-id=996889834|alias=log - archiveId=1",
+                "value": 13429120
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 141,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron-spy:aeron:udp?tags=73|session-id=996889834|alias=log-sc-0 @0",
+                "value": 13429120
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:07.362525407Z",
+          "elapsedNanos": 20000198455,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 16694080
+              }
+            ],
+            "appendPublicationPosition": [
+              {
+                "counterId": 133,
+                "registrationId": 74,
+                "typeId": 12,
+                "label": "pub-pos (exclusive): 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 16718656
+              }
+            ],
+            "senderPosition": [
+              {
+                "counterId": 135,
+                "registrationId": 74,
+                "typeId": 2,
+                "label": "snd-pos: 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 16718656
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 140,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=73|session-id=996889834|alias=log - archiveId=1",
+                "value": 16694080
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 141,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron-spy:aeron:udp?tags=73|session-id=996889834|alias=log-sc-0 @0",
+                "value": 16694080
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:08.362686148Z",
+          "elapsedNanos": 21000260008,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 19737088
+              }
+            ],
+            "appendPublicationPosition": [
+              {
+                "counterId": 133,
+                "registrationId": 74,
+                "typeId": 12,
+                "label": "pub-pos (exclusive): 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 19761664
+              }
+            ],
+            "senderPosition": [
+              {
+                "counterId": 135,
+                "registrationId": 74,
+                "typeId": 2,
+                "label": "snd-pos: 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 19761664
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 140,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=73|session-id=996889834|alias=log - archiveId=1",
+                "value": 19737088
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 141,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron-spy:aeron:udp?tags=73|session-id=996889834|alias=log-sc-0 @0",
+                "value": 19737088
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:09.362619482Z",
+          "elapsedNanos": 22000206571,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 22872640
+              }
+            ],
+            "appendPublicationPosition": [
+              {
+                "counterId": 133,
+                "registrationId": 74,
+                "typeId": 12,
+                "label": "pub-pos (exclusive): 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 22897216
+              }
+            ],
+            "senderPosition": [
+              {
+                "counterId": 135,
+                "registrationId": 74,
+                "typeId": 2,
+                "label": "snd-pos: 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 22897216
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 140,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=73|session-id=996889834|alias=log - archiveId=1",
+                "value": 22882240
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 141,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron-spy:aeron:udp?tags=73|session-id=996889834|alias=log-sc-0 @0",
+                "value": 22872640
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:10.362560515Z",
+          "elapsedNanos": 23000216904,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 26016640
+              }
+            ],
+            "appendPublicationPosition": [
+              {
+                "counterId": 133,
+                "registrationId": 74,
+                "typeId": 12,
+                "label": "pub-pos (exclusive): 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 26022592
+              }
+            ],
+            "senderPosition": [
+              {
+                "counterId": 135,
+                "registrationId": 74,
+                "typeId": 2,
+                "label": "snd-pos: 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 26022592
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 140,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=73|session-id=996889834|alias=log - archiveId=1",
+                "value": 26016640
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 141,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron-spy:aeron:udp?tags=73|session-id=996889834|alias=log-sc-0 @0",
+                "value": 26016640
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:11.362521959Z",
+          "elapsedNanos": 24000222307,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 28835200
+              }
+            ],
+            "appendPublicationPosition": [
+              {
+                "counterId": 133,
+                "registrationId": 74,
+                "typeId": 12,
+                "label": "pub-pos (exclusive): 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 28856320
+              }
+            ],
+            "senderPosition": [
+              {
+                "counterId": 135,
+                "registrationId": 74,
+                "typeId": 2,
+                "label": "snd-pos: 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 28856320
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 140,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=73|session-id=996889834|alias=log - archiveId=1",
+                "value": 28835200
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 141,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron-spy:aeron:udp?tags=73|session-id=996889834|alias=log-sc-0 @0",
+                "value": 28835200
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:12.362644930Z",
+          "elapsedNanos": 25000303309,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 31684096
+              }
+            ],
+            "appendPublicationPosition": [
+              {
+                "counterId": 133,
+                "registrationId": 74,
+                "typeId": 12,
+                "label": "pub-pos (exclusive): 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 31708672
+              }
+            ],
+            "senderPosition": [
+              {
+                "counterId": 135,
+                "registrationId": 74,
+                "typeId": 2,
+                "label": "snd-pos: 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 31708672
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 140,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=73|session-id=996889834|alias=log - archiveId=1",
+                "value": 31684096
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 141,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron-spy:aeron:udp?tags=73|session-id=996889834|alias=log-sc-0 @0",
+                "value": 31684096
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:13.362546214Z",
+          "elapsedNanos": 26000210483,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 34577536
+              }
+            ],
+            "appendPublicationPosition": [
+              {
+                "counterId": 133,
+                "registrationId": 74,
+                "typeId": 12,
+                "label": "pub-pos (exclusive): 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 34602112
+              }
+            ],
+            "senderPosition": [
+              {
+                "counterId": 135,
+                "registrationId": 74,
+                "typeId": 2,
+                "label": "snd-pos: 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 34602112
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 140,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=73|session-id=996889834|alias=log - archiveId=1",
+                "value": 34577536
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 141,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron-spy:aeron:udp?tags=73|session-id=996889834|alias=log-sc-0 @0",
+                "value": 34577536
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:14.362523217Z",
+          "elapsedNanos": 27000198046,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 37266496
+              }
+            ],
+            "appendPublicationPosition": [
+              {
+                "counterId": 133,
+                "registrationId": 74,
+                "typeId": 12,
+                "label": "pub-pos (exclusive): 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 37291072
+              }
+            ],
+            "senderPosition": [
+              {
+                "counterId": 135,
+                "registrationId": 74,
+                "typeId": 2,
+                "label": "snd-pos: 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 37291072
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 140,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=73|session-id=996889834|alias=log - archiveId=1",
+                "value": 37266496
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 141,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron-spy:aeron:udp?tags=73|session-id=996889834|alias=log-sc-0 @0",
+                "value": 37266496
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:15.362338632Z",
+          "elapsedNanos": 28000186639,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 40220608
+              }
+            ],
+            "appendPublicationPosition": [
+              {
+                "counterId": 133,
+                "registrationId": 74,
+                "typeId": 12,
+                "label": "pub-pos (exclusive): 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 40245184
+              }
+            ],
+            "senderPosition": [
+              {
+                "counterId": 135,
+                "registrationId": 74,
+                "typeId": 2,
+                "label": "snd-pos: 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 40245184
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 140,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=73|session-id=996889834|alias=log - archiveId=1",
+                "value": 40220608
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 141,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron-spy:aeron:udp?tags=73|session-id=996889834|alias=log-sc-0 @0",
+                "value": 40220608
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:16.362585163Z",
+          "elapsedNanos": 29000222591,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 42880768
+              }
+            ],
+            "appendPublicationPosition": [
+              {
+                "counterId": 133,
+                "registrationId": 74,
+                "typeId": 12,
+                "label": "pub-pos (exclusive): 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 42905152
+              }
+            ],
+            "senderPosition": [
+              {
+                "counterId": 135,
+                "registrationId": 74,
+                "typeId": 2,
+                "label": "snd-pos: 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 42905152
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 140,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=73|session-id=996889834|alias=log - archiveId=1",
+                "value": 42880768
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 141,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron-spy:aeron:udp?tags=73|session-id=996889834|alias=log-sc-0 @0",
+                "value": 42880768
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:17.362538866Z",
+          "elapsedNanos": 30000206315,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 45455680
+              }
+            ],
+            "appendPublicationPosition": [
+              {
+                "counterId": 133,
+                "registrationId": 74,
+                "typeId": 12,
+                "label": "pub-pos (exclusive): 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 45480256
+              }
+            ],
+            "senderPosition": [
+              {
+                "counterId": 135,
+                "registrationId": 74,
+                "typeId": 2,
+                "label": "snd-pos: 74 996889834 100 aeron:udp?alias=log|term-id=0|tags=73,72|term-length=64m|control=127.0.0.1:0|term-offset=0|mtu=1248|control-mode=manual|ssc=false|init-term-id=0",
+                "value": 45480256
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 140,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=73|session-id=996889834|alias=log - archiveId=1",
+                "value": 45455680
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 141,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron-spy:aeron:udp?tags=73|session-id=996889834|alias=log-sc-0 @0",
+                "value": 45455680
+              }
+            ]
+          }
+        }
+      ],
+      "nonAtomicSignedPositionDifferenceSamples": [
+        {
+          "timestamp": "2026-10-24T04:03:02.362398584Z",
+          "elapsedNanos": 15000221641,
+          "appendMinusCommitBytes": 24576,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": 20928,
+          "receiveHighWaterMinusRecordingBytes": null
+        },
+        {
+          "timestamp": "2026-10-24T04:03:03.362600385Z",
+          "elapsedNanos": 16000223604,
+          "appendMinusCommitBytes": 2112,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": 2112,
+          "receiveHighWaterMinusRecordingBytes": null
+        },
+        {
+          "timestamp": "2026-10-24T04:03:04.362706616Z",
+          "elapsedNanos": 17000241056,
+          "appendMinusCommitBytes": 1152,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": 1152,
+          "receiveHighWaterMinusRecordingBytes": null
+        },
+        {
+          "timestamp": "2026-10-24T04:03:05.362740579Z",
+          "elapsedNanos": 18000233739,
+          "appendMinusCommitBytes": 19200,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": 19200,
+          "receiveHighWaterMinusRecordingBytes": null
+        },
+        {
+          "timestamp": "2026-10-24T04:03:06.362600483Z",
+          "elapsedNanos": 19000246942,
+          "appendMinusCommitBytes": 22080,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": 22080,
+          "receiveHighWaterMinusRecordingBytes": null
+        },
+        {
+          "timestamp": "2026-10-24T04:03:07.362525407Z",
+          "elapsedNanos": 20000198455,
+          "appendMinusCommitBytes": 24576,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": 24576,
+          "receiveHighWaterMinusRecordingBytes": null
+        },
+        {
+          "timestamp": "2026-10-24T04:03:08.362686148Z",
+          "elapsedNanos": 21000260008,
+          "appendMinusCommitBytes": 24576,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": 24576,
+          "receiveHighWaterMinusRecordingBytes": null
+        },
+        {
+          "timestamp": "2026-10-24T04:03:09.362619482Z",
+          "elapsedNanos": 22000206571,
+          "appendMinusCommitBytes": 24576,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": 14976,
+          "receiveHighWaterMinusRecordingBytes": null
+        },
+        {
+          "timestamp": "2026-10-24T04:03:10.362560515Z",
+          "elapsedNanos": 23000216904,
+          "appendMinusCommitBytes": 5952,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": 5952,
+          "receiveHighWaterMinusRecordingBytes": null
+        },
+        {
+          "timestamp": "2026-10-24T04:03:11.362521959Z",
+          "elapsedNanos": 24000222307,
+          "appendMinusCommitBytes": 21120,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": 21120,
+          "receiveHighWaterMinusRecordingBytes": null
+        },
+        {
+          "timestamp": "2026-10-24T04:03:12.362644930Z",
+          "elapsedNanos": 25000303309,
+          "appendMinusCommitBytes": 24576,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": 24576,
+          "receiveHighWaterMinusRecordingBytes": null
+        },
+        {
+          "timestamp": "2026-10-24T04:03:13.362546214Z",
+          "elapsedNanos": 26000210483,
+          "appendMinusCommitBytes": 24576,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": 24576,
+          "receiveHighWaterMinusRecordingBytes": null
+        },
+        {
+          "timestamp": "2026-10-24T04:03:14.362523217Z",
+          "elapsedNanos": 27000198046,
+          "appendMinusCommitBytes": 24576,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": 24576,
+          "receiveHighWaterMinusRecordingBytes": null
+        },
+        {
+          "timestamp": "2026-10-24T04:03:15.362338632Z",
+          "elapsedNanos": 28000186639,
+          "appendMinusCommitBytes": 24576,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": 24576,
+          "receiveHighWaterMinusRecordingBytes": null
+        },
+        {
+          "timestamp": "2026-10-24T04:03:16.362585163Z",
+          "elapsedNanos": 29000222591,
+          "appendMinusCommitBytes": 24384,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": 24384,
+          "receiveHighWaterMinusRecordingBytes": null
+        },
+        {
+          "timestamp": "2026-10-24T04:03:17.362538866Z",
+          "elapsedNanos": 30000206315,
+          "appendMinusCommitBytes": 24576,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": 24576,
+          "receiveHighWaterMinusRecordingBytes": null
+        }
+      ],
+      "positionDifferenceRanges": {
+        "appendMinusCommitBytes": {
+          "first": 24576,
+          "last": 24576,
+          "minObserved": 1152,
+          "maxObserved": 24576,
+          "observations": 16
+        },
+        "commitMinusServiceBytes": {
+          "first": 0,
+          "last": 0,
+          "minObserved": 0,
+          "maxObserved": 0,
+          "observations": 16
+        },
+        "appendMinusRecordingBytes": {
+          "first": 20928,
+          "last": 24576,
+          "minObserved": 1152,
+          "maxObserved": 24576,
+          "observations": 16
+        },
+        "receiveHighWaterMinusRecordingBytes": {
+          "first": null,
+          "last": null,
+          "minObserved": null,
+          "maxObserved": null,
+          "observations": 0
+        }
+      },
+      "counterIdentitiesOnlyInFirstSample": [
+        {
+          "counterId": 100,
+          "registrationId": 95,
+          "typeId": 20,
+          "label": "rcv-naks-sent: 95 1854711994 101 aeron:udp?rejoin=false|mtu=1248|reliable=true|endpoint=127.0.0.1:23002|term-length=64k"
+        },
+        {
+          "counterId": 104,
+          "registrationId": 86,
+          "typeId": 4,
+          "label": "sub-pos: 86 1854711994 101 aeron:udp?rejoin=false|mtu=1248|reliable=true|endpoint=127.0.0.1:23002|term-length=64k @0"
+        },
+        {
+          "counterId": 142,
+          "registrationId": 95,
+          "typeId": 5,
+          "label": "rcv-pos: 95 1854711994 101 aeron:udp?rejoin=false|mtu=1248|reliable=true|endpoint=127.0.0.1:23002|term-length=64k"
+        },
+        {
+          "counterId": 143,
+          "registrationId": 95,
+          "typeId": 3,
+          "label": "rcv-hwm: 95 1854711994 101 aeron:udp?rejoin=false|mtu=1248|reliable=true|endpoint=127.0.0.1:23002|term-length=64k"
+        }
+      ],
+      "counterIdentitiesOnlyInLastSample": [],
+      "scope": "Only unchanged counter id + registration id + type + label identities are differenced; missing/reused registrations are not assumed zero. Positions identified by label/type and log stream 100. Follower receive-HWM is distinct from leader append position. Position differences are signed non-atomic observations, not exact lag or fsync durability proof."
+    },
+    "1": {
+      "file": "evidence/2026-10-24/runpod-cpu/capacity/cpu-capacity-clientpark-a2-22000-w128-r1/raw/evidence/runs/cpu-capacity-clientpark-a2-22000-w128-r1/node1-counters.jsonl",
+      "readErrors": [],
+      "coverage": {
+        "observerSamples": 124,
+        "selectedSamples": 16,
+        "selectionStartUtcApproximate": "2026-10-24T04:03:02.205551+00:00",
+        "selectionEndUtcApproximate": "2026-10-24T04:03:18.114642+00:00",
+        "invalidTimestampSampleIndices": [],
+        "firstSelectedUtc": "2026-10-24T04:03:02.352557216Z",
+        "lastSelectedUtc": "2026-10-24T04:03:17.352552750Z",
+        "firstSelectedMonotonic": 15000164032,
+        "lastSelectedMonotonic": 30000135745,
+        "monotonicField": "elapsedNanos",
+        "monotonicUnits": "nanoseconds",
+        "selectedWallSpanSeconds": 14.999994993209839,
+        "wallMinusMonotonicSpanSeconds": 2.3280209838105748e-05,
+        "selectedMonotonicSpanSeconds": 14.999971713,
+        "fractionOfArrivalWindowCoveredByDelta": 0.9428553596789889
+      },
+      "completion": {
+        "kind": "complete",
+        "timestamp": "2026-10-24T04:04:49.755579802Z",
+        "samples": 124,
+        "elapsedNanos": 122403425005,
+        "terminationReason": "SHUTDOWN_REQUESTED"
+      },
+      "failure": null,
+      "diagnosticCounterDeltas": [
+        {
+          "counterId": 5,
+          "registrationId": 5,
+          "typeId": 0,
+          "label": "NAKs sent",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 6,
+          "registrationId": 6,
+          "typeId": 0,
+          "label": "NAKs received",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 11,
+          "registrationId": 11,
+          "typeId": 0,
+          "label": "Retransmits sent",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 14,
+          "registrationId": 14,
+          "typeId": 0,
+          "label": "Invalid packets",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 15,
+          "registrationId": 15,
+          "typeId": 0,
+          "label": "Errors: version=1.53.3 commit=377943bcb8",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 16,
+          "registrationId": 16,
+          "typeId": 0,
+          "label": "Short sends",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 18,
+          "registrationId": 18,
+          "typeId": 0,
+          "label": "Sender flow control limits, i.e. back-pressure events",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 23,
+          "registrationId": 23,
+          "typeId": 0,
+          "label": "Loss gap fills",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 24,
+          "registrationId": 24,
+          "typeId": 0,
+          "label": "Client liveness timeouts",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 27,
+          "registrationId": 27,
+          "typeId": 0,
+          "label": "Conductor work cycle exceeded threshold count: threshold=100ms SHARED",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 29,
+          "registrationId": 29,
+          "typeId": 0,
+          "label": "Sender work cycle exceeded threshold count: threshold=100ms SHARED",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 31,
+          "registrationId": 31,
+          "typeId": 0,
+          "label": "Receiver work cycle exceeded threshold count: threshold=100ms SHARED",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 33,
+          "registrationId": 33,
+          "typeId": 0,
+          "label": "NameResolver exceeded threshold count: threshold=5s",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 36,
+          "registrationId": 36,
+          "typeId": 0,
+          "label": "Retransmitted bytes",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 37,
+          "registrationId": 37,
+          "typeId": 0,
+          "label": "Retransmit Pool Overflow count",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 38,
+          "registrationId": 38,
+          "typeId": 0,
+          "label": "Error Frames received",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 39,
+          "registrationId": 39,
+          "typeId": 0,
+          "label": "Error Frames sent",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 61,
+          "registrationId": 19,
+          "typeId": 212,
+          "label": "Cluster Errors - clusterId=0 version=1.53.3 commit=377943bcb8",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 71,
+          "registrationId": 29,
+          "typeId": 213,
+          "label": "Cluster timed out client count - clusterId=0",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 73,
+          "registrationId": 31,
+          "typeId": 217,
+          "label": "Cluster work cycle time exceeded count: threshold=100ms - clusterId=0",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 81,
+          "registrationId": 38,
+          "typeId": 215,
+          "label": "Cluster Container Errors - clusterId=0 serviceId=0 version=1.53.3 commit=377943bcb8",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 83,
+          "registrationId": 40,
+          "typeId": 219,
+          "label": "Cluster container work cycle time exceeded count: threshold=100ms - clusterId=0 serviceId=0",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        }
+      ],
+      "archiveWriteCounterDeltas": [
+        {
+          "counterId": 53,
+          "registrationId": 9,
+          "typeId": 106,
+          "label": "archive-recorder total write bytes - archiveId=1",
+          "first": 480832,
+          "last": 45431104,
+          "delta": 44950272,
+          "units": "bytes"
+        },
+        {
+          "counterId": 54,
+          "registrationId": 10,
+          "typeId": 107,
+          "label": "archive-recorder total write time in ns - archiveId=1",
+          "first": 723363696,
+          "last": 15068901285,
+          "delta": 14345537589,
+          "units": "nanoseconds-wall-time-in-write-path",
+          "elapsedWriteTimeToObservedWallRatio": 0.9563709761243867
+        }
+      ],
+      "lifetimeMaximaObserved": [
+        {
+          "counterId": 26,
+          "registrationId": 26,
+          "typeId": 0,
+          "label": "Conductor max cycle time doing its work in ns: SHARED",
+          "maxObservedNanos": 10974595,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 28,
+          "registrationId": 28,
+          "typeId": 0,
+          "label": "Sender max cycle time doing its work in ns: SHARED",
+          "maxObservedNanos": 10919336,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 30,
+          "registrationId": 30,
+          "typeId": 0,
+          "label": "Receiver max cycle time doing its work in ns: SHARED",
+          "maxObservedNanos": 10935766,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 47,
+          "registrationId": 3,
+          "typeId": 103,
+          "label": "archive-conductor max cycle time in ns: SHARED - archiveId=1",
+          "maxObservedNanos": 25032785,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 52,
+          "registrationId": 8,
+          "typeId": 105,
+          "label": "archive-recorder max write time in ns - archiveId=1",
+          "maxObservedNanos": 25031425,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 72,
+          "registrationId": 30,
+          "typeId": 216,
+          "label": "Cluster max cycle time in ns - clusterId=0",
+          "maxObservedNanos": 11000000,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 82,
+          "registrationId": 39,
+          "typeId": 218,
+          "label": "Cluster container max cycle time in ns - clusterId=0 serviceId=0",
+          "maxObservedNanos": 14340397,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        }
+      ],
+      "observedRoles": [
+        0
+      ],
+      "observedTerms": [
+        0
+      ],
+      "positionSamples": [
+        {
+          "timestamp": "2026-10-24T04:03:02.352557216Z",
+          "elapsedNanos": 15000164032,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 477184
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 501760
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 480832
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 477184
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:03.352933295Z",
+          "elapsedNanos": 16000181204,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 3673216
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 3696640
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 3673216
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 3673216
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:04.352883638Z",
+          "elapsedNanos": 17000177387,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 7084864
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 7086016
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 7085056
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 7084864
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:05.352547575Z",
+          "elapsedNanos": 18000145780,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 10267648
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 10280896
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 10267648
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 10267648
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:06.352587447Z",
+          "elapsedNanos": 19000153693,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 13402048
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 13426624
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 13402048
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 13402048
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:07.353014325Z",
+          "elapsedNanos": 20000150826,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 16655872
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 16674688
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 16655872
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 16655872
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:08.352966079Z",
+          "elapsedNanos": 21000179949,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 19712512
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 19737088
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 19723648
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 19712512
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:09.352646115Z",
+          "elapsedNanos": 22000161742,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 22848064
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 22872640
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 22848064
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 22848064
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:10.352979374Z",
+          "elapsedNanos": 23000192824,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 25973440
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 25998016
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 25973440
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 25973440
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:11.352899018Z",
+          "elapsedNanos": 24000207387,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 28800832
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 28831744
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 28800832
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 28800832
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:12.352938401Z",
+          "elapsedNanos": 25000189080,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 31657216
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 31678336
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 31657216
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 31657216
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:13.352547308Z",
+          "elapsedNanos": 26000161134,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 34552960
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 34573696
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 34552960
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 34552960
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:14.352806838Z",
+          "elapsedNanos": 27000172156,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 37241920
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 37256704
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 37241920
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 37241920
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:15.352895860Z",
+          "elapsedNanos": 28000163259,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 40196032
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 40214464
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 40196032
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 40196032
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:16.352862033Z",
+          "elapsedNanos": 29000208262,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 42856384
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 42861952
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 42856384
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 42837376
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:17.352552750Z",
+          "elapsedNanos": 30000135745,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 45431104
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 45455680
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 45431104
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 45431104
+              }
+            ]
+          }
+        }
+      ],
+      "nonAtomicSignedPositionDifferenceSamples": [
+        {
+          "timestamp": "2026-10-24T04:03:02.352557216Z",
+          "elapsedNanos": 15000164032,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 20928
+        },
+        {
+          "timestamp": "2026-10-24T04:03:03.352933295Z",
+          "elapsedNanos": 16000181204,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 23424
+        },
+        {
+          "timestamp": "2026-10-24T04:03:04.352883638Z",
+          "elapsedNanos": 17000177387,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 960
+        },
+        {
+          "timestamp": "2026-10-24T04:03:05.352547575Z",
+          "elapsedNanos": 18000145780,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 13248
+        },
+        {
+          "timestamp": "2026-10-24T04:03:06.352587447Z",
+          "elapsedNanos": 19000153693,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 24576
+        },
+        {
+          "timestamp": "2026-10-24T04:03:07.353014325Z",
+          "elapsedNanos": 20000150826,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 18816
+        },
+        {
+          "timestamp": "2026-10-24T04:03:08.352966079Z",
+          "elapsedNanos": 21000179949,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 13440
+        },
+        {
+          "timestamp": "2026-10-24T04:03:09.352646115Z",
+          "elapsedNanos": 22000161742,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 24576
+        },
+        {
+          "timestamp": "2026-10-24T04:03:10.352979374Z",
+          "elapsedNanos": 23000192824,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 24576
+        },
+        {
+          "timestamp": "2026-10-24T04:03:11.352899018Z",
+          "elapsedNanos": 24000207387,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 30912
+        },
+        {
+          "timestamp": "2026-10-24T04:03:12.352938401Z",
+          "elapsedNanos": 25000189080,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 21120
+        },
+        {
+          "timestamp": "2026-10-24T04:03:13.352547308Z",
+          "elapsedNanos": 26000161134,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 20736
+        },
+        {
+          "timestamp": "2026-10-24T04:03:14.352806838Z",
+          "elapsedNanos": 27000172156,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 14784
+        },
+        {
+          "timestamp": "2026-10-24T04:03:15.352895860Z",
+          "elapsedNanos": 28000163259,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 18432
+        },
+        {
+          "timestamp": "2026-10-24T04:03:16.352862033Z",
+          "elapsedNanos": 29000208262,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 19008,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 5568
+        },
+        {
+          "timestamp": "2026-10-24T04:03:17.352552750Z",
+          "elapsedNanos": 30000135745,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 24576
+        }
+      ],
+      "positionDifferenceRanges": {
+        "appendMinusCommitBytes": {
+          "first": null,
+          "last": null,
+          "minObserved": null,
+          "maxObserved": null,
+          "observations": 0
+        },
+        "commitMinusServiceBytes": {
+          "first": 0,
+          "last": 0,
+          "minObserved": 0,
+          "maxObserved": 19008,
+          "observations": 16
+        },
+        "appendMinusRecordingBytes": {
+          "first": null,
+          "last": null,
+          "minObserved": null,
+          "maxObserved": null,
+          "observations": 0
+        },
+        "receiveHighWaterMinusRecordingBytes": {
+          "first": 20928,
+          "last": 24576,
+          "minObserved": 960,
+          "maxObserved": 30912,
+          "observations": 16
+        }
+      },
+      "counterIdentitiesOnlyInFirstSample": [],
+      "counterIdentitiesOnlyInLastSample": [],
+      "scope": "Only unchanged counter id + registration id + type + label identities are differenced; missing/reused registrations are not assumed zero. Positions identified by label/type and log stream 100. Follower receive-HWM is distinct from leader append position. Position differences are signed non-atomic observations, not exact lag or fsync durability proof."
+    },
+    "2": {
+      "file": "evidence/2026-10-24/runpod-cpu/capacity/cpu-capacity-clientpark-a2-22000-w128-r1/raw/evidence/runs/cpu-capacity-clientpark-a2-22000-w128-r1/node2-counters.jsonl",
+      "readErrors": [],
+      "coverage": {
+        "observerSamples": 124,
+        "selectedSamples": 16,
+        "selectionStartUtcApproximate": "2026-10-24T04:03:02.205551+00:00",
+        "selectionEndUtcApproximate": "2026-10-24T04:03:18.114642+00:00",
+        "invalidTimestampSampleIndices": [],
+        "firstSelectedUtc": "2026-10-24T04:03:02.363898817Z",
+        "lastSelectedUtc": "2026-10-24T04:03:17.364106488Z",
+        "firstSelectedMonotonic": 15000216191,
+        "lastSelectedMonotonic": 30000206115,
+        "monotonicField": "elapsedNanos",
+        "monotonicUnits": "nanoseconds",
+        "selectedWallSpanSeconds": 15.000207901000977,
+        "wallMinusMonotonicSpanSeconds": 0.00021797700097714312,
+        "selectedMonotonicSpanSeconds": 14.999989924,
+        "fractionOfArrivalWindowCoveredByDelta": 0.9428565043704112
+      },
+      "completion": {
+        "kind": "complete",
+        "timestamp": "2026-10-24T04:04:49.865608110Z",
+        "samples": 124,
+        "elapsedNanos": 122502346030,
+        "terminationReason": "SHUTDOWN_REQUESTED"
+      },
+      "failure": null,
+      "diagnosticCounterDeltas": [
+        {
+          "counterId": 5,
+          "registrationId": 5,
+          "typeId": 0,
+          "label": "NAKs sent",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 6,
+          "registrationId": 6,
+          "typeId": 0,
+          "label": "NAKs received",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 11,
+          "registrationId": 11,
+          "typeId": 0,
+          "label": "Retransmits sent",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 14,
+          "registrationId": 14,
+          "typeId": 0,
+          "label": "Invalid packets",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 15,
+          "registrationId": 15,
+          "typeId": 0,
+          "label": "Errors: version=1.53.3 commit=377943bcb8",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 16,
+          "registrationId": 16,
+          "typeId": 0,
+          "label": "Short sends",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 18,
+          "registrationId": 18,
+          "typeId": 0,
+          "label": "Sender flow control limits, i.e. back-pressure events",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 23,
+          "registrationId": 23,
+          "typeId": 0,
+          "label": "Loss gap fills",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 24,
+          "registrationId": 24,
+          "typeId": 0,
+          "label": "Client liveness timeouts",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 27,
+          "registrationId": 27,
+          "typeId": 0,
+          "label": "Conductor work cycle exceeded threshold count: threshold=100ms SHARED",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 29,
+          "registrationId": 29,
+          "typeId": 0,
+          "label": "Sender work cycle exceeded threshold count: threshold=100ms SHARED",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 31,
+          "registrationId": 31,
+          "typeId": 0,
+          "label": "Receiver work cycle exceeded threshold count: threshold=100ms SHARED",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 33,
+          "registrationId": 33,
+          "typeId": 0,
+          "label": "NameResolver exceeded threshold count: threshold=5s",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 36,
+          "registrationId": 36,
+          "typeId": 0,
+          "label": "Retransmitted bytes",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 37,
+          "registrationId": 37,
+          "typeId": 0,
+          "label": "Retransmit Pool Overflow count",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 38,
+          "registrationId": 38,
+          "typeId": 0,
+          "label": "Error Frames received",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 39,
+          "registrationId": 39,
+          "typeId": 0,
+          "label": "Error Frames sent",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 61,
+          "registrationId": 19,
+          "typeId": 212,
+          "label": "Cluster Errors - clusterId=0 version=1.53.3 commit=377943bcb8",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 71,
+          "registrationId": 29,
+          "typeId": 213,
+          "label": "Cluster timed out client count - clusterId=0",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 73,
+          "registrationId": 31,
+          "typeId": 217,
+          "label": "Cluster work cycle time exceeded count: threshold=100ms - clusterId=0",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 81,
+          "registrationId": 38,
+          "typeId": 215,
+          "label": "Cluster Container Errors - clusterId=0 serviceId=0 version=1.53.3 commit=377943bcb8",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        },
+        {
+          "counterId": 83,
+          "registrationId": 40,
+          "typeId": 219,
+          "label": "Cluster container work cycle time exceeded count: threshold=100ms - clusterId=0 serviceId=0",
+          "first": 0,
+          "last": 0,
+          "delta": 0
+        }
+      ],
+      "archiveWriteCounterDeltas": [
+        {
+          "counterId": 53,
+          "registrationId": 9,
+          "typeId": 106,
+          "label": "archive-recorder total write bytes - archiveId=1",
+          "first": 505408,
+          "last": 45461440,
+          "delta": 44956032,
+          "units": "bytes"
+        },
+        {
+          "counterId": 54,
+          "registrationId": 10,
+          "typeId": 107,
+          "label": "archive-recorder total write time in ns - archiveId=1",
+          "first": 740622563,
+          "last": 15071805543,
+          "delta": 14331182980,
+          "units": "nanoseconds-wall-time-in-write-path",
+          "elapsedWriteTimeToObservedWallRatio": 0.9554128404493187
+        }
+      ],
+      "lifetimeMaximaObserved": [
+        {
+          "counterId": 26,
+          "registrationId": 26,
+          "typeId": 0,
+          "label": "Conductor max cycle time doing its work in ns: SHARED",
+          "maxObservedNanos": 14688023,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 28,
+          "registrationId": 28,
+          "typeId": 0,
+          "label": "Sender max cycle time doing its work in ns: SHARED",
+          "maxObservedNanos": 14690413,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 30,
+          "registrationId": 30,
+          "typeId": 0,
+          "label": "Receiver max cycle time doing its work in ns: SHARED",
+          "maxObservedNanos": 14693513,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 47,
+          "registrationId": 3,
+          "typeId": 103,
+          "label": "archive-conductor max cycle time in ns: SHARED - archiveId=1",
+          "maxObservedNanos": 23630432,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 52,
+          "registrationId": 8,
+          "typeId": 105,
+          "label": "archive-recorder max write time in ns - archiveId=1",
+          "maxObservedNanos": 23624092,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 72,
+          "registrationId": 30,
+          "typeId": 216,
+          "label": "Cluster max cycle time in ns - clusterId=0",
+          "maxObservedNanos": 14000000,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        },
+        {
+          "counterId": 82,
+          "registrationId": 39,
+          "typeId": 218,
+          "label": "Cluster container max cycle time in ns - clusterId=0 serviceId=0",
+          "maxObservedNanos": 15491464,
+          "scope": "Lifetime high-water gauge, possibly set during startup/warmup before arrival window"
+        }
+      ],
+      "observedRoles": [
+        0
+      ],
+      "observedTerms": [
+        0
+      ],
+      "positionSamples": [
+        {
+          "timestamp": "2026-10-24T04:03:02.363898817Z",
+          "elapsedNanos": 15000216191,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 505408
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 529984
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 505408
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 505408
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:03.364172057Z",
+          "elapsedNanos": 16000216734,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 3721216
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 3746944
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 3721216
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 3721216
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:04.364024271Z",
+          "elapsedNanos": 17000217577,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 7110592
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 7134016
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 7110592
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 7110592
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:05.363882466Z",
+          "elapsedNanos": 18000187650,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 10305472
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 10329856
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 10305472
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 10305472
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:06.364164595Z",
+          "elapsedNanos": 19000229823,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 13429120
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 13453696
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 13451200
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 13429120
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:07.364218588Z",
+          "elapsedNanos": 20000204406,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 16697536
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 16718656
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 16697536
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 16697536
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:08.364193891Z",
+          "elapsedNanos": 21000231819,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 19738240
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 19761664
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 19738240
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 19738240
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:09.364040336Z",
+          "elapsedNanos": 22000221982,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 22872640
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 22897216
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 22897216
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 22872640
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:10.364293616Z",
+          "elapsedNanos": 23000239934,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 26016640
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 26044480
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 26020480
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 26020480
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:11.364144120Z",
+          "elapsedNanos": 24000277317,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 28835200
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 28859776
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 28856320
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 28835200
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:12.364051914Z",
+          "elapsedNanos": 25000228600,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 31695616
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 31708672
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 31695616
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 31695616
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:13.363775Z",
+          "elapsedNanos": 26000185224,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 34577536
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 34602112
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 34577536
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 34577536
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:14.364085020Z",
+          "elapsedNanos": 27000235766,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 37266496
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 37291072
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 37283968
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 37266496
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:15.364098042Z",
+          "elapsedNanos": 28000238489,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 40232128
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 40245184
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 40232128
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 40232128
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:16.364358042Z",
+          "elapsedNanos": 29000296351,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 42880768
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 42905344
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 42886528
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 42880768
+              }
+            ]
+          }
+        },
+        {
+          "timestamp": "2026-10-24T04:03:17.364106488Z",
+          "elapsedNanos": 30000206115,
+          "positions": {
+            "commitPosition": [
+              {
+                "counterId": 67,
+                "registrationId": 25,
+                "typeId": 203,
+                "label": "Cluster commit-pos: - clusterId=0",
+                "value": 45461440
+              }
+            ],
+            "receiveHighWaterPosition": [
+              {
+                "counterId": 132,
+                "registrationId": 76,
+                "typeId": 3,
+                "label": "rcv-hwm: 76 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false",
+                "value": 45480256
+              }
+            ],
+            "archiveRecordingPosition": [
+              {
+                "counterId": 136,
+                "registrationId": 79,
+                "typeId": 100,
+                "label": "rec-pos: 0 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-cm|group=true|rejoin=false - archiveId=1",
+                "value": 45461440
+              }
+            ],
+            "serviceSubscriptionPosition": [
+              {
+                "counterId": 137,
+                "registrationId": 80,
+                "typeId": 4,
+                "label": "sub-pos: 80 996889834 100 aeron:udp?tags=72,73|control-mode=manual|session-id=996889834|alias=log-sc-0|group=true|rejoin=false @0",
+                "value": 45461440
+              }
+            ]
+          }
+        }
+      ],
+      "nonAtomicSignedPositionDifferenceSamples": [
+        {
+          "timestamp": "2026-10-24T04:03:02.363898817Z",
+          "elapsedNanos": 15000216191,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 24576
+        },
+        {
+          "timestamp": "2026-10-24T04:03:03.364172057Z",
+          "elapsedNanos": 16000216734,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 25728
+        },
+        {
+          "timestamp": "2026-10-24T04:03:04.364024271Z",
+          "elapsedNanos": 17000217577,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 23424
+        },
+        {
+          "timestamp": "2026-10-24T04:03:05.363882466Z",
+          "elapsedNanos": 18000187650,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 24384
+        },
+        {
+          "timestamp": "2026-10-24T04:03:06.364164595Z",
+          "elapsedNanos": 19000229823,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 2496
+        },
+        {
+          "timestamp": "2026-10-24T04:03:07.364218588Z",
+          "elapsedNanos": 20000204406,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 21120
+        },
+        {
+          "timestamp": "2026-10-24T04:03:08.364193891Z",
+          "elapsedNanos": 21000231819,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 23424
+        },
+        {
+          "timestamp": "2026-10-24T04:03:09.364040336Z",
+          "elapsedNanos": 22000221982,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 0
+        },
+        {
+          "timestamp": "2026-10-24T04:03:10.364293616Z",
+          "elapsedNanos": 23000239934,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": -3840,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 24000
+        },
+        {
+          "timestamp": "2026-10-24T04:03:11.364144120Z",
+          "elapsedNanos": 24000277317,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 3456
+        },
+        {
+          "timestamp": "2026-10-24T04:03:12.364051914Z",
+          "elapsedNanos": 25000228600,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 13056
+        },
+        {
+          "timestamp": "2026-10-24T04:03:13.363775Z",
+          "elapsedNanos": 26000185224,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 24576
+        },
+        {
+          "timestamp": "2026-10-24T04:03:14.364085020Z",
+          "elapsedNanos": 27000235766,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 7104
+        },
+        {
+          "timestamp": "2026-10-24T04:03:15.364098042Z",
+          "elapsedNanos": 28000238489,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 13056
+        },
+        {
+          "timestamp": "2026-10-24T04:03:16.364358042Z",
+          "elapsedNanos": 29000296351,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 18816
+        },
+        {
+          "timestamp": "2026-10-24T04:03:17.364106488Z",
+          "elapsedNanos": 30000206115,
+          "appendMinusCommitBytes": null,
+          "commitMinusServiceBytes": 0,
+          "appendMinusRecordingBytes": null,
+          "receiveHighWaterMinusRecordingBytes": 18816
+        }
+      ],
+      "positionDifferenceRanges": {
+        "appendMinusCommitBytes": {
+          "first": null,
+          "last": null,
+          "minObserved": null,
+          "maxObserved": null,
+          "observations": 0
+        },
+        "commitMinusServiceBytes": {
+          "first": 0,
+          "last": 0,
+          "minObserved": -3840,
+          "maxObserved": 0,
+          "observations": 16
+        },
+        "appendMinusRecordingBytes": {
+          "first": null,
+          "last": null,
+          "minObserved": null,
+          "maxObserved": null,
+          "observations": 0
+        },
+        "receiveHighWaterMinusRecordingBytes": {
+          "first": 24576,
+          "last": 18816,
+          "minObserved": 0,
+          "maxObserved": 25728,
+          "observations": 16
+        }
+      },
+      "counterIdentitiesOnlyInFirstSample": [],
+      "counterIdentitiesOnlyInLastSample": [],
+      "scope": "Only unchanged counter id + registration id + type + label identities are differenced; missing/reused registrations are not assumed zero. Positions identified by label/type and log stream 100. Follower receive-HWM is distinct from leader append position. Position differences are signed non-atomic observations, not exact lag or fsync durability proof."
+    }
+  }
+}
