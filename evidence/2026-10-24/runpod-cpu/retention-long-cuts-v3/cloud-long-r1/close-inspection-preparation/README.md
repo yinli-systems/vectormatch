@@ -1,0 +1,9 @@
+This is a local preparation of a bounded read-only close probe for one long-cuts arm. It has not observed the CPU host or an actual run. Its 13 pure guards use synthetic process identities and control receipts; they do not start, stop or signal a process.
+
+The root supplies `--arm 1`, the actual frozen `--release-sha256` and `--controller-sha256`, and the exact independently recorded `--controller-pid`, `--controller-start-ticks` and `--controller-argv-sha256`. Those values must match the original three-row append-only launch register and the exact one-arm controller invocation. There is no alternate arm or prior-gate shortcut.
+
+While that controller identity runs, the probe returns after its bounded launch-register/process observation and reads no completion, raw or native files. A successful closed control-plane result requires strict PID absence for the controller and all four owned JVM identities, matching original full arguments/start ticks, no observed Java/Postgres process, successful controller stop/completion receipts, exact protected 57-file and PG989 receipts, and the long summary's complete 33792/500/12-cycle outcome with a valid scheduler and zero late-over-20ms arrivals. Reused PIDs and unreaped zombies do not satisfy the closed gate.
+
+The archive check reads metadata only. It never hashes or extracts the native archive. Independent full archive readback and raw parsing remain required after closure. A failed application result stays a failed result and may be safely collected only once ownership is closed. The probe never grants another launch or claims independent raw correctness, sustained capacity or hard real-time behavior.
+
+Send the pinned source to Python's stdin only after the root reviews and registers the concrete actual CLI. This directory itself performs no SSH and contains no execution wrapper.

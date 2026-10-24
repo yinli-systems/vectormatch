@@ -1,0 +1,46 @@
+test_closed_proof_exact_long_scope_and_release (test_long_collection.Guards) ... FAIL
+test_config_allowlist_fixture_only (test_long_collection.Guards) ... ok
+test_config_wrong_arm_preset_prior_metadata_and_stage (test_long_collection.Guards) ... ok
+test_finalizer_denies_local_diagnostic_wrong_source_and_overbudget (test_long_collection.Guards) ... ok
+test_frozen_loader_rejects_source_change_and_restores_alias (test_long_collection.Guards) ... ok
+test_frozen_loader_restores_alias_and_strict_default (test_long_collection.Guards) ... ok
+test_long_tape_over32m_explicit_only (test_long_collection.Guards) ... ok
+test_overbudget_preserves_archive_not_raw_admission (test_long_collection.Guards) ... ok
+test_projection_rejects_payload_change (test_long_collection.Guards) ... ok
+test_projection_rejects_symlink (test_long_collection.Guards) ... ok
+test_projection_requires_all_closures_and_tape_admission (test_long_collection.Guards) ... ok
+test_projection_separates_original_owner_from_local (test_long_collection.Guards) ... FAIL
+test_strict_adapter_never_passes_diagnostic_optin (test_long_collection.Guards) ... ok
+
+======================================================================
+FAIL: test_closed_proof_exact_long_scope_and_release (test_long_collection.Guards)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-collection-preparation-r1/test_long_collection.py", line 157, in test_closed_proof_exact_long_scope_and_release
+    p.write_text(json.dumps(v));runner.closed_proof(p,common.sha(p),c,r)
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-collection-preparation-r1/collect_and_audit.py", line 29, in closed_proof
+    x = json.loads(b.reference(path, expected).read_text())
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-collection-preparation-r1/build_config.py", line 17, in reference
+    path = no_links(Path(path).absolute())
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-collection-preparation-r1/build_config.py", line 12, in no_links
+    require(not any(p.is_symlink() for p in [path] + list(path.parents)), 'Symlink path refused')
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-collection-preparation-r1/common.py", line 7, in require
+    if not value: raise AssertionError(message)
+AssertionError: Symlink path refused
+
+======================================================================
+FAIL: test_projection_separates_original_owner_from_local (test_long_collection.Guards)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-collection-preparation-r1/test_long_collection.py", line 54, in test_projection_separates_original_owner_from_local
+    rows,links=bindings.project(collection,outer,receipt,native);key='raw-files/job/idle-arm/load/arrivals.csv'
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-collection-preparation-r1/closed_bindings.py", line 38, in project
+    require(not any(p.is_symlink()for p in [path]+list(path.parents)),'Materialized symlink ancestor refused')
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-collection-preparation-r1/common.py", line 7, in require
+    if not value: raise AssertionError(message)
+AssertionError: Materialized symlink ancestor refused
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.063s
+
+FAILED (failures=2)

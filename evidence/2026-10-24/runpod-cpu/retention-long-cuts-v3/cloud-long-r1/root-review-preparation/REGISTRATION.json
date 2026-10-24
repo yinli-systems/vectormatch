@@ -1,0 +1,57 @@
+{
+  "atUTC": "2026-10-24T09:08:28.762753+00:00",
+  "baselineSourceSha256": "069ba00caf54ccbd2c599bc46d267dca1e66a8179a4c575a8ad8d68b59d87c39",
+  "adaptedSourceSha256": "73307e4cd030b7346fef64d0f84e947e700aae0f07fadb43f16eadc44e59267d",
+  "scope": "Prospective independent fullouter/rawinput metadata projection and33kidentity/latency recalculation after complete strict collection. No SSH/Java or capacitypromotion",
+  "sourceChanges": [
+    [
+      "f78025f91f9e43ad634840b400ab04ed4ae422597c35800984e434dbd1844c8f",
+      "6033c9ebfc2a7b1836c45f858784a4930540b469eb136635761fd3217733edc8"
+    ],
+    [
+      "arm_number in [1,2,3,4]",
+      "arm_number==1"
+    ],
+    [
+      "len(rows)==6400",
+      "len(rows)==33792"
+    ],
+    [
+      "end<=12800000000",
+      "end<=67584000000"
+    ],
+    [
+      "len({r['order_id'] for r in rows})==6400",
+      "{int(r['order_id']) for r in rows}==set(range(2,33794)) and {int(r['command_seq'])for r in rows}==set(range(4,33796))"
+    ],
+    [
+      "'6400 distinct fresh accepted IDs required'",
+      "'33792 distinct fresh IDs and exact command frontier required'"
+    ],
+    [
+      "len(arm['readPhaseBindings']['readPhases'])==6 and len(arm['cycles'])==3",
+      "len(arm['readPhaseBindings']['readPhases'])==24 and len(arm['cycles'])==12"
+    ],
+    [
+      "arm['retainedPostCheckpointEosWarningPairs']",
+      "raw['retainedPostCheckpointEosWarningPairs']"
+    ],
+    [
+      "within/12.8",
+      "within/67.584"
+    ],
+    [
+      "separate 6400-row p99 calculations",
+      "separate33792-row p99 calculations"
+    ],
+    [
+      "require(m.isfile(),'Only regular files and directories')",
+      "require(m.isfile() and not m.issparse(),'Only ordinary regular files and directories')"
+    ]
+  ],
+  "extraChecks": [
+    "Strict CPU singlearm timing optinFalse",
+    "Original vs localmetadata projection",
+    "Worker/producer/sequence/clock/unknown checks"
+  ]
+}

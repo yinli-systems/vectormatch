@@ -1,0 +1,252 @@
+--- frozen-idle-r2/common.py
++++ new-long-collector/common.py
+@@ -1,7 +1,7 @@
+ """Pure local validation shared by the closed-round collector/auditors. No network at import."""
+ from pathlib import Path, PurePosixPath
+ import argparse, hashlib, json, re, sys
+-def valid_prep(value):return isinstance(value,str) and re.fullmatch(r'/opt/vectormatch-cpu/preparation/cpu-idle-cloud-abab-r1',value) is not None
++def valid_prep(value):return isinstance(value,str) and re.fullmatch(r'/opt/vectormatch-cpu/preparation/cpu-long-cuts-cloud-r1',value) is not None
+ WINDOWS=(8,)
+ def require(value,message):
+     if not value: raise AssertionError(message)
+@@ -17,54 +17,39 @@
+     return value
+ def load_config(path):
+     c=json.loads(Path(path).read_text())
+-    require(c['schemaVersion']==2 and type(c['arm']) is int and c['arm'] in (1,2,3,4),'Idle arm/config version')
+-    prep=c['remotePrep'];require(valid_prep(prep) and c['host']=='ed6c0673f5cb','Fixed idle PREP/host')
++    require(c['schemaVersion']==3 and c['experiment']=='retention-long-cuts-v1' and type(c['arm'])is int and c['arm']==1,'One explicit long arm/schema3 required')
++    prep=c['remotePrep'];require(valid_prep(prep) and c['host']=='ed6c0673f5cb','Fixed long PREP/host')
+     for key,h in [('releaseLocal','releaseSha256'),('stagingReceipt','stagingReceiptSha256'),('protectedReference','protectedReferenceSha256')]:
+-        require(hexsha(c[h]) and sha(c[key])==c[h], 'Frozen local input differs: '+key)
++        require(hexsha(c[h]) and sha(c[key])==c[h],'Frozen local input differs: '+key)
+     release=json.loads(Path(c['releaseLocal']).read_text())
+-    from cpu_idle_abab import validate_release, selection, PARK_ORDER
++    from cpu_long_cuts import validate_release, selected_park_ns
+     validate_release(release)
+-    require(c['maximumParkNs']==PARK_ORDER[c['arm']-1], 'Canonical ABAB arm order required')
+-    require(release['arms'][str(c['arm'])]=={'job':prep+'/arm-'+str(c['arm']),
+-            'armRoot':prep+'/arm-'+str(c['arm'])+'/idle-arm','maximumParkNs':c['maximumParkNs']},'Fixed idle arm roots differ')
++    require(c['maximumParkNs']==selected_park_ns()==100000 and c['workloadPreset']=='long-cuts-33792-v1','Fixed requested100us/long preset required')
++    require(release['arms']=={'1':{'job':prep+'/arm-1','armRoot':prep+'/arm-1/idle-arm','maximumParkNs':100000}},'Single long arm roots differ')
+     staged=json.loads(Path(c['stagingReceipt']).read_text())
+-    require(staged['passed'] is True and isinstance(staged['stagedFiles'],dict), 'Successful explicit stage required')
+-    require(staged['releaseSha256']==c['releaseSha256'] and staged['controllerSha256']==release['controllerSha256'], 'Stage release/controller differs')
+-    require(staged['applicationStarted'] is False and staged['resourceCreated'] is False,
+-            'Collection source binding requires metadata-only stage receipt')
++    require(staged['passed']is True and isinstance(staged['stagedFiles'],dict),'Successful explicit stage required')
++    require(staged['releaseSha256']==c['releaseSha256'] and staged['controllerSha256']==release['controllerSha256'],'Stage release/controller differs')
++    require(staged['applicationStarted']is False and staged['resourceCreated']is False,'Metadata-only source stage required')
+     expected=dict(staged['stagedFiles']);require(8<=len(expected)<=64,'Bounded explicit stage allowlist')
+     for name,row in expected.items():
+-        relative(name);require(not name.startswith(('arm-1','arm-2','arm-3','arm-4')), 'Cannot tar a job tree as source')
+-        require(type(row['bytes']) is int and 0<=row['bytes']<=32*1024**2 and hexsha(row['sha256']), 'Frozen source bytes/SHA')
+-    require(expected['release/release.json']['sha256']==c['releaseSha256'], 'Source release binding differs')
+-    require(expected['cpu_idle_abab.py']['sha256']==release['controllerSha256']
+-            and expected['owned_linux_base_8eeb.py']['sha256']=='8eeb10c14d6e5a9aa3895fbb674fc5c59ceac7fd3b15a6e3e11da325f444ab87',
+-            'Stage must contain the exact controller and reviewed owned-process helper')
+-    for name in ['idle_attestation.py','common.py','read_phase_audit.py','shutdown_warning.py']:
+-        require(expected[name]['sha256']==sha(Path(__file__).with_name(name)),
+-                'Staged/independent local schema source differs: '+name)
+-    require(c['protectedReferenceSha256']==release['protectedOriginalState']['manifestSha256'], 'Protected57/PG989 reference differs')
+-    gates=c.get('priorGates',{})
+-    require(set(gates)=={str(n) for n in range(1,c['arm'])}, 'Exact preceding collected-arm prefix required')
+-    for key,row in gates.items():
+-        n=int(key);require(set(row)=={'local','sha256'} and hexsha(row['sha256']) and sha(row['local'])==row['sha256'], 'Prior gate file differs')
+-        gate=json.loads(Path(row['local']).read_text())
+-        require(gate['schemaVersion']==2 and gate['scope']=='ROOT_VERIFIED_CLOSED_CPU_IDLE_ARM_COLLECTION'
+-                and gate['collectionComplete'] is True and gate['arm']==n and gate['maximumParkNs']==PARK_ORDER[n-1]
+-                and gate['frozenReleaseSha256']==c['releaseSha256'] and gate['controllerSha256']==release['controllerSha256']
+-                and gate['localFullMemberShaBytesModesOwnersEmptyDirsVerified'] is True
+-                and gate['allRawInputsAndFailuresRetained'] is True
+-                and hexsha(gate['independentLocalCollectionReceiptSha256']), 'Root prior-arm collection gate differs')
+-        name='release/arm-%d-collection-gate.json'%n
+-        require(name not in expected,'Prior gates are separately explicit inputs')
+-        expected[name]={'bytes':Path(row['local']).stat().st_size,'sha256':row['sha256']}
++        relative(name);require(not name.startswith(('arm-1','arm-2','arm-3','arm-4')),'Cannot collect job tree as source')
++        require(type(row['bytes'])is int and 0<=row['bytes']<=32*1024**2 and hexsha(row['sha256']),'Frozen source bytes/SHA')
++    require(expected['release/release.json']['sha256']==c['releaseSha256'],'Source release binding differs')
++    require(expected['cpu_long_cuts.py']['sha256']==release['controllerSha256']==sha(Path(__file__).with_name('cpu_long_cuts.py'))
++        and expected['owned_linux_base_8eeb.py']['sha256']=='8eeb10c14d6e5a9aa3895fbb674fc5c59ceac7fd3b15a6e3e11da325f444ab87','Exact long controller/owned-process source required')
++    for name in ['idle_attestation.py','shutdown_warning.py']:
++        require(expected[name]['sha256']==sha(Path(__file__).with_name(name)),'Staged/local schema source differs: '+name)
++    require(c['protectedReferenceSha256']==release['protectedOriginalState']['manifestSha256'],'Protected57/PG989 reference differs')
++    require(c.get('priorGates')=={},'Single prospective long arm has no preceding-arm gate or automatic continuation')
++    require(sha(Path(__file__).parent/'long_parser/SOURCE_FROZEN.json')=='1fdec3e1bd4253e6eb11f32bc8bae5fbab53cd5531ffb8dec75c0cfb31e8c7b3','Qualified long parser freeze differs')
++    for name,row in json.loads((Path(__file__).parent/'long_parser/SOURCE_FROZEN.json').read_text())['sourceFiles'].items():
++        if not name.startswith('source/'):continue
++        p=Path(__file__).parent/'long_parser'/name
++        require(p.stat().st_size==row['bytes'] and sha(p)==row['sha256'],'Frozen imported long parser differs: '+name)
+     metadata=c['executionMetadata']
+-    require(isinstance(metadata,list) and len(metadata)==3 and len(set(metadata))==3, 'Exactly3 opaque execution metadata names')
+-    require(metadata==['arm-%d-execution-register.json'%c['arm'],
+-            'arm-%d-execution.stdout'%c['arm'],'arm-%d-execution.stderr'%c['arm']],
+-            'Exact current-arm opaque execution metadata allowlist required')
+-    for name in metadata:relative(name);require('/' not in name and name not in expected, 'Explicit root metadata only')
+-    allow=sorted(set(expected)|set(metadata));require(len(allow)==len(expected)+3, 'Source whitelist collision')
++    require(metadata==['arm-1-execution-register.json','arm-1-execution.stdout','arm-1-execution.stderr'],'Exact three opaque execution metadata required')
++    for name in metadata:relative(name);require('/'not in name and name not in expected,'Explicit root metadata only')
++    allow=sorted(set(expected)|set(metadata));require(len(allow)==len(expected)+3,'Source whitelist collision')
+     return c,release,expected,allow
+ 
+ def audit_arguments(description):
+--- frozen-idle-r2/collect_closed_round.py
++++ new-long-collector/collect_closed_round.py
+@@ -3,13 +3,17 @@
+ from pathlib import Path,PurePosixPath
+ import argparse,hashlib,importlib.util,json,shlex,subprocess,tarfile,traceback
+ from common import require,sha,load_config
++from closed_bindings import materialize,validate_tape_budget
+ 
+ def collect(config_path,dest,remote_helper):
+     c,release,expected,allow=load_config(config_path);prep=c['remotePrep'];dest.mkdir(parents=True,exist_ok=False)
+     (dest/'collector-config.json').write_bytes(config_path.read_bytes())
+-    for name in ['common.py','collect_closed_round.py','audit_native_artifacts.py','audit_raw.py','read_phase_audit.py','finalize_local_collection.py','cpu_idle_abab.py','idle_attestation.py','shutdown_warning.py']:
++    frozen=json.loads(Path(__file__).with_name('LOCAL_PREPARATION_FROZEN.json').read_text())
++    for name,row in frozen['sourceFiles'].items():
+         p=Path(__file__).parent/name
+-        if p.is_file():(dest/'collector-source').mkdir(exist_ok=True);(dest/'collector-source'/name).write_bytes(p.read_bytes())
++        require(p.is_file()and p.stat().st_size==row['bytes']and sha(p)==row['sha256'],'Independent local source preparation changed')
++        target=dest/'collector-source'/name;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(p.read_bytes())
++    require(sha(remote_helper)=='0922e32bee55b1e47503880e763fcf112626649d31f037bb62e5c4ceb588bb73','Exact reviewed remote helper required')
+     spec=importlib.util.spec_from_file_location('closed_round_readonly_remote',remote_helper);remote=importlib.util.module_from_spec(spec);spec.loader.exec_module(remote)
+     job=prep+'/arm-'+str(c['arm'])
+     inventory_program='JOB='+repr(job)+'\nSOURCE='+repr(prep)+'\nALLOW='+repr(allow)+'\nEXPECTED='+repr(expected)+'\nHOST='+repr(c['host'])+'\nRELEASE_SHA='+repr(c['releaseSha256'])+'\nARM='+repr(c['arm'])+'\nMAX_PARK='+repr(c['maximumParkNs'])+'\n'+r'''
+@@ -48,6 +52,7 @@
+     (dest/'remote-inventory.stdout.json').write_text(r.stdout);(dest/'remote-inventory.stderr').write_text(r.stderr)
+     require(r.returncode==0,'Closed remote inventory failed; preserve this attempt')
+     inv=json.loads(r.stdout)
++    tape_budget=validate_tape_budget(inv['files'],release['derivedPlan'])
+     transfer_program='JOB='+repr(job)+'\nSOURCE='+repr(prep)+'\nALLOW='+repr(allow)+'\n'+r'''
+ import sys,pathlib,tarfile,gzip
+ source=pathlib.Path(SOURCE);parents={'.'}
+@@ -73,7 +78,7 @@
+             require((a.size,a.mode,a.uid,a.gid)==(row['bytes'],row['mode'],row['uid'],row['gid']),'Outer bytes/mode/owner')
+             target=None
+             if name=='job/pilot-after-clean-stop.tar.gz':target=dest/'pilot-after-clean-stop.tar.gz'
+-            elif a.size<=32*1024**2 and not name.endswith(('.rec','.dat','.catalog','.jar','.class','.gz','.zip')):target=dest/'raw-files'/name
++            elif materialize(name,a.size,release['derivedPlan'],allow_tapes=tape_budget['passed']):target=dest/'raw-files'/name
+             output=None
+             if target:target.parent.mkdir(parents=True,exist_ok=True);output=target.open('xb')
+             h=hashlib.sha256();f=stream.extractfile(a)
+@@ -88,7 +93,7 @@
+     after=json.loads((dest/'raw-files/job/after-clean-stop.json').read_text());nested=dest/'pilot-after-clean-stop.tar.gz'
+     require(sha(nested)==after['archive']['archive']['sha256'] and nested.stat().st_size==after['archive']['archive']['bytes'],'Nested compressed artifact differs')
+     native=json.dumps(after['archive']['inventory'],sort_keys=True,separators=(',',':')).encode()
+-    receipt={'passed':True,'arm':c['arm'],'functionalRunPassed':inv['completion']['passed'],'allFunctionalErrorsRetained':inv['completion']['errors'],'scope':'Read-only closed JOB SSH inventory and streaming transfer; strict PREP source allowlist, no remote writes/launch/signals/PG or new resources. Local native/raw verification and independent root attestation still required.', 'frozenReleaseSha256':c['releaseSha256'],'controllerSha256':release['controllerSha256'],'outerFiles':len(seen),'outerDirectories':len(dirs),'outerLogicalBytes':sum(x['bytes'] for x in inv['files'].values()),'sourceWhitelistFiles':len(allow),'sourceRecursiveTar':False,'allOuterFileFullShaSizeModeOwnerAndEmptyDirClosureVerified':True,'fullOuterArchive':{'bytes':packed.stat().st_size,'sha256':sha(packed)},'nestedNativeArchive':{'bytes':nested.stat().st_size,'sha256':sha(nested)},'closedNativeInventorySha256':hashlib.sha256(native).hexdigest(),'nestedFullVerificationPending':True,'rootAttestationCreated':False,'originalsDeleted':False}
++    receipt={'passed':True,'rawTapeMaterializationBudget':tape_budget,'outerInventorySha256':sha(dest/'remote-inventory.stdout.json'),'arm':c['arm'],'functionalRunPassed':inv['completion']['passed'],'allFunctionalErrorsRetained':inv['completion']['errors'],'scope':'Read-only closed JOB SSH inventory and streaming transfer; strict PREP source allowlist, no remote writes/launch/signals/PG or new resources. Local native/raw verification and independent root attestation still required.', 'frozenReleaseSha256':c['releaseSha256'],'controllerSha256':release['controllerSha256'],'outerFiles':len(seen),'outerDirectories':len(dirs),'outerLogicalBytes':sum(x['bytes'] for x in inv['files'].values()),'sourceWhitelistFiles':len(allow),'sourceRecursiveTar':False,'allOuterFileFullShaSizeModeOwnerAndEmptyDirClosureVerified':True,'fullOuterArchive':{'bytes':packed.stat().st_size,'sha256':sha(packed)},'nestedNativeArchive':{'bytes':nested.stat().st_size,'sha256':sha(nested)},'closedNativeInventorySha256':hashlib.sha256(native).hexdigest(),'nestedFullVerificationPending':True,'rootAttestationCreated':False,'originalsDeleted':False}
+     (dest/'collection-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');return receipt
+ 
+ def main():
+--- frozen-idle-r2/audit_native_artifacts.py
++++ new-long-collector/audit_native_artifacts.py
+@@ -55,12 +55,15 @@
+     for r in records:
+         rec=r['record'];args=rec['arguments'];require(hashlib.sha256(b''.join(x.encode()+b'\0' for x in args)).hexdigest()==rec['commandSha256'],'Actual argv SHA')
+         require(args[0]==release['java'] and args[args.index('-cp')+1].split(':')==(release['classPath'] if r['role']=='pilot-parent' else release['nodeClassPath']),'Actual exact classpath')
+-        if r['role']=='pilot-parent':require(args==[release['java'],'-Dvectormatch.retention.idleMaxParkNs='+str(c['maximumParkNs'])]+release['parentJvmArguments']+['-cp',':'.join(release['classPath']),'io.vectormatch.cluster.RetentionCapacityAeronPilotV3',pair,'idle-window8','42000'],'Parent fixed arguments')
++        if r['role']=='pilot-parent':require(args==[release['java'],'-Dvectormatch.retention.idleMaxParkNs='+str(c['maximumParkNs'])]+release['parentJvmArguments']+['-cp',':'.join(release['classPath']),'io.vectormatch.cluster.RetentionCapacityAeronPilotV3',pair,'idle-window8-long-cuts','42000'],'Parent fixed arguments')
+         identities.append({'role':r['role'],**rec})
+     arms=[]
+     for chunk in WINDOWS:
+         arm=job/'idle-arm';reg=json.loads((arm/'registration.json').read_text());art=json.loads((arm/'artifact-inventory.json').read_text())
+-        require(reg['batchCap']==4 and reg['archiveChunkBytes']==6144 and reg['readWindow']==chunk and reg['appointedLeader']==0 and reg['ports']==42000 and reg['sync']==2 and reg['arrivals']==6400 and reg['rate']==500,'Actual fixed registration')
++        require(reg['batchCap']==4 and reg['archiveChunkBytes']==6144 and reg['readWindow']==chunk and reg['appointedLeader']==0 and reg['ports']==42000 and reg['sync']==2 and reg['arrivals']==33792 and reg['rate']==500,'Actual fixed registration')
++        require(reg['workloadPreset']=='long-cuts-33792-v1' and reg['expectedFullCommandCuts']==11
++            and reg['expectedTrailingCommands']==3 and reg['equivalentFullLoadCutNumbers']==list(range(2,12)),
++            'Explicit actual long workload/cut registration required')
+         require(reg['codeSha256']==release['codeFingerprint'] and reg['profileSha256']==release['profileFingerprint'] and art['codeFingerprint']==release['codeFingerprint'],'Actual source/profile fingerprints')
+         require([(x['type'],Path(x['path']).name) for x in art['actualFiles']]==actual_sources,'Actual runtime type-to-JAR binding')
+         for x in art['actualFiles']:require(all(x[k]==release['artifacts'][x['path']][k] for k in ['bytes','sha256']),'Actual JAR inventory differs')
+@@ -76,7 +79,7 @@
+         arms.append({'archiveChunkBytes':6144,'readWindow':chunk,'batchCap':4,'ports':reg['ports'],'lineage':reg['lineage']})
+     import types
+     from idle_attestation import validate_idle_artifacts
+-    from cpu_idle_abab import load_base
++    from cpu_long_cuts import load_base
+     registry=types.SimpleNamespace(records={(rec['pid'],rec['startTicks']):{'role':rec['role'],'identity':rec} for rec in identities})
+     idle=validate_idle_artifacts(load_base(),job/'idle-arm',registry,c['maximumParkNs'])
+     final=json.loads((job/'idle-arm/final-position.json').read_text()); log_reports=[]
+--- frozen-idle-r2/finalize_local_collection.py
++++ new-long-collector/finalize_local_collection.py
+@@ -3,6 +3,15 @@
+ from pathlib import Path
+ import argparse,hashlib,json
+ from common import require,sha,load_config
++
++def strict_long_reports(reports,source_commit,code):
++    native,raw=reports['nativeResult'],reports['rawResult']
++    require(native['sourceCommit']==raw['sourceCommit']==source_commit
++        and native['frozenCodeFingerprintIndependentlyRecomputed']==code,'Same actual long artifact required')
++    require(raw['strictSchedulerTimingAdmission']is True and raw['localFunctionalDiagnosticOptIn']is False,
++        'Local functional timing bypass cannot authorize cloud collection')
++    require(reports['collectionReceipt']['rawTapeMaterializationBudget']['passed']is True,
++        'Overbudget full archives remain diagnostics-only')
+ 
+ def main():
+     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--config',required=True,type=Path);p.add_argument('--collection',required=True,type=Path);p.add_argument('--native-audit',required=True,type=Path);p.add_argument('--raw-audit',required=True,type=Path);p.add_argument('--out',required=True,type=Path)
+@@ -12,6 +21,7 @@
+     require(reports['collectionReceipt']['functionalRunPassed'] is True,'Closed functional failure is retained but cannot authorize subsequent round')
+     for k,d in reports.items():require(d.get('releaseSha256',d.get('frozenReleaseSha256'))==c['releaseSha256'],'Same frozen release across local audits')
+     require(reports['nativeResult']['allNestedFullShaBytesModeOwnerAndEmptyDirClosureVerified'] is True and reports['nativeResult']['allNestedFilesExactlyBoundToOuterArchive'] is True,'Complete nested verification required')
++    strict_long_reports(reports,r['sourceCommit'],r['codeFingerprint'])
+     collection=reports['collectionReceipt'];archive=a.collection/'pilot-after-clean-stop.tar.gz'
+     require(sha(archive)==collection['nestedNativeArchive']['sha256'],'Closed archive unchanged at finalization')
+     for item in reports['rawResult']['inputs'].items():
+@@ -19,8 +29,5 @@
+     a.out.mkdir(parents=True)
+     report={'schemaVersion':1,'passed':True,'arm':c['arm'],'frozenReleaseSha256':c['releaseSha256'],'controllerSha256':r['controllerSha256'],'localFullMemberShaBytesModesOwnersEmptyDirsVerified':True,'allClosedRoundRawFilesAndErrorReceiptsRetained':True,'allRawInputsAndFailuresRetentionRootReviewRequired':True,'rawInputFiles':len(reports['rawResult']['inputs']),'nestedFullVerificationPending':False,'sourceRecursiveTar':False,'closedArchiveSha256':collection['nestedNativeArchive']['sha256'],'closedNativeInventorySha256':collection['closedNativeInventorySha256'],'files':{k:{'path':str(v.resolve()),'bytes':v.stat().st_size,'sha256':sha(v)} for k,v in paths.items()},'scope':'Local round collection and strict full audit complete. Root must independently review this receipt, source/failed attempts and raw evidence before signing any preceding-arm gate. No next arm authorized, no live gate written.'}
+     receipt=a.out/'LOCAL_COLLECTION_COMPLETE.json';receipt.write_text(json.dumps(report,indent=2)+'\n')
+-    if c['arm']<4:
+-        candidate={'schemaVersion':2,'scope':'ROOT_VERIFIED_CLOSED_CPU_IDLE_ARM_COLLECTION','collectionComplete':False,'arm':c['arm'],'maximumParkNs':c['maximumParkNs'],'frozenReleaseSha256':c['releaseSha256'],'controllerSha256':r['controllerSha256'],'independentLocalCollectionReceiptSha256':sha(receipt),'localFullMemberShaBytesModesOwnersEmptyDirsVerified':True,'allRawInputsAndFailuresRetained':False,'closedArchiveSha256':report['closedArchiveSha256'],'closedNativeInventorySha256':report['closedNativeInventorySha256'],'rootReviewedExactOwnedNativeRemoval':False}
+-        (a.out/'ROOT_GATE_CANDIDATE_NOT_APPROVED.json').write_text(json.dumps(candidate,indent=2)+'\n')
+     print(json.dumps({'passed':True,'arm':c['arm'],'receiptSha256':sha(receipt),'rootAttestationCreated':False},indent=2))
+ if __name__=='__main__':main()
+--- frozen-idle-r2/build_config.py
++++ new-long-collector/build_config.py
+@@ -28,13 +28,13 @@
+ 
+ def build(arm, release, release_sha, stage, stage_sha, protected, protected_sha,
+           gates, metadata, output):
+-    from cpu_idle_abab import validate_release, PARK_ORDER, PREP
+-    require(type(arm) is int and arm in [1, 2, 3, 4], 'Canonical arm required')
++    from cpu_long_cuts import validate_release, selected_park_ns, PREP
++    require(type(arm) is int and arm==1, 'One fixed long arm required')
+     release = reference(release, release_sha); stage = reference(stage, stage_sha)
+     protected = reference(protected, protected_sha)
+     actual = validate_release(json.loads(release.read_text()))
+     require(actual['protectedOriginalState']['manifestSha256'] == protected_sha, 'Protected baseline differs')
+-    require(set(gates) == set(range(1, arm)), 'Exact preceding independently collected arm prefix required')
++    require(gates=={}, 'Exact preceding independently collected arm prefix required')
+     for n, (path, expected) in gates.items():
+         reference(path, expected)
+     no_links(output)
+@@ -48,7 +48,7 @@
+     for n, (path, expected) in sorted(gates.items()):
+         target = inputs / ('arm-%d-collection-gate.json' % n)
+         shutil.copy2(path, target); prior[str(n)] = {'local': str(target.resolve()), 'sha256': expected}
+-    config = {'schemaVersion': 2, 'arm': arm, 'maximumParkNs': PARK_ORDER[arm-1],
++    config = {'schemaVersion': 3, 'experiment':'retention-long-cuts-v1', 'workloadPreset':'long-cuts-33792-v1', 'arm': arm, 'maximumParkNs': selected_park_ns(),
+               'remotePrep': str(PREP), 'host': actual['host'],
+               'releaseLocal': str((inputs / 'release.json').resolve()), 'releaseSha256': release_sha,
+               'stagingReceipt': str((inputs / 'STAGE_SUCCESS.json').resolve()), 'stagingReceiptSha256': stage_sha,
+@@ -66,7 +66,7 @@
+ 
+ def main():
+     p = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
+-    p.add_argument('--arm', type=int, choices=[1, 2, 3, 4], required=True)
++    p.add_argument('--arm', type=int, choices=[1], required=True)
+     for name in ['release', 'stage', 'protected']:
+         p.add_argument('--' + name, type=Path, required=True)
+         p.add_argument('--' + name + '-sha256', required=True)
+--- frozen-idle-r2/collect_and_audit.py
++++ new-long-collector/collect_and_audit.py
+@@ -27,7 +27,7 @@
+ 
+ def closed_proof(path, expected, c, release):
+     x = json.loads(b.reference(path, expected).read_text())
+-    b.require(x['schemaVersion'] == 2 and x['scope'] == 'ROOT_VERIFIED_CLOSED_CPU_IDLE_CONTROLLER'
++    b.require(x['schemaVersion'] == 2 and x['scope'] == 'ROOT_VERIFIED_CLOSED_CPU_LONG_CUTS_CONTROLLER'
+               and x['rootVerified'] is True and x['arm'] == c['arm']
+               and x['maximumParkNs'] == c['maximumParkNs']
+               and x['frozenReleaseSha256'] == c['releaseSha256']
