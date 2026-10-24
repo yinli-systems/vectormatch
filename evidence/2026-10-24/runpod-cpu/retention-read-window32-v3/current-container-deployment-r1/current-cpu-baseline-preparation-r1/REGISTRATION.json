@@ -1,0 +1,19 @@
+{
+  "command": [
+    "ssh",
+    "-i",
+    "/Users/kevin/.ssh/id_ed25519",
+    "-o",
+    "BatchMode=yes",
+    "-o",
+    "StrictHostKeyChecking=yes",
+    "-o",
+    "UserKnownHostsFile=runtime/cloud/cpu-20261024/current-cpu-connection-r1/known_hosts",
+    "-p",
+    "40184",
+    "root@185.226.156.243",
+    "python3 -B -c 'from pathlib import Path\nimport socket,json,os,hashlib\nassert socket.gethostname()=='\"'\"'33ace3d92505'\"'\"'\nroots=['\"'\"'/opt/vectormatch-cpu/restorations/original-native-r1'\"'\"','\"'\"'/opt/vectormatch-cpu/preparation'\"'\"','\"'\"'/opt/vectormatch-cpu/experiments/read-window32-current-abab-r1'\"'\"']\nfor name in roots:\n p=Path(name)\n assert not p.exists() and not p.is_symlink(), '\"'\"'Fresh protected absence differs: '\"'\"'+name\nprint(json.dumps(dict(schemaVersion=1,scope='\"'\"'CURRENT_CPU_CONTAINER_ABSENT_OLD_STATE_AND_FRESH_SYNTHETIC_NAMESPACE'\"'\"',host=socket.gethostname(),bootId=Path('\"'\"'/proc/sys/kernel/random/boot_id'\"'\"').read_text().strip(),absentProtectedPaths=roots,old57AndPg989RestorationClaimed=False,newSyntheticNamespaceOnly=True,affinity=sorted(os.sched_getaffinity(0)),cpuMax=Path('\"'\"'/sys/fs/cgroup/cpu.max'\"'\"').read_text(),memoryMax=Path('\"'\"'/sys/fs/cgroup/memory.max'\"'\"').read_text()),sort_keys=True,indent=2))\n'"
+  ],
+  "readOnly": true,
+  "atUTC": "2026-10-24T18:42:46.584175+00:00"
+}

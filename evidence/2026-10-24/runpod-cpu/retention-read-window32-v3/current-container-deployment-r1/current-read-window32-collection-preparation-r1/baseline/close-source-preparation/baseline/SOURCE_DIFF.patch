@@ -1,0 +1,112 @@
+--- baseline/inspect_closed_owner_arm.py
++++ inspect_closed_event_arm.py
+@@ -13,15 +13,16 @@
+ import stat
+ import time
+ 
+-PREP=pathlib.Path('/opt/vectormatch-cpu/preparation/cpu-owner-poll-cloud-abab-r1')
++PREP=pathlib.Path('/opt/vectormatch-cpu/preparation/cpu-event-fetch-cloud-abab-r1')
+ PROTECTED_SHA='6769aa2590668ba69692b17565c3463cc274b1fa2a777129d742c1e04899f753'
+ MAX_PROC=4096
+ FILES={}
+ MAXIMUM_PARK_NS=100000
+-OWNER_PARK_ORDER=(1000000,100000,1000000,100000)
+-CONTROLLER_SHA='33db61a0a48d64158ae3ed49af8dc59edd2bc56fbb6ebc5bcd91fb2524718edf'
+-SOURCE_COMMIT='977197616ade0283174f2ea6ddfaa700547f6d15'
+-CODE_SHA='23586ccc5b9ad88aef2eba48a4eeceb15e64fdc62142bd2971c23e028724b884'
++OWNER_PARK_ORDER=(1000000,1000000,1000000,1000000)
++EVENT_PAGE_ORDER=(16,32,16,32)
++CONTROLLER_SHA='eb84eed09cad46c5097c32d980a1629f7c7c7fec3759e904544f7ef9e91e3100'
++SOURCE_COMMIT='d92301d3058acc83cb85d5bc5b4fd2e3f0ed4df8'
++CODE_SHA='87a7ccd092f4d3c890bf8cc8bd7c6ffcd18900838699cd2b873fd1931cddb6aa'
+ PROFILE_SHA='732201775469861083f9dd0798a465dec1d0ed6bff39ed281dbef58c28b9fc68'
+ 
+ 
+@@ -96,9 +97,9 @@
+     return found,count
+ 
+ 
+-def expected_parent(release,root,maximum):
++def expected_parent(release,root,maximum,page):
+     return [release['java'],'-Dvectormatch.retention.idleMaxParkNs=100000','-Dvectormatch.retention.ownerPollMaxParkNs='+str(maximum)]+release['parentJvmArguments']+[
+-        '-cp',':'.join(release['classPath']),'io.vectormatch.cluster.RetentionCapacityAeronPilotV3',str(root),'idle-window8-long-cuts','42000']
++        '-cp',':'.join(release['classPath']),'io.vectormatch.cluster.RetentionCapacityAeronPilotV3',str(root),'event-fetch-page-long-cuts',str(page),'42000']
+ 
+ 
+ def expected_node(release,root,reg,node,maximum):
+@@ -122,7 +123,8 @@
+             and all(c in '0123456789abcdef' for c in expected_controller['commandSha256']), 'Explicit actual launch identity required')
+     require(controller_sha==CONTROLLER_SHA,'Exact frozen owner-poll controller SHA required')
+     maximum=OWNER_PARK_ORDER[arm_number-1]
+-    expected_args=['/usr/bin/python3','-B',str(PREP/'cpu_owner_poll_abab.py'),'--arm',str(arm_number),'--release-sha256',release_sha]
++    page=EVENT_PAGE_ORDER[arm_number-1]
++    expected_args=['/usr/bin/python3','-B',str(PREP/'cpu_event_fetch_abab.py'),'--arm',str(arm_number),'--release-sha256',release_sha]
+     if arm_number>1:expected_args+=['--prior-collection-sha256',prior_gate_sha]
+     expected_args+=['--start-new']
+     require(argv_sha(expected_args)==expected_controller['commandSha256'], 'Actual controller argv SHA does not bind exact one long-cut arm')
+@@ -154,7 +156,7 @@
+             and release['sourceCommit']==SOURCE_COMMIT
+             and release['codeFingerprint']==CODE_SHA and release['profileFingerprint']==PROFILE_SHA,
+             'Actual ready source/code/controller differs')
+-    require(hashlib.sha256(bounded(PREP/'cpu_owner_poll_abab.py',1024**2)).hexdigest()==controller_sha,
++    require(hashlib.sha256(bounded(PREP/'cpu_event_fetch_abab.py',1024**2)).hexdigest()==controller_sha,
+             'Actual frozen controller source differs')
+     job=PREP/('arm-%d'%arm_number)
+     # While any registered JVM is not strictly absent, never read completion or source summary.
+@@ -180,12 +182,12 @@
+             and reg['retentionIdleSelection']['maximumParkNs']==100000
+             and reg['ownerPollSelection']=={'schema':'retention-owner-poll-selection-v1','property':'vectormatch.retention.ownerPollMaxParkNs','maximumParkNs':maximum,'factor':'owner poll requested park cap only','hardRealtimeGuaranteed':False}
+             and reg['arrivals']==33792 and reg['rate']==500 and reg['batchCap']==4 and reg['archiveChunkBytes']==6144
+-            and reg['eventFetchCount']==16 and reg['commonReadWindowEnvelope'] is True and reg['commonChunkEnvelope'] is False
++            and reg['eventFetchCount']==page and reg.get('commonEventFetchEnvelope') is True and reg['commonReadWindowEnvelope'] is True and reg['commonChunkEnvelope'] is False
+             and reg['workloadPreset']=='long-cuts-33792-v1' and reg['expectedFullCommandCuts']==11
+             and reg['expectedTrailingCommands']==3 and reg['equivalentFullLoadCutNumbers']==list(range(2,12)),'Exact long arm registration differs')
+-    require(unique['pilot-parent']['arguments']==expected_parent(release,root,maximum),'Registered actual Java parent argv differs')
++    require(unique['pilot-parent']['arguments']==expected_parent(release,root,maximum,page),'Registered actual Java parent argv differs')
+     handle=js(job/'parent-launch-handle.json',65536)
+-    require(handle['pid']==unique['pilot-parent']['pid'] and handle['expectedArguments']==expected_parent(release,root,maximum)
++    require(handle['pid']==unique['pilot-parent']['pid'] and handle['expectedArguments']==expected_parent(release,root,maximum,page)
+             and handle['expectedCommandSha256']==unique['pilot-parent']['commandSha256'],'Independent parent launch/kernel binding differs')
+     for n in range(3):
+         claimed=js(root/('node-%d-identity.json'%n),65536);record=unique['window-8-node-%d'%n]
+@@ -202,17 +204,20 @@
+     completion=js(job/'completion.json',optional=True)
+     if blocked is not None:return {'state':'BLOCKED_STOP_UNCONFIRMED','closedGate':False,'controller':observed,'blockedReason':blocked.get('reason'),'neverResubmit':True}
+     if completion is None:return {'state':'CONTROLLER_EXITED_COMPLETION_INCOMPLETE','closedGate':False,'controller':observed,'neverResubmit':True}
+-    require(completion['arm']==arm_number and completion['ownerPollMaximumParkNs']==maximum and completion['serverDriverMaximumParkNs']==100000 and completion['frozenReleaseSha256']==release_sha,'Completion scope mismatch')
++    require(completion['arm']==arm_number and completion.get('eventFetchCount')==page and completion['ownerPollMaximumParkNs']==maximum and completion['serverDriverMaximumParkNs']==100000 and completion['frozenReleaseSha256']==release_sha,'Completion scope mismatch')
+     require(completion.get('allOwnedStopped') is True,'Completion must confirm all registered JVMs stopped')
+     if completion.get('passed') is not True or completion.get('errors'):
+         return {'state':'CLOSED_FAILED_OUTCOME','closedGate':False,'safeForReadOnlyFailureCollection':True,'controller':observed,'ownership':ownership,'errors':completion.get('errors'),'allOwnedStoppedAtObservation':True}
+     before=js(job/'before.json',4*1024**2);after=js(job/'after-clean-stop.json',4*1024**2)
+     require(before['controllerSha256']==controller_sha and before['baseSha256']=='8eeb10c14d6e5a9aa3895fbb674fc5c59ceac7fd3b15a6e3e11da325f444ab87',
+             'Actual before/preflight frozen controller/ownership source differs')
+-    require(before['arm']==arm_number and before['ownerPollMaximumParkNs']==maximum and before['serverDriverMaximumParkNs']==100000 and before['singleManualArmOnly'] is True and before['noJavaStarted'] is True,'One manual arm default-preflight receipt differs')
++    require(before['arm']==arm_number and before.get('eventFetchCount')==page and before['ownerPollMaximumParkNs']==maximum and before['serverDriverMaximumParkNs']==100000 and before['singleManualArmOnly'] is True and before['noJavaStarted'] is True,'One manual arm default-preflight receipt differs')
+     result=completion['result'];require(result['passed'] is True and len(result['arms'])==1,'Full successful single-arm controller result required')
+     arm=result['arms'][0];summary=arm['functional']['actualSourceSummary'];logs=arm['nodeLogClassifications']
+-    require(arm['ownerPollMaximumParkNs']==maximum and arm['serverDriverMaximumParkNs']==100000 and arm['readWindow']==8 and arm['functional']['passed'] is True
++    require(arm.get('eventFetchCount')==page and arm['functional'].get('eventFetchCount')==page and arm['functional'].get('commonEventFetchEnvelope') is True
++            and arm.get('completion',{}).get('eventFetchCount')==page and arm['completion'].get('commonEventFetchEnvelope') is True
++            and summary.get('eventFetchCount')==page and summary.get('commonEventFetchEnvelope') is True
++            and arm['ownerPollMaximumParkNs']==maximum and arm['serverDriverMaximumParkNs']==100000 and arm['readWindow']==8 and arm['functional']['passed'] is True
+             and summary['confirmedAcceptedUniqueOrders']==33792 and summary['notSent']==0 and summary['unknownObserved']==0 and summary['unknownFinal']==0
+             and summary['scheduledArrivals']==33792 and summary['releasedArrivals']==33792 and summary['completedLogicalReplies']==33792
+             and summary['ratePerSecond']==500 and summary['batchCap']==4 and summary['archiveChunkBytes']==6144 and summary['readWindow']==8
+@@ -239,14 +244,14 @@
+     st=expected_archive.lstat();require(stat.S_ISREG(st.st_mode) and not expected_archive.is_symlink() and st.st_size==advertised['bytes']<=256*1024**2,'Stopped archive metadata differs')
+     require(identity_state(controller)['observation']=='PID_ABSENT','Controller observation changed')
+     require(all(identity_state(value)['observation']=='PID_ABSENT' for value in unique.values()),'Owned JVM absence changed during metadata inspection')
+-    return {'state':'CLOSED_PASS_CONTROL_PLANE','closedGate':True,'safeForIndependentClosedCollection':True,'controller':observed,'controllerExitCodeIndependentlyObserved':False,'javaParentNormalExitBasis':'Frozen controller passed only after parent.returncode==0 and parent.wait; not a separately observed controller exit code.','ownership':ownership,'processesObserved':proc_count,'allOwnedStoppedAtObservation':True,'allFourOwnedJvmsStrictlyPidAbsent':True,'protectedNative57Pg989ReceiptsExact':True,'protectedFinalValues':protected,'archiveMetadataOnly':advertised,'archiveFullHashReadHere':False,'fullNativeOrRawEvidenceRead':False,'independentRawAndFullArchiveCollectionStillRequired':True,'nextArmStartedByProbe':False,'benchmarkOrBusinessCommandStartedByProbe':False,'arm':arm_number,'job':str(job),'ownerPollMaximumParkNs':maximum,'serverDriverMaximumParkNs':100000,'frozenReleaseSha256':release_sha,'controllerSha256':controller_sha,'controllerOriginalIdentity':controller,'controllerFullSuccessReceiptPassed':True,'schedulerTimingValidReported':summary['schedulerTimingValid'],'retainedPostCheckpointEosWarningPairs':arm['retainedPostCheckpointEosWarningPairs'],'afterSigtermWallTimeProven':False}
++    return {'state':'CLOSED_PASS_CONTROL_PLANE','closedGate':True,'safeForIndependentClosedCollection':True,'controller':observed,'controllerExitCodeIndependentlyObserved':False,'javaParentNormalExitBasis':'Frozen controller passed only after parent.returncode==0 and parent.wait; not a separately observed controller exit code.','ownership':ownership,'processesObserved':proc_count,'allOwnedStoppedAtObservation':True,'allFourOwnedJvmsStrictlyPidAbsent':True,'protectedNative57Pg989ReceiptsExact':True,'protectedFinalValues':protected,'archiveMetadataOnly':advertised,'archiveFullHashReadHere':False,'fullNativeOrRawEvidenceRead':False,'independentRawAndFullArchiveCollectionStillRequired':True,'nextArmStartedByProbe':False,'benchmarkOrBusinessCommandStartedByProbe':False,'arm':arm_number,'eventFetchCount':page,'job':str(job),'ownerPollMaximumParkNs':maximum,'serverDriverMaximumParkNs':100000,'frozenReleaseSha256':release_sha,'controllerSha256':controller_sha,'controllerOriginalIdentity':controller,'controllerFullSuccessReceiptPassed':True,'schedulerTimingValidReported':summary['schedulerTimingValid'],'retainedPostCheckpointEosWarningPairs':arm['retainedPostCheckpointEosWarningPairs'],'afterSigtermWallTimeProven':False}
+ 
+ 
+ if __name__=='__main__':
+     p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--arm',type=int,choices=(1,2,3,4),required=True);p.add_argument('--release-sha256',required=True);p.add_argument('--controller-sha256',required=True);p.add_argument('--controller-pid',type=int,required=True);p.add_argument('--controller-start-ticks',type=int,required=True);p.add_argument('--controller-argv-sha256',required=True);p.add_argument('--prior-collection-sha256');args=p.parse_args()
+     try:
+         result=inspect(args.arm,args.release_sha256,args.controller_sha256,{'pid':args.controller_pid,'startTicks':args.controller_start_ticks,'commandSha256':args.controller_argv_sha256},args.prior_collection_sha256)
+-        result.update(observedAtUnixNs=time.time_ns(),controlPlaneInputs=FILES,readOnly=True,networkOrSignalsOrWritesPerformed=False)
++        result.update(schemaVersion=2,probeScope='CPU_EVENT_FETCH_CLOSED_CONTROL_PLANE_PROBE',observedAtUnixNs=time.time_ns(),controlPlaneInputs=FILES,readOnly=True,networkOrSignalsOrWritesPerformed=False)
+         print(json.dumps(result,sort_keys=True));raise SystemExit(0)
+     except Exception as error:
+         print(json.dumps({'state':'INSPECTION_INDETERMINATE','closedGate':False,'errorType':type(error).__name__,'error':str(error)[:1024],'controlPlaneInputs':FILES,'readOnly':True,'neverSignalOrResubmit':True},sort_keys=True));raise SystemExit(2)

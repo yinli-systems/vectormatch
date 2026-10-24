@@ -1,0 +1,93 @@
+--- old-container/controller
++++ current-container/controller
+@@ -20,7 +20,7 @@
+ 
+ HERE = Path(__file__).resolve().parent
+ BASE_SHA = '8eeb10c14d6e5a9aa3895fbb674fc5c59ceac7fd3b15a6e3e11da325f444ab87'
+-HOST = 'ed6c0673f5cb'
++HOST = '33ace3d92505'
+ ROOT = Path('/opt/vectormatch-cpu')
+ PREP = ROOT / 'preparation/cpu-read-window32-cloud-abab-r1'
+ ARM = 1
+@@ -39,7 +39,7 @@
+ MINIMUM_INITIAL_FREE_BYTES = 2116076873
+ PRIOR_GATE_SHA = None
+ LOG_CLASSIFIER_SHA = 'bb8725c5bc560cc9a72c80a5c5d445373edbd0da91f2cccf41eb3550569319a9'
+-PREREQUISITE_PINS = {'linuxMetadataObservation': {'bytes': 7666, 'sha256': 'b9217e7d2adc2e0f1fea742c32fc56ed46984881b2f5405839f23595263efa9f'}, 'linuxMetadataReceipt': {'bytes': 5018, 'sha256': '52b449da92464bd64067679942d8c5d07bd6ed418e8c3f1f7080e2a09d1ee361'}}
++PREREQUISITE_PINS = {'linuxMetadataObservation': {'bytes': 7710, 'sha256': '6641379f2fff250f1a7a843876d2c9336fde97758cf4b8f04e2c360c0299e0b0'}, 'linuxMetadataReceipt': {'bytes': 5048, 'sha256': 'd81c5d5c0fcfb352d93875c00f5ba21fe62e4153365576250abd0c68174da275'}}
+ PARSER_FREEZE_SHA = "766ef61f32b8c0dfe8010749795637969b319ddcd19e05d8351830d0e02836ad"
+ FIXED_PORTS = 42000
+ 
+@@ -214,7 +214,7 @@
+             require({k: row[k] for k in ('bytes','sha256')} == PREREQUISITE_PINS[key], 'Exact actual qualified prerequisite differs: ' + key)
+     protection = release['protectedOriginalState']
+     require(set(protection) == {'manifest', 'manifestSha256'}, 'Unknown or missing protected-state key')
+-    require(protection['manifestSha256'] == '6769aa2590668ba69692b17565c3463cc274b1fa2a777129d742c1e04899f753' and Path(protection['manifest']).parent == PREP / 'release',
++    require(protection['manifestSha256'] == 'c5f826989dc882a60b0b29b034fa51cfb85665666bd24ec10d90da863b14ae76' and Path(protection['manifest']).parent == PREP / 'release',
+             'Current stopped original-state manifest required; initial clone is not an updated tail baseline')
+     require(release['parentJvmArguments'] == ['--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED',
+             '--add-opens=java.base/java.util.zip=ALL-UNNAMED', '-Xmx256m'], 'Fixed parent JVM flags differ')
+@@ -446,36 +446,25 @@
+             'sampleFailureValuesInvented': False}
+ 
+ 
++def validate_current_container_baseline(manifest, *, host, boot_id, affinity, cpu_max, memory_max, absent_paths):
++    require(manifest['schemaVersion']==1 and manifest['scope']=='CURRENT_CPU_CONTAINER_ABSENT_OLD_STATE_AND_FRESH_SYNTHETIC_NAMESPACE', 'Explicit fresh-container absence baseline required')
++    require(manifest['host']==host==HOST and manifest['bootId']==boot_id, 'Host/container boot identity changed')
++    expected=[str(ROOT/'restorations/original-native-r1'),str(ROOT/'preparation')]
++    require(manifest['absentProtectedPaths']==expected and absent_paths==expected, 'Old restoration/preparation appeared; preserve and requalify')
++    require(manifest['initialSyntheticNamespaceObservedAbsent']==str(PREP) and manifest['old57AndPg989RestorationClaimed'] is False and manifest['newSyntheticNamespaceOnly'] is True, 'Do not inherit old57/PG989 state')
++    require(manifest['affinity']==affinity and len(affinity)==32 and manifest['cpuMax']==cpu_max and manifest['memoryMax']==memory_max, 'CPU affinity or cgroup budget changed')
++    return True
++
+ def protected_state(base, release):
+-    row = release['protectedOriginalState']
+-    path = Path(row['manifest'])
+-    base.no_links(path)
+-    require(digest(path) == row['manifestSha256'], 'Current original-state manifest differs')
+-    manifest = json_bounded(base, path, 4 * 1024**2)
+-    require(manifest['scope'] == 'CURRENT_STOPPED_ORIGINAL_RESTORATION' and len(manifest['nativeTrees']) == 3,
+-            'Explicit current three-native-tree plus PG baseline required')
+-    expected_roots = {str(ROOT / ('restorations/original-native-r1/node%d/runtime/cloud-20261023-01/node-%d' % (n, n)))
+-                      for n in range(3)}
+-    require({tree['root'] for tree in manifest['nativeTrees']} == expected_roots,
+-            'Exactly the three original native roots must be protected')
+-    require(manifest['postgres']['pgData'] == str(ROOT / 'restorations/original-native-r1/node2/runtime/postgres18'),
+-            'Exactly original stopped PGDATA must be protected')
+-    output = []
+-    for tree in manifest['nativeTrees']:
+-        root = Path(tree['root'])
+-        require(str(root).startswith(str(ROOT / 'restorations/original-native-r1') + '/'), 'Protected tree outside original restoration')
+-        actual = base.scan(root, True)
+-        # Ignore atime/mtime/allocation; bytes, closure, owners and modes are exact.
+-        require(set(actual['files']) == set(tree['files']) and actual['directories'] == tree['directories'],
+-                'Protected original native file/directory closure/owner/mode differs')
+-        for name, expected in tree['files'].items():
+-            require(all(actual['files'][name][k] == expected[k] for k in ['bytes', 'sha256', 'mode', 'uid', 'gid']),
+-                    'Protected original native bytes/owner/mode differs')
+-        output.append({'root': str(root), 'files': len(actual['files']), 'logicalBytes': actual['logicalBytes']})
+-    require(sum(len(tree['files']) for tree in manifest['nativeTrees']) == 57, 'Current original native57-file baseline required')
+-    pg = base.verify_pg(manifest['postgres'])
+-    require(pg['files'] == 989, 'Current stopped PG989-file baseline required')
+-    return {'passed': True, 'nativeTrees': output, 'postgres': pg, 'manifestSha256': row['manifestSha256']}
++    row=release['protectedOriginalState'];path=Path(row['manifest']);base.no_links(path)
++    require(digest(path)==row['manifestSha256'], 'Current-container baseline body differs')
++    manifest=json_bounded(base,path,4*1024**2);absent=[]
++    for name in manifest['absentProtectedPaths']:
++        p=Path(name);base.no_links(p)
++        require(not p.exists(), 'Unexpected old-state tree must be preserved: '+name);absent.append(name)
++    validate_current_container_baseline(manifest,host=socket.gethostname(),boot_id=Path('/proc/sys/kernel/random/boot_id').read_text().strip(),affinity=sorted(os.sched_getaffinity(0)),cpu_max=Path('/sys/fs/cgroup/cpu.max').read_text(),memory_max=Path('/sys/fs/cgroup/memory.max').read_text(),absent_paths=absent)
++    return dict(passed=True,manifestSha256=row['manifestSha256'],scope=manifest['scope'],host=manifest['host'],bootId=manifest['bootId'],absentProtectedPaths=absent,old57AndPg989RestorationClaimed=False,newSyntheticNamespaceOnly=True)
++
+ 
+ 
+ def allocated_scan(base, path):
+@@ -569,7 +558,7 @@
+ 
+ def validate_linux_metadata(observation, receipt, release):
+     """Actual new helper/class/selected-plan process binding, never native qualification."""
+-    root='/opt/vectormatch-cpu/preparation/cpu-read-window32-release-metadata-r1'
++    root='/opt/vectormatch-cpu/tools/cpu-read-window32-current-container-metadata-r1'
+     require(observation['schemaVersion']==2 and observation['sourceCommit']==SOURCE_COMMIT and observation['actualCodeFingerprint']==release['codeFingerprint']
+         and observation['profileSha256']==release['profileFingerprint'] and observation['fixedEventFetchCount']==32
+         and observation['noDriverOrClusterStarted'] is True and observation['cliExecuted'] is False

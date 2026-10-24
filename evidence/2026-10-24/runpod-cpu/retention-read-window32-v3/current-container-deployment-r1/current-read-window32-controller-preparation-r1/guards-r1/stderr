@@ -1,0 +1,66 @@
+test_both_selected_windows_validate_complete_historical_actual_schema_with_synthetic_role_relabeling (test_read_window32_delta.DynamicIdleRoles) ... ok
+test_controller_explicitly_passes_selected_window_and_helper_sha (test_read_window32_delta.DynamicIdleRoles) ... ok
+test_duplicate_role_rejected (test_read_window32_delta.DynamicIdleRoles) ... ok
+test_missing_node_rejected (test_read_window32_delta.DynamicIdleRoles) ... ok
+test_reused_pid_rejected (test_read_window32_delta.DynamicIdleRoles) ... ok
+test_swapped_actual_node_identity_rejected (test_read_window32_delta.DynamicIdleRoles) ... ok
+test_wrong_window_registry_rejected (test_read_window32_delta.DynamicIdleRoles) ... ok
+test_actual_closed_metadata_and_parser_prerequisites_validate (test_read_window32_delta.Read32Delta) ... ERROR
+test_both_real_linux_plans_have_same_common32_caps (test_read_window32_delta.Read32Delta) ... ok
+test_complete_synthetic_release_schema_checks_do_not_start_anything (test_read_window32_delta.Read32Delta) ... ERROR
+test_draft_cannot_self_qualify (test_read_window32_delta.Read32Delta) ... ok
+test_exact_new_cli_without_old_page_axis (test_read_window32_delta.Read32Delta) ... ok
+test_first_cloud_arm_cannot_borrow_old_native_qualification (test_read_window32_delta.Read32Delta) ... ok
+test_four_arms_one_selected_window_only_and_fresh_roots (test_read_window32_delta.Read32Delta) ... ok
+test_full_agrona_body_and_helper_identity_pinned (test_read_window32_delta.Read32Delta) ... ERROR
+test_initial_floor_never_drops_below_previous2116076873 (test_read_window32_delta.Read32Delta) ... ok
+test_lifecycle_retry_ownership_protection_egress_core_definitions_unchanged (test_read_window32_delta.Read32Delta) ... ok
+test_linux_two_plans_are_not_invented_four_plans (test_read_window32_delta.Read32Delta) ... ok
+test_live_or_unobserved_metadata_identity_rejected (test_read_window32_delta.Read32Delta) ... ok
+test_no_duplicate_keys_or_legacy_window8_role_paths (test_read_window32_delta.Read32Delta) ... ok
+test_old_release_schema_and_artifact_rejected (test_read_window32_delta.Read32Delta) ... ok
+test_prior_collection_requires_actual_matching_read_window_and_schema3 (test_read_window32_delta.Read32Delta) ... ok
+test_registration_requires_selected_window_and_fixed_page (test_read_window32_delta.Read32Delta) ... ok
+test_root_pending_proof_still_rejected (test_read_window32_delta.Read32Delta) ... ok
+test_tampered_selected_plan_and_parser_hash_rejected (test_read_window32_delta.Read32Delta) ... ok
+test_time_archive_memory_caps_and_cleanup_policy_unchanged (test_read_window32_delta.Read32Delta) ... ok
+test_unchanged_child_driver_leader_profile_arguments (test_read_window32_delta.Read32Delta) ... ok
+
+======================================================================
+ERROR: test_actual_closed_metadata_and_parser_prerequisites_validate (test_read_window32_delta.Read32Delta)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read-window32-controller-preparation-r1/test_read_window32_delta.py", line 65, in test_actual_closed_metadata_and_parser_prerequisites_validate
+    v,r=prerequisites();self.assertTrue(p.validate_prerequisite_proofs(v,r))
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read-window32-controller-preparation-r1/cpu_read_window32_abab.py", line 643, in validate_prerequisite_proofs
+    validate_linux_metadata(values['linuxMetadataObservation'],values['linuxMetadataReceipt'],release)
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read-window32-controller-preparation-r1/cpu_read_window32_abab.py", line 606, in validate_linux_metadata
+    name=bindings[row['class']];frozen=release['artifacts'][str(PREP/'release/lib'/name)]
+KeyError: '/opt/vectormatch-cpu/preparation/cpu-read-window32-cloud-abab-r1/release/lib/cluster-0.1.0-SNAPSHOT.jar'
+
+======================================================================
+ERROR: test_complete_synthetic_release_schema_checks_do_not_start_anything (test_read_window32_delta.Read32Delta)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read-window32-controller-preparation-r1/test_read_window32_delta.py", line 30, in test_complete_synthetic_release_schema_checks_do_not_start_anything
+    def test_complete_synthetic_release_schema_checks_do_not_start_anything(self):self.assertTrue(p.validate_release(fixture()))
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read-window32-controller-preparation-r1/cpu_read_window32_abab.py", line 169, in validate_release
+    require(release['host'] == HOST and release['arms'] == {str(n): {
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read-window32-controller-preparation-r1/cpu_read_window32_abab.py", line 68, in require
+    raise RuntimeError(message)
+RuntimeError: Fixed host/four manual owner-poll arm roots differ
+
+======================================================================
+ERROR: test_full_agrona_body_and_helper_identity_pinned (test_read_window32_delta.Read32Delta)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read-window32-controller-preparation-r1/test_read_window32_delta.py", line 72, in test_full_agrona_body_and_helper_identity_pinned
+    with self.assertRaises(RuntimeError):p.validate_linux_metadata(v['linuxMetadataObservation'],v['linuxMetadataReceipt'],r)
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-read-window32-controller-preparation-r1/cpu_read_window32_abab.py", line 606, in validate_linux_metadata
+    name=bindings[row['class']];frozen=release['artifacts'][str(PREP/'release/lib'/name)]
+KeyError: '/opt/vectormatch-cpu/preparation/cpu-read-window32-cloud-abab-r1/release/lib/cluster-0.1.0-SNAPSHOT.jar'
+
+----------------------------------------------------------------------
+Ran 27 tests in 1.010s
+
+FAILED (errors=3)

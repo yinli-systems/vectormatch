@@ -1,0 +1,44 @@
+{
+  "atUTC": "2026-10-24T18:57:22.565858+00:00",
+  "commandsPerMaintenanceCycle": 3072,
+  "currentFinitePlannerRejects100MBeforeNative": true,
+  "currentGlobalWriterFilesIncludingReceipts": 1024,
+  "currentMaximumPlannedArrivals": 350000,
+  "currentProfileMaintenanceJournalBytes": 4194304,
+  "currentProfileMaintenanceJournalRecords": 4096,
+  "invariantsReplayJournalFromGenesis": true,
+  "maintenanceJournalHasNoAutomaticEviction": true,
+  "noChangingConstantsPresentedAsSolution": true,
+  "passed": true,
+  "prospectiveEightAckRecordsPerCycleFourOfferEnvelope": 260424,
+  "prospectiveMaintenanceCycles": 32553,
+  "prospectiveTwoAckRecordsPerCycleWithoutExtraOffers": 65106,
+  "prospectiveWriterFilesIncludingReceipts": 130212,
+  "prospectiveWriterPayloadFiles": 65106,
+  "requiredChanges": [
+    "segmented streaming arrival/evidence generator with continuous lineage and absolute counters",
+    "certified maintenance-journal anchor covering cursor/cache/high-water projection",
+    "snapshot v2 validating anchor plus retained suffix and accepting no forged old state",
+    "bounded local raw/writer segments retained until byte-hash and durable-receipt checks",
+    "cold application recovery and original-identity replay verification at segment boundaries",
+    "fixed-source/config baseline and capacity curve after correctness qualification"
+  ],
+  "scope": "Source-verified finite V3 admission gap; arithmetic only, not an executed workload",
+  "setupCommands": 3,
+  "sourceInputs": {
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionBatchProfilesV3.java": {
+      "bytes": 788,
+      "sha256": "19e3cd9798da800344cf1eadd5c70b79d5d144c995150b09e4c6a23bcc0c7cbc"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityPlanV3.java": {
+      "bytes": 36357,
+      "sha256": "881a94050dffa035cd14d8071b7b47196229256c99cac65d69bcc321810f1e75"
+    },
+    "cluster/src/main/java/io/vectormatch/cluster/RetentionServiceV3.java": {
+      "bytes": 34212,
+      "sha256": "b2199ca52aacb997500cd09eb8a5161869f00b219745c408a809acec1684db60"
+    }
+  },
+  "targetFreshAcceptedOrders": 100000000,
+  "three100MGoalsRemainDistinct": true
+}

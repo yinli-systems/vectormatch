@@ -1,0 +1,11 @@
+# Actual replacement-container deployment and strict collection preparation
+
+The same605/d0 application remains on private feature branch. Full current controller/collector source scopes, failed drafts/guards, all sourceZIPs/bundles, real Linux stage/correction output and fresh-container baseline/isolation observations are preserved byte-for-byte. Neither source nor metadata proof constitutes a native read32 performance result.
+
+A first58-file stage ran85 pure Linux guards and no native preflight or benchmark. Subsequent strict collector guards caught a changed reused ownership helper: a generic hostname rebind had changed its bytes. The first package and raw outcomes remain. An explicit reviewed5-file correction first verified all58 original inputs, preserved5 original bodies remotely, refused any launched arm path, restored the exact8eeb helper and added a guard. Actual Linux35controller/current-baseline/base-integrity +51strict parser guards passed; final58 bodies/modes were reverified. Local collector26 pure guards passed, including absence/boot/protected-state failures and unchanged close PID/argv logic.
+
+Current actual release:35652d5dd4175e2f7fff500147ce084a41d9ae7a3c6951b9c67374b780ec05d0. Current source closure:LOCAL_PREPARATION_FROZEN_R3. Older draft maps describe retained prior bundle/ZIP bodies; they are not claimed to still match their original live working paths. Full raw SSH stdout includes actual Linux guard output and complete staged-body receipts.
+
+The user identified Gradle PID5669 as VectorMatch and requested natural exit. Its recorded idleTimeoutMs is10800000 (3hours). It remains rejected by the unchanged strict foreign-Java gate; no stop, signal or workload launch occurred. The current baseline explicitly protects absent old restoration/preparation directories, container boot ID, CPU affinity and cgroups. It does not falsely claim old57native/PG989 state exists on the replacement container.
+
+No new native arm, p99, throughput, stable capacity or100M run is claimed. The separately included source-gap arithmetic and repository endurance plan explain why finiteV3 limits cannot simply be raised to100M without bounded journal anchors, streaming evidence and real cold recovery qualification.

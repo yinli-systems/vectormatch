@@ -1,0 +1,9 @@
+# Replacement-container read-window8/32 controller and actual source stage
+
+The application remains605/d0, with fixedpage32 and the existing read8/32/8/32 experiment. Only connection, exact container/boot, fresh namespace and protection baseline are rebound. Old57/PG989 state is absent and is not inherited: the new baseline protects that absence and fixed CPU affinity/cgroup resources. Foreign Java/Postgres refusal and owned-process lifecycle remain unchanged. User instructed natural Gradle exit; no stop or force-kill was sent.
+
+Final local controller/current-environment/base integrity guards35 PASS. Initial27 had3 errors due a split PREP path suffix; the failed sourceZIP is retained. A first actual58-file Linux stage passed85 pure guards but was blocked before preflight/native: host rebinding had also changed a reused ownership helper whose actual body must remain8eeb. The complete first bundle, inputs, sourceZIP, hashes and source snapshots are preserved.
+
+An exact five-file correction restored8eeb, added a base-body guard, updated source closure and root review/release. It verified all58 original staged files first, preserved all5 prior bodies and refused every existing native-arm path before replacement. Final actual Linux35+51=86 guards passed and every58 body/mode was reverified. Current release SHA35652d5dd4175e2f7fff500147ce084a41d9ae7a3c6951b9c67374b780ec05d0. No native arm has started. Old staged release is a retained superseded artifact, not a qualification.
+
+LOCAL_PREPARATION_FROZEN_R3 and STAGE_CORRECTION_R3 are current. Earlier same-scope draft source maps point to retained bundle/ZIP bodies and are not claimed to still describe current live source paths. root-release-r2 is current; root-release is historical. New original application matching code is unchanged, but the container performance baseline must be rerun. Metadata/guards do not prove performance,100M or hard realtime.
