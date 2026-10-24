@@ -1,0 +1,1481 @@
+{
+  "id": "cpu-capacity-park100us-26000-w128-r1",
+  "task": {
+    "id": "cpu-capacity-park100us-26000-w128-r1",
+    "stage": "R1-26000",
+    "group": "park100us",
+    "rate": 26000,
+    "arrivals": 350000,
+    "workers": 128,
+    "phase": "cpu-single-host-fixed-node-100us-capacity-curve",
+    "repetition": 1,
+    "nodeMaxParkNs": 100000
+  },
+  "spaceBefore": {
+    "hostname": "ed6c0673f5cb",
+    "freeBytes": 4201201664,
+    "checkedAtUtc": "2026-10-24T03:24:56.619849+00:00",
+    "minimumBeforeNextPoint": 3221225472,
+    "nextPointEligible": true
+  },
+  "startedAtUtc": "2026-10-24T03:24:56.621786+00:00",
+  "completion": {
+    "jobId": "cpu-capacity-park100us-26000-w128-r1",
+    "scope": "SINGLE_HOST_THREE_JVM_LOOPBACK_UDP",
+    "planSha256": "2b03b57880c45e07130c4bf684ebcd75360996b6a78e0f2da3ce8d8f0f7d461e",
+    "startedAtUtc": "2026-10-24T03:25:09.989935+00:00",
+    "matrixTrialPassed": true,
+    "workloadLaunched": true,
+    "loadStartedAtUtc": "2026-10-24T03:25:16.401794+00:00",
+    "loadCompletedAtUtc": "2026-10-24T03:27:11.518830+00:00",
+    "loadExitCode": 0,
+    "loadAndLeaderComplete": true,
+    "controllerSignal": null,
+    "allOwnedProcessesStopped": true,
+    "completedAtUtc": "2026-10-24T03:27:13.130499+00:00",
+    "archiveComplete": true,
+    "arrivalArchivePassed": true,
+    "archive": {
+      "path": "/workspace/vectormatch-cpu-archives/cpu-capacity-park100us-26000-w128-r1.tar.gz",
+      "bytes": 66746049,
+      "sha256": "7ba8fab552cf06f589daa3c5ccd0275f570d52894660a8e2d87b1693b98ac99c",
+      "files": 117,
+      "fullStateManifestSha256": "41bec8429dbce992fd344ad30cae143074d8fb8b099f901cd51bbdc85517ff1a",
+      "verifiedAllEntries": true,
+      "originalOverlayStatePreserved": true
+    }
+  },
+  "analysisDirectory": "/Users/kevin/Documents/ChatGPT/App 2/evidence/2026-10-24/runpod-cpu/capacity/cpu-capacity-park100us-26000-w128-r1",
+  "analysisSummarySha256": "9c98a01fbab29988189e0a80f324eb7ef9c778a825606a30c7b9e51ce674e836",
+  "continuation": {
+    "passed": true,
+    "errors": [],
+    "overloadAllowed": true
+  },
+  "analysisTrial": {
+    "arrivalWindowGoodputFraction": 0.6950457143135161,
+    "arrivalWindowSeconds": 13.461538461,
+    "backlog": {
+      "peakInFlight": 128,
+      "peakObservedOutstanding": 8317,
+      "peakQueueDepth": 8189,
+      "samples": 16,
+      "scope": "Non-atomic queue_depth + in_flight observations; not exact queue conservation. Growth is positive OLS trend times observed span in the second half of the arrival window; drain samples excluded.",
+      "secondHalfEndpointGrowthCommands": 31,
+      "secondHalfFittedGrowthCommands": 3.000048675506803,
+      "secondHalfOutstandingTrendCommandsPerSecond": 0.500009282106178,
+      "secondHalfSpanSeconds": 5.999985966,
+      "secondHalfWindowSamples": 7,
+      "validationIssues": []
+    },
+    "classification": "OBSERVED_OVERLOAD_OR_UNDERSIZED_CLIENT",
+    "comparisonConfiguration": {
+      "aeronMtuLength": 1248,
+      "clientAeronMode": "one-session-one-network-owner",
+      "clientDriverCount": 1,
+      "clientDriverMode": "shared",
+      "clientEgressHost": "127.0.0.1",
+      "deploymentBundleSha256": "ec85f1411f7a54cfdd72df6b972f7343ec63c2306dea3466b191c9d47a862c47",
+      "drainTimeoutMs": 30000,
+      "expectedLeader": 0,
+      "fixedNodeConfiguration": {
+        "aeronMtuLength": 1248,
+        "aeronVersion": "1.53.3",
+        "archiveThreading": "SHARED",
+        "capacityProfile": "extended-350k-256",
+        "checkpointMaxBytes": 536870912,
+        "clientNakUnicastDelayNs": 1000,
+        "clientSessionCount": 1,
+        "clientTransportMode": "multiplexed",
+        "drainTimeoutMs": 30000,
+        "driverIdleMaxParkNs": 100000,
+        "driverIdleMaxSpins": 10,
+        "driverIdleMaxYields": 5,
+        "driverIdleMinParkNs": 1000,
+        "driverThreading": "SHARED",
+        "driverThreadingArgument": "SHARED",
+        "idleStrategy": "Explicit node driver(10,5,1000,100000); archive/consensus/service(10,20,1000,100000)",
+        "leader": 0,
+        "loadHeap": "2g",
+        "maxClusterSessions": 256,
+        "maxRetainedOrders": 360000,
+        "nakUnicastDelayNs": 1000,
+        "nakUnicastRetryDelayRatio": 100,
+        "nodeDataPathIdleAgentMaxYields": 20,
+        "nodeDataPathIdleMinParkNs": 1000,
+        "nodeDataPathIdlePolicyVersion": 1,
+        "nodeDataPathMaxParkNs": 100000,
+        "nodeHeap": "2g",
+        "outboxCapacity": 800000,
+        "portBase": 23000,
+        "queuePerWorker": 64,
+        "requestTimeoutMs": 2000,
+        "resultCachePerProducer": 1024,
+        "schedulerLatenessLimitMs": 20,
+        "scope": "SINGLE_HOST_THREE_JVM_LOOPBACK_UDP",
+        "socketReceiveBufferArgumentBytes": 131072,
+        "socketReceiveBufferBytes": 131072,
+        "socketSendBufferBytes": 131072,
+        "stateProfile": "capacity-350k-v1",
+        "syncLevel": 2
+      },
+      "javaVersion": "21.0.13",
+      "loadGeneratorBundleSha256": "ec85f1411f7a54cfdd72df6b972f7343ec63c2306dea3466b191c9d47a862c47",
+      "loadGeneratorRelease": "/opt/vectormatch-cpu/releases/433f02bebe2f3109ec363291fa562d5c509c0723",
+      "loadGeneratorRevision": "433f02bebe2f3109ec363291fa562d5c509c0723",
+      "loadGeneratorUsesMemberAddress": true,
+      "loadModel": "absolute fixed-arrival scheduler; bounded round-robin per-worker FIFO; one synchronous in-flight per worker",
+      "memberHosts": [
+        "127.0.0.1",
+        "127.0.0.1",
+        "127.0.0.1"
+      ],
+      "portBase": 23000,
+      "preparedSnapshotSha256": "2c6847a5eb5bbdf0674a74c63f92dfb274fdc626ddfbcd540866596979e46bc4",
+      "priceTicks": 10000,
+      "quantityLotsPerMeasuredCommand": 1,
+      "release": "/opt/vectormatch-cpu/releases/433f02bebe2f3109ec363291fa562d5c509c0723",
+      "requestTimeoutMs": 2000,
+      "schedulerLatenessLimitMs": 20,
+      "seededBuyerAccounts": 64,
+      "seededMakerQuantity": 380000,
+      "seededQuotePerBuyer": 1900000000,
+      "sourceRevision": "433f02bebe2f3109ec363291fa562d5c509c0723",
+      "warmupCommands": 100,
+      "workload": "independent one-lot IOC buys, one pre-funded GTC maker, one trade per accepted command"
+    },
+    "comparisonFingerprintSha256": "3904a96b0a12c76aca7d1a32061c5c86bae41af880337c5dc7fde0f779180ae8",
+    "configuration": {
+      "aeronMtuLength": 1248,
+      "clientAeronMode": "one-session-one-network-owner",
+      "clientConnectionConcurrencyLimit": 8,
+      "clientDriverCount": 1,
+      "clientDriverCountScope": "load phase only; count recorded after every worker connects; setup/validation excluded",
+      "clientDriverMode": "shared",
+      "clientEgressHost": "127.0.0.1",
+      "clientNakUnicastDelayNs": 1000,
+      "clientNakUnicastRetryDelayRatio": 100,
+      "clientPendingCapacity": 128,
+      "clientSessionCount": 1,
+      "clientTransportMode": "multiplexed",
+      "declaredOutboxCapacity": 800000,
+      "drainTimeoutMs": 30000,
+      "expectedCoreLimits": {
+        "maxAccounts": 10000,
+        "maxCachedResults": 100000,
+        "maxProducers": 10000,
+        "maxRetainedOrders": 360000
+      },
+      "expectedLeader": 0,
+      "expectedResultCachePerProducer": 1024,
+      "expectedStateProfile": "capacity-350k-v1",
+      "fullCheckpointMaximumBytes": 536870912,
+      "initialResultCachePerProducer": 1024,
+      "javaVersion": "21.0.13",
+      "loadGeneratorUsesMemberAddress": true,
+      "loadModel": "absolute fixed-arrival scheduler; bounded round-robin per-worker FIFO; one synchronous in-flight per worker",
+      "maxServiceRequestsInFlight": 128,
+      "memberHosts": [
+        "127.0.0.1",
+        "127.0.0.1",
+        "127.0.0.1"
+      ],
+      "portBase": 23000,
+      "preparedOutboxPending": 267,
+      "preparedSnapshotSha256": "2c6847a5eb5bbdf0674a74c63f92dfb274fdc626ddfbcd540866596979e46bc4",
+      "priceTicks": 10000,
+      "processors": 32,
+      "producerPrefix": "capacity-fixed-v1",
+      "profile": "extended-350k-256",
+      "profileMaximumArrivals": 350000,
+      "profileMaximumWorkers": 256,
+      "quantityLotsPerMeasuredCommand": 1,
+      "queueCapacityPerWorker": 64,
+      "ratePerSecond": 26000,
+      "requestTimeoutMs": 2000,
+      "scheduledArrivals": 350000,
+      "schedulerLatenessLimitMs": 20,
+      "seededBuyerAccounts": 64,
+      "seededMakerQuantity": 380000,
+      "seededQuotePerBuyer": 1900000000,
+      "sessionReapWaitSecondsPerPhase": 12,
+      "setupTimeoutSeconds": 180,
+      "startedAt": "2026-10-24T03:25:16.443938598Z",
+      "timeouts": "A timeout is unknown. Worker retries the identical identity before advancing; original and resolved completion times remain distinct.",
+      "validationTimeoutSeconds": 600,
+      "warmupCommands": 100,
+      "workers": 128,
+      "workload": "independent one-lot IOC buys, one pre-funded GTC maker, one trade per accepted command"
+    },
+    "configurationIdentityIssues": [],
+    "configurationIdentityScope": "Checks completeness and agreement of declared node source/deployment, separate load-generator source/deployment, prepared-state and configuration identities. Missing all load-generator fields means the historical common node/load bundle; any explicit load-generator identity requires all three fields. Artifact bytes and actual node configuration require separate deployment evidence. Rate, worker count and queue size are not inside this fingerprint; grouping additionally separates phase/workers/queue.",
+    "countMismatches": [],
+    "derived": {
+      "allOfferedAcceptedFinite": false,
+      "allOfferedAcceptedP99Millis": null,
+      "arrivalWindowGoodputPerSecond": 18071.18857215142,
+      "businessRejected": 0,
+      "clientNotSent": 98449,
+      "clientQueueFullNotSent": 98449,
+      "completionWindowSeconds": 13.92513732,
+      "confirmedAccepted": 251551,
+      "confirmedIncludingDrainPerSecond": 18064.525628677966,
+      "confirmedWithinArrivalWindow": 243266,
+      "drainNotSent": 0,
+      "drainSeconds": 0.4635988589999993,
+      "latency": {
+        "conditionalAccepted": {
+          "count": 251551,
+          "maxMillis": 525.275883,
+          "minMillis": 7.035083,
+          "p50Millis": 454.435588,
+          "p95Millis": 491.09776,
+          "p999Millis": 516.239832,
+          "p99Millis": 508.240431
+        },
+        "conditionalReply": {
+          "count": 251551,
+          "maxMillis": 525.275883,
+          "minMillis": 7.035083,
+          "p50Millis": 454.435588,
+          "p95Millis": 491.09776,
+          "p999Millis": 516.239832,
+          "p99Millis": 508.240431
+        },
+        "initialExecute": {
+          "count": 251551,
+          "maxMillis": 35.080357,
+          "minMillis": 3.045665,
+          "p50Millis": 6.769332,
+          "p95Millis": 9.650899,
+          "p999Millis": 19.429837,
+          "p99Millis": 12.22623
+        },
+        "queue": {
+          "count": 251551,
+          "maxMillis": 515.957153,
+          "minMillis": 0.006,
+          "p50Millis": 447.243252,
+          "p95Millis": 483.654444,
+          "p999Millis": 508.472809,
+          "p99Millis": 500.668558
+        },
+        "scheduler": {
+          "count": 350000,
+          "maxMillis": 7.709372,
+          "minMillis": 2e-05,
+          "p50Millis": 4.9e-05,
+          "p95Millis": 0.000203,
+          "p999Millis": 2.542033,
+          "p99Millis": 0.000346
+        }
+      },
+      "outcomes": {
+        "CLIENT_QUEUE_FULL_NOT_SENT": 98449,
+        "CONFIRMED_ACCEPTED": 251551
+      },
+      "resolvedAfterInitialUnknown": 0,
+      "rows": 350000,
+      "serverErrors": 0,
+      "unknownAtInitialDeadline": 0,
+      "unknownUnresolved": 0,
+      "validationIssues": [],
+      "workerBlockedUnknownNotSent": 0
+    },
+    "directory": "/Users/kevin/Documents/ChatGPT/App 2/evidence/2026-10-24/runpod-cpu/capacity/cpu-capacity-park100us-26000-w128-r1/raw/evidence/runs/cpu-capacity-park100us-26000-w128-r1",
+    "effectiveBacklogGrowthLimitCommands": 3500.0,
+    "effectiveDrainLimitSeconds": 0.13461538461,
+    "failureArtifactPresent": false,
+    "fixedLeaderCheck": {
+      "aeronVersion": "1.53.3",
+      "checkedAt": "2026-10-24T03:27:12.774646+00:00",
+      "clusterId": 0,
+      "errors": [],
+      "expectedLeader": 0,
+      "nodes": [
+        {
+          "complete": true,
+          "node": 0,
+          "observedConsensusModuleStates": [
+            1
+          ],
+          "observedElectionCounts": [
+            1
+          ],
+          "observedElectionStates": [
+            17
+          ],
+          "observedRoles": [
+            2
+          ],
+          "observedTerms": [
+            0
+          ],
+          "samples": 119
+        },
+        {
+          "complete": true,
+          "node": 1,
+          "observedConsensusModuleStates": [
+            1
+          ],
+          "observedElectionCounts": [
+            1
+          ],
+          "observedElectionStates": [
+            17
+          ],
+          "observedRoles": [
+            0
+          ],
+          "observedTerms": [
+            0
+          ],
+          "samples": 119
+        },
+        {
+          "complete": true,
+          "node": 2,
+          "observedConsensusModuleStates": [
+            1
+          ],
+          "observedElectionCounts": [
+            1
+          ],
+          "observedElectionStates": [
+            17
+          ],
+          "observedRoles": [
+            0
+          ],
+          "observedTerms": [
+            0
+          ],
+          "samples": 119
+        }
+      ],
+      "observedRoles": {
+        "0": [
+          2
+        ],
+        "1": [
+          0
+        ],
+        "2": [
+          0
+        ]
+      },
+      "observedTerms": [
+        0
+      ],
+      "passed": true,
+      "postTerm": 0,
+      "preTerm": 0,
+      "scope": "All recorded CnC samples plus official pre/post list-members views; requires complete collector files from the pre-ready point through post-measurement. This checker cannot infer missing time coverage or exclude unobserved transitions between samples. Source type/label mappings are fixed to Aeron 1.53.3 clusterId=0.",
+      "test": "capacity-fixed-leader-check",
+      "verified": true
+    },
+    "id": "cpu-capacity-park100us-26000-w128-r1",
+    "inputErrors": [],
+    "inputSha256": {
+      "arrivals.csv": "a0a36dfe7bfaf183a62c6115b8bf6a1a0b9635eb2bbdcf57b166d5509ce1fea6",
+      "backlog.csv": "e3931f72e10fc124aff9826ea0f1c2d8ebe9affc7028c99995a14672f4ffe339",
+      "configuration.json": "77477f0966a963f552b783e1759c5cadd981bfebb237cea0b50e13cd5c0b3a09",
+      "fixed-leader-check.json": "491122c0d855c616892060bfaa189008f580e0b5198340b68452c914c211d83a",
+      "load-result.json": "a423cabe8b225c756d82dd593d97d9dc763f008d57949e30a71307a562ea4978",
+      "result.json": "526ec28f8e9f5c151634a2daa3553181e9eda1c95eae802f8a22634f38569675",
+      "trial.json": "6c4932a6183d4b9277606b80d8477f9658039d022605bac18cc6a8b8b517e0af"
+    },
+    "latencyTargetMet": null,
+    "measurementValid": true,
+    "observedStableWindow": false,
+    "phase": "cpu-single-host-fixed-node-100us-capacity-curve",
+    "queueCapacityPerWorker": 64,
+    "rawSummary": {
+      "acceptedScheduledToConfirmedMicroseconds": {
+        "count": 251551,
+        "max": 525275.883,
+        "min": 7035.083,
+        "p50": 454435.588,
+        "p95": 491097.76,
+        "p99": 508240.431,
+        "p999": 516239.832
+      },
+      "allOfferedAcceptedP99Microseconds": null,
+      "arrivalWindowSeconds": 13.461538461,
+      "assetConservationVerified": true,
+      "businessRejectedCommands": 0,
+      "canonicalSnapshotBytesVerified": true,
+      "clientNotSentCommands": 98449,
+      "clientQueueFullNotSent": 98449,
+      "completionWindowSeconds": 13.92513732,
+      "confirmedAcceptedCommands": 251551,
+      "confirmedIncludingDrainPerSecond": 18064.525628677966,
+      "confirmedWithinArrivalWindow": 243266,
+      "confirmedWithinArrivalWindowPerSecond": 18071.18857215142,
+      "drainNotSent": 0,
+      "drainSeconds": 0.463598859,
+      "executeInitialAttemptMicroseconds": {
+        "count": 251551,
+        "max": 35080.357,
+        "min": 3045.665,
+        "p50": 6769.332,
+        "p95": 9650.899,
+        "p99": 12226.23,
+        "p999": 19429.837
+      },
+      "executeStartAfterPlannedDeadlineCount": 250560,
+      "executeStartDeadlineLimitMs": 20,
+      "fixedLeaderVerified": true,
+      "generatorTimingInvalid": false,
+      "invariantsVerified": true,
+      "leaderChanged": false,
+      "measurementValid": true,
+      "passed": true,
+      "queueCapacityPerWorker": 64,
+      "queueDelayMicroseconds": {
+        "count": 251551,
+        "max": 515957.153,
+        "min": 6.0,
+        "p50": 447243.252,
+        "p95": 483654.444,
+        "p99": 500668.558,
+        "p999": 508472.809
+      },
+      "resolvedAfterInitialUnknown": 0,
+      "scheduledArrivals": 350000,
+      "scheduledToConfirmedMicroseconds": {
+        "count": 251551,
+        "max": 525275.883,
+        "min": 7035.083,
+        "p50": 454435.588,
+        "p95": 491097.76,
+        "p99": 508240.431,
+        "p999": 516239.832
+      },
+      "schedulerLatenessAboveLimitCount": 0,
+      "schedulerLatenessMicroseconds": {
+        "count": 350000,
+        "max": 7709.372,
+        "min": 0.02,
+        "p50": 0.049,
+        "p95": 0.203,
+        "p99": 0.346,
+        "p999": 2542.033
+      },
+      "serverErrors": 0,
+      "stateHashVerified": true,
+      "targetArrivalRatePerSecond": 26000,
+      "transportCountersByWorker": [
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 0
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0,
+          "worker": 1
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0,
+          "worker": 2
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 3
+        },
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 8,
+          "unknownRequestTimeouts": 0,
+          "worker": 4
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 5
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0,
+          "worker": 6
+        },
+        {
+          "acceptedOffers": 1968,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 7
+        },
+        {
+          "acceptedOffers": 1968,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0,
+          "worker": 8
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0,
+          "worker": 9
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0,
+          "worker": 10
+        },
+        {
+          "acceptedOffers": 1961,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0,
+          "worker": 11
+        },
+        {
+          "acceptedOffers": 1962,
+          "acceptedResends": 0,
+          "unacceptedOffers": 8,
+          "unknownRequestTimeouts": 0,
+          "worker": 12
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 13
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0,
+          "worker": 14
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 15
+        },
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0,
+          "worker": 16
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0,
+          "worker": 17
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 18
+        },
+        {
+          "acceptedOffers": 1970,
+          "acceptedResends": 0,
+          "unacceptedOffers": 10,
+          "unknownRequestTimeouts": 0,
+          "worker": 19
+        },
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0,
+          "worker": 20
+        },
+        {
+          "acceptedOffers": 1968,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 21
+        },
+        {
+          "acceptedOffers": 1968,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 22
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 11,
+          "unknownRequestTimeouts": 0,
+          "worker": 23
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 24
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 25
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 26
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 27
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 28
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 8,
+          "unknownRequestTimeouts": 0,
+          "worker": 29
+        },
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 8,
+          "unknownRequestTimeouts": 0,
+          "worker": 30
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 31
+        },
+        {
+          "acceptedOffers": 1968,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 32
+        },
+        {
+          "acceptedOffers": 1969,
+          "acceptedResends": 0,
+          "unacceptedOffers": 9,
+          "unknownRequestTimeouts": 0,
+          "worker": 33
+        },
+        {
+          "acceptedOffers": 1969,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0,
+          "worker": 34
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 35
+        },
+        {
+          "acceptedOffers": 1968,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 36
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 9,
+          "unknownRequestTimeouts": 0,
+          "worker": 37
+        },
+        {
+          "acceptedOffers": 1970,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 38
+        },
+        {
+          "acceptedOffers": 1962,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 39
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 9,
+          "unknownRequestTimeouts": 0,
+          "worker": 40
+        },
+        {
+          "acceptedOffers": 1968,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0,
+          "worker": 41
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 42
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0,
+          "worker": 43
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 44
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 45
+        },
+        {
+          "acceptedOffers": 1971,
+          "acceptedResends": 0,
+          "unacceptedOffers": 9,
+          "unknownRequestTimeouts": 0,
+          "worker": 46
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 47
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 48
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 49
+        },
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0,
+          "worker": 50
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 51
+        },
+        {
+          "acceptedOffers": 1963,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 52
+        },
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 53
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 8,
+          "unknownRequestTimeouts": 0,
+          "worker": 54
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 55
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0,
+          "worker": 56
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0,
+          "worker": 57
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0,
+          "worker": 58
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 59
+        },
+        {
+          "acceptedOffers": 1954,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 60
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 61
+        },
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0,
+          "worker": 62
+        },
+        {
+          "acceptedOffers": 1969,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 63
+        },
+        {
+          "acceptedOffers": 1959,
+          "acceptedResends": 0,
+          "unacceptedOffers": 8,
+          "unknownRequestTimeouts": 0,
+          "worker": 64
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 65
+        },
+        {
+          "acceptedOffers": 1968,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 66
+        },
+        {
+          "acceptedOffers": 1962,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0,
+          "worker": 67
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 68
+        },
+        {
+          "acceptedOffers": 1963,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 69
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0,
+          "worker": 70
+        },
+        {
+          "acceptedOffers": 1968,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 71
+        },
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0,
+          "worker": 72
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 73
+        },
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 9,
+          "unknownRequestTimeouts": 0,
+          "worker": 74
+        },
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0,
+          "worker": 75
+        },
+        {
+          "acceptedOffers": 1963,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0,
+          "worker": 76
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 8,
+          "unknownRequestTimeouts": 0,
+          "worker": 77
+        },
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 9,
+          "unknownRequestTimeouts": 0,
+          "worker": 78
+        },
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 10,
+          "unknownRequestTimeouts": 0,
+          "worker": 79
+        },
+        {
+          "acceptedOffers": 1969,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 80
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0,
+          "worker": 81
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0,
+          "worker": 82
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 83
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 10,
+          "unknownRequestTimeouts": 0,
+          "worker": 84
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 85
+        },
+        {
+          "acceptedOffers": 1969,
+          "acceptedResends": 0,
+          "unacceptedOffers": 10,
+          "unknownRequestTimeouts": 0,
+          "worker": 86
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 87
+        },
+        {
+          "acceptedOffers": 1962,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 88
+        },
+        {
+          "acceptedOffers": 1962,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 89
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 90
+        },
+        {
+          "acceptedOffers": 1961,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 91
+        },
+        {
+          "acceptedOffers": 1970,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0,
+          "worker": 92
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0,
+          "worker": 93
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 94
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0,
+          "worker": 95
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 9,
+          "unknownRequestTimeouts": 0,
+          "worker": 96
+        },
+        {
+          "acceptedOffers": 1962,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0,
+          "worker": 97
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 98
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 99
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0,
+          "worker": 100
+        },
+        {
+          "acceptedOffers": 1963,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 101
+        },
+        {
+          "acceptedOffers": 1963,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 102
+        },
+        {
+          "acceptedOffers": 1963,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0,
+          "worker": 103
+        },
+        {
+          "acceptedOffers": 1963,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 104
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 105
+        },
+        {
+          "acceptedOffers": 1963,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 106
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 107
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0,
+          "worker": 108
+        },
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0,
+          "worker": 109
+        },
+        {
+          "acceptedOffers": 1961,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0,
+          "worker": 110
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 9,
+          "unknownRequestTimeouts": 0,
+          "worker": 111
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 112
+        },
+        {
+          "acceptedOffers": 1968,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 113
+        },
+        {
+          "acceptedOffers": 1963,
+          "acceptedResends": 0,
+          "unacceptedOffers": 13,
+          "unknownRequestTimeouts": 0,
+          "worker": 114
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 9,
+          "unknownRequestTimeouts": 0,
+          "worker": 115
+        },
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 11,
+          "unknownRequestTimeouts": 0,
+          "worker": 116
+        },
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 117
+        },
+        {
+          "acceptedOffers": 1961,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0,
+          "worker": 118
+        },
+        {
+          "acceptedOffers": 1965,
+          "acceptedResends": 0,
+          "unacceptedOffers": 9,
+          "unknownRequestTimeouts": 0,
+          "worker": 119
+        },
+        {
+          "acceptedOffers": 1968,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0,
+          "worker": 120
+        },
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 7,
+          "unknownRequestTimeouts": 0,
+          "worker": 121
+        },
+        {
+          "acceptedOffers": 1961,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0,
+          "worker": 122
+        },
+        {
+          "acceptedOffers": 1963,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0,
+          "worker": 123
+        },
+        {
+          "acceptedOffers": 1955,
+          "acceptedResends": 0,
+          "unacceptedOffers": 11,
+          "unknownRequestTimeouts": 0,
+          "worker": 124
+        },
+        {
+          "acceptedOffers": 1967,
+          "acceptedResends": 0,
+          "unacceptedOffers": 6,
+          "unknownRequestTimeouts": 0,
+          "worker": 125
+        },
+        {
+          "acceptedOffers": 1964,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0,
+          "worker": 126
+        },
+        {
+          "acceptedOffers": 1966,
+          "acceptedResends": 0,
+          "unacceptedOffers": 8,
+          "unknownRequestTimeouts": 0,
+          "worker": 127
+        }
+      ],
+      "unknownAtInitialDeadline": 0,
+      "unresolvedFinal": 0,
+      "workerBlockedUnknownNotSent": 0,
+      "workers": 128
+    },
+    "repetition": 1,
+    "scheduledArrivals": 350000,
+    "sourceResult": "result.json",
+    "stabilityAssessmentComplete": true,
+    "stabilityChecks": {
+      "allOfferedAcceptedFinite": false,
+      "arrivalWindowGoodputFraction": false,
+      "boundedDrain": false,
+      "boundedSecondHalfBacklogGrowth": true,
+      "minimumWindowObserved": true,
+      "noInitialUnknown": true,
+      "noUnresolvedUnknown": true
+    },
+    "targetArrivalRatePerSecond": 26000.0,
+    "trial": {
+      "arrivals": 350000,
+      "completedAt": "2026-10-24T03:27:11.518830+00:00",
+      "deploymentBundleSha256": "ec85f1411f7a54cfdd72df6b972f7343ec63c2306dea3466b191c9d47a862c47",
+      "deploymentRevision": "433f02bebe2f3109ec363291fa562d5c509c0723",
+      "fixedNodeConfiguration": {
+        "aeronMtuLength": 1248,
+        "aeronVersion": "1.53.3",
+        "archiveThreading": "SHARED",
+        "capacityProfile": "extended-350k-256",
+        "checkpointMaxBytes": 536870912,
+        "clientNakUnicastDelayNs": 1000,
+        "clientSessionCount": 1,
+        "clientTransportMode": "multiplexed",
+        "drainTimeoutMs": 30000,
+        "driverIdleMaxParkNs": 100000,
+        "driverIdleMaxSpins": 10,
+        "driverIdleMaxYields": 5,
+        "driverIdleMinParkNs": 1000,
+        "driverThreading": "SHARED",
+        "driverThreadingArgument": "SHARED",
+        "idleStrategy": "Explicit node driver(10,5,1000,100000); archive/consensus/service(10,20,1000,100000)",
+        "leader": 0,
+        "loadHeap": "2g",
+        "maxClusterSessions": 256,
+        "maxRetainedOrders": 360000,
+        "nakUnicastDelayNs": 1000,
+        "nakUnicastRetryDelayRatio": 100,
+        "nodeDataPathIdleAgentMaxYields": 20,
+        "nodeDataPathIdleMinParkNs": 1000,
+        "nodeDataPathIdlePolicyVersion": 1,
+        "nodeDataPathMaxParkNs": 100000,
+        "nodeHeap": "2g",
+        "outboxCapacity": 800000,
+        "portBase": 23000,
+        "queuePerWorker": 64,
+        "requestTimeoutMs": 2000,
+        "resultCachePerProducer": 1024,
+        "schedulerLatenessLimitMs": 20,
+        "scope": "SINGLE_HOST_THREE_JVM_LOOPBACK_UDP",
+        "socketReceiveBufferArgumentBytes": 131072,
+        "socketReceiveBufferBytes": 131072,
+        "socketSendBufferBytes": 131072,
+        "stateProfile": "capacity-350k-v1",
+        "syncLevel": 2
+      },
+      "group": "park100us",
+      "id": "cpu-capacity-park100us-26000-w128-r1",
+      "loadGeneratorBundleSha256": "ec85f1411f7a54cfdd72df6b972f7343ec63c2306dea3466b191c9d47a862c47",
+      "loadGeneratorJvmArguments": [
+        "-Dvectormatch.capacity.client.driver=shared",
+        "-Daeron.nak.unicast.delay=1000",
+        "-Dvectormatch.capacity.client.transport=multiplexed"
+      ],
+      "loadGeneratorRelease": "/opt/vectormatch-cpu/releases/433f02bebe2f3109ec363291fa562d5c509c0723",
+      "loadGeneratorRevision": "433f02bebe2f3109ec363291fa562d5c509c0723",
+      "nodeMaxParkNs": 100000,
+      "phase": "cpu-single-host-fixed-node-100us-capacity-curve",
+      "profile": "extended-350k-256",
+      "queuePerWorker": 64,
+      "rate": 26000,
+      "release": "/opt/vectormatch-cpu/releases/433f02bebe2f3109ec363291fa562d5c509c0723",
+      "repetition": 1,
+      "scope": "SINGLE_HOST_THREE_JVM_LOOPBACK_UDP",
+      "sourceRevision": "433f02bebe2f3109ec363291fa562d5c509c0723",
+      "stage": "R1-26000",
+      "startedAt": "2026-10-24T03:25:12.550692+00:00",
+      "state": "/opt/vectormatch-cpu/runs/cpu-capacity-park100us-26000-w128-r1/state",
+      "workers": 128
+    },
+    "validationChecks": {
+      "arrivalRecordsValid": true,
+      "backlogRecordsValid": true,
+      "canonicalSnapshotBytesVerified": true,
+      "configurationIdentityVerified": true,
+      "finalResultPresent": true,
+      "fixedLeaderTermEvidence": true,
+      "fixedLeaderVerified": true,
+      "inputsReadable": true,
+      "measurementValid": true,
+      "noFailureArtifact": true,
+      "reportedCountsMatchRawCsv": true,
+      "resultPassed": true,
+      "schedulerTimingValid": true
+    },
+    "workers": 128
+  },
+  "spaceAfter": {
+    "hostname": "ed6c0673f5cb",
+    "freeBytes": 3825704960,
+    "checkedAtUtc": "2026-10-24T03:27:45.210432+00:00",
+    "minimumBeforeNextPoint": 3221225472,
+    "nextPointEligible": true
+  },
+  "completedAtUtc": "2026-10-24T03:27:45.210463+00:00"
+}
