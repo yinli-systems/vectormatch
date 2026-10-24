@@ -1,6 +1,6 @@
 # Read credits 8 vs 32: CPU candidate
 
-Source `605eb43fcafd8fa0a6287304387c93c4d1bbddf6` is pushed on private branch `codex/read-window32-v3`. The current-container native8/32/8/32 comparison has now completed and qualified all four arms; see [actual results](READ_WINDOW32_RESULTS.md). The historical preparation notes below describe the sequence before execution. Its actual installed-JAR fingerprint is `d0fbef05df5a23d7b8e27d2673005908a18373c3d0c1921a8c4e4465111591ea`.
+Source `605eb43fcafd8fa0a6287304387c93c4d1bbddf6` is merged into private main by `2472b90d9f55187cac2db7f0bca8ef0073fb7cf1` after full native qualification. The current-container native8/32/8/32 comparison has now completed and qualified all four arms; see [actual results](READ_WINDOW32_RESULTS.md). The historical preparation notes below describe the sequence before execution. Its actual installed-JAR fingerprint is `d0fbef05df5a23d7b8e27d2673005908a18373c3d0c1921a8c4e4465111591ea`.
 
 The separate `read-window32-long-cuts` mode selects page 16 or 32 and read credits 8 or 32. A future comparison must keep one page fixed. Each arm remains 33,792 arrivals at 500/s over 67.584s, leader 0, sync 2, batch 4, chunk 6144, owner 1ms and driver 100us. Existing modes, default constructors and their eight-credit budgets remain unchanged.
 
