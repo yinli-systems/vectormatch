@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "exitCode": 0,
+  "command": [
+    "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+    "-I",
+    "-B",
+    "-c",
+    "BASE='/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/optimization-20261024/idle'\nfrom pathlib import Path\nimport sys,json\nsys.path.insert(0,BASE)\nimport common as idle\ncapacity=idle.capacity_module();plan=idle.read(idle.CAPACITY_ROOT/'plan.json')\nidentity=capacity.validate_plan(plan);artifact_prior=idle.artifact_prerequisites()\nprint(json.dumps({'passed':True,'idleCommon':idle.__file__,'registeredCommonNamespace':sys.modules['common'].__file__,\n 'capacityCommon':capacity.__file__,'postprocessorModule':sys.modules['postprocessor'].__file__,\n 'nodeRevision':identity['node']['revision'],'loadRevision':identity['load']['revision'],\n 'analysisIdentitySha256':plan['analysisIdentitySha256'],'capRate':plan['rate'],\n 'artifactPriorLoad':artifact_prior['loadIdentity']['revision'],\n 'prior26kGateVerifiedByCapacityPlan':True,'cap18ResultsRequired':False,'sshOrRegistration':False}))\n"
+  ],
+  "stdout": "{\"passed\": true, \"idleCommon\": \"/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/optimization-20261024/idle/common.py\", \"registeredCommonNamespace\": \"/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/optimization-20261024/idle/common.py\", \"capacityCommon\": \"/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/optimization-20261024/pipeline-capacity/common.py\", \"postprocessorModule\": \"/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/optimization-20261024/pipeline-capacity/postprocessor.py\", \"nodeRevision\": \"e57e341909a49692b9ecbf9693803ed62a240b06\", \"loadRevision\": \"e57e341909a49692b9ecbf9693803ed62a240b06\", \"analysisIdentitySha256\": \"31e4dbc7af8c6e84e6099b76081837716870c47d4811d6d0db1757d594707e1f\", \"capRate\": 18000, \"artifactPriorLoad\": \"e57e341909a49692b9ecbf9693803ed62a240b06\", \"prior26kGateVerifiedByCapacityPlan\": true, \"cap18ResultsRequired\": false, \"sshOrRegistration\": false}\n",
+  "stderr": "",
+  "result": {
+    "passed": true,
+    "idleCommon": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/optimization-20261024/idle/common.py",
+    "registeredCommonNamespace": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/optimization-20261024/idle/common.py",
+    "capacityCommon": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/optimization-20261024/pipeline-capacity/common.py",
+    "postprocessorModule": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/optimization-20261024/pipeline-capacity/postprocessor.py",
+    "nodeRevision": "e57e341909a49692b9ecbf9693803ed62a240b06",
+    "loadRevision": "e57e341909a49692b9ecbf9693803ed62a240b06",
+    "analysisIdentitySha256": "31e4dbc7af8c6e84e6099b76081837716870c47d4811d6d0db1757d594707e1f",
+    "capRate": 18000,
+    "artifactPriorLoad": "e57e341909a49692b9ecbf9693803ed62a240b06",
+    "prior26kGateVerifiedByCapacityPlan": true,
+    "cap18ResultsRequired": false,
+    "sshOrRegistration": false
+  },
+  "registeredCapacityInputsUnchanged": true,
+  "protectedInputSha256": {
+    "evidence/2026-10-23/runpod-optimization/pipeline-capacity/plan.json": "426559e90c7969eb55038c441067ecca2eec007bda06b2104af7f4b661536e8e",
+    "runtime/cloud/optimization-20261024/pipeline-capacity/common.py": "cbec51947a2b9ff9530a1d205bb9004f01e793660668992bc046c538c6aa6342",
+    "runtime/cloud/optimization-20261024/pipeline-capacity/register.py": "cabd624f0507a6e170a0ed0ac9d99626bb517ab8c974940badaea1992f7ad21c",
+    "runtime/cloud/optimization-20261024/pipeline-capacity/matrix.py": "4fd5e151fd80f52c0b082f193a5a5761ed8e460d9ca1b83c4076a24167c934ab",
+    "runtime/cloud/optimization-20261024/pipeline-capacity/test_guards.py": "1bfabd388cdc6c823ffae501666cf3e2e838d9570a8383a949ac96cc53942d20",
+    "runtime/cloud/optimization-20261024/pipeline-capacity/postprocessor.py": "ded89b5948bb5b5b036e0fdd97b0447dedab8afdb8cafdad043a726fb44057c3",
+    "runtime/cloud/optimization-20261024/pipeline-capacity/build-postprocessor.py": "6cc2c23e20821c7ae2a9ec299ea4d45958b2ffcc82924860b34f0f87a0b9cf8b"
+  },
+  "idleCommonSha256": "081ca158d3dc96ceb8b3fa3aeb3f35b3059547d723ee65c7fc9da89996e937ed",
+  "scope": "Actual read-only local namespace handshake through registered capacity.validate_plan and artifact-only prerequisites. Does not require cap18 trial results; no SSH, registration, build or source mutation."
+}

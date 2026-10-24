@@ -141,6 +141,14 @@ B两轮完成canonical终态、逐条业务回复和资产验证，且初次/最
 
 独立[正式归因](../evidence/2026-10-23/runpod-optimization/pipeline/analysis/attribution-summary.json)核对140个raw/tool SHA，确认资源下降可重复：node0 JVM由A的2.562/2.589核降到B的1.263/1.394核，负载由4.072/4.105核降到1.724/1.855核；node0 FD/UDP由553/134降到45/7，负载FD/UDP由400/129降到19/2，线程约299降到172–175。严格窗口内node0/load/node2四轮owned socket drops均0，node1日志socket A为315/91、B为0/0，未出现NAK风暴。node0总quota未持续耗尽，A限流24.53/1.94ms、B为0；累计限流不是单请求延迟。单session在本配置下节省资源成立，稳定吞吐与p99改善仍未成立；下一独立node-only park因子两组统一保留multiplexed路径，分别比较1ms与100µs上限，未把两种改动的总变化归给单个因素。
 
+## 同配置18k边界复测
+
+同一e57 node/load、W128/Q64配置的18k/s、每轮350k到达A/B/A/B已全部完成。窗口goodput依次为 **14,514.377 / 14,850.720 / 14,799.497 / 11,420.897/s**，已接受条件p99为 **645.285 / 621.434 / 628.043 / 1,101.152ms**。四轮canonical、配置与leader校验通过，unknown、业务拒绝和server error均为0，但均有队列满未发送，全量接受p99均为null，排空526–709ms超过194.444ms门槛，全部过载。B2明显退化完整保留，没有建立稳定18k容量或可重复的吞吐、p99改善。原始证据和逐轮审计见[cap18报告](../evidence/2026-10-23/runpod-optimization/pipeline-capacity/README.md)。
+
+平均活跃请求仍约127.94–127.96/128槽位；B2平均API执行从B1的8.605ms升至11.183ms。核对169项input/tool SHA的[正式归因](../evidence/2026-10-23/runpod-optimization/pipeline-capacity/analysis/attribution-summary.json)显示，B2匹配的owned UDP drops均0，但node0 NAK sent从B1的54升至41,364；约18秒窗口内node0相关线程累计runqueue等待也增加，cgroup限流仍0。这些支持检验传输恢复与调度等待，不能唯一定位丢包、宿主机或持久化瓶颈，也不能把累计等待当作单请求p99。multiplexed的CPU/FD/socket节省仍重复出现，资源收益与稳定容量分别验收。
+
+下一node-only试验只改变节点最大park：1ms与100µs，双方固定multiplexed负载及其余配置。新节点87ad通过132项Java测试和三节点不可变上传校验；严格10k/s、350k pilot已登记提交，尚未据此声称性能改善。实际进度和独立node/load/analysis身份见[idle报告](../evidence/2026-10-23/runpod-optimization/idle/README.md)。
+
 ## 已完成的代码验证
 
 新负载版本从已提交源码 `git archive` 建立隔离 checkout，运行全部 Java tests 与 `:cluster:installDist`，记录 **109 tests、0 failures、0 errors、0 skipped**，见 [Java 验证](../evidence/2026-10-23/runpod-optimization/tool-validation/java-tests.json)。测试覆盖共享 driver 下独立 session/Aeron、关闭一个客户端后其他客户端继续工作、连接失败不关闭借用 driver、错误模式/固定端口拒绝、运行元数据及固定到达调度等路径；这些检查不替代云端容量测量。
@@ -149,7 +157,7 @@ B两轮完成canonical终态、逐条业务回复和资产验证，且初次/最
 
 新的独立流式证据分析器已完成15项定向测试，并对三个冻结的真实350k案例（multiplexed pilot、direct A1、NAK失败A1）逐trial全部字段比对一致，没有排除任何指标、判定、异常或input SHA。三个案例只运行新工具，既有摘要和旧工具不重跑。新进程耗时6.061/9.664/4.861秒，峰值RSS80,412,672/45,056,000/47,415,296字节，见[完整验证收据](../evidence/2026-10-23/runpod-optimization/tool-validation/streaming-analyzer-validation.json)。这是后处理效率验证，不是云端撮合吞吐收益或与旧工具同时测得的加速倍数；当前26k正式四轮仍保留原分析器。
 
-新分析器与旁置legacy依赖从已提交源码`3fd86fe535fc0858e300e0337d4da154f622ae32`另建不可变本地postprocessor，分别记录source archive、两文件SHA、Python二进制/版本和parity receipt；analysis身份独立于e57 node/load/buildTools。未登记的后续容量对照只有在原四轮完整归档、配置与清理通过后才可统一使用该工具，旧摘要不被覆盖。
+新分析器与旁置legacy依赖从已提交源码`3fd86fe535fc0858e300e0337d4da154f622ae32`另建不可变本地postprocessor，分别记录source archive、两文件SHA、Python二进制/版本和parity receipt；analysis身份独立于e57 node/load/buildTools。18k四轮在原26k完整归档、配置与清理通过后统一使用独立31e4后处理；e57运行代码和原26k摘要保持原身份，旧摘要不被覆盖。
 
 归因观察器在三台 Linux Pod 各完成 14 项测试与有界采样 smoke：[node0](../evidence/2026-10-23/runpod-optimization/tool-validation/attribution-node0.json)、[node1](../evidence/2026-10-23/runpod-optimization/tool-validation/attribution-node1.json)、[node2](../evidence/2026-10-23/runpod-optimization/tool-validation/attribution-node2.json)。配置验证器另用四组历史真实 command SHA 回归，拒绝 mode/count 错配、部分运行声明、非法 JVM 属性，并验证显式默认属性同样进入 NUL 分隔的完整参数摘要。
 
