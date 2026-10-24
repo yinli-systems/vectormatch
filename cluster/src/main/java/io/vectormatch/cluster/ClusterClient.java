@@ -86,16 +86,25 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
     }
 
     static MediaDriver launchDriver(Path driverDirectory, NetworkTransport transport) {
-        return MediaDriver.launchEmbedded(new MediaDriver.Context()
+        return launchDriver(driverDirectory, transport, new BackoffIdleStrategy());
+    }
+
+    /** Retention-only experiments can supply their exact owned shared-driver instance. */
+    static MediaDriver launchDriver(Path driverDirectory, NetworkTransport transport, IdleStrategy sharedIdle) {
+        return MediaDriver.launchEmbedded(driverContext(driverDirectory, transport, sharedIdle));
+    }
+
+    static MediaDriver.Context driverContext(Path driverDirectory, NetworkTransport transport, IdleStrategy sharedIdle) {
+        return new MediaDriver.Context()
                 .aeronDirectoryName(driverDirectory.toAbsolutePath().toString())
                 .threadingMode(ThreadingMode.SHARED)
-                .sharedIdleStrategy(new BackoffIdleStrategy())
+                .sharedIdleStrategy(Objects.requireNonNull(sharedIdle))
                 .socketSndbufLength(128 * 1024)
                 .socketRcvbufLength(128 * 1024)
                 .mtuLength(transport.mtuLength())
                 .termBufferSparseFile(true)
                 .dirDeleteOnStart(false) // Aeron checks for an active driver before recreating stale files.
-                .dirDeleteOnShutdown(true));
+                .dirDeleteOnShutdown(true);
     }
 
     long clusterSessionId() { return client.clusterSessionId(); }

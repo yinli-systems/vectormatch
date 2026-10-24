@@ -30,6 +30,7 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
     private final boolean maintenanceEnabled;
     private final int archiveChunkBytes;
     private final RetentionEgressBoundsV3 egressBounds;
+    private final RetentionIdlePolicyV3 idlePolicy;
 
     public RetentionBatchAeronTransportV3(Path driverDirectory, int portBase,
                                           RetentionServiceV3.Profile profile, String lineage) {
@@ -50,11 +51,13 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
         scope = new Scope(profile.fingerprint(), lineage);
         var topology = ClusterTopology.local(portBase);
         var transport = new NetworkTransport(1248);
+        idlePolicy = RetentionIdlePolicyV3.owner(RetentionIdlePolicyV3.systemSelection());
         MediaDriver openedDriver = null;
         AeronCluster openedCluster = null;
         AeronCluster.Context context = null;
         try {
-            openedDriver = ClusterClient.launchDriver(driverDirectory.toAbsolutePath().normalize(), transport);
+            openedDriver = idlePolicy == null ? ClusterClient.launchDriver(driverDirectory.toAbsolutePath().normalize(), transport)
+                    : ClusterClient.launchDriver(driverDirectory.toAbsolutePath().normalize(), transport, idlePolicy.driver());
             context = new AeronCluster.Context().aeronDirectoryName(openedDriver.aeronDirectoryName()).egressListener(this)
                     .messageTimeoutNs(TimeUnit.SECONDS.toNanos(20))
                     .egressChannel(transport.withMtu("aeron:udp?endpoint=127.0.0.1:0"))
@@ -104,6 +107,7 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
         actual.put("driverDirectory", context.aeronDirectoryName());
         actual.put("threadingMode", context.threadingMode().name());
         actual.put("strategyClass", idle.getClass().getName()); actual.put("strategyDescription", idle.toString());
+        if (idlePolicy != null) actual.put("retentionIdlePolicy", idlePolicy.ownerAttestation(context));
         actual.put("mtuLength", context.mtuLength());
         actual.put("nakUnicastDelayNs", context.nakUnicastDelayNs());
         actual.put("nakUnicastRetryDelayRatio", context.nakUnicastRetryDelayRatio());
