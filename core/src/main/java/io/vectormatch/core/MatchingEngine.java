@@ -252,24 +252,27 @@ public final class MatchingEngine {
                 incoming.side, incoming.price, incoming.original, incoming.tif.name());
         NavigableMap<Long, LinkedHashMap<Long, Order>> opposite = incoming.side == Side.BUY ? asks : bids;
         int tradeCount = 0;
+        matching:
         while (incoming.remaining > 0 && !opposite.isEmpty()) {
             Map.Entry<Long, LinkedHashMap<Long, Order>> best = opposite.firstEntry();
             if (incoming.side == Side.BUY ? best.getKey() > incoming.price : best.getKey() < incoming.price) break;
-            Order maker = best.getValue().values().iterator().next();
-            // Self-trading is rejected before either order is changed: cancel the incoming residual.
-            if (maker.accountId == incoming.accountId) break;
-            long quantity = Math.min(incoming.remaining, maker.remaining);
-            settle(incoming, maker, quantity);
-            incoming.remaining -= quantity; maker.remaining -= quantity;
-            maker.status = maker.remaining == 0 ? OrderStatus.FILLED : OrderStatus.PARTIALLY_FILLED;
-            incoming.status = incoming.remaining == 0 ? OrderStatus.FILLED : OrderStatus.PARTIALLY_FILLED;
-            if (maker.remaining == 0) {
-                best.getValue().remove(maker.id);
-                if (best.getValue().isEmpty()) opposite.remove(best.getKey());
+            LinkedHashMap<Long, Order> level = best.getValue();
+            Iterator<Order> makers = level.values().iterator();
+            while (incoming.remaining > 0 && makers.hasNext()) {
+                Order maker = makers.next();
+                // Stop the entire sweep at our own FIFO head; never skip it within this price level.
+                if (maker.accountId == incoming.accountId) break matching;
+                long quantity = Math.min(incoming.remaining, maker.remaining);
+                settle(incoming, maker, quantity);
+                incoming.remaining -= quantity; maker.remaining -= quantity;
+                maker.status = maker.remaining == 0 ? OrderStatus.FILLED : OrderStatus.PARTIALLY_FILLED;
+                incoming.status = incoming.remaining == 0 ? OrderStatus.FILLED : OrderStatus.PARTIALLY_FILLED;
+                if (maker.remaining == 0) makers.remove();
+                tradeCount++;
+                emit(events, true, EventType.TRADE, incoming.accountId, incoming.id, maker.id, incoming.id,
+                        incoming.side, maker.price, quantity, "maker-price");
             }
-            tradeCount++;
-            emit(events, true, EventType.TRADE, incoming.accountId, incoming.id, maker.id, incoming.id,
-                    incoming.side, maker.price, quantity, "maker-price");
+            if (level.isEmpty()) opposite.remove(best.getKey());
         }
         boolean selfTradeBlocked = incoming.remaining > 0 && !opposite.isEmpty()
                 && crosses(incoming, opposite.firstKey())
