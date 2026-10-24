@@ -17,22 +17,25 @@ spec.loader.exec_module(ssd)
 
 def mount(source="/dev/nvme0n1p1", fstype="ext4", options="rw,relatime"):
     return {"filesystems": [{"target": "/mnt/bench", "source": source,
-                             "fstype": fstype, "options": options}]}
+                             "fstype": fstype, "options": options,
+                             "maj:min": "259:0" if source == "/dev/nvme0n1" else "259:1"}]}
 
 
 def devices(model="Samsung SSD 990 PRO", transport="nvme", rotational=False):
     return {"blockdevices": [
         {"name": "nvme0n1", "path": "/dev/nvme0n1", "type": "disk", "pkname": None,
-         "tran": transport, "rota": rotational, "model": model},
+         "tran": transport, "rota": rotational, "model": model, "maj:min": "259:0"},
         {"name": "nvme0n1p1", "path": "/dev/nvme0n1p1", "type": "part", "pkname": "nvme0n1",
-         "tran": None, "rota": rotational, "model": None},
+         "tran": None, "rota": rotational, "model": None, "maj:min": "259:1"},
     ]}
 
 
 def check(mount_info=None, devices_info=None, free=5_000_000_000, growth=1_000_000_000, reserve=1_000_000_000):
-    return ssd.classify(mount() if mount_info is None else mount_info,
+    actual_mount = mount() if mount_info is None else mount_info
+    return ssd.classify(actual_mount,
                         devices() if devices_info is None else devices_info,
-                        free, growth, reserve)
+                        free, growth, reserve,
+                        actual_mount.get("filesystems", [{}])[0].get("maj:min", "invalid"))
 
 
 class LocalSsdCandidateTest(unittest.TestCase):
@@ -80,6 +83,17 @@ class LocalSsdCandidateTest(unittest.TestCase):
         for mount_info, devices_info in cases:
             with self.subTest(source=mount_info, devices=devices_info):
                 self.assertFalse(check(mount_info, devices_info)["candidateForDiskBackedExperiment"])
+
+    def test_device_identity_must_match_mount_lsblk_and_real_path(self):
+        bad_lsblk = devices()
+        bad_lsblk["blockdevices"][1]["maj:min"] = "259:17"
+        self.assertFalse(check(devices_info=bad_lsblk)["candidateForDiskBackedExperiment"])
+        self.assertFalse(ssd.classify(mount(), devices(), 5_000_000_000,
+                                      1_000_000_000, 1_000_000_000, "259:17")
+                         ["candidateForDiskBackedExperiment"])
+        bad_findmnt = mount()
+        bad_findmnt["filesystems"][0]["maj:min"] = "abc"
+        self.assertFalse(check(mount_info=bad_findmnt)["candidateForDiskBackedExperiment"])
 
     def test_budget_must_fit_with_reserve_and_must_be_positive(self):
         self.assertTrue(check(free=2_000_000_000)["candidateForDiskBackedExperiment"])
