@@ -1,0 +1,95 @@
+--- frozen-r1/PgReadonlyInspect.java
++++ r2/PgReadonlyInspect.java
+@@ -20,7 +20,7 @@
+     static final String CLUSTER = "runpod-cloud-20261023-01";
+     static final String DATA = "/opt/vectormatch-cpu/restorations/original-native-r1/node2/runtime/postgres18";
+     static final String SYSTEM_ID = "7699920832388303129";
+-    static final Path OUTPUT = Path.of("/opt/vectormatch-cpu/preparation/pg-readonly-recovery-r1/sql-inspection-r1");
++    static final Path OUTPUT = Path.of("/opt/vectormatch-cpu/preparation/pg-readonly-recovery-r2/sql-inspection-r2");
+     static final int MAX_EVENTS = 100_000, MAX_JSON_BYTES = 65_536, MAX_TABLE_ROWS = 512;
+     static final ObjectMapper JSON = JsonMapper.builder().enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY).build();
+     static final String URL = "jdbc:postgresql://127.0.0.1:15432/postgres";
+@@ -101,40 +101,66 @@
+         require(actual.equals(SCHEMA), "Actual existing projection schema differs from same-source schema; no migration attempted");
+     }
+ 
++    @FunctionalInterface
++    interface ConnectionOpener { Connection open(String url, Properties properties) throws SQLException; }
++
++    static Properties connectionProperties(String password) {
++        Properties properties = new Properties();
++        properties.setProperty("user", "vectormatch");
++        // Original clone uses loopback trust. If a credential is supplied, never serialize it or a SQLException message.
++        if (password != null) properties.setProperty("password", password);
++        properties.setProperty("connectTimeout", "5"); properties.setProperty("socketTimeout", "15");
++        properties.setProperty("ApplicationName", "vectormatch-pg-readonly-recovery-r2");
++        properties.setProperty("readOnly", "true"); properties.setProperty("readOnlyMode", "transaction");
++        properties.setProperty("options", "-c default_transaction_read_only=on -c statement_timeout=10000 -c idle_in_transaction_session_timeout=15000 -c search_path=pg_catalog");
++        return properties;
++    }
++
++    static Connection openReadOnlyConnection(ConnectionOpener opener, String password) throws SQLException {
++        Connection c = opener.open(URL, connectionProperties(password));
++        try {
++            c.setReadOnly(true);
++            c.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
++            c.setAutoCommit(false);
++            return c;
++        } catch (SQLException | RuntimeException failure) {
++            try { c.close(); } catch (SQLException closing) { failure.addSuppressed(closing); }
++            throw failure;
++        }
++    }
++
++    static void verifySettings(Map<String,Object> settings) {
++        require("180006".equals(settings.get("server_version_num")) && "postgres".equals(settings.get("database_name"))
++            && "vectormatch".equals(settings.get("database_user")) && "on".equals(settings.get("transaction_read_only"))
++            && "repeatable read".equals(settings.get("transaction_isolation")) && "on".equals(settings.get("fsync"))
++            && "on".equals(settings.get("synchronous_commit")) && DATA.equals(settings.get("data_directory"))
++            && "127.0.0.1".equals(settings.get("listen_addresses")) && "15432".equals(settings.get("port"))
++            && "on".equals(settings.get("default_transaction_read_only"))
++            && "on".equals(settings.get("full_page_writes")) && Boolean.FALSE.equals(settings.get("in_recovery")), "Actual server identity/durability/loopback/read-only settings differ");
++    }
++
+     static void inspect(Path output) throws Exception {
+         require(output.equals(OUTPUT), "Output must equal the fixed registered evidence path");
+         require(!Files.exists(output) && !Files.isSymbolicLink(output), "Output must be a unique new directory");
+         Files.createDirectory(output); // Retain partial raw output on any failure; never overwrite/retry.
+         Map<String,Object> report = new LinkedHashMap<>();
+         report.put("scope", "Existing physical clone; fixed read-only repeatable-read SQL snapshot. Not cluster/canonical reconciliation or performance evidence.");
++        report.put("jdbcReadOnlyMode", "transaction");
+         report.put("clusterId", CLUSTER); report.put("applicationSource", "e1db2e755a834234efb60b7a1ed291b31ce33c16");
+         report.put("initializedSchema", false); report.put("createdDatabase", false); report.put("serverMayPerformInternalPhysicalWrites", true);
+-        Properties properties = new Properties();
+-        properties.setProperty("user", "vectormatch");
+-        // Original clone uses loopback trust. If a credential is supplied, never serialize it or a SQLException message.
+         String password = System.getenv("VM_PG_RECOVERY_PASSWORD");
+-        if (password != null) properties.setProperty("password", password);
+-        properties.setProperty("connectTimeout", "5"); properties.setProperty("socketTimeout", "15");
+-        properties.setProperty("ApplicationName", "vectormatch-pg-readonly-recovery-r1");
+-        properties.setProperty("readOnly", "true"); properties.setProperty("readOnlyMode", "always");
+-        properties.setProperty("options", "-c default_transaction_read_only=on -c statement_timeout=10000 -c idle_in_transaction_session_timeout=15000 -c search_path=pg_catalog");
+         long started = System.nanoTime();
+-        try (Connection c = DriverManager.getConnection(URL, properties)) {
+-            c.setReadOnly(true); c.setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ); c.setAutoCommit(false);
++        try (Connection c = openReadOnlyConnection(DriverManager::getConnection, password)) {
+             try {
+                 Map<String,Object> settings = single(c, "SELECT version() AS build_version, current_database() AS database_name, current_user AS database_user, "
+                     + "current_setting('server_version_num') AS server_version_num,current_setting('transaction_read_only') AS transaction_read_only,"
+                     + "current_setting('transaction_isolation') AS transaction_isolation,current_setting('fsync') AS fsync,"
+                     + "current_setting('synchronous_commit') AS synchronous_commit,current_setting('data_directory') AS data_directory,"
+                     + "current_setting('listen_addresses') AS listen_addresses,current_setting('port') AS port,"
+-                    + "current_setting('default_transaction_read_only') AS default_transaction_read_only,current_setting('lc_messages') AS lc_messages");
++                    + "current_setting('default_transaction_read_only') AS default_transaction_read_only,current_setting('lc_messages') AS lc_messages,"
++                    + "current_setting('full_page_writes') AS full_page_writes,pg_is_in_recovery() AS in_recovery");
+                 report.put("settings", settings);
+-                require("180006".equals(settings.get("server_version_num")) && "postgres".equals(settings.get("database_name"))
+-                    && "vectormatch".equals(settings.get("database_user")) && "on".equals(settings.get("transaction_read_only"))
+-                    && "repeatable read".equals(settings.get("transaction_isolation")) && "on".equals(settings.get("fsync"))
+-                    && "on".equals(settings.get("synchronous_commit")) && DATA.equals(settings.get("data_directory"))
+-                    && "127.0.0.1".equals(settings.get("listen_addresses")) && "15432".equals(settings.get("port"))
+-                    && "on".equals(settings.get("default_transaction_read_only")), "Actual server identity/durability/loopback/read-only settings differ");
++                verifySettings(settings);
+                 Map<String,Object> control = single(c, "SELECT pg_control_version,catalog_version_no,system_identifier::text AS system_identifier FROM pg_control_system()");
+                 report.put("controlSystem", control);
+                 require(SYSTEM_ID.equals(control.get("system_identifier")) && number(control, "pg_control_version") == 1800,

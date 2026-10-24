@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 1,
+  "scope": "Exact PGJDBC42.7.10 primary-source and pinned actual JAR static diagnosis; no live SQL proof",
+  "r1ActualFailure": {
+    "rawEvidence": "evidence/2026-10-24/runpod-cpu/restoration-preparation/pg-readonly-r1/first-outcome.json",
+    "rawEvidenceSha256": "e5f5d9f580b198eb3b0e8a8a0752ff63da8d5301df821ae97885bb53f21c597b",
+    "jsonPath": "report.settings",
+    "derivedSettingsSha256": "7dec7a75fa1286822285db8856748d9a2ee6299395b8dfcb1c5ca7dd8cf6e5f1"
+  },
+  "conclusion": "r1 kept its transaction read-only, but readOnlyMode=always deliberately reset session default to READ WRITE while disabling autoCommit; strict default_transaction_read_only=on gate correctly failed. r2 changes mode to transaction while retaining every old runtime gate.",
+  "sources": {
+    "version": "42.7.10",
+    "tag": "REL42.7.10",
+    "downloadedAtUtc": "2026-10-24T05:11:44.267573+00:00",
+    "files": [
+      {
+        "file": "PgConnection.java",
+        "sourceUrl": "https://raw.githubusercontent.com/pgjdbc/pgjdbc/REL42.7.10/pgjdbc/src/main/java/org/postgresql/jdbc/PgConnection.java",
+        "bytes": 63628,
+        "sha256": "f9833deda7c6794aa923a481f51a7d6a99c42eda6b244570af7664cc347c87ef"
+      },
+      {
+        "file": "QueryExecutorImpl.java",
+        "sourceUrl": "https://raw.githubusercontent.com/pgjdbc/pgjdbc/REL42.7.10/pgjdbc/src/main/java/org/postgresql/core/v3/QueryExecutorImpl.java",
+        "bytes": 120760,
+        "sha256": "f47bcd1a14e2f748e834d186b38cce985efbb6665136e1168c6e8a5e0f50caa3"
+      },
+      {
+        "file": "LICENSE",
+        "sourceUrl": "https://raw.githubusercontent.com/pgjdbc/pgjdbc/REL42.7.10/LICENSE",
+        "bytes": 1321,
+        "sha256": "5be1f67a4d62692cc2fc8b81a71088943fc4c1462bd76fd2f04bc0e965ca6d53"
+      },
+      {
+        "file": "PgStatement.java",
+        "sourceUrl": "https://raw.githubusercontent.com/pgjdbc/pgjdbc/REL42.7.10/pgjdbc/src/main/java/org/postgresql/jdbc/PgStatement.java",
+        "bytes": 43799,
+        "sha256": "5eb64f8ff3105bd3bb49ea7d26ca87b640ab0be0d7c7d3d63ec358d01629efd1"
+      }
+    ],
+    "cloudActions": false
+  },
+  "facts": [
+    {
+      "file": "PgConnection.java",
+      "lines": [
+        297,
+        302,
+        926,
+        949,
+        954,
+        979
+      ],
+      "summary": "Constructor creates the READ WRITE session query; always mode conditionally issues session commands in setReadOnly and setAutoCommit. At autoCommit true -> false, only always mode calls the READ WRITE session command. Transaction mode skips it and hintReadOnly still returns true."
+    },
+    {
+      "file": "PgStatement.java",
+      "lines": [
+        484,
+        485,
+        879,
+        880
+      ],
+      "summary": "A read-only connection adds QUERY_READ_ONLY_HINT to statement execution flags."
+    },
+    {
+      "file": "QueryExecutorImpl.java",
+      "lines": [
+        697,
+        716,
+        3241,
+        3242
+      ],
+      "summary": "First transactional statement selects the BEGIN READ ONLY query when the read-only hint is set."
+    }
+  ],
+  "actualDriver": {
+    "jarPath": "runtime/cloud/cpu-20261024/app-restore-build/bundle/dist/projector/lib/postgresql-42.7.10.jar",
+    "jarSha256": "cab1cd67cfa25c25de4348e532298028288a877ba01c77d1619fe45416193387",
+    "classes": {
+      "org/postgresql/jdbc/PgConnection.class": {
+        "bytes": 55805,
+        "sha256": "a7b06ed6c30354c941d526e068724f68cecf7dd47fa643e7fee95fc6fae2fb78"
+      },
+      "org/postgresql/jdbc/PgStatement.class": {
+        "bytes": 32656,
+        "sha256": "e596cfea7860c3939ffcc693a7095b5f1499f6d65426ad5550112d8c1c1c5bf5"
+      },
+      "org/postgresql/core/v3/QueryExecutorImpl.class": {
+        "bytes": 68556,
+        "sha256": "0bcdb1ca0be2ac3f089af5f0e845a699aa38c642d15fd6ece31a366752df16ce"
+      }
+    },
+    "javapLogs": {
+      "PgConnection.javap.log": "0fe2dd5303b4963668ca56e65aeb70238e137a420711a39d755d1cac270697d5",
+      "PgStatement.javap.log": "0acc074dbf76c758aab01b47f5cc883d11399709371700683bc14575ade72876",
+      "QueryExecutorImpl.javap.log": "a1111509244060face35d0638eb47a14602b8740007ecfa8f25864cce60ef8ea"
+    },
+    "relevantBytecodeLogLines": {
+      "PgConnection.javap.log": [
+        [
+          1567,
+          1614
+        ],
+        [
+          1624,
+          1685
+        ]
+      ],
+      "PgStatement.javap.log": [
+        [
+          835,
+          846
+        ]
+      ],
+      "QueryExecutorImpl.javap.log": [
+        [
+          181,
+          192
+        ]
+      ]
+    },
+    "interpretation": "Actual pinned bytecode agrees with the source mode branch and read-only hint path. Proxy guards validate inspector API contract only; no claim of real PG integration until r2 executes."
+  },
+  "unchangedR1Regions": {
+    "ledger": {
+      "unchanged": true,
+      "r1Sha256": "58028b067d9358ada26e4b89ddbd9871ee7e759ba0f549cf603566d337d3c0f1",
+      "r2Sha256": "58028b067d9358ada26e4b89ddbd9871ee7e759ba0f549cf603566d337d3c0f1"
+    },
+    "schema": {
+      "unchanged": true,
+      "r1Sha256": "776c059ff5b848ed19f343b2905c04b71a3109c0c779df0253f84bdb26b638e0",
+      "r2Sha256": "776c059ff5b848ed19f343b2905c04b71a3109c0c779df0253f84bdb26b638e0"
+    },
+    "remainingSqlAndEvidence": {
+      "unchanged": true,
+      "r1Sha256": "2166a19bb2d3b9643fdabff3b83b56d5fe81af0f549959a0d75b1fdf38aa2ce2",
+      "r2Sha256": "2166a19bb2d3b9643fdabff3b83b56d5fe81af0f549959a0d75b1fdf38aa2ce2"
+    }
+  },
+  "oldRuntimeGateKeysPreserved": [
+    "server_version_num",
+    "database_name",
+    "database_user",
+    "transaction_read_only",
+    "transaction_isolation",
+    "fsync",
+    "synchronous_commit",
+    "data_directory",
+    "listen_addresses",
+    "port",
+    "default_transaction_read_only"
+  ],
+  "newRuntimeGateKeys": [
+    "full_page_writes",
+    "in_recovery"
+  ],
+  "integrationPending": true
+}

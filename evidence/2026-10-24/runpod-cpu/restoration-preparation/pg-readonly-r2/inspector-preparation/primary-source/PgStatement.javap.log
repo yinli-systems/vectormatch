@@ -1,0 +1,2821 @@
+Compiled from "PgStatement.java"
+public class org.postgresql.jdbc.PgStatement implements java.sql.Statement,org.postgresql.core.BaseStatement {
+  private static final java.lang.String[] NO_RETURNING_COLUMNS;
+
+  private static final boolean DEFAULT_FORCE_BINARY_TRANSFERS;
+
+  private boolean forceBinaryTransfers;
+
+  protected final org.postgresql.jdbc.ResourceLock lock;
+
+  protected java.util.ArrayList<org.postgresql.core.Query> batchStatements;
+
+  protected java.util.ArrayList<org.postgresql.core.ParameterList> batchParameters;
+
+  protected final int resultsettype;
+
+  protected final int concurrency;
+
+  private final int rsHoldability;
+
+  private boolean poolable;
+
+  private boolean closeOnCompletion;
+
+  protected int fetchdirection;
+
+  private volatile java.util.TimerTask cancelTimerTask;
+
+  private static final java.util.concurrent.atomic.AtomicReferenceFieldUpdater<org.postgresql.jdbc.PgStatement, java.util.TimerTask> CANCEL_TIMER_UPDATER;
+
+  private volatile org.postgresql.jdbc.StatementCancelState statementState;
+
+  private static final java.util.concurrent.atomic.AtomicReferenceFieldUpdater<org.postgresql.jdbc.PgStatement, org.postgresql.jdbc.StatementCancelState> STATE_UPDATER;
+
+  protected boolean wantsGeneratedKeysOnce;
+
+  public boolean wantsGeneratedKeysAlways;
+
+  protected final org.postgresql.jdbc.PgConnection connection;
+
+  protected volatile org.postgresql.jdbc.PSQLWarningWrapper warnings;
+
+  protected int maxrows;
+
+  protected int fetchSize;
+
+  protected long timeout;
+
+  protected boolean replaceProcessingEnabled;
+
+  protected org.postgresql.jdbc.ResultWrapper result;
+
+  protected org.postgresql.jdbc.ResultWrapper firstUnclosedResult;
+
+  protected org.postgresql.jdbc.ResultWrapper generatedKeys;
+
+  protected int mPrepareThreshold;
+
+  protected int maxFieldSize;
+
+  protected boolean adaptiveFetch;
+
+  private org.postgresql.jdbc.TimestampUtils timestampUtils;
+
+  private volatile int isClosed;
+
+  private static final java.util.concurrent.atomic.AtomicIntegerFieldUpdater<org.postgresql.jdbc.PgStatement> IS_CLOSED_UPDATER;
+
+  org.postgresql.jdbc.PgStatement(org.postgresql.jdbc.PgConnection, int, int, int) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: getstatic     #7                  // Field DEFAULT_FORCE_BINARY_TRANSFERS:Z
+       8: putfield      #13                 // Field forceBinaryTransfers:Z
+      11: aload_0
+      12: new           #16                 // class org/postgresql/jdbc/ResourceLock
+      15: dup
+      16: invokespecial #18                 // Method org/postgresql/jdbc/ResourceLock."<init>":()V
+      19: putfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+      22: aload_0
+      23: sipush        1000
+      26: putfield      #25                 // Field fetchdirection:I
+      29: aload_0
+      30: getstatic     #29                 // Field org/postgresql/jdbc/StatementCancelState.IDLE:Lorg/postgresql/jdbc/StatementCancelState;
+      33: putfield      #35                 // Field statementState:Lorg/postgresql/jdbc/StatementCancelState;
+      36: aload_0
+      37: iconst_1
+      38: putfield      #38                 // Field replaceProcessingEnabled:Z
+      41: aload_0
+      42: aload_1
+      43: putfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+      46: aload_0
+      47: dup
+      48: getfield      #13                 // Field forceBinaryTransfers:Z
+      51: aload_1
+      52: invokevirtual #45                 // Method org/postgresql/jdbc/PgConnection.getForceBinary:()Z
+      55: ior
+      56: putfield      #13                 // Field forceBinaryTransfers:Z
+      59: iload_2
+      60: sipush        1003
+      63: if_icmpeq     100
+      66: iload_2
+      67: sipush        1004
+      70: if_icmpeq     100
+      73: iload_2
+      74: sipush        1005
+      77: if_icmpeq     100
+      80: new           #51                 // class org/postgresql/util/PSQLException
+      83: dup
+      84: ldc           #53                 // String Unknown value for ResultSet type
+      86: iconst_0
+      87: anewarray     #2                  // class java/lang/Object
+      90: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      93: getstatic     #61                 // Field org/postgresql/util/PSQLState.INVALID_PARAMETER_VALUE:Lorg/postgresql/util/PSQLState;
+      96: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+      99: athrow
+     100: aload_0
+     101: iload_2
+     102: putfield      #70                 // Field resultsettype:I
+     105: iload_3
+     106: sipush        1007
+     109: if_icmpeq     139
+     112: iload_3
+     113: sipush        1008
+     116: if_icmpeq     139
+     119: new           #51                 // class org/postgresql/util/PSQLException
+     122: dup
+     123: ldc           #73                 // String Unknown value for ResultSet concurrency
+     125: iconst_0
+     126: anewarray     #2                  // class java/lang/Object
+     129: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+     132: getstatic     #61                 // Field org/postgresql/util/PSQLState.INVALID_PARAMETER_VALUE:Lorg/postgresql/util/PSQLState;
+     135: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+     138: athrow
+     139: aload_0
+     140: iload_3
+     141: putfield      #75                 // Field concurrency:I
+     144: aload_0
+     145: aload_1
+     146: invokevirtual #78                 // Method org/postgresql/jdbc/PgConnection.getDefaultFetchSize:()I
+     149: invokevirtual #82                 // Method setFetchSize:(I)V
+     152: aload_0
+     153: aload_1
+     154: invokevirtual #86                 // Method org/postgresql/jdbc/PgConnection.getQueryTimeout:()I
+     157: invokevirtual #89                 // Method setQueryTimeout:(I)V
+     160: aload_0
+     161: aload_1
+     162: invokevirtual #92                 // Method org/postgresql/jdbc/PgConnection.getPrepareThreshold:()I
+     165: invokevirtual #95                 // Method setPrepareThreshold:(I)V
+     168: aload_0
+     169: aload_1
+     170: invokevirtual #98                 // Method org/postgresql/jdbc/PgConnection.getAdaptiveFetch:()Z
+     173: invokevirtual #101                // Method setAdaptiveFetch:(Z)V
+     176: iload         4
+     178: iconst_1
+     179: if_icmpeq     208
+     182: iload         4
+     184: iconst_2
+     185: if_icmpeq     208
+     188: new           #51                 // class org/postgresql/util/PSQLException
+     191: dup
+     192: ldc           #105                // String Unknown value for ResultSet holdability
+     194: iconst_0
+     195: anewarray     #2                  // class java/lang/Object
+     198: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+     201: getstatic     #61                 // Field org/postgresql/util/PSQLState.INVALID_PARAMETER_VALUE:Lorg/postgresql/util/PSQLState;
+     204: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+     207: athrow
+     208: aload_0
+     209: iload         4
+     211: putfield      #107                // Field rsHoldability:I
+     214: return
+
+  public java.sql.ResultSet createResultSet(org.postgresql.core.Query, org.postgresql.core.Field[], java.util.List<org.postgresql.core.Tuple>, org.postgresql.core.ResultCursor) throws java.sql.SQLException;
+    Code:
+       0: new           #110                // class org/postgresql/jdbc/PgResultSet
+       3: dup
+       4: aload_1
+       5: aload_0
+       6: aload_2
+       7: aload_3
+       8: aload         4
+      10: aload_0
+      11: invokevirtual #112                // Method getMaxRows:()I
+      14: aload_0
+      15: invokevirtual #115                // Method getMaxFieldSize:()I
+      18: aload_0
+      19: invokevirtual #118                // Method getResultSetType:()I
+      22: aload_0
+      23: invokevirtual #121                // Method getResultSetConcurrency:()I
+      26: aload_0
+      27: invokevirtual #124                // Method getResultSetHoldability:()I
+      30: aload_0
+      31: invokevirtual #127                // Method getAdaptiveFetch:()Z
+      34: invokespecial #128                // Method org/postgresql/jdbc/PgResultSet."<init>":(Lorg/postgresql/core/Query;Lorg/postgresql/core/BaseStatement;[Lorg/postgresql/core/Field;Ljava/util/List;Lorg/postgresql/core/ResultCursor;IIIIIZ)V
+      37: astore        5
+      39: aload         5
+      41: aload_0
+      42: invokevirtual #131                // Method getFetchSize:()I
+      45: invokevirtual #134                // Method org/postgresql/jdbc/PgResultSet.setFetchSize:(I)V
+      48: aload         5
+      50: aload_0
+      51: invokevirtual #135                // Method getFetchDirection:()I
+      54: invokevirtual #138                // Method org/postgresql/jdbc/PgResultSet.setFetchDirection:(I)V
+      57: aload         5
+      59: areturn
+
+  public org.postgresql.core.BaseConnection getPGConnection();
+    Code:
+       0: aload_0
+       1: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+       4: areturn
+
+  public java.lang.String getFetchingCursorName();
+    Code:
+       0: aconst_null
+       1: areturn
+
+  public int getFetchSize();
+    Code:
+       0: aload_0
+       1: getfield      #141                // Field fetchSize:I
+       4: ireturn
+
+  protected boolean wantsScrollableResultSet();
+    Code:
+       0: aload_0
+       1: getfield      #70                 // Field resultsettype:I
+       4: sipush        1003
+       7: if_icmpeq     14
+      10: iconst_1
+      11: goto          15
+      14: iconst_0
+      15: ireturn
+
+  protected boolean wantsHoldableResultSet();
+    Code:
+       0: aload_0
+       1: getfield      #107                // Field rsHoldability:I
+       4: iconst_1
+       5: if_icmpne     12
+       8: iconst_1
+       9: goto          13
+      12: iconst_0
+      13: ireturn
+
+  public java.sql.ResultSet executeQuery(java.lang.String) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+       4: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+       7: astore_2
+       8: aload_0
+       9: aload_1
+      10: iconst_0
+      11: invokevirtual #148                // Method executeWithFlags:(Ljava/lang/String;I)Z
+      14: ifne          37
+      17: new           #51                 // class org/postgresql/util/PSQLException
+      20: dup
+      21: ldc           #152                // String No results were returned by the query.
+      23: iconst_0
+      24: anewarray     #2                  // class java/lang/Object
+      27: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      30: getstatic     #154                // Field org/postgresql/util/PSQLState.NO_DATA:Lorg/postgresql/util/PSQLState;
+      33: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+      36: athrow
+      37: aload_0
+      38: invokevirtual #157                // Method getSingleResultSet:()Ljava/sql/ResultSet;
+      41: astore_3
+      42: aload_2
+      43: ifnull        50
+      46: aload_2
+      47: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      50: aload_3
+      51: areturn
+      52: astore_3
+      53: aload_2
+      54: ifnull        72
+      57: aload_2
+      58: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      61: goto          72
+      64: astore        4
+      66: aload_3
+      67: aload         4
+      69: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+      72: aload_3
+      73: athrow
+    Exception table:
+       from    to  target type
+           8    42    52   Class java/lang/Throwable
+          57    61    64   Class java/lang/Throwable
+
+  protected java.sql.ResultSet getSingleResultSet() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: aload_0
+       5: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+       8: invokestatic  #177                // Method org/postgresql/util/internal/Nullness.castNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+      11: checkcast     #183                // class org/postgresql/jdbc/ResultWrapper
+      14: astore_1
+      15: aload_1
+      16: invokevirtual #185                // Method org/postgresql/jdbc/ResultWrapper.getNext:()Lorg/postgresql/jdbc/ResultWrapper;
+      19: ifnull        42
+      22: new           #51                 // class org/postgresql/util/PSQLException
+      25: dup
+      26: ldc           #189                // String Multiple ResultSets were returned by the query.
+      28: iconst_0
+      29: anewarray     #2                  // class java/lang/Object
+      32: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      35: getstatic     #191                // Field org/postgresql/util/PSQLState.TOO_MANY_RESULTS:Lorg/postgresql/util/PSQLState;
+      38: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+      41: athrow
+      42: aload_1
+      43: invokevirtual #194                // Method org/postgresql/jdbc/ResultWrapper.getResultSet:()Ljava/sql/ResultSet;
+      46: ldc           #197                // String result.getResultSet()
+      48: invokestatic  #199                // Method org/postgresql/util/internal/Nullness.castNonNull:(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+      51: checkcast     #23                 // class java/sql/ResultSet
+      54: areturn
+
+  public int executeUpdate(java.lang.String) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+       4: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+       7: astore_2
+       8: aload_0
+       9: aload_1
+      10: iconst_4
+      11: invokevirtual #148                // Method executeWithFlags:(Ljava/lang/String;I)Z
+      14: pop
+      15: aload_0
+      16: invokevirtual #204                // Method checkNoResultUpdate:()V
+      19: aload_0
+      20: invokevirtual #207                // Method getUpdateCount:()I
+      23: istore_3
+      24: aload_2
+      25: ifnull        32
+      28: aload_2
+      29: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      32: iload_3
+      33: ireturn
+      34: astore_3
+      35: aload_2
+      36: ifnull        54
+      39: aload_2
+      40: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      43: goto          54
+      46: astore        4
+      48: aload_3
+      49: aload         4
+      51: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+      54: aload_3
+      55: athrow
+    Exception table:
+       from    to  target type
+           8    24    34   Class java/lang/Throwable
+          39    43    46   Class java/lang/Throwable
+
+  protected final void checkNoResultUpdate() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+       4: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+       7: astore_1
+       8: aload_0
+       9: invokevirtual #170                // Method checkClosed:()V
+      12: aload_0
+      13: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      16: astore_2
+      17: aload_2
+      18: ifnull        56
+      21: aload_2
+      22: invokevirtual #194                // Method org/postgresql/jdbc/ResultWrapper.getResultSet:()Ljava/sql/ResultSet;
+      25: ifnull        48
+      28: new           #51                 // class org/postgresql/util/PSQLException
+      31: dup
+      32: ldc           #210                // String A result was returned when none was expected.
+      34: iconst_0
+      35: anewarray     #2                  // class java/lang/Object
+      38: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      41: getstatic     #191                // Field org/postgresql/util/PSQLState.TOO_MANY_RESULTS:Lorg/postgresql/util/PSQLState;
+      44: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+      47: athrow
+      48: aload_2
+      49: invokevirtual #185                // Method org/postgresql/jdbc/ResultWrapper.getNext:()Lorg/postgresql/jdbc/ResultWrapper;
+      52: astore_2
+      53: goto          17
+      56: aload_1
+      57: ifnull        87
+      60: aload_1
+      61: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      64: goto          87
+      67: astore_2
+      68: aload_1
+      69: ifnull        85
+      72: aload_1
+      73: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      76: goto          85
+      79: astore_3
+      80: aload_2
+      81: aload_3
+      82: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+      85: aload_2
+      86: athrow
+      87: return
+    Exception table:
+       from    to  target type
+           8    56    67   Class java/lang/Throwable
+          72    76    79   Class java/lang/Throwable
+
+  public boolean execute(java.lang.String) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: aload_1
+       2: iconst_0
+       3: invokevirtual #148                // Method executeWithFlags:(Ljava/lang/String;I)Z
+       6: ireturn
+
+  public boolean executeWithFlags(java.lang.String, int) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: aload_1
+       2: iload_2
+       3: getstatic     #212                // Field NO_RETURNING_COLUMNS:[Ljava/lang/String;
+       6: invokespecial #216                // Method executeCachedSql:(Ljava/lang/String;I[Ljava/lang/String;)Z
+       9: ireturn
+
+  private boolean executeCachedSql(java.lang.String, int, java.lang.String[]) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+       4: invokevirtual #220                // Method org/postgresql/jdbc/PgConnection.getPreferQueryMode:()Lorg/postgresql/jdbc/PreferQueryMode;
+       7: astore        4
+       9: iconst_0
+      10: istore        5
+      12: aload_0
+      13: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+      16: invokevirtual #224                // Method org/postgresql/jdbc/PgConnection.getQueryExecutor:()Lorg/postgresql/core/QueryExecutor;
+      19: astore        6
+      21: aload         6
+      23: aload_1
+      24: aload_0
+      25: getfield      #38                 // Field replaceProcessingEnabled:Z
+      28: iload         5
+      30: aload_3
+      31: invokeinterface #228,  5          // InterfaceMethod org/postgresql/core/QueryExecutor.createQueryKey:(Ljava/lang/String;ZZ[Ljava/lang/String;)Ljava/lang/Object;
+      36: astore        7
+      38: aload         4
+      40: getstatic     #232                // Field org/postgresql/jdbc/PreferQueryMode.EXTENDED_CACHE_EVERYTHING:Lorg/postgresql/jdbc/PreferQueryMode;
+      43: if_acmpne     50
+      46: iconst_1
+      47: goto          51
+      50: iconst_0
+      51: istore        9
+      53: iload         9
+      55: ifeq          72
+      58: aload         6
+      60: aload         7
+      62: invokeinterface #238,  2          // InterfaceMethod org/postgresql/core/QueryExecutor.borrowQueryByKey:(Ljava/lang/Object;)Lorg/postgresql/core/CachedQuery;
+      67: astore        8
+      69: goto          83
+      72: aload         6
+      74: aload         7
+      76: invokeinterface #242,  2          // InterfaceMethod org/postgresql/core/QueryExecutor.createQueryByKey:(Ljava/lang/Object;)Lorg/postgresql/core/CachedQuery;
+      81: astore        8
+      83: aload_0
+      84: getfield      #245                // Field wantsGeneratedKeysOnce:Z
+      87: ifeq          124
+      90: aload         8
+      92: getfield      #248                // Field org/postgresql/core/CachedQuery.query:Lorg/postgresql/core/Query;
+      95: invokeinterface #254,  1          // InterfaceMethod org/postgresql/core/Query.getSqlCommand:()Lorg/postgresql/core/SqlCommand;
+     100: astore        10
+     102: aload_0
+     103: aload         10
+     105: ifnull        120
+     108: aload         10
+     110: invokevirtual #260                // Method org/postgresql/core/SqlCommand.isReturningKeywordPresent:()Z
+     113: ifeq          120
+     116: iconst_1
+     117: goto          121
+     120: iconst_0
+     121: putfield      #245                // Field wantsGeneratedKeysOnce:Z
+     124: aload_0
+     125: aload         8
+     127: iload_2
+     128: invokevirtual #265                // Method executeWithFlags:(Lorg/postgresql/core/CachedQuery;I)Z
+     131: istore        10
+     133: iload         9
+     135: ifeq          169
+     138: aload         6
+     140: aload         8
+     142: invokeinterface #268,  2          // InterfaceMethod org/postgresql/core/QueryExecutor.releaseQuery:(Lorg/postgresql/core/CachedQuery;)V
+     147: goto          169
+     150: astore        11
+     152: iload         9
+     154: ifeq          166
+     157: aload         6
+     159: aload         8
+     161: invokeinterface #268,  2          // InterfaceMethod org/postgresql/core/QueryExecutor.releaseQuery:(Lorg/postgresql/core/CachedQuery;)V
+     166: aload         11
+     168: athrow
+     169: iload         10
+     171: ireturn
+    Exception table:
+       from    to  target type
+         124   133   150   any
+         150   152   150   any
+
+  public boolean executeWithFlags(org.postgresql.core.CachedQuery, int) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: aload_0
+       5: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+       8: invokevirtual #220                // Method org/postgresql/jdbc/PgConnection.getPreferQueryMode:()Lorg/postgresql/jdbc/PreferQueryMode;
+      11: getstatic     #272                // Field org/postgresql/jdbc/PreferQueryMode.EXTENDED:Lorg/postgresql/jdbc/PreferQueryMode;
+      14: invokevirtual #275                // Method org/postgresql/jdbc/PreferQueryMode.compareTo:(Ljava/lang/Enum;)I
+      17: ifge          26
+      20: iload_2
+      21: sipush        1024
+      24: ior
+      25: istore_2
+      26: aload_0
+      27: aload_1
+      28: aconst_null
+      29: iload_2
+      30: invokevirtual #279                // Method execute:(Lorg/postgresql/core/CachedQuery;Lorg/postgresql/core/ParameterList;I)V
+      33: aload_0
+      34: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+      37: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+      40: astore_3
+      41: aload_0
+      42: invokevirtual #170                // Method checkClosed:()V
+      45: aload_0
+      46: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      49: ifnull        66
+      52: aload_0
+      53: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      56: invokevirtual #194                // Method org/postgresql/jdbc/ResultWrapper.getResultSet:()Ljava/sql/ResultSet;
+      59: ifnull        66
+      62: iconst_1
+      63: goto          67
+      66: iconst_0
+      67: istore        4
+      69: aload_3
+      70: ifnull        77
+      73: aload_3
+      74: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      77: iload         4
+      79: ireturn
+      80: astore        4
+      82: aload_3
+      83: ifnull        102
+      86: aload_3
+      87: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      90: goto          102
+      93: astore        5
+      95: aload         4
+      97: aload         5
+      99: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+     102: aload         4
+     104: athrow
+    Exception table:
+       from    to  target type
+          41    69    80   Class java/lang/Throwable
+          86    90    93   Class java/lang/Throwable
+
+  public boolean executeWithFlags(int) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: new           #51                 // class org/postgresql/util/PSQLException
+       7: dup
+       8: ldc_w         #283                // String Can\'\'t use executeWithFlags(int) on a Statement.
+      11: iconst_0
+      12: anewarray     #2                  // class java/lang/Object
+      15: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      18: getstatic     #285                // Field org/postgresql/util/PSQLState.WRONG_OBJECT_TYPE:Lorg/postgresql/util/PSQLState;
+      21: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+      24: athrow
+
+  private void closeUnclosedProcessedResults() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+       4: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+       7: astore_1
+       8: aload_0
+       9: getfield      #288                // Field firstUnclosedResult:Lorg/postgresql/jdbc/ResultWrapper;
+      12: astore_2
+      13: aload_0
+      14: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      17: astore_3
+      18: aload_2
+      19: aload_3
+      20: if_acmpeq     54
+      23: aload_2
+      24: ifnull        54
+      27: aload_2
+      28: invokevirtual #194                // Method org/postgresql/jdbc/ResultWrapper.getResultSet:()Ljava/sql/ResultSet;
+      31: checkcast     #110                // class org/postgresql/jdbc/PgResultSet
+      34: astore        4
+      36: aload         4
+      38: ifnull        46
+      41: aload         4
+      43: invokevirtual #291                // Method org/postgresql/jdbc/PgResultSet.closeInternally:()V
+      46: aload_2
+      47: invokevirtual #185                // Method org/postgresql/jdbc/ResultWrapper.getNext:()Lorg/postgresql/jdbc/ResultWrapper;
+      50: astore_2
+      51: goto          18
+      54: aload_0
+      55: aload_2
+      56: putfield      #288                // Field firstUnclosedResult:Lorg/postgresql/jdbc/ResultWrapper;
+      59: aload_1
+      60: ifnull        90
+      63: aload_1
+      64: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      67: goto          90
+      70: astore_2
+      71: aload_1
+      72: ifnull        88
+      75: aload_1
+      76: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      79: goto          88
+      82: astore_3
+      83: aload_2
+      84: aload_3
+      85: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+      88: aload_2
+      89: athrow
+      90: return
+    Exception table:
+       from    to  target type
+           8    59    70   Class java/lang/Throwable
+          75    79    82   Class java/lang/Throwable
+
+  protected void closeForNextExecution() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #294                // Method clearWarnings:()V
+       4: aload_0
+       5: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+       8: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+      11: astore_1
+      12: aload_0
+      13: invokespecial #297                // Method closeUnclosedProcessedResults:()V
+      16: aload_0
+      17: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      20: ifnull        45
+      23: aload_0
+      24: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      27: invokevirtual #194                // Method org/postgresql/jdbc/ResultWrapper.getResultSet:()Ljava/sql/ResultSet;
+      30: ifnull        45
+      33: aload_0
+      34: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      37: invokevirtual #194                // Method org/postgresql/jdbc/ResultWrapper.getResultSet:()Ljava/sql/ResultSet;
+      40: invokeinterface #300,  1          // InterfaceMethod java/sql/ResultSet.close:()V
+      45: aload_0
+      46: aconst_null
+      47: putfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      50: aload_0
+      51: getfield      #301                // Field generatedKeys:Lorg/postgresql/jdbc/ResultWrapper;
+      54: astore_2
+      55: aload_2
+      56: ifnull        79
+      59: aload_2
+      60: invokevirtual #194                // Method org/postgresql/jdbc/ResultWrapper.getResultSet:()Ljava/sql/ResultSet;
+      63: astore_3
+      64: aload_3
+      65: ifnull        74
+      68: aload_3
+      69: invokeinterface #300,  1          // InterfaceMethod java/sql/ResultSet.close:()V
+      74: aload_0
+      75: aconst_null
+      76: putfield      #301                // Field generatedKeys:Lorg/postgresql/jdbc/ResultWrapper;
+      79: aload_1
+      80: ifnull        110
+      83: aload_1
+      84: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      87: goto          110
+      90: astore_2
+      91: aload_1
+      92: ifnull        108
+      95: aload_1
+      96: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      99: goto          108
+     102: astore_3
+     103: aload_2
+     104: aload_3
+     105: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+     108: aload_2
+     109: athrow
+     110: return
+    Exception table:
+       from    to  target type
+          12    79    90   Class java/lang/Throwable
+          95    99   102   Class java/lang/Throwable
+
+  protected boolean isOneShotQuery(org.postgresql.core.CachedQuery);
+    Code:
+       0: aload_1
+       1: ifnonnull     6
+       4: iconst_1
+       5: ireturn
+       6: aload_1
+       7: invokevirtual #304                // Method org/postgresql/core/CachedQuery.increaseExecuteCount:()V
+      10: aload_0
+      11: getfield      #307                // Field mPrepareThreshold:I
+      14: ifeq          28
+      17: aload_1
+      18: invokevirtual #310                // Method org/postgresql/core/CachedQuery.getExecuteCount:()I
+      21: aload_0
+      22: getfield      #307                // Field mPrepareThreshold:I
+      25: if_icmpge     39
+      28: aload_0
+      29: invokevirtual #313                // Method getForceBinaryTransfer:()Z
+      32: ifne          39
+      35: iconst_1
+      36: goto          40
+      39: iconst_0
+      40: ireturn
+
+  protected final void execute(org.postgresql.core.CachedQuery, org.postgresql.core.ParameterList, int) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+       4: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+       7: astore        4
+       9: aload_0
+      10: aload_1
+      11: aload_2
+      12: iload_3
+      13: invokespecial #316                // Method executeInternal:(Lorg/postgresql/core/CachedQuery;Lorg/postgresql/core/ParameterList;I)V
+      16: goto          69
+      19: astore        5
+      21: aload_1
+      22: getfield      #248                // Field org/postgresql/core/CachedQuery.query:Lorg/postgresql/core/Query;
+      25: invokeinterface #321,  1          // InterfaceMethod org/postgresql/core/Query.getSubqueries:()[Lorg/postgresql/core/Query;
+      30: ifnonnull     50
+      33: aload_0
+      34: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+      37: invokevirtual #224                // Method org/postgresql/jdbc/PgConnection.getQueryExecutor:()Lorg/postgresql/core/QueryExecutor;
+      40: aload         5
+      42: invokeinterface #325,  2          // InterfaceMethod org/postgresql/core/QueryExecutor.willHealOnRetry:(Ljava/sql/SQLException;)Z
+      47: ifne          53
+      50: aload         5
+      52: athrow
+      53: aload_1
+      54: getfield      #248                // Field org/postgresql/core/CachedQuery.query:Lorg/postgresql/core/Query;
+      57: invokeinterface #329,  1          // InterfaceMethod org/postgresql/core/Query.close:()V
+      62: aload_0
+      63: aload_1
+      64: aload_2
+      65: iload_3
+      66: invokespecial #316                // Method executeInternal:(Lorg/postgresql/core/CachedQuery;Lorg/postgresql/core/ParameterList;I)V
+      69: aload         4
+      71: ifnull        109
+      74: aload         4
+      76: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      79: goto          109
+      82: astore        5
+      84: aload         4
+      86: ifnull        106
+      89: aload         4
+      91: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      94: goto          106
+      97: astore        6
+      99: aload         5
+     101: aload         6
+     103: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+     106: aload         5
+     108: athrow
+     109: return
+    Exception table:
+       from    to  target type
+           9    16    19   Class java/sql/SQLException
+           9    69    82   Class java/lang/Throwable
+          89    94    97   Class java/lang/Throwable
+
+  private void executeInternal(org.postgresql.core.CachedQuery, org.postgresql.core.ParameterList, int) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #330                // Method closeForNextExecution:()V
+       4: aload_0
+       5: getfield      #141                // Field fetchSize:I
+       8: ifle          40
+      11: aload_0
+      12: invokevirtual #333                // Method wantsScrollableResultSet:()Z
+      15: ifne          40
+      18: aload_0
+      19: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+      22: invokevirtual #336                // Method org/postgresql/jdbc/PgConnection.getAutoCommit:()Z
+      25: ifne          40
+      28: aload_0
+      29: invokevirtual #339                // Method wantsHoldableResultSet:()Z
+      32: ifne          40
+      35: iload_3
+      36: bipush        8
+      38: ior
+      39: istore_3
+      40: aload_0
+      41: getfield      #245                // Field wantsGeneratedKeysOnce:Z
+      44: ifne          54
+      47: aload_0
+      48: getfield      #342                // Field wantsGeneratedKeysAlways:Z
+      51: ifeq          70
+      54: iload_3
+      55: bipush        64
+      57: ior
+      58: istore_3
+      59: iload_3
+      60: iconst_4
+      61: iand
+      62: ifeq          70
+      65: iload_3
+      66: bipush        -5
+      68: iand
+      69: istore_3
+      70: aload_0
+      71: aload_1
+      72: invokevirtual #345                // Method isOneShotQuery:(Lorg/postgresql/core/CachedQuery;)Z
+      75: ifeq          82
+      78: iload_3
+      79: iconst_1
+      80: ior
+      81: istore_3
+      82: aload_0
+      83: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+      86: invokevirtual #336                // Method org/postgresql/jdbc/PgConnection.getAutoCommit:()Z
+      89: ifeq          97
+      92: iload_3
+      93: bipush        16
+      95: ior
+      96: istore_3
+      97: aload_0
+      98: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+     101: invokevirtual #349                // Method org/postgresql/jdbc/PgConnection.hintReadOnly:()Z
+     104: ifeq          113
+     107: iload_3
+     108: sipush        2048
+     111: ior
+     112: istore_3
+     113: aload_0
+     114: getfield      #75                 // Field concurrency:I
+     117: sipush        1007
+     120: if_icmpeq     129
+     123: iload_3
+     124: sipush        256
+     127: ior
+     128: istore_3
+     129: aload_1
+     130: getfield      #248                // Field org/postgresql/core/CachedQuery.query:Lorg/postgresql/core/Query;
+     133: astore        4
+     135: aload         4
+     137: invokeinterface #352,  1          // InterfaceMethod org/postgresql/core/Query.isEmpty:()Z
+     142: ifeq          150
+     145: iload_3
+     146: bipush        16
+     148: ior
+     149: istore_3
+     150: aload         4
+     152: invokeinterface #355,  1          // InterfaceMethod org/postgresql/core/Query.isStatementDescribed:()Z
+     157: ifne          260
+     160: aload_0
+     161: getfield      #13                 // Field forceBinaryTransfers:Z
+     164: ifeq          260
+     167: iload_3
+     168: sipush        1024
+     171: iand
+     172: ifne          260
+     175: iload_3
+     176: bipush        32
+     178: ior
+     179: istore        5
+     181: new           #358                // class org/postgresql/jdbc/PgStatement$StatementResultHandler
+     184: dup
+     185: aload_0
+     186: invokespecial #360                // Method org/postgresql/jdbc/PgStatement$StatementResultHandler."<init>":(Lorg/postgresql/jdbc/PgStatement;)V
+     189: astore        6
+     191: aload_0
+     192: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+     195: invokevirtual #224                // Method org/postgresql/jdbc/PgConnection.getQueryExecutor:()Lorg/postgresql/core/QueryExecutor;
+     198: aload         4
+     200: aload_2
+     201: aload         6
+     203: iconst_0
+     204: iconst_0
+     205: iload         5
+     207: invokeinterface #363,  7          // InterfaceMethod org/postgresql/core/QueryExecutor.execute:(Lorg/postgresql/core/Query;Lorg/postgresql/core/ParameterList;Lorg/postgresql/core/ResultHandler;III)V
+     212: aload         6
+     214: invokevirtual #366                // Method org/postgresql/jdbc/PgStatement$StatementResultHandler.getResults:()Lorg/postgresql/jdbc/ResultWrapper;
+     217: astore        7
+     219: aload         7
+     221: ifnull        260
+     224: aload_0
+     225: getfield      #369                // Field closeOnCompletion:Z
+     228: istore        8
+     230: aload_0
+     231: iconst_0
+     232: putfield      #369                // Field closeOnCompletion:Z
+     235: aload         7
+     237: invokevirtual #194                // Method org/postgresql/jdbc/ResultWrapper.getResultSet:()Ljava/sql/ResultSet;
+     240: ldc_w         #372                // String result2.getResultSet()
+     243: invokestatic  #199                // Method org/postgresql/util/internal/Nullness.castNonNull:(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+     246: checkcast     #23                 // class java/sql/ResultSet
+     249: invokeinterface #300,  1          // InterfaceMethod java/sql/ResultSet.close:()V
+     254: aload_0
+     255: iload         8
+     257: putfield      #369                // Field closeOnCompletion:Z
+     260: new           #358                // class org/postgresql/jdbc/PgStatement$StatementResultHandler
+     263: dup
+     264: aload_0
+     265: invokespecial #360                // Method org/postgresql/jdbc/PgStatement$StatementResultHandler."<init>":(Lorg/postgresql/jdbc/PgStatement;)V
+     268: astore        5
+     270: aload_0
+     271: aconst_null
+     272: putfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+     275: aload_0
+     276: invokespecial #374                // Method startTimer:()V
+     279: aload_0
+     280: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+     283: invokevirtual #224                // Method org/postgresql/jdbc/PgConnection.getQueryExecutor:()Lorg/postgresql/core/QueryExecutor;
+     286: aload         4
+     288: aload_2
+     289: aload         5
+     291: aload_0
+     292: getfield      #377                // Field maxrows:I
+     295: aload_0
+     296: getfield      #141                // Field fetchSize:I
+     299: iload_3
+     300: aload_0
+     301: getfield      #380                // Field adaptiveFetch:Z
+     304: invokeinterface #383,  8          // InterfaceMethod org/postgresql/core/QueryExecutor.execute:(Lorg/postgresql/core/Query;Lorg/postgresql/core/ParameterList;Lorg/postgresql/core/ResultHandler;IIIZ)V
+     309: aload_0
+     310: invokespecial #386                // Method killTimerTask:()V
+     313: goto          325
+     316: astore        9
+     318: aload_0
+     319: invokespecial #386                // Method killTimerTask:()V
+     322: aload         9
+     324: athrow
+     325: aload_0
+     326: invokevirtual #170                // Method checkClosed:()V
+     329: aload         5
+     331: invokevirtual #366                // Method org/postgresql/jdbc/PgStatement$StatementResultHandler.getResults:()Lorg/postgresql/jdbc/ResultWrapper;
+     334: astore        6
+     336: aload_0
+     337: aload_0
+     338: aload         6
+     340: dup_x1
+     341: putfield      #288                // Field firstUnclosedResult:Lorg/postgresql/jdbc/ResultWrapper;
+     344: putfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+     347: aload_0
+     348: getfield      #245                // Field wantsGeneratedKeysOnce:Z
+     351: ifne          361
+     354: aload_0
+     355: getfield      #342                // Field wantsGeneratedKeysAlways:Z
+     358: ifeq          397
+     361: aload_0
+     362: aload         6
+     364: putfield      #301                // Field generatedKeys:Lorg/postgresql/jdbc/ResultWrapper;
+     367: aload_0
+     368: aload         6
+     370: ldc_w         #389                // String handler.getResults()
+     373: invokestatic  #199                // Method org/postgresql/util/internal/Nullness.castNonNull:(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;
+     376: checkcast     #183                // class org/postgresql/jdbc/ResultWrapper
+     379: invokevirtual #185                // Method org/postgresql/jdbc/ResultWrapper.getNext:()Lorg/postgresql/jdbc/ResultWrapper;
+     382: putfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+     385: aload_0
+     386: getfield      #245                // Field wantsGeneratedKeysOnce:Z
+     389: ifeq          397
+     392: aload_0
+     393: iconst_0
+     394: putfield      #245                // Field wantsGeneratedKeysOnce:Z
+     397: return
+    Exception table:
+       from    to  target type
+         275   309   316   any
+         316   318   316   any
+
+  public void setCursorName(java.lang.String) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: return
+
+  public int getUpdateCount() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+       4: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+       7: astore_1
+       8: aload_0
+       9: invokevirtual #170                // Method checkClosed:()V
+      12: aload_0
+      13: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      16: ifnull        29
+      19: aload_0
+      20: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      23: invokevirtual #194                // Method org/postgresql/jdbc/ResultWrapper.getResultSet:()Ljava/sql/ResultSet;
+      26: ifnull        41
+      29: iconst_m1
+      30: istore_2
+      31: aload_1
+      32: ifnull        39
+      35: aload_1
+      36: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      39: iload_2
+      40: ireturn
+      41: aload_0
+      42: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      45: invokevirtual #391                // Method org/postgresql/jdbc/ResultWrapper.getUpdateCount:()J
+      48: lstore_2
+      49: lload_2
+      50: ldc2_w        #396                // long 2147483647l
+      53: lcmp
+      54: ifle          62
+      57: bipush        -2
+      59: goto          64
+      62: lload_2
+      63: l2i
+      64: istore        4
+      66: aload_1
+      67: ifnull        74
+      70: aload_1
+      71: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      74: iload         4
+      76: ireturn
+      77: astore_2
+      78: aload_1
+      79: ifnull        95
+      82: aload_1
+      83: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      86: goto          95
+      89: astore_3
+      90: aload_2
+      91: aload_3
+      92: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+      95: aload_2
+      96: athrow
+    Exception table:
+       from    to  target type
+           8    31    77   Class java/lang/Throwable
+          41    66    77   Class java/lang/Throwable
+          82    86    89   Class java/lang/Throwable
+
+  public boolean getMoreResults() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: iconst_3
+       2: invokevirtual #400                // Method getMoreResults:(I)Z
+       5: ireturn
+
+  public int getMaxRows() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: aload_0
+       5: getfield      #377                // Field maxrows:I
+       8: ireturn
+
+  public void setMaxRows(int) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: iload_1
+       5: ifge          29
+       8: new           #51                 // class org/postgresql/util/PSQLException
+      11: dup
+      12: ldc_w         #404                // String Maximum number of rows must be a value greater than or equal to 0.
+      15: iconst_0
+      16: anewarray     #2                  // class java/lang/Object
+      19: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      22: getstatic     #61                 // Field org/postgresql/util/PSQLState.INVALID_PARAMETER_VALUE:Lorg/postgresql/util/PSQLState;
+      25: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+      28: athrow
+      29: aload_0
+      30: iload_1
+      31: putfield      #377                // Field maxrows:I
+      34: return
+
+  public void setEscapeProcessing(boolean) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: aload_0
+       5: iload_1
+       6: putfield      #38                 // Field replaceProcessingEnabled:Z
+       9: return
+
+  public int getQueryTimeout() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: aload_0
+       5: getfield      #406                // Field timeout:J
+       8: ldc2_w        #410                // long 1000l
+      11: ldiv
+      12: lstore_1
+      13: lload_1
+      14: ldc2_w        #396                // long 2147483647l
+      17: lcmp
+      18: iflt          25
+      21: ldc_w         #412                // int 2147483647
+      24: ireturn
+      25: lload_1
+      26: l2i
+      27: ireturn
+
+  public void setQueryTimeout(int) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: iload_1
+       2: i2l
+       3: ldc2_w        #410                // long 1000l
+       6: lmul
+       7: invokevirtual #413                // Method setQueryTimeoutMs:(J)V
+      10: return
+
+  public long getQueryTimeoutMs() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: aload_0
+       5: getfield      #406                // Field timeout:J
+       8: lreturn
+
+  public void setQueryTimeoutMs(long) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: lload_1
+       5: lconst_0
+       6: lcmp
+       7: ifge          31
+      10: new           #51                 // class org/postgresql/util/PSQLException
+      13: dup
+      14: ldc_w         #417                // String Query timeout must be a value greater than or equals to 0.
+      17: iconst_0
+      18: anewarray     #2                  // class java/lang/Object
+      21: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      24: getstatic     #61                 // Field org/postgresql/util/PSQLState.INVALID_PARAMETER_VALUE:Lorg/postgresql/util/PSQLState;
+      27: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+      30: athrow
+      31: aload_0
+      32: lload_1
+      33: putfield      #406                // Field timeout:J
+      36: return
+
+  public void addWarning(java.sql.SQLWarning);
+    Code:
+       0: aload_0
+       1: getfield      #419                // Field warnings:Lorg/postgresql/jdbc/PSQLWarningWrapper;
+       4: astore_2
+       5: aload_2
+       6: ifnonnull     24
+       9: aload_0
+      10: new           #423                // class org/postgresql/jdbc/PSQLWarningWrapper
+      13: dup
+      14: aload_1
+      15: invokespecial #425                // Method org/postgresql/jdbc/PSQLWarningWrapper."<init>":(Ljava/sql/SQLWarning;)V
+      18: putfield      #419                // Field warnings:Lorg/postgresql/jdbc/PSQLWarningWrapper;
+      21: goto          29
+      24: aload_2
+      25: aload_1
+      26: invokevirtual #428                // Method org/postgresql/jdbc/PSQLWarningWrapper.addWarning:(Ljava/sql/SQLWarning;)V
+      29: return
+
+  public java.sql.SQLWarning getWarnings() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: aload_0
+       5: getfield      #419                // Field warnings:Lorg/postgresql/jdbc/PSQLWarningWrapper;
+       8: astore_1
+       9: aload_1
+      10: ifnull        20
+      13: aload_1
+      14: invokevirtual #431                // Method org/postgresql/jdbc/PSQLWarningWrapper.getFirstWarning:()Ljava/sql/SQLWarning;
+      17: goto          21
+      20: aconst_null
+      21: areturn
+
+  public int getMaxFieldSize() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #435                // Field maxFieldSize:I
+       4: ireturn
+
+  public void setMaxFieldSize(int) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: iload_1
+       5: ifge          29
+       8: new           #51                 // class org/postgresql/util/PSQLException
+      11: dup
+      12: ldc_w         #438                // String The maximum field size must be a value greater than or equal to 0.
+      15: iconst_0
+      16: anewarray     #2                  // class java/lang/Object
+      19: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      22: getstatic     #61                 // Field org/postgresql/util/PSQLState.INVALID_PARAMETER_VALUE:Lorg/postgresql/util/PSQLState;
+      25: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+      28: athrow
+      29: aload_0
+      30: iload_1
+      31: putfield      #435                // Field maxFieldSize:I
+      34: return
+
+  public void clearWarnings() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: aconst_null
+       2: putfield      #419                // Field warnings:Lorg/postgresql/jdbc/PSQLWarningWrapper;
+       5: return
+
+  public java.sql.ResultSet getResultSet() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+       4: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+       7: astore_1
+       8: aload_0
+       9: invokevirtual #170                // Method checkClosed:()V
+      12: aload_0
+      13: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      16: ifnonnull     31
+      19: aconst_null
+      20: astore_2
+      21: aload_1
+      22: ifnull        29
+      25: aload_1
+      26: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      29: aload_2
+      30: areturn
+      31: aload_0
+      32: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      35: invokevirtual #194                // Method org/postgresql/jdbc/ResultWrapper.getResultSet:()Ljava/sql/ResultSet;
+      38: astore_2
+      39: aload_1
+      40: ifnull        47
+      43: aload_1
+      44: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      47: aload_2
+      48: areturn
+      49: astore_2
+      50: aload_1
+      51: ifnull        67
+      54: aload_1
+      55: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      58: goto          67
+      61: astore_3
+      62: aload_2
+      63: aload_3
+      64: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+      67: aload_2
+      68: athrow
+    Exception table:
+       from    to  target type
+           8    21    49   Class java/lang/Throwable
+          31    39    49   Class java/lang/Throwable
+          54    58    61   Class java/lang/Throwable
+
+  public final void close() throws java.sql.SQLException;
+    Code:
+       0: getstatic     #440                // Field IS_CLOSED_UPDATER:Ljava/util/concurrent/atomic/AtomicIntegerFieldUpdater;
+       3: aload_0
+       4: iconst_0
+       5: iconst_1
+       6: invokevirtual #444                // Method java/util/concurrent/atomic/AtomicIntegerFieldUpdater.compareAndSet:(Ljava/lang/Object;II)Z
+       9: ifne          13
+      12: return
+      13: aload_0
+      14: invokevirtual #450                // Method cancel:()V
+      17: aload_0
+      18: invokevirtual #330                // Method closeForNextExecution:()V
+      21: aload_0
+      22: invokevirtual #453                // Method closeImpl:()V
+      25: return
+
+  protected void closeImpl() throws java.sql.SQLException;
+    Code:
+       0: return
+
+  public long getLastOID() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+       4: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+       7: astore_1
+       8: aload_0
+       9: invokevirtual #170                // Method checkClosed:()V
+      12: aload_0
+      13: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      16: ifnonnull     31
+      19: lconst_0
+      20: lstore_2
+      21: aload_1
+      22: ifnull        29
+      25: aload_1
+      26: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      29: lload_2
+      30: lreturn
+      31: aload_0
+      32: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      35: invokevirtual #456                // Method org/postgresql/jdbc/ResultWrapper.getInsertOID:()J
+      38: lstore_2
+      39: aload_1
+      40: ifnull        47
+      43: aload_1
+      44: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      47: lload_2
+      48: lreturn
+      49: astore_2
+      50: aload_1
+      51: ifnull        67
+      54: aload_1
+      55: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      58: goto          67
+      61: astore_3
+      62: aload_2
+      63: aload_3
+      64: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+      67: aload_2
+      68: athrow
+    Exception table:
+       from    to  target type
+           8    21    49   Class java/lang/Throwable
+          31    39    49   Class java/lang/Throwable
+          54    58    61   Class java/lang/Throwable
+
+  public void setPrepareThreshold(int) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: iload_1
+       5: ifge          15
+       8: aload_0
+       9: iconst_1
+      10: putfield      #13                 // Field forceBinaryTransfers:Z
+      13: iconst_1
+      14: istore_1
+      15: aload_0
+      16: iload_1
+      17: putfield      #307                // Field mPrepareThreshold:I
+      20: return
+
+  public int getPrepareThreshold();
+    Code:
+       0: aload_0
+       1: getfield      #307                // Field mPrepareThreshold:I
+       4: ireturn
+
+  public void setUseServerPrepare(boolean) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: iload_1
+       2: ifeq          9
+       5: iconst_1
+       6: goto          10
+       9: iconst_0
+      10: invokevirtual #95                 // Method setPrepareThreshold:(I)V
+      13: return
+
+  public boolean isUseServerPrepare();
+    Code:
+       0: iconst_0
+       1: ireturn
+
+  protected void checkClosed() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #459                // Method isClosed:()Z
+       4: ifeq          28
+       7: new           #51                 // class org/postgresql/util/PSQLException
+      10: dup
+      11: ldc_w         #462                // String This statement has been closed.
+      14: iconst_0
+      15: anewarray     #2                  // class java/lang/Object
+      18: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      21: getstatic     #464                // Field org/postgresql/util/PSQLState.OBJECT_NOT_IN_STATE:Lorg/postgresql/util/PSQLState;
+      24: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+      27: athrow
+      28: return
+
+  public void addBatch(java.lang.String) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: aload_0
+       5: getfield      #467                // Field batchStatements:Ljava/util/ArrayList;
+       8: astore_2
+       9: aload_2
+      10: ifnonnull     26
+      13: aload_0
+      14: new           #471                // class java/util/ArrayList
+      17: dup
+      18: invokespecial #473                // Method java/util/ArrayList."<init>":()V
+      21: dup
+      22: astore_2
+      23: putfield      #467                // Field batchStatements:Ljava/util/ArrayList;
+      26: aload_0
+      27: getfield      #474                // Field batchParameters:Ljava/util/ArrayList;
+      30: astore_3
+      31: aload_3
+      32: ifnonnull     48
+      35: aload_0
+      36: new           #471                // class java/util/ArrayList
+      39: dup
+      40: invokespecial #473                // Method java/util/ArrayList."<init>":()V
+      43: dup
+      44: astore_3
+      45: putfield      #474                // Field batchParameters:Ljava/util/ArrayList;
+      48: iconst_0
+      49: istore        4
+      51: aload_0
+      52: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+      55: aload_1
+      56: aload_0
+      57: getfield      #38                 // Field replaceProcessingEnabled:Z
+      60: iload         4
+      62: iconst_0
+      63: anewarray     #477                // class java/lang/String
+      66: invokevirtual #479                // Method org/postgresql/jdbc/PgConnection.createQuery:(Ljava/lang/String;ZZ[Ljava/lang/String;)Lorg/postgresql/core/CachedQuery;
+      69: astore        5
+      71: aload_2
+      72: aload         5
+      74: getfield      #248                // Field org/postgresql/core/CachedQuery.query:Lorg/postgresql/core/Query;
+      77: invokevirtual #483                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+      80: pop
+      81: aload_3
+      82: aconst_null
+      83: invokevirtual #483                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+      86: pop
+      87: return
+
+  public void clearBatch() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #467                // Field batchStatements:Ljava/util/ArrayList;
+       4: ifnull        14
+       7: aload_0
+       8: getfield      #467                // Field batchStatements:Ljava/util/ArrayList;
+      11: invokevirtual #487                // Method java/util/ArrayList.clear:()V
+      14: aload_0
+      15: getfield      #474                // Field batchParameters:Ljava/util/ArrayList;
+      18: ifnull        28
+      21: aload_0
+      22: getfield      #474                // Field batchParameters:Ljava/util/ArrayList;
+      25: invokevirtual #487                // Method java/util/ArrayList.clear:()V
+      28: return
+
+  protected org.postgresql.jdbc.BatchResultHandler createBatchHandler(org.postgresql.core.Query[], org.postgresql.core.ParameterList[]);
+    Code:
+       0: new           #490                // class org/postgresql/jdbc/BatchResultHandler
+       3: dup
+       4: aload_0
+       5: aload_1
+       6: aload_2
+       7: aload_0
+       8: getfield      #342                // Field wantsGeneratedKeysAlways:Z
+      11: invokespecial #492                // Method org/postgresql/jdbc/BatchResultHandler."<init>":(Lorg/postgresql/jdbc/PgStatement;[Lorg/postgresql/core/Query;[Lorg/postgresql/core/ParameterList;Z)V
+      14: areturn
+
+  private org.postgresql.jdbc.BatchResultHandler internalExecuteBatch() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #495                // Method transformQueriesAndParameters:()V
+       4: aload_0
+       5: getfield      #467                // Field batchStatements:Ljava/util/ArrayList;
+       8: invokestatic  #177                // Method org/postgresql/util/internal/Nullness.castNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+      11: checkcast     #471                // class java/util/ArrayList
+      14: astore_1
+      15: aload_0
+      16: getfield      #474                // Field batchParameters:Ljava/util/ArrayList;
+      19: invokestatic  #177                // Method org/postgresql/util/internal/Nullness.castNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+      22: checkcast     #471                // class java/util/ArrayList
+      25: astore_2
+      26: aload_1
+      27: iconst_0
+      28: anewarray     #255                // class org/postgresql/core/Query
+      31: invokevirtual #498                // Method java/util/ArrayList.toArray:([Ljava/lang/Object;)[Ljava/lang/Object;
+      34: checkcast     #502                // class "[Lorg/postgresql/core/Query;"
+      37: astore_3
+      38: aload_2
+      39: iconst_0
+      40: anewarray     #504                // class org/postgresql/core/ParameterList
+      43: invokevirtual #498                // Method java/util/ArrayList.toArray:([Ljava/lang/Object;)[Ljava/lang/Object;
+      46: checkcast     #506                // class "[Lorg/postgresql/core/ParameterList;"
+      49: astore        4
+      51: aload_1
+      52: invokevirtual #487                // Method java/util/ArrayList.clear:()V
+      55: aload_2
+      56: invokevirtual #487                // Method java/util/ArrayList.clear:()V
+      59: aload_0
+      60: getfield      #342                // Field wantsGeneratedKeysAlways:Z
+      63: ifeq          74
+      66: sipush        320
+      69: istore        5
+      71: goto          77
+      74: iconst_4
+      75: istore        5
+      77: aload_0
+      78: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+      81: invokevirtual #220                // Method org/postgresql/jdbc/PgConnection.getPreferQueryMode:()Lorg/postgresql/jdbc/PreferQueryMode;
+      84: astore        6
+      86: aload         6
+      88: getstatic     #508                // Field org/postgresql/jdbc/PreferQueryMode.SIMPLE:Lorg/postgresql/jdbc/PreferQueryMode;
+      91: if_acmpeq     109
+      94: aload         6
+      96: getstatic     #511                // Field org/postgresql/jdbc/PreferQueryMode.EXTENDED_FOR_PREPARED:Lorg/postgresql/jdbc/PreferQueryMode;
+      99: if_acmpne     117
+     102: aload         4
+     104: iconst_0
+     105: aaload
+     106: ifnonnull     117
+     109: iload         5
+     111: sipush        1024
+     114: ior
+     115: istore        5
+     117: aload_0
+     118: aconst_null
+     119: invokevirtual #345                // Method isOneShotQuery:(Lorg/postgresql/core/CachedQuery;)Z
+     122: ifeq          134
+     125: iload         5
+     127: iconst_1
+     128: ior
+     129: istore        5
+     131: goto          142
+     134: iload         5
+     136: sipush        512
+     139: ior
+     140: istore        5
+     142: aload_0
+     143: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+     146: invokevirtual #336                // Method org/postgresql/jdbc/PgConnection.getAutoCommit:()Z
+     149: ifeq          159
+     152: iload         5
+     154: bipush        16
+     156: ior
+     157: istore        5
+     159: aload_0
+     160: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+     163: invokevirtual #349                // Method org/postgresql/jdbc/PgConnection.hintReadOnly:()Z
+     166: ifeq          177
+     169: iload         5
+     171: sipush        2048
+     174: ior
+     175: istore        5
+     177: aload_0
+     178: aload_3
+     179: aload         4
+     181: invokevirtual #514                // Method createBatchHandler:([Lorg/postgresql/core/Query;[Lorg/postgresql/core/ParameterList;)Lorg/postgresql/jdbc/BatchResultHandler;
+     184: astore        7
+     186: aload_0
+     187: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+     190: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+     193: astore        8
+     195: aload_0
+     196: aconst_null
+     197: putfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+     200: aload         8
+     202: ifnull        240
+     205: aload         8
+     207: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+     210: goto          240
+     213: astore        9
+     215: aload         8
+     217: ifnull        237
+     220: aload         8
+     222: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+     225: goto          237
+     228: astore        10
+     230: aload         9
+     232: aload         10
+     234: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+     237: aload         9
+     239: athrow
+     240: aload_0
+     241: invokespecial #374                // Method startTimer:()V
+     244: aload_0
+     245: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+     248: invokevirtual #224                // Method org/postgresql/jdbc/PgConnection.getQueryExecutor:()Lorg/postgresql/core/QueryExecutor;
+     251: aload_3
+     252: aload         4
+     254: aload         7
+     256: aload_0
+     257: getfield      #377                // Field maxrows:I
+     260: aload_0
+     261: getfield      #141                // Field fetchSize:I
+     264: iload         5
+     266: aload_0
+     267: getfield      #380                // Field adaptiveFetch:Z
+     270: invokeinterface #518,  8          // InterfaceMethod org/postgresql/core/QueryExecutor.execute:([Lorg/postgresql/core/Query;[Lorg/postgresql/core/ParameterList;Lorg/postgresql/jdbc/BatchResultHandler;IIIZ)V
+     275: aload_0
+     276: invokespecial #386                // Method killTimerTask:()V
+     279: aload_0
+     280: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+     283: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+     286: astore        8
+     288: aload_0
+     289: invokevirtual #170                // Method checkClosed:()V
+     292: aload_0
+     293: getfield      #342                // Field wantsGeneratedKeysAlways:Z
+     296: ifeq          315
+     299: aload_0
+     300: new           #183                // class org/postgresql/jdbc/ResultWrapper
+     303: dup
+     304: aload         7
+     306: invokevirtual #521                // Method org/postgresql/jdbc/BatchResultHandler.getGeneratedKeys:()Ljava/sql/ResultSet;
+     309: invokespecial #524                // Method org/postgresql/jdbc/ResultWrapper."<init>":(Ljava/sql/ResultSet;)V
+     312: putfield      #301                // Field generatedKeys:Lorg/postgresql/jdbc/ResultWrapper;
+     315: aload         8
+     317: ifnull        355
+     320: aload         8
+     322: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+     325: goto          355
+     328: astore        9
+     330: aload         8
+     332: ifnull        352
+     335: aload         8
+     337: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+     340: goto          352
+     343: astore        10
+     345: aload         9
+     347: aload         10
+     349: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+     352: aload         9
+     354: athrow
+     355: goto          443
+     358: astore        11
+     360: aload_0
+     361: invokespecial #386                // Method killTimerTask:()V
+     364: aload_0
+     365: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+     368: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+     371: astore        12
+     373: aload_0
+     374: invokevirtual #170                // Method checkClosed:()V
+     377: aload_0
+     378: getfield      #342                // Field wantsGeneratedKeysAlways:Z
+     381: ifeq          400
+     384: aload_0
+     385: new           #183                // class org/postgresql/jdbc/ResultWrapper
+     388: dup
+     389: aload         7
+     391: invokevirtual #521                // Method org/postgresql/jdbc/BatchResultHandler.getGeneratedKeys:()Ljava/sql/ResultSet;
+     394: invokespecial #524                // Method org/postgresql/jdbc/ResultWrapper."<init>":(Ljava/sql/ResultSet;)V
+     397: putfield      #301                // Field generatedKeys:Lorg/postgresql/jdbc/ResultWrapper;
+     400: aload         12
+     402: ifnull        440
+     405: aload         12
+     407: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+     410: goto          440
+     413: astore        13
+     415: aload         12
+     417: ifnull        437
+     420: aload         12
+     422: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+     425: goto          437
+     428: astore        14
+     430: aload         13
+     432: aload         14
+     434: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+     437: aload         13
+     439: athrow
+     440: aload         11
+     442: athrow
+     443: aload         7
+     445: areturn
+    Exception table:
+       from    to  target type
+         195   200   213   Class java/lang/Throwable
+         220   225   228   Class java/lang/Throwable
+         288   315   328   Class java/lang/Throwable
+         335   340   343   Class java/lang/Throwable
+         240   275   358   any
+         373   400   413   Class java/lang/Throwable
+         420   425   428   Class java/lang/Throwable
+         358   360   358   any
+
+  public int[] executeBatch() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: aload_0
+       5: invokevirtual #330                // Method closeForNextExecution:()V
+       8: aload_0
+       9: getfield      #467                // Field batchStatements:Ljava/util/ArrayList;
+      12: ifnull        32
+      15: aload_0
+      16: getfield      #467                // Field batchStatements:Ljava/util/ArrayList;
+      19: invokevirtual #527                // Method java/util/ArrayList.isEmpty:()Z
+      22: ifne          32
+      25: aload_0
+      26: getfield      #474                // Field batchParameters:Ljava/util/ArrayList;
+      29: ifnonnull     36
+      32: iconst_0
+      33: newarray       int
+      35: areturn
+      36: aload_0
+      37: invokespecial #528                // Method internalExecuteBatch:()Lorg/postgresql/jdbc/BatchResultHandler;
+      40: invokevirtual #532                // Method org/postgresql/jdbc/BatchResultHandler.getUpdateCount:()[I
+      43: areturn
+
+  public void cancel() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #35                 // Field statementState:Lorg/postgresql/jdbc/StatementCancelState;
+       4: getstatic     #29                 // Field org/postgresql/jdbc/StatementCancelState.IDLE:Lorg/postgresql/jdbc/StatementCancelState;
+       7: if_acmpne     11
+      10: return
+      11: getstatic     #535                // Field STATE_UPDATER:Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater;
+      14: aload_0
+      15: getstatic     #539                // Field org/postgresql/jdbc/StatementCancelState.IN_QUERY:Lorg/postgresql/jdbc/StatementCancelState;
+      18: getstatic     #542                // Field org/postgresql/jdbc/StatementCancelState.CANCELING:Lorg/postgresql/jdbc/StatementCancelState;
+      21: invokevirtual #545                // Method java/util/concurrent/atomic/AtomicReferenceFieldUpdater.compareAndSet:(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z
+      24: ifne          28
+      27: return
+      28: aload_0
+      29: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+      32: invokevirtual #550                // Method org/postgresql/jdbc/PgConnection.obtainLock:()Lorg/postgresql/jdbc/ResourceLock;
+      35: astore_1
+      36: aload_0
+      37: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+      40: invokevirtual #553                // Method org/postgresql/jdbc/PgConnection.cancelQuery:()V
+      43: getstatic     #535                // Field STATE_UPDATER:Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater;
+      46: aload_0
+      47: getstatic     #556                // Field org/postgresql/jdbc/StatementCancelState.CANCELLED:Lorg/postgresql/jdbc/StatementCancelState;
+      50: invokevirtual #559                // Method java/util/concurrent/atomic/AtomicReferenceFieldUpdater.set:(Ljava/lang/Object;Ljava/lang/Object;)V
+      53: aload_0
+      54: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+      57: invokevirtual #563                // Method org/postgresql/jdbc/PgConnection.lockCondition:()Ljava/util/concurrent/locks/Condition;
+      60: invokeinterface #567,  1          // InterfaceMethod java/util/concurrent/locks/Condition.signalAll:()V
+      65: goto          93
+      68: astore_2
+      69: getstatic     #535                // Field STATE_UPDATER:Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater;
+      72: aload_0
+      73: getstatic     #556                // Field org/postgresql/jdbc/StatementCancelState.CANCELLED:Lorg/postgresql/jdbc/StatementCancelState;
+      76: invokevirtual #559                // Method java/util/concurrent/atomic/AtomicReferenceFieldUpdater.set:(Ljava/lang/Object;Ljava/lang/Object;)V
+      79: aload_0
+      80: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+      83: invokevirtual #563                // Method org/postgresql/jdbc/PgConnection.lockCondition:()Ljava/util/concurrent/locks/Condition;
+      86: invokeinterface #567,  1          // InterfaceMethod java/util/concurrent/locks/Condition.signalAll:()V
+      91: aload_2
+      92: athrow
+      93: aload_1
+      94: ifnull        124
+      97: aload_1
+      98: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+     101: goto          124
+     104: astore_2
+     105: aload_1
+     106: ifnull        122
+     109: aload_1
+     110: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+     113: goto          122
+     116: astore_3
+     117: aload_2
+     118: aload_3
+     119: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+     122: aload_2
+     123: athrow
+     124: return
+    Exception table:
+       from    to  target type
+          36    43    68   any
+          36    93   104   Class java/lang/Throwable
+         109   113   116   Class java/lang/Throwable
+
+  public java.sql.Connection getConnection() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+       4: areturn
+
+  public int getFetchDirection();
+    Code:
+       0: aload_0
+       1: getfield      #25                 // Field fetchdirection:I
+       4: ireturn
+
+  public int getResultSetConcurrency();
+    Code:
+       0: aload_0
+       1: getfield      #75                 // Field concurrency:I
+       4: ireturn
+
+  public int getResultSetType();
+    Code:
+       0: aload_0
+       1: getfield      #70                 // Field resultsettype:I
+       4: ireturn
+
+  public void setFetchDirection(int) throws java.sql.SQLException;
+    Code:
+       0: iload_1
+       1: tableswitch   { // 1000 to 1002
+                  1000: 28
+                  1001: 28
+                  1002: 28
+               default: 36
+          }
+      28: aload_0
+      29: iload_1
+      30: putfield      #25                 // Field fetchdirection:I
+      33: goto          64
+      36: new           #51                 // class org/postgresql/util/PSQLException
+      39: dup
+      40: ldc_w         #572                // String Invalid fetch direction constant: {0}.
+      43: iconst_1
+      44: anewarray     #2                  // class java/lang/Object
+      47: dup
+      48: iconst_0
+      49: iload_1
+      50: invokestatic  #574                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      53: aastore
+      54: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      57: getstatic     #61                 // Field org/postgresql/util/PSQLState.INVALID_PARAMETER_VALUE:Lorg/postgresql/util/PSQLState;
+      60: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+      63: athrow
+      64: return
+
+  public void setFetchSize(int) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: iload_1
+       5: ifge          29
+       8: new           #51                 // class org/postgresql/util/PSQLException
+      11: dup
+      12: ldc_w         #578                // String Fetch size must be a value greater than or equal to 0.
+      15: iconst_0
+      16: anewarray     #2                  // class java/lang/Object
+      19: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      22: getstatic     #61                 // Field org/postgresql/util/PSQLState.INVALID_PARAMETER_VALUE:Lorg/postgresql/util/PSQLState;
+      25: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+      28: athrow
+      29: aload_0
+      30: iload_1
+      31: putfield      #141                // Field fetchSize:I
+      34: return
+
+  private void startTimer();
+    Code:
+       0: aload_0
+       1: invokespecial #580                // Method cleanupTimer:()Z
+       4: pop
+       5: getstatic     #535                // Field STATE_UPDATER:Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater;
+       8: aload_0
+       9: getstatic     #539                // Field org/postgresql/jdbc/StatementCancelState.IN_QUERY:Lorg/postgresql/jdbc/StatementCancelState;
+      12: invokevirtual #559                // Method java/util/concurrent/atomic/AtomicReferenceFieldUpdater.set:(Ljava/lang/Object;Ljava/lang/Object;)V
+      15: aload_0
+      16: getfield      #406                // Field timeout:J
+      19: lconst_0
+      20: lcmp
+      21: ifne          25
+      24: return
+      25: new           #583                // class org/postgresql/jdbc/StatementCancelTimerTask
+      28: dup
+      29: aload_0
+      30: invokespecial #585                // Method org/postgresql/jdbc/StatementCancelTimerTask."<init>":(Lorg/postgresql/jdbc/PgStatement;)V
+      33: astore_1
+      34: getstatic     #586                // Field CANCEL_TIMER_UPDATER:Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater;
+      37: aload_0
+      38: aload_1
+      39: invokevirtual #559                // Method java/util/concurrent/atomic/AtomicReferenceFieldUpdater.set:(Ljava/lang/Object;Ljava/lang/Object;)V
+      42: aload_0
+      43: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+      46: aload_1
+      47: aload_0
+      48: getfield      #406                // Field timeout:J
+      51: invokevirtual #589                // Method org/postgresql/jdbc/PgConnection.addTimerTask:(Ljava/util/TimerTask;J)V
+      54: return
+
+  void cancelIfStillNeeded(java.util.TimerTask);
+    Code:
+       0: getstatic     #586                // Field CANCEL_TIMER_UPDATER:Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater;
+       3: aload_0
+       4: aload_1
+       5: aconst_null
+       6: invokevirtual #545                // Method java/util/concurrent/atomic/AtomicReferenceFieldUpdater.compareAndSet:(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z
+       9: ifne          13
+      12: return
+      13: aload_0
+      14: invokevirtual #450                // Method cancel:()V
+      17: goto          21
+      20: astore_2
+      21: return
+    Exception table:
+       from    to  target type
+           0    12    20   Class java/sql/SQLException
+          13    17    20   Class java/sql/SQLException
+
+  private boolean cleanupTimer();
+    Code:
+       0: getstatic     #586                // Field CANCEL_TIMER_UPDATER:Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater;
+       3: aload_0
+       4: invokevirtual #593                // Method java/util/concurrent/atomic/AtomicReferenceFieldUpdater.get:(Ljava/lang/Object;)Ljava/lang/Object;
+       7: checkcast     #596                // class java/util/TimerTask
+      10: astore_1
+      11: aload_1
+      12: ifnonnull     30
+      15: aload_0
+      16: getfield      #406                // Field timeout:J
+      19: lconst_0
+      20: lcmp
+      21: ifne          28
+      24: iconst_1
+      25: goto          29
+      28: iconst_0
+      29: ireturn
+      30: getstatic     #586                // Field CANCEL_TIMER_UPDATER:Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater;
+      33: aload_0
+      34: aload_1
+      35: aconst_null
+      36: invokevirtual #545                // Method java/util/concurrent/atomic/AtomicReferenceFieldUpdater.compareAndSet:(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z
+      39: ifne          44
+      42: iconst_0
+      43: ireturn
+      44: aload_1
+      45: invokevirtual #598                // Method java/util/TimerTask.cancel:()Z
+      48: pop
+      49: aload_0
+      50: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+      53: invokevirtual #600                // Method org/postgresql/jdbc/PgConnection.purgeTimerTasks:()V
+      56: iconst_1
+      57: ireturn
+
+  private void killTimerTask();
+    Code:
+       0: aload_0
+       1: invokespecial #580                // Method cleanupTimer:()Z
+       4: istore_1
+       5: iload_1
+       6: ifeq          26
+       9: getstatic     #535                // Field STATE_UPDATER:Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater;
+      12: aload_0
+      13: getstatic     #539                // Field org/postgresql/jdbc/StatementCancelState.IN_QUERY:Lorg/postgresql/jdbc/StatementCancelState;
+      16: getstatic     #29                 // Field org/postgresql/jdbc/StatementCancelState.IDLE:Lorg/postgresql/jdbc/StatementCancelState;
+      19: invokevirtual #545                // Method java/util/concurrent/atomic/AtomicReferenceFieldUpdater.compareAndSet:(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z
+      22: ifeq          26
+      25: return
+      26: iconst_0
+      27: istore_2
+      28: aload_0
+      29: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+      32: invokevirtual #550                // Method org/postgresql/jdbc/PgConnection.obtainLock:()Lorg/postgresql/jdbc/ResourceLock;
+      35: astore_3
+      36: getstatic     #535                // Field STATE_UPDATER:Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater;
+      39: aload_0
+      40: getstatic     #556                // Field org/postgresql/jdbc/StatementCancelState.CANCELLED:Lorg/postgresql/jdbc/StatementCancelState;
+      43: getstatic     #29                 // Field org/postgresql/jdbc/StatementCancelState.IDLE:Lorg/postgresql/jdbc/StatementCancelState;
+      46: invokevirtual #545                // Method java/util/concurrent/atomic/AtomicReferenceFieldUpdater.compareAndSet:(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Z
+      49: ifne          81
+      52: aload_0
+      53: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+      56: invokevirtual #563                // Method org/postgresql/jdbc/PgConnection.lockCondition:()Ljava/util/concurrent/locks/Condition;
+      59: ldc2_w        #603                // long 10l
+      62: getstatic     #605                // Field java/util/concurrent/TimeUnit.MILLISECONDS:Ljava/util/concurrent/TimeUnit;
+      65: invokeinterface #611,  4          // InterfaceMethod java/util/concurrent/locks/Condition.await:(JLjava/util/concurrent/TimeUnit;)Z
+      70: pop
+      71: goto          36
+      74: astore        4
+      76: iconst_1
+      77: istore_2
+      78: goto          36
+      81: aload_3
+      82: ifnull        117
+      85: aload_3
+      86: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      89: goto          117
+      92: astore        4
+      94: aload_3
+      95: ifnull        114
+      98: aload_3
+      99: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+     102: goto          114
+     105: astore        5
+     107: aload         4
+     109: aload         5
+     111: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+     114: aload         4
+     116: athrow
+     117: iload_2
+     118: ifeq          127
+     121: invokestatic  #617                // Method java/lang/Thread.currentThread:()Ljava/lang/Thread;
+     124: invokevirtual #623                // Method java/lang/Thread.interrupt:()V
+     127: return
+    Exception table:
+       from    to  target type
+          52    71    74   Class java/lang/InterruptedException
+          36    81    92   Class java/lang/Throwable
+          98   102   105   Class java/lang/Throwable
+
+  protected boolean getForceBinaryTransfer();
+    Code:
+       0: aload_0
+       1: getfield      #13                 // Field forceBinaryTransfers:Z
+       4: ireturn
+
+  public long getLargeUpdateCount() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+       4: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+       7: astore_1
+       8: aload_0
+       9: invokevirtual #170                // Method checkClosed:()V
+      12: aload_0
+      13: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      16: ifnull        29
+      19: aload_0
+      20: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      23: invokevirtual #194                // Method org/postgresql/jdbc/ResultWrapper.getResultSet:()Ljava/sql/ResultSet;
+      26: ifnull        43
+      29: ldc2_w        #626                // long -1l
+      32: lstore_2
+      33: aload_1
+      34: ifnull        41
+      37: aload_1
+      38: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      41: lload_2
+      42: lreturn
+      43: aload_0
+      44: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      47: invokevirtual #391                // Method org/postgresql/jdbc/ResultWrapper.getUpdateCount:()J
+      50: lstore_2
+      51: aload_1
+      52: ifnull        59
+      55: aload_1
+      56: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      59: lload_2
+      60: lreturn
+      61: astore_2
+      62: aload_1
+      63: ifnull        79
+      66: aload_1
+      67: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      70: goto          79
+      73: astore_3
+      74: aload_2
+      75: aload_3
+      76: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+      79: aload_2
+      80: athrow
+    Exception table:
+       from    to  target type
+           8    33    61   Class java/lang/Throwable
+          43    51    61   Class java/lang/Throwable
+          66    70    73   Class java/lang/Throwable
+
+  public void setLargeMaxRows(long) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #628                // Method java/lang/Object.getClass:()Ljava/lang/Class;
+       4: ldc_w         #632                // String setLargeMaxRows
+       7: invokestatic  #634                // Method org/postgresql/Driver.notImplemented:(Ljava/lang/Class;Ljava/lang/String;)Ljava/sql/SQLFeatureNotSupportedException;
+      10: athrow
+
+  public long getLargeMaxRows() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #628                // Method java/lang/Object.getClass:()Ljava/lang/Class;
+       4: ldc_w         #640                // String getLargeMaxRows
+       7: invokestatic  #634                // Method org/postgresql/Driver.notImplemented:(Ljava/lang/Class;Ljava/lang/String;)Ljava/sql/SQLFeatureNotSupportedException;
+      10: athrow
+
+  public long[] executeLargeBatch() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: aload_0
+       5: invokevirtual #330                // Method closeForNextExecution:()V
+       8: aload_0
+       9: getfield      #467                // Field batchStatements:Ljava/util/ArrayList;
+      12: ifnull        32
+      15: aload_0
+      16: getfield      #467                // Field batchStatements:Ljava/util/ArrayList;
+      19: invokevirtual #527                // Method java/util/ArrayList.isEmpty:()Z
+      22: ifne          32
+      25: aload_0
+      26: getfield      #474                // Field batchParameters:Ljava/util/ArrayList;
+      29: ifnonnull     36
+      32: iconst_0
+      33: newarray       long
+      35: areturn
+      36: aload_0
+      37: invokespecial #528                // Method internalExecuteBatch:()Lorg/postgresql/jdbc/BatchResultHandler;
+      40: invokevirtual #642                // Method org/postgresql/jdbc/BatchResultHandler.getLargeUpdateCount:()[J
+      43: areturn
+
+  public long executeLargeUpdate(java.lang.String) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+       4: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+       7: astore_2
+       8: aload_0
+       9: aload_1
+      10: iconst_4
+      11: invokevirtual #148                // Method executeWithFlags:(Ljava/lang/String;I)Z
+      14: pop
+      15: aload_0
+      16: invokevirtual #204                // Method checkNoResultUpdate:()V
+      19: aload_0
+      20: invokevirtual #646                // Method getLargeUpdateCount:()J
+      23: lstore_3
+      24: aload_2
+      25: ifnull        32
+      28: aload_2
+      29: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      32: lload_3
+      33: lreturn
+      34: astore_3
+      35: aload_2
+      36: ifnull        54
+      39: aload_2
+      40: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      43: goto          54
+      46: astore        4
+      48: aload_3
+      49: aload         4
+      51: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+      54: aload_3
+      55: athrow
+    Exception table:
+       from    to  target type
+           8    24    34   Class java/lang/Throwable
+          39    43    46   Class java/lang/Throwable
+
+  public long executeLargeUpdate(java.lang.String, int) throws java.sql.SQLException;
+    Code:
+       0: iload_2
+       1: iconst_2
+       2: if_icmpne     11
+       5: aload_0
+       6: aload_1
+       7: invokevirtual #648                // Method executeLargeUpdate:(Ljava/lang/String;)J
+      10: lreturn
+      11: iload_2
+      12: iconst_1
+      13: if_icmpne     26
+      16: aload_0
+      17: aload_1
+      18: aconst_null
+      19: checkcast     #652                // class "[Ljava/lang/String;"
+      22: invokevirtual #653                // Method executeLargeUpdate:(Ljava/lang/String;[Ljava/lang/String;)J
+      25: lreturn
+      26: new           #51                 // class org/postgresql/util/PSQLException
+      29: dup
+      30: ldc_w         #656                // String Invalid value for autoGeneratedKeys {0}
+      33: iconst_1
+      34: anewarray     #2                  // class java/lang/Object
+      37: dup
+      38: iconst_0
+      39: iload_2
+      40: invokestatic  #574                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      43: aastore
+      44: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      47: getstatic     #61                 // Field org/postgresql/util/PSQLState.INVALID_PARAMETER_VALUE:Lorg/postgresql/util/PSQLState;
+      50: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+      53: athrow
+
+  public long executeLargeUpdate(java.lang.String, int[]) throws java.sql.SQLException;
+    Code:
+       0: aload_2
+       1: ifnull        9
+       4: aload_2
+       5: arraylength
+       6: ifne          15
+       9: aload_0
+      10: aload_1
+      11: invokevirtual #648                // Method executeLargeUpdate:(Ljava/lang/String;)J
+      14: lreturn
+      15: new           #51                 // class org/postgresql/util/PSQLException
+      18: dup
+      19: ldc_w         #658                // String Returning autogenerated keys by column index is not supported.
+      22: iconst_0
+      23: anewarray     #2                  // class java/lang/Object
+      26: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      29: getstatic     #660                // Field org/postgresql/util/PSQLState.NOT_IMPLEMENTED:Lorg/postgresql/util/PSQLState;
+      32: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+      35: athrow
+
+  public long executeLargeUpdate(java.lang.String, java.lang.String[]) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+       4: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+       7: astore_3
+       8: aload_2
+       9: ifnull        35
+      12: aload_2
+      13: arraylength
+      14: ifne          35
+      17: aload_0
+      18: aload_1
+      19: invokevirtual #648                // Method executeLargeUpdate:(Ljava/lang/String;)J
+      22: lstore        4
+      24: aload_3
+      25: ifnull        32
+      28: aload_3
+      29: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      32: lload         4
+      34: lreturn
+      35: aload_0
+      36: iconst_1
+      37: putfield      #245                // Field wantsGeneratedKeysOnce:Z
+      40: aload_0
+      41: aload_1
+      42: iconst_0
+      43: aload_2
+      44: invokespecial #216                // Method executeCachedSql:(Ljava/lang/String;I[Ljava/lang/String;)Z
+      47: ifne          50
+      50: aload_0
+      51: invokevirtual #646                // Method getLargeUpdateCount:()J
+      54: lstore        4
+      56: aload_3
+      57: ifnull        64
+      60: aload_3
+      61: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      64: lload         4
+      66: lreturn
+      67: astore        4
+      69: aload_3
+      70: ifnull        89
+      73: aload_3
+      74: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      77: goto          89
+      80: astore        5
+      82: aload         4
+      84: aload         5
+      86: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+      89: aload         4
+      91: athrow
+    Exception table:
+       from    to  target type
+           8    24    67   Class java/lang/Throwable
+          35    56    67   Class java/lang/Throwable
+          73    77    80   Class java/lang/Throwable
+
+  public boolean isClosed() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #663                // Field isClosed:I
+       4: iconst_1
+       5: if_icmpne     12
+       8: iconst_1
+       9: goto          13
+      12: iconst_0
+      13: ireturn
+
+  public void setPoolable(boolean) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: aload_0
+       5: iload_1
+       6: putfield      #665                // Field poolable:Z
+       9: return
+
+  public boolean isPoolable() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: invokevirtual #170                // Method checkClosed:()V
+       4: aload_0
+       5: getfield      #665                // Field poolable:Z
+       8: ireturn
+
+  public boolean isWrapperFor(java.lang.Class<?>) throws java.sql.SQLException;
+    Code:
+       0: aload_1
+       1: aload_0
+       2: invokevirtual #628                // Method java/lang/Object.getClass:()Ljava/lang/Class;
+       5: invokevirtual #668                // Method java/lang/Class.isAssignableFrom:(Ljava/lang/Class;)Z
+       8: ireturn
+
+  public <T> T unwrap(java.lang.Class<T>) throws java.sql.SQLException;
+    Code:
+       0: aload_1
+       1: aload_0
+       2: invokevirtual #628                // Method java/lang/Object.getClass:()Ljava/lang/Class;
+       5: invokevirtual #668                // Method java/lang/Class.isAssignableFrom:(Ljava/lang/Class;)Z
+       8: ifeq          17
+      11: aload_1
+      12: aload_0
+      13: invokevirtual #674                // Method java/lang/Class.cast:(Ljava/lang/Object;)Ljava/lang/Object;
+      16: areturn
+      17: new           #319                // class java/sql/SQLException
+      20: dup
+      21: new           #677                // class java/lang/StringBuilder
+      24: dup
+      25: invokespecial #679                // Method java/lang/StringBuilder."<init>":()V
+      28: ldc_w         #680                // String Cannot unwrap to
+      31: invokevirtual #682                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      34: aload_1
+      35: invokevirtual #686                // Method java/lang/Class.getName:()Ljava/lang/String;
+      38: invokevirtual #682                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      41: invokevirtual #690                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      44: invokespecial #693                // Method java/sql/SQLException."<init>":(Ljava/lang/String;)V
+      47: athrow
+
+  public void closeOnCompletion() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: iconst_1
+       2: putfield      #369                // Field closeOnCompletion:Z
+       5: return
+
+  public boolean isCloseOnCompletion() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #369                // Field closeOnCompletion:Z
+       4: ireturn
+
+  protected void checkCompletion() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #369                // Field closeOnCompletion:Z
+       4: ifne          8
+       7: return
+       8: aload_0
+       9: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+      12: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+      15: astore_1
+      16: aload_0
+      17: getfield      #288                // Field firstUnclosedResult:Lorg/postgresql/jdbc/ResultWrapper;
+      20: astore_2
+      21: aload_2
+      22: ifnull        60
+      25: aload_2
+      26: invokevirtual #194                // Method org/postgresql/jdbc/ResultWrapper.getResultSet:()Ljava/sql/ResultSet;
+      29: astore_3
+      30: aload_3
+      31: ifnull        52
+      34: aload_3
+      35: invokeinterface #696,  1          // InterfaceMethod java/sql/ResultSet.isClosed:()Z
+      40: ifne          52
+      43: aload_1
+      44: ifnull        51
+      47: aload_1
+      48: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      51: return
+      52: aload_2
+      53: invokevirtual #185                // Method org/postgresql/jdbc/ResultWrapper.getNext:()Lorg/postgresql/jdbc/ResultWrapper;
+      56: astore_2
+      57: goto          21
+      60: aload_1
+      61: ifnull        91
+      64: aload_1
+      65: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      68: goto          91
+      71: astore_2
+      72: aload_1
+      73: ifnull        89
+      76: aload_1
+      77: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      80: goto          89
+      83: astore_3
+      84: aload_2
+      85: aload_3
+      86: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+      89: aload_2
+      90: athrow
+      91: aload_0
+      92: iconst_0
+      93: putfield      #369                // Field closeOnCompletion:Z
+      96: aload_0
+      97: invokevirtual #697                // Method close:()V
+     100: aload_0
+     101: iconst_1
+     102: putfield      #369                // Field closeOnCompletion:Z
+     105: goto          118
+     108: astore        4
+     110: aload_0
+     111: iconst_1
+     112: putfield      #369                // Field closeOnCompletion:Z
+     115: aload         4
+     117: athrow
+     118: return
+    Exception table:
+       from    to  target type
+          16    43    71   Class java/lang/Throwable
+          52    60    71   Class java/lang/Throwable
+          76    80    83   Class java/lang/Throwable
+          96   100   108   any
+         108   110   108   any
+
+  public boolean getMoreResults(int) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+       4: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+       7: astore_2
+       8: aload_0
+       9: invokevirtual #170                // Method checkClosed:()V
+      12: iload_1
+      13: iconst_1
+      14: if_icmpne     46
+      17: aload_0
+      18: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      21: ifnull        46
+      24: aload_0
+      25: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      28: invokevirtual #194                // Method org/postgresql/jdbc/ResultWrapper.getResultSet:()Ljava/sql/ResultSet;
+      31: ifnull        46
+      34: aload_0
+      35: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      38: invokevirtual #194                // Method org/postgresql/jdbc/ResultWrapper.getResultSet:()Ljava/sql/ResultSet;
+      41: invokeinterface #300,  1          // InterfaceMethod java/sql/ResultSet.close:()V
+      46: aload_0
+      47: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      50: ifnull        64
+      53: aload_0
+      54: aload_0
+      55: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      58: invokevirtual #185                // Method org/postgresql/jdbc/ResultWrapper.getNext:()Lorg/postgresql/jdbc/ResultWrapper;
+      61: putfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      64: iload_1
+      65: iconst_3
+      66: if_icmpne     73
+      69: aload_0
+      70: invokespecial #297                // Method closeUnclosedProcessedResults:()V
+      73: aload_0
+      74: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      77: ifnull        94
+      80: aload_0
+      81: getfield      #173                // Field result:Lorg/postgresql/jdbc/ResultWrapper;
+      84: invokevirtual #194                // Method org/postgresql/jdbc/ResultWrapper.getResultSet:()Ljava/sql/ResultSet;
+      87: ifnull        94
+      90: iconst_1
+      91: goto          95
+      94: iconst_0
+      95: istore_3
+      96: aload_2
+      97: ifnull        104
+     100: aload_2
+     101: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+     104: iload_3
+     105: ireturn
+     106: astore_3
+     107: aload_2
+     108: ifnull        126
+     111: aload_2
+     112: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+     115: goto          126
+     118: astore        4
+     120: aload_3
+     121: aload         4
+     123: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+     126: aload_3
+     127: athrow
+    Exception table:
+       from    to  target type
+           8    96   106   Class java/lang/Throwable
+         111   115   118   Class java/lang/Throwable
+
+  public java.sql.ResultSet getGeneratedKeys() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+       4: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+       7: astore_1
+       8: aload_0
+       9: invokevirtual #170                // Method checkClosed:()V
+      12: aload_0
+      13: getfield      #301                // Field generatedKeys:Lorg/postgresql/jdbc/ResultWrapper;
+      16: ifnull        29
+      19: aload_0
+      20: getfield      #301                // Field generatedKeys:Lorg/postgresql/jdbc/ResultWrapper;
+      23: invokevirtual #194                // Method org/postgresql/jdbc/ResultWrapper.getResultSet:()Ljava/sql/ResultSet;
+      26: ifnonnull     55
+      29: aload_0
+      30: iconst_0
+      31: anewarray     #698                // class org/postgresql/core/Field
+      34: new           #471                // class java/util/ArrayList
+      37: dup
+      38: invokespecial #473                // Method java/util/ArrayList."<init>":()V
+      41: invokevirtual #700                // Method createDriverResultSet:([Lorg/postgresql/core/Field;Ljava/util/List;)Ljava/sql/ResultSet;
+      44: astore_2
+      45: aload_1
+      46: ifnull        53
+      49: aload_1
+      50: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      53: aload_2
+      54: areturn
+      55: aload_0
+      56: getfield      #301                // Field generatedKeys:Lorg/postgresql/jdbc/ResultWrapper;
+      59: invokevirtual #194                // Method org/postgresql/jdbc/ResultWrapper.getResultSet:()Ljava/sql/ResultSet;
+      62: astore_2
+      63: aload_1
+      64: ifnull        71
+      67: aload_1
+      68: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      71: aload_2
+      72: areturn
+      73: astore_2
+      74: aload_1
+      75: ifnull        91
+      78: aload_1
+      79: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      82: goto          91
+      85: astore_3
+      86: aload_2
+      87: aload_3
+      88: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+      91: aload_2
+      92: athrow
+    Exception table:
+       from    to  target type
+           8    45    73   Class java/lang/Throwable
+          55    63    73   Class java/lang/Throwable
+          78    82    85   Class java/lang/Throwable
+
+  public int executeUpdate(java.lang.String, int) throws java.sql.SQLException;
+    Code:
+       0: iload_2
+       1: iconst_2
+       2: if_icmpne     11
+       5: aload_0
+       6: aload_1
+       7: invokevirtual #704                // Method executeUpdate:(Ljava/lang/String;)I
+      10: ireturn
+      11: iload_2
+      12: iconst_1
+      13: if_icmpne     26
+      16: aload_0
+      17: aload_1
+      18: aconst_null
+      19: checkcast     #652                // class "[Ljava/lang/String;"
+      22: invokevirtual #708                // Method executeUpdate:(Ljava/lang/String;[Ljava/lang/String;)I
+      25: ireturn
+      26: new           #51                 // class org/postgresql/util/PSQLException
+      29: dup
+      30: ldc_w         #656                // String Invalid value for autoGeneratedKeys {0}
+      33: iconst_1
+      34: anewarray     #2                  // class java/lang/Object
+      37: dup
+      38: iconst_0
+      39: iload_2
+      40: invokestatic  #574                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      43: aastore
+      44: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      47: getstatic     #61                 // Field org/postgresql/util/PSQLState.INVALID_PARAMETER_VALUE:Lorg/postgresql/util/PSQLState;
+      50: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+      53: athrow
+
+  public int executeUpdate(java.lang.String, int[]) throws java.sql.SQLException;
+    Code:
+       0: aload_2
+       1: ifnull        9
+       4: aload_2
+       5: arraylength
+       6: ifne          15
+       9: aload_0
+      10: aload_1
+      11: invokevirtual #704                // Method executeUpdate:(Ljava/lang/String;)I
+      14: ireturn
+      15: new           #51                 // class org/postgresql/util/PSQLException
+      18: dup
+      19: ldc_w         #658                // String Returning autogenerated keys by column index is not supported.
+      22: iconst_0
+      23: anewarray     #2                  // class java/lang/Object
+      26: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      29: getstatic     #660                // Field org/postgresql/util/PSQLState.NOT_IMPLEMENTED:Lorg/postgresql/util/PSQLState;
+      32: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+      35: athrow
+
+  public int executeUpdate(java.lang.String, java.lang.String[]) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+       4: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+       7: astore_3
+       8: aload_2
+       9: ifnull        35
+      12: aload_2
+      13: arraylength
+      14: ifne          35
+      17: aload_0
+      18: aload_1
+      19: invokevirtual #704                // Method executeUpdate:(Ljava/lang/String;)I
+      22: istore        4
+      24: aload_3
+      25: ifnull        32
+      28: aload_3
+      29: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      32: iload         4
+      34: ireturn
+      35: aload_0
+      36: iconst_1
+      37: putfield      #245                // Field wantsGeneratedKeysOnce:Z
+      40: aload_0
+      41: aload_1
+      42: iconst_0
+      43: aload_2
+      44: invokespecial #216                // Method executeCachedSql:(Ljava/lang/String;I[Ljava/lang/String;)Z
+      47: ifne          50
+      50: aload_0
+      51: invokevirtual #207                // Method getUpdateCount:()I
+      54: istore        4
+      56: aload_3
+      57: ifnull        64
+      60: aload_3
+      61: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      64: iload         4
+      66: ireturn
+      67: astore        4
+      69: aload_3
+      70: ifnull        89
+      73: aload_3
+      74: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      77: goto          89
+      80: astore        5
+      82: aload         4
+      84: aload         5
+      86: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+      89: aload         4
+      91: athrow
+    Exception table:
+       from    to  target type
+           8    24    67   Class java/lang/Throwable
+          35    56    67   Class java/lang/Throwable
+          73    77    80   Class java/lang/Throwable
+
+  public boolean execute(java.lang.String, int) throws java.sql.SQLException;
+    Code:
+       0: iload_2
+       1: iconst_2
+       2: if_icmpne     11
+       5: aload_0
+       6: aload_1
+       7: invokevirtual #711                // Method execute:(Ljava/lang/String;)Z
+      10: ireturn
+      11: iload_2
+      12: iconst_1
+      13: if_icmpne     26
+      16: aload_0
+      17: aload_1
+      18: aconst_null
+      19: checkcast     #652                // class "[Ljava/lang/String;"
+      22: invokevirtual #714                // Method execute:(Ljava/lang/String;[Ljava/lang/String;)Z
+      25: ireturn
+      26: new           #51                 // class org/postgresql/util/PSQLException
+      29: dup
+      30: ldc_w         #656                // String Invalid value for autoGeneratedKeys {0}
+      33: iconst_1
+      34: anewarray     #2                  // class java/lang/Object
+      37: dup
+      38: iconst_0
+      39: iload_2
+      40: invokestatic  #574                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      43: aastore
+      44: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      47: getstatic     #61                 // Field org/postgresql/util/PSQLState.INVALID_PARAMETER_VALUE:Lorg/postgresql/util/PSQLState;
+      50: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+      53: athrow
+
+  public boolean execute(java.lang.String, int[]) throws java.sql.SQLException;
+    Code:
+       0: aload_2
+       1: ifnull        15
+       4: aload_2
+       5: arraylength
+       6: ifne          15
+       9: aload_0
+      10: aload_1
+      11: invokevirtual #711                // Method execute:(Ljava/lang/String;)Z
+      14: ireturn
+      15: new           #51                 // class org/postgresql/util/PSQLException
+      18: dup
+      19: ldc_w         #658                // String Returning autogenerated keys by column index is not supported.
+      22: iconst_0
+      23: anewarray     #2                  // class java/lang/Object
+      26: invokestatic  #55                 // Method org/postgresql/util/GT.tr:(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;
+      29: getstatic     #660                // Field org/postgresql/util/PSQLState.NOT_IMPLEMENTED:Lorg/postgresql/util/PSQLState;
+      32: invokespecial #67                 // Method org/postgresql/util/PSQLException."<init>":(Ljava/lang/String;Lorg/postgresql/util/PSQLState;)V
+      35: athrow
+
+  public boolean execute(java.lang.String, java.lang.String[]) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #19                 // Field lock:Lorg/postgresql/jdbc/ResourceLock;
+       4: invokevirtual #144                // Method org/postgresql/jdbc/ResourceLock.obtain:()Lorg/postgresql/jdbc/ResourceLock;
+       7: astore_3
+       8: aload_2
+       9: ifnull        35
+      12: aload_2
+      13: arraylength
+      14: ifne          35
+      17: aload_0
+      18: aload_1
+      19: invokevirtual #711                // Method execute:(Ljava/lang/String;)Z
+      22: istore        4
+      24: aload_3
+      25: ifnull        32
+      28: aload_3
+      29: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      32: iload         4
+      34: ireturn
+      35: aload_0
+      36: iconst_1
+      37: putfield      #245                // Field wantsGeneratedKeysOnce:Z
+      40: aload_0
+      41: aload_1
+      42: iconst_0
+      43: aload_2
+      44: invokespecial #216                // Method executeCachedSql:(Ljava/lang/String;I[Ljava/lang/String;)Z
+      47: istore        4
+      49: aload_3
+      50: ifnull        57
+      53: aload_3
+      54: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      57: iload         4
+      59: ireturn
+      60: astore        4
+      62: aload_3
+      63: ifnull        82
+      66: aload_3
+      67: invokevirtual #161                // Method org/postgresql/jdbc/ResourceLock.close:()V
+      70: goto          82
+      73: astore        5
+      75: aload         4
+      77: aload         5
+      79: invokevirtual #166                // Method java/lang/Throwable.addSuppressed:(Ljava/lang/Throwable;)V
+      82: aload         4
+      84: athrow
+    Exception table:
+       from    to  target type
+           8    24    60   Class java/lang/Throwable
+          35    49    60   Class java/lang/Throwable
+          66    70    73   Class java/lang/Throwable
+
+  public int getResultSetHoldability() throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: getfield      #107                // Field rsHoldability:I
+       4: ireturn
+
+  public java.sql.ResultSet createDriverResultSet(org.postgresql.core.Field[], java.util.List<org.postgresql.core.Tuple>) throws java.sql.SQLException;
+    Code:
+       0: aload_0
+       1: aconst_null
+       2: aload_1
+       3: aload_2
+       4: aconst_null
+       5: invokevirtual #717                // Method createResultSet:(Lorg/postgresql/core/Query;[Lorg/postgresql/core/Field;Ljava/util/List;Lorg/postgresql/core/ResultCursor;)Ljava/sql/ResultSet;
+       8: areturn
+
+  protected void transformQueriesAndParameters() throws java.sql.SQLException;
+    Code:
+       0: return
+
+  public void setAdaptiveFetch(boolean);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #380                // Field adaptiveFetch:Z
+       5: return
+
+  public boolean getAdaptiveFetch();
+    Code:
+       0: aload_0
+       1: getfield      #380                // Field adaptiveFetch:Z
+       4: ireturn
+
+  protected org.postgresql.jdbc.TimestampUtils getTimestampUtils();
+    Code:
+       0: aload_0
+       1: getfield      #721                // Field timestampUtils:Lorg/postgresql/jdbc/TimestampUtils;
+       4: ifnonnull     52
+       7: aload_0
+       8: new           #725                // class org/postgresql/jdbc/TimestampUtils
+      11: dup
+      12: aload_0
+      13: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+      16: invokevirtual #224                // Method org/postgresql/jdbc/PgConnection.getQueryExecutor:()Lorg/postgresql/core/QueryExecutor;
+      19: invokeinterface #727,  1          // InterfaceMethod org/postgresql/core/QueryExecutor.getIntegerDateTimes:()Z
+      24: ifne          31
+      27: iconst_1
+      28: goto          32
+      31: iconst_0
+      32: new           #730                // class org/postgresql/jdbc/QueryExecutorTimeZoneProvider
+      35: dup
+      36: aload_0
+      37: getfield      #41                 // Field connection:Lorg/postgresql/jdbc/PgConnection;
+      40: invokevirtual #224                // Method org/postgresql/jdbc/PgConnection.getQueryExecutor:()Lorg/postgresql/core/QueryExecutor;
+      43: invokespecial #732                // Method org/postgresql/jdbc/QueryExecutorTimeZoneProvider."<init>":(Lorg/postgresql/core/QueryExecutor;)V
+      46: invokespecial #735                // Method org/postgresql/jdbc/TimestampUtils."<init>":(ZLorg/postgresql/core/Provider;)V
+      49: putfield      #721                // Field timestampUtils:Lorg/postgresql/jdbc/TimestampUtils;
+      52: aload_0
+      53: getfield      #721                // Field timestampUtils:Lorg/postgresql/jdbc/TimestampUtils;
+      56: areturn
+
+  static {};
+    Code:
+       0: iconst_0
+       1: anewarray     #477                // class java/lang/String
+       4: putstatic     #212                // Field NO_RETURNING_COLUMNS:[Ljava/lang/String;
+       7: ldc_w         #738                // String org.postgresql.forceBinary
+      10: invokestatic  #740                // Method java/lang/Boolean.getBoolean:(Ljava/lang/String;)Z
+      13: putstatic     #7                  // Field DEFAULT_FORCE_BINARY_TRANSFERS:Z
+      16: ldc           #8                  // class org/postgresql/jdbc/PgStatement
+      18: ldc_w         #596                // class java/util/TimerTask
+      21: ldc_w         #745                // String cancelTimerTask
+      24: invokestatic  #747                // Method java/util/concurrent/atomic/AtomicReferenceFieldUpdater.newUpdater:(Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/String;)Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater;
+      27: putstatic     #586                // Field CANCEL_TIMER_UPDATER:Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater;
+      30: ldc           #8                  // class org/postgresql/jdbc/PgStatement
+      32: ldc           #30                 // class org/postgresql/jdbc/StatementCancelState
+      34: ldc_w         #751                // String statementState
+      37: invokestatic  #747                // Method java/util/concurrent/atomic/AtomicReferenceFieldUpdater.newUpdater:(Ljava/lang/Class;Ljava/lang/Class;Ljava/lang/String;)Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater;
+      40: putstatic     #535                // Field STATE_UPDATER:Ljava/util/concurrent/atomic/AtomicReferenceFieldUpdater;
+      43: ldc           #8                  // class org/postgresql/jdbc/PgStatement
+      45: ldc_w         #752                // String isClosed
+      48: invokestatic  #753                // Method java/util/concurrent/atomic/AtomicIntegerFieldUpdater.newUpdater:(Ljava/lang/Class;Ljava/lang/String;)Ljava/util/concurrent/atomic/AtomicIntegerFieldUpdater;
+      51: putstatic     #440                // Field IS_CLOSED_UPDATER:Ljava/util/concurrent/atomic/AtomicIntegerFieldUpdater;
+      54: return
+}

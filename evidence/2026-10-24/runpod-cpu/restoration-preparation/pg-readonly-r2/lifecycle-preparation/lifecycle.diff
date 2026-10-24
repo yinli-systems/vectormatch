@@ -1,0 +1,36 @@
+--- runtime/cloud/cpu-20261024/pg-recovery-preparation/pg_recovery.py	2026-10-24 08:54:35
++++ runtime/cloud/cpu-20261024/pg-recovery-preparation/lifecycle-r2/pg_recovery.py	2026-10-24 09:15:05
+@@ -26,13 +26,13 @@
+ 
+ HERE = Path(__file__).resolve().parent
+ BASELINE = HERE / 'expected-baseline.json'
+-BASELINE_SHA = '7a517d88b2759c1379f61b2f210176d96d67d4375848561fe948a09c90b5bff5'
++BASELINE_SHA = '060ae81fe941b41204ea89070aa0896a7f88ece9a22915cd77c7c1e6048f5fcd'
+ HOST = 'ed6c0673f5cb'
+ PGDATA = Path('/opt/vectormatch-cpu/restorations/original-native-r1/node2/runtime/postgres18')
+ BINROOT = Path('/opt/vectormatch-cpu/preparation/pg18-loader-probe-r1/binaries')
+ CONTROL_TOOL = Path('/opt/vectormatch-cpu/tool-builds/pg18-two-tools-r3/install/bin/pg_controldata')
+ CONTROL_TOOL_SHA = '0b9c8705202342b508bbe3944f151338a11cfa2ca4f62c1e014de5f0a5ecf26b'
+-JOB = Path('/opt/vectormatch-cpu/preparation/pg-readonly-recovery-r1')
++JOB = Path('/opt/vectormatch-cpu/preparation/pg-readonly-recovery-r2')
+ ACCOUNT = 'vectormatch-pg'
+ UID = GID = 963
+ PORT = 15432
+@@ -81,7 +81,7 @@
+     require(sha(BASELINE) == BASELINE_SHA, 'Baseline SHA mismatch')
+     d = json.loads(BASELINE.read_text())
+     require(d['pgData'] == str(PGDATA) and d['binaryRoot'] == str(BINROOT), 'Fixed path mismatch')
+-    require(d['pgFilesCount'] == 990 and len(d['pgFiles']) == 990, 'Wrong original PG inventory')
++    require(d['pgFilesCount'] == 989 and len(d['pgFiles']) == 989, 'Wrong original PG inventory')
+     return d
+ 
+ 
+@@ -416,7 +416,7 @@
+         ('ssl', 'off'), ('logging_collector', 'off'), ('log_destination', 'stderr'), ('log_statement', 'none'),
+         ('log_connections', 'on'), ('log_disconnections', 'on'), ('lc_messages', 'C'),
+         ('shared_preload_libraries', ''), ('session_preload_libraries', ''), ('local_preload_libraries', ''),
+-        ('archive_mode', 'off'), ('archive_command', ''), ('restore_command', ''), ('external_pid_file', '')]
++        ('archive_mode', 'off'), ('archive_command', ''), ('restore_command', '')]
+     out = [str(BINROOT / 'bin/postgres'), '-D', str(PGDATA)]
+     for key, value in settings:
+         out.extend(['-c', key + '=' + value])

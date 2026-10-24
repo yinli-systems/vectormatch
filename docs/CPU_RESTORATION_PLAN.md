@@ -6,7 +6,9 @@
 
 第一次PG-only实际探针已启动原物理库，随后定向SIGINT正常关闭。JDBC事务实际只读，但readOnlyMode=always在切换autocommit时将会话默认只读设置改为off，触发首个检查断言；本次未验证ledger或cursor。原始失败、完整停止态副本及物理差异在[首次探针证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg-readonly-r1/README.md)。PG启动产生预期内部写入，当前989文件的派生基线另存，不能再要求它逐字节等于启动前备份。
 
-另已完整离线解码三份原备份的最新service checkpoint，canonical及outbox字节全相等：command4539/event6106/market6086/exported6106/pending0。[离线证明及在线恢复计划](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-cluster-probe-preparation-r1/RESTORATION_PROBE_PLAN.md)区分了checkpoint、尾部重放和leader回复；它不证明CPU上三节点已恢复。locale、数据库内容/cursor与source lineage、三节点恢复、HTTP及WS仍未验收。
+第二次独立PG-only探针已通过：6214 events、6194 market events、1551 trades，cursor、逐条payload SHA、序号、公开view及记录的collation版本检查均通过；root独立解析所有原始事件并复现ledger摘要。实际会话/事务只读及fsync、synchronous_commit、full_page_writes均验证为on；正常关闭和完整停止态归档完成。[第二次探针及独立读回](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg-readonly-r2/README.md)。这仅证明PG内部一致性。**PG实际比旧checkpoint多108事件**，此前r1在线probe的固定6106/hash断言已不适用于最终tip，尚未执行；必须另准备尾部重放后验证，不能强置cursor或把旧checkpoint当最终恢复结果。
+
+另已完整离线解码三份原备份的最新service checkpoint，canonical及outbox字节全相等：command4539/event6106/market6086/exported6106/pending0。[离线证明及原在线恢复计划](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-cluster-probe-preparation-r1/RESTORATION_PROBE_PLAN.md)区分了checkpoint、尾部重放和leader回复；其固定tip预期须按第二次PG探针的新证据修订，它不证明CPU上三节点已恢复。source lineage对账、三节点尾部重放、HTTP及WS仍未验收。
 
 新增准备：固定官方18.6源码的两个工具已在CPU原生构建成功，20项离线守卫及每个原生命令/输出版本/格式宏检查通过；[r3证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg18-native-tools-r3/README.md)保留源码/二进制SHA、全部日志和前两次失败的原因。`pg_config`描述此次工具构建，不描述原Zonky服务器。依赖安装没有升级/移除既有包，未启动数据库。源码来源在[工具准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg18-tools-source/README.md)。无损稀疏解包器此前已在空闲CPU通过10项微型合成文件测试，含实际Linux稀疏分配与完整字节读回；[Linux守卫](../evidence/2026-10-24/runpod-cpu/restoration-preparation/sparse-native-guards-r1/receipt.json)和本次完整副本检查分开保留。它们不是运行中数据库或业务恢复证明。
 

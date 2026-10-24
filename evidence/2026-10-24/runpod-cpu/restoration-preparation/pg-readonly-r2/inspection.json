@@ -1,0 +1,195 @@
+{
+  "scope" : "Existing physical clone; fixed read-only repeatable-read SQL snapshot. Not cluster/canonical reconciliation or performance evidence.",
+  "jdbcReadOnlyMode" : "transaction",
+  "clusterId" : "runpod-cloud-20261023-01",
+  "applicationSource" : "e1db2e755a834234efb60b7a1ed291b31ce33c16",
+  "initializedSchema" : false,
+  "createdDatabase" : false,
+  "serverMayPerformInternalPhysicalWrites" : true,
+  "settings" : {
+    "build_version" : "PostgreSQL 18.6 on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 7.5.0-3ubuntu1~18.04) 7.5.0, 64-bit",
+    "database_name" : "postgres",
+    "database_user" : "vectormatch",
+    "server_version_num" : "180006",
+    "transaction_read_only" : "on",
+    "transaction_isolation" : "repeatable read",
+    "fsync" : "on",
+    "synchronous_commit" : "on",
+    "data_directory" : "/opt/vectormatch-cpu/restorations/original-native-r1/node2/runtime/postgres18",
+    "listen_addresses" : "127.0.0.1",
+    "port" : "15432",
+    "default_transaction_read_only" : "on",
+    "lc_messages" : "C",
+    "full_page_writes" : "on",
+    "in_recovery" : false
+  },
+  "controlSystem" : {
+    "pg_control_version" : 1800,
+    "catalog_version_no" : 202506291,
+    "system_identifier" : "7699920832388303129"
+  },
+  "databaseLocales" : [ {
+    "datname" : "postgres",
+    "encoding" : "UTF8",
+    "provider" : "c",
+    "datcollate" : "C",
+    "datctype" : "C",
+    "datlocale" : null,
+    "datcollversion" : null,
+    "actual_version" : null
+  }, {
+    "datname" : "template0",
+    "encoding" : "UTF8",
+    "provider" : "c",
+    "datcollate" : "C",
+    "datctype" : "C",
+    "datlocale" : null,
+    "datcollversion" : null,
+    "actual_version" : null
+  }, {
+    "datname" : "template1",
+    "encoding" : "UTF8",
+    "provider" : "c",
+    "datcollate" : "C",
+    "datctype" : "C",
+    "datlocale" : null,
+    "datcollversion" : null,
+    "actual_version" : null
+  } ],
+  "databaseCollationVersionsMatch" : true,
+  "installedCollationVersionMismatches" : [ ],
+  "schema" : [ {
+    "table_name" : "cursors",
+    "column_name" : "cluster_id",
+    "data_type" : "text",
+    "is_nullable" : "NO",
+    "character_maximum_length" : null
+  }, {
+    "table_name" : "cursors",
+    "column_name" : "event_seq",
+    "data_type" : "bigint",
+    "is_nullable" : "NO",
+    "character_maximum_length" : null
+  }, {
+    "table_name" : "cursors",
+    "column_name" : "market_seq",
+    "data_type" : "bigint",
+    "is_nullable" : "NO",
+    "character_maximum_length" : null
+  }, {
+    "table_name" : "cursors",
+    "column_name" : "events_stored",
+    "data_type" : "bigint",
+    "is_nullable" : "NO",
+    "character_maximum_length" : null
+  }, {
+    "table_name" : "cursors",
+    "column_name" : "trades_stored",
+    "data_type" : "bigint",
+    "is_nullable" : "NO",
+    "character_maximum_length" : null
+  }, {
+    "table_name" : "cursors",
+    "column_name" : "batches_committed",
+    "data_type" : "bigint",
+    "is_nullable" : "NO",
+    "character_maximum_length" : null
+  }, {
+    "table_name" : "cursors",
+    "column_name" : "source_last_event_seq",
+    "data_type" : "bigint",
+    "is_nullable" : "NO",
+    "character_maximum_length" : null
+  }, {
+    "table_name" : "cursors",
+    "column_name" : "updated_at",
+    "data_type" : "timestamp with time zone",
+    "is_nullable" : "NO",
+    "character_maximum_length" : null
+  }, {
+    "table_name" : "events",
+    "column_name" : "cluster_id",
+    "data_type" : "text",
+    "is_nullable" : "NO",
+    "character_maximum_length" : null
+  }, {
+    "table_name" : "events",
+    "column_name" : "event_seq",
+    "data_type" : "bigint",
+    "is_nullable" : "NO",
+    "character_maximum_length" : null
+  }, {
+    "table_name" : "events",
+    "column_name" : "market_seq",
+    "data_type" : "bigint",
+    "is_nullable" : "NO",
+    "character_maximum_length" : null
+  }, {
+    "table_name" : "events",
+    "column_name" : "event_type",
+    "data_type" : "text",
+    "is_nullable" : "NO",
+    "character_maximum_length" : null
+  }, {
+    "table_name" : "events",
+    "column_name" : "payload",
+    "data_type" : "jsonb",
+    "is_nullable" : "NO",
+    "character_maximum_length" : null
+  }, {
+    "table_name" : "events",
+    "column_name" : "payload_sha256",
+    "data_type" : "character",
+    "is_nullable" : "NO",
+    "character_maximum_length" : 64
+  }, {
+    "table_name" : "events",
+    "column_name" : "stored_at",
+    "data_type" : "timestamp with time zone",
+    "is_nullable" : "NO",
+    "character_maximum_length" : null
+  } ],
+  "indexes" : [ {
+    "tablename" : "cursors",
+    "indexname" : "cursors_pkey",
+    "indexdef" : "CREATE UNIQUE INDEX cursors_pkey ON vm_projection.cursors USING btree (cluster_id)"
+  }, {
+    "tablename" : "events",
+    "indexname" : "events_pkey",
+    "indexdef" : "CREATE UNIQUE INDEX events_pkey ON vm_projection.events USING btree (cluster_id, event_seq)"
+  }, {
+    "tablename" : "events",
+    "indexname" : "events_public_sequence",
+    "indexdef" : "CREATE UNIQUE INDEX events_public_sequence ON vm_projection.events USING btree (cluster_id, market_seq) WHERE (market_seq > 0)"
+  } ],
+  "allLineageCursors" : [ {
+    "cluster_id" : "runpod-cloud-20261023-01",
+    "event_seq" : 6214,
+    "market_seq" : 6194,
+    "events_stored" : 6214,
+    "trades_stored" : 1551,
+    "batches_committed" : 535,
+    "source_last_event_seq" : 6214,
+    "updated_at" : "2026-10-23 21:37:25.698463+00"
+  } ],
+  "eventsByLineage" : [ {
+    "cluster_id" : "runpod-cloud-20261023-01",
+    "rows" : 6214,
+    "min_event_seq" : 1,
+    "max_event_seq" : 6214,
+    "max_market_seq" : 6194
+  } ],
+  "ledgerEventCount" : 6214,
+  "ledgerMarketCount" : 6194,
+  "ledgerTradeCount" : 1551,
+  "framedLedgerSha256" : "5a438910c3c1c7af02dd9e494754341cd03664cf315eaec68d56824e69a24226",
+  "framedLedgerDefinition" : "Ordered rows: BE i64 eventSeq,i64 marketSeq,i32 ASCII eventType length,eventType bytes,32 raw stored payload SHA bytes. JSONB text SHA is not original Jackson SHA.",
+  "eventsRawSha256" : "7973ca109ac0e3fff36c2f256da41c180a159a037397e0bccc4d015df37d7cd9",
+  "publicMarketView" : {
+    "maxOrZero" : 6194,
+    "minOrZero" : 1,
+    "rows" : 6194
+  },
+  "passed" : true,
+  "sourceClusterCanonicalCompared" : false
+}
