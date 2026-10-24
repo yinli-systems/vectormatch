@@ -1,0 +1,117 @@
+--- baseline/test_stage_launch.py
++++ test_stage_launch.py
+@@ -5,8 +5,8 @@
+ """
+ import copy,hashlib,io,json,pathlib,shutil,sys,tarfile,tempfile,types,unittest
+ from unittest import mock
+-import stage_event_fetch as stage
+-import launch_event_fetch as launch
++import stage_read_window32 as stage
++import launch_read_window32 as launch
+ 
+ HERE=pathlib.Path(__file__).resolve().parent
+ BASE=HERE.parent
+@@ -14,7 +14,7 @@
+ class Fixture(unittest.TestCase):
+  def setUp(self):
+   self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.root=pathlib.Path(self.tmp.name).resolve();self.source=self.root/'prep';self.source.mkdir()
+-  actual=BASE/'cpu-event-fetch-cloud-preparation-r1';self.frozen=json.loads((actual/'LOCAL_PREPARATION_FROZEN.json').read_text())
++  actual=BASE/'cpu-read-window32-cloud-preparation-r2';self.frozen=json.loads((actual/'LOCAL_PREPARATION_FROZEN.json').read_text())
+   for name in self.frozen['files']:
+    p=self.source/name;p.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(actual/name,p)
+   shutil.copy2(actual/'LOCAL_PREPARATION_FROZEN.json',self.source/'LOCAL_PREPARATION_FROZEN.json')
+@@ -26,13 +26,13 @@
+   proofs={};refs={}
+   for key in stage.PROOFS:
+    value={'syntheticFixtureOnly':True,'proof':key}
+-   if key=='eventFetchRawParserFreeze':
+-    p=self.root/(key+'.json');shutil.copy2(BASE/'event-fetch-long-parser-preparation-r1/SOURCE_FROZEN.json',p)
++   if key=='readWindow32RawParserFreeze':
++    p=self.root/(key+'.json');shutil.copy2(BASE/'read-window32-long-parser-preparation-r1/SOURCE_FROZEN.json',p)
+    else:p=self.write(self.root/(key+'.json'),value)
+    proofs[key]=self.ref(p);refs[key]={'path':stage.PREP+'/release/proofs/'+key+'.json','bytes':p.stat().st_size,'sha256':stage.sha(p)}
+-  self.ready={'ownerPollValidatorSha256':stage.OWNER_VALIDATOR_SHA,'releaseReady':True,'sourceCommit':stage.SOURCE_COMMIT,'controllerSha256':stage.sha(self.source/'cpu_event_fetch_abab.py'),'codeFingerprint':stage.CODE_SHA,'protectedOriginalState':{'manifest':stage.PREP+'/release/current-stopped-original-state.json','manifestSha256':stage.PROTECTED_SHA},'artifacts':artifacts,'evidenceReferences':refs}
++  self.ready={'ownerPollValidatorSha256':stage.OWNER_VALIDATOR_SHA,'releaseReady':True,'sourceCommit':stage.SOURCE_COMMIT,'controllerSha256':stage.sha(self.source/'cpu_read_window32_abab.py'),'codeFingerprint':stage.CODE_SHA,'protectedOriginalState':{'manifest':stage.PREP+'/release/current-stopped-original-state.json','manifestSha256':stage.PROTECTED_SHA},'artifacts':artifacts,'evidenceReferences':refs}
+   ready=self.write(self.root/'ready.json',self.ready)
+-  self.gate={'schemaVersion':2,'scope':'ROOT_VERIFIED_EVENT_FETCH_CPU_RELEASE','rootVerified':True,'sourceUnitMetadataAndParserVerified':True,'firstCloudArmQualifiesNewArtifactFunctional':True,'newNativeBusinessQualifiedBeforeArm1':False,'sourceCommit':stage.SOURCE_COMMIT,'controllerSha256':self.ready['controllerSha256'],'protectedManifestSha256':stage.PROTECTED_SHA,'readyRelease':self.ref(ready),'preparationDirectory':str(self.source),'preparation':self.ref(self.source/'LOCAL_PREPARATION_FROZEN.json'),'protectedManifest':self.ref(old/'candidate/release/current-stopped-original-state.json'),'artifacts':local_artifacts,'proofs':proofs,'linuxGuardCommands':self.groups,'remoteHelper':self.ref(BASE/'remote.py')}
++  self.gate={'schemaVersion':3,'scope':'ROOT_VERIFIED_READ_WINDOW32_CPU_RELEASE','rootVerified':True,'sourceUnitMetadataAndParserVerified':True,'firstCloudArmQualifiesNewArtifactFunctional':True,'newNativeBusinessQualifiedBeforeArm1':False,'sourceCommit':stage.SOURCE_COMMIT,'controllerSha256':self.ready['controllerSha256'],'protectedManifestSha256':stage.PROTECTED_SHA,'readyRelease':self.ref(ready),'preparationDirectory':str(self.source),'preparation':self.ref(self.source/'LOCAL_PREPARATION_FROZEN.json'),'protectedManifest':self.ref(old/'candidate/release/current-stopped-original-state.json'),'artifacts':local_artifacts,'proofs':proofs,'linuxGuardCommands':self.groups,'remoteHelper':self.ref(BASE/'remote.py')}
+   self.semantic=types.SimpleNamespace(validate_release=mock.Mock(),validate_prerequisite_proofs=mock.Mock())
+  def write(self,p,value):p.write_text(json.dumps(value));return p
+  def ref(self,p):return {'path':str(p),'sha256':stage.sha(p)}
+@@ -44,11 +44,11 @@
+  def rewrite_ready(self):
+   p=self.write(self.root/'ready.json',self.ready);self.gate['readyRelease']=self.ref(p)
+  def test_complete_synthetic_fixture_closes_files_and_calls_shared_semantic_gate(self):
+-  got=self.validate();self.assertEqual(39,len(got['rows']));self.assertEqual(self.groups,got['guardGroups']);self.semantic.validate_release.assert_called_once_with(self.ready);self.semantic.validate_prerequisite_proofs.assert_called_once();self.assertEqual(stage.PROOFS,set(self.semantic.validate_prerequisite_proofs.call_args.args[0]))
++  got=self.validate();self.assertEqual(55,len(got['rows']));self.assertEqual(self.groups,got['guardGroups']);self.semantic.validate_release.assert_called_once_with(self.ready);self.semantic.validate_prerequisite_proofs.assert_called_once();self.assertEqual(stage.PROOFS,set(self.semantic.validate_prerequisite_proofs.call_args.args[0]))
+  def test_historical_a918_parser_cannot_replace_final_r2_stream_closure(self):
+   path=self.root/'historical-parser.json';shutil.copy2(BASE/'owner-poll-native-preparation-r1/PARSER_SOURCE_FROZEN.json',path)
+-  self.gate['proofs']['eventFetchRawParserFreeze']=self.ref(path)
+-  self.ready['evidenceReferences']['eventFetchRawParserFreeze'].update(bytes=path.stat().st_size,sha256=stage.sha(path));self.rewrite_ready()
++  self.gate['proofs']['readWindow32RawParserFreeze']=self.ref(path)
++  self.ready['evidenceReferences']['readWindow32RawParserFreeze'].update(bytes=path.stat().st_size,sha256=stage.sha(path));self.rewrite_ready()
+   self.rejected();self.semantic.validate_release.assert_not_called()
+  def test_false_template_root_rejected_before_any_execution(self):
+   self.gate['rootVerified']=False;self.rejected();self.semantic.validate_release.assert_not_called()
+@@ -60,7 +60,7 @@
+    with self.subTest(key=key):
+     old=self.ready[key];self.ready[key]=value;self.rewrite_ready();self.rejected();self.ready[key]=old
+  def test_modified_frozen_source_rejected(self):
+-  p=self.source/'cpu_event_fetch_abab.py';p.write_bytes(p.read_bytes()+b'# changed\n');self.rejected()
++  p=self.source/'cpu_read_window32_abab.py';p.write_bytes(p.read_bytes()+b'# changed\n');self.rejected()
+  def test_frozen_source_cannot_smuggle_release_path(self):
+   self.frozen['files']['release/unsafe.json']=next(iter(self.frozen['files'].values()));p=self.write(self.source/'LOCAL_PREPARATION_FROZEN.json',self.frozen);self.gate['preparation']=self.ref(p);self.rejected()
+  def test_changed_protected_manifest_and_wrong_target_rejected(self):
+@@ -88,8 +88,8 @@
+ 
+ class PureContract(unittest.TestCase):
+  def test_final_guard_groups_require_controller_and_authoritative_parser(self):
+-  groups=[{'scope':'controller','cwd':'.','modules':['test_event_delta'],'tests':19},{'scope':'long-parser','cwd':'long-parser','modules':['test_long_contract','test_phase_baseline','test_event_fetch'],'tests':42}]
+-  rows={name:None for name in ('test_event_delta.py','long-parser/test_long_contract.py','long-parser/test_phase_baseline.py','long-parser/test_event_fetch.py')}
++  groups=[{'scope':'controller','cwd':'.','modules':['test_read_window32_delta'],'tests':27},{'scope':'long-parser','cwd':'long-parser','modules':['test_long_contract','test_phase_baseline','test_read_window32'],'tests':51}]
++  rows={name:None for name in ('test_read_window32_delta.py','long-parser/test_long_contract.py','long-parser/test_phase_baseline.py','long-parser/test_read_window32.py')}
+   self.assertEqual(groups,stage.validate_guard_groups(groups,rows))
+   for mutate in (lambda x:x.pop(),lambda x:x[1].update(cwd='../parser'),lambda x:x[1].update(modules=['test_missing']),lambda x:x[1].update(modules=['test_read_phase_audit']),lambda x:x[0].update(tests=0),lambda x:x[0].update(modules=['test_phase_baseline'])):
+    g=copy.deepcopy(groups);mutate(g);self.assertRaises((ValueError,KeyError),stage.validate_guard_groups,g,rows)
+@@ -137,13 +137,34 @@
+    push.write_text('{"changed":true}')
+    self.assertRaises(ValueError,launch.validate_prior,2,gate,stage.sha(gate),push,checked,'a'*64)
+  def test_stage_source_contains_only_default_readonly_preflight(self):
+-  source=(HERE/'stage_event_fetch.py').read_text();self.assertNotIn('--start-new',source);self.assertIn("'--arm','1'",source);self.assertIn('allStagedInputsUnchangedAfterGuardsAndReadonlyPreflight',source)
++  source=(HERE/'stage_read_window32.py').read_text();self.assertNotIn('--start-new',source);self.assertIn("'--arm','1'",source);self.assertIn('allStagedInputsUnchangedAfterGuardsAndReadonlyPreflight',source)
+ 
+ class ActualClosedInputs(unittest.TestCase):
+- def test_actual_reviewed_metadata_parser_jars_and_first_cloud_policy_close_without_ssh(self):
+-  path=BASE/'event-fetch-root-release-freeze-r1/ROOT_FREEZE.json'
+-  checked=stage.validate_inputs(path,'52c82baef3b67647b09022dcff5063520d9b9343f6f3040c2b5d6521db7f828c')
+-  self.assertEqual(39,len(checked['rows']));self.assertEqual(61,sum(g['tests']for g in checked['guardGroups']))
+-  self.assertFalse(checked['gate']['newNativeBusinessQualifiedBeforeArm1']);self.assertTrue(checked['gate']['firstCloudArmQualifiesNewArtifactFunctional'])
++ def test_actual_closed_source_mapping_idle_and_real_metadata_fixtures_match_without_ready_claim(self):
++  source=BASE/'cpu-read-window32-cloud-preparation-r2';frozen=stage.load(source/'LOCAL_PREPARATION_FROZEN.json')
++  self.assertEqual(stage.PREPARATION_SHA,stage.sha(source/'LOCAL_PREPARATION_FROZEN.json'))
++  self.assertEqual(43,len(frozen['files']));self.assertEqual(stage.CONTROLLER_SHA,stage.sha(source/'cpu_read_window32_abab.py'))
++  self.assertEqual(stage.IDLE_VALIDATOR_SHA,stage.sha(source/'idle_attestation.py'))
++  parser=stage.load(source/'fixtures/read-window32-parser-source-freeze.json')
++  files={name:source/name for name in frozen['files']}
++  stage.validate_guard_groups(frozen['linuxGuardCommands'],files)
++  self.assertEqual(12,len(stage.validate_parser_closure(frozen,parser,files,frozen['linuxGuardCommands'])))
++  linux=stage.load(source/'fixtures/actual-linux-distribution-observation.json');local=stage.load(source/'fixtures/actual-local-distribution-observation.json')
++  self.assertEqual({'8','32'},set(linux['plans']))
++  for window in ('8','32'):self.assertEqual(linux['plans'][window],local['plans']['page32-window'+window])
++  receipt=stage.load(source/'fixtures/remote-receipt.json');identity=receipt['execution']['actualProcessIdentity']
++  self.assertEqual((69431,5325814),(identity['pid'],identity['startTicks']))
++  self.assertFalse(stage.load(source/'release.template.json')['releaseReady'])
++ def test_old_idle_validator_cannot_be_staged_even_under_same_filename(self):
++  actual=BASE/'cpu-read-window32-cloud-preparation-r2';old=BASE/'cpu-event-fetch-cloud-preparation-r1'
++  self.assertNotEqual(stage.IDLE_VALIDATOR_SHA,stage.sha(old/'idle_attestation.py'))
++  self.assertEqual(stage.IDLE_VALIDATOR_SHA,stage.sha(actual/'idle_attestation.py'))
++ def test_future_stage_has_original_floor_and_actual_metadata_identity_before_upload(self):
++  text=(HERE/'stage_read_window32.py').read_text()
++  self.assertIn("identity['pid']==69431 and identity['startTicks']==5325814",text)
++  self.assertNotIn("identity['pid']==67629",text)
++  self.assertEqual(2,text.count('free>=2116076873+reserved_bytes'))
++  self.assertIn("free>=2116076873+sum(row['bytes'] for row in rows.values())",text)
++  self.assertNotIn('free>=1024**3+',text)
++  self.assertIn('free>=2116076873',(HERE/'launch_read_window32.py').read_text())
+ if __name__=='__main__':unittest.main(verbosity=2)
+-

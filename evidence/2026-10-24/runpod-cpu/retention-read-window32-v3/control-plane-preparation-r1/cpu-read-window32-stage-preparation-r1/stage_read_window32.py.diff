@@ -1,0 +1,154 @@
+--- baseline/stage_event_fetch.py
++++ stage_read_window32.py
+@@ -1,18 +1,19 @@
+-"""Exclusive event-page source staging,19+42 Linux guards and readonly arm1 preflight; never launches a benchmark."""
++"""Exclusive fixed-page32 read-window8/32 source staging,27+51 Linux guards and readonly arm1 preflight; never launches a benchmark."""
+ import argparse,hashlib,importlib.util,io,json,pathlib,re,shlex,shutil,stat,subprocess,sys,tarfile
+ sys.dont_write_bytecode=True
+ 
+-PREP='/opt/vectormatch-cpu/preparation/cpu-event-fetch-cloud-abab-r1'
+-SOURCE_COMMIT='d92301d3058acc83cb85d5bc5b4fd2e3f0ed4df8'
++PREP='/opt/vectormatch-cpu/preparation/cpu-read-window32-cloud-abab-r1'
++SOURCE_COMMIT='605eb43fcafd8fa0a6287304387c93c4d1bbddf6'
+ PROTECTED_SHA='6769aa2590668ba69692b17565c3463cc274b1fa2a777129d742c1e04899f753'
+-CODE_SHA='87a7ccd092f4d3c890bf8cc8bd7c6ffcd18900838699cd2b873fd1931cddb6aa'
+-PREPARATION_SHA='10a3f6e9144e1b6a54fef342e037d2de0987aee9dfddc6c7c5573f3e83ea56f6'
+-CONTROLLER_SHA='eb84eed09cad46c5097c32d980a1629f7c7c7fec3759e904544f7ef9e91e3100'
++CODE_SHA='d0fbef05df5a23d7b8e27d2673005908a18373c3d0c1921a8c4e4465111591ea'
++PREPARATION_SHA='3c08ef18ecb9599ccce4a7e6d03c8afeea760cdf66297f422520e5708ec1a9f0'
++CONTROLLER_SHA='d0dbd4c5051ab328e94102e151382d358aa1c5dee115fbc991ad2e0d41fe8c04'
+ OWNER_VALIDATOR_SHA='868b1f426906e16602e2ad9a0e7c7bba33bb5e80ea950af171a9903ac5dc4fdd'
+-PARSER_FREEZE_SHA='468db7bdb5b2fcf29dd2fab975cef9b3dbe7ce8f9ed73d326d65a5cd74488d8b'
++IDLE_VALIDATOR_SHA='74a666f0087e92de6ce1da311bd73e4941db7cc2b264a472cc84b0512d40032a'
++PARSER_FREEZE_SHA='766ef61f32b8c0dfe8010749795637969b319ddcd19e05d8351830d0e02836ad'
+ LIMIT=32*1024**2
+ MAX_FILES=64
+-PROOFS={'campaignQualificationPolicy','eventFetchRawParserFreeze','linuxMetadataObservation','linuxMetadataReceipt','rootEvidenceReview'}
++PROOFS={'campaignQualificationPolicy','readWindow32RawParserFreeze','linuxMetadataObservation','linuxMetadataReceipt','rootEvidenceReview'}
+ 
+ def require(value,message):
+  if not value:raise ValueError(message)
+@@ -33,19 +34,21 @@
+  spec=importlib.util.spec_from_file_location(name,str(path));m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
+ 
+ def validate_guard_groups(groups,files):
+- expected=[{'scope':'controller','cwd':'.','modules':['test_event_delta'],'tests':19},
+-           {'scope':'long-parser','cwd':'long-parser','modules':['test_long_contract','test_phase_baseline','test_event_fetch'],'tests':42}]
+- require(groups==expected,'Exact frozen19controller +42new selected-page LONG guard groups required')
++ expected=[{'scope':'controller','cwd':'.','modules':['test_read_window32_delta'],'tests':27},
++           {'scope':'long-parser','cwd':'long-parser','modules':['test_long_contract','test_phase_baseline','test_read_window32'],'tests':51}]
++ require(groups==expected,'Exact frozen27controller/helper +51fixed-page32 read-window LONG guard groups required')
+  for group in groups:
+   cwd=pathlib.PurePosixPath(group['cwd'])
+   for name in group['modules']:require(str(cwd/(name+'.py')) in files,'Exact guard module source not staged')
+  return groups
+ 
+ def validate_parser_closure(frozen,parser,files,groups):
+- require(parser['schemaVersion']==1 and parser['scope']=='EVENT_FETCH_LONG_RAW_AUDIT_SOURCE_CLOSURE'
++ require(parser['schemaVersion']==1 and parser['scope']=='SOURCE_ONLY_FIXED_PAGE32_LONG_READ_WINDOW8_32_PARSER'
+          and parser['sourceCommit']==SOURCE_COMMIT and parser['actualLocalMetadataCodeFingerprint']==CODE_SHA
+-         and parser['actualPureGuardMethods']==42 and parser['selectedPageHasNoDefault'] is True
+-         and parser['defaultCpuSchedulerStrict'] is True,'Exact new explicit selected-page parser source proof required')
++         and parser['pureGuardMethods']==51 and parser['noImplicitSelectedPage'] is True
++         and parser['selectedReadWindows']==[8,32] and parser['explicitFixedEventFetchCount']==32
++         and parser['actualRawAuditOrJavaNativeSshGitBusinessExecuted'] is False
++         and parser['defaultCpuSchedulerStrict'] is True,'Exact fixed-page32/window8|32 parser source proof required')
+  original={name:row for name,row in parser['sourceFiles'].items() if name.startswith('source/') or name.startswith('tests/')}
+  mapping=frozen['longParserSourceMapping']
+  require(len(original)==12 and set(mapping)==set(original) and len(set(mapping.values()))==12,'Exact12 parser source/test mapping required')
+@@ -55,13 +58,13 @@
+   require(mapping[name]==target and target in files,'Actual parser flat mapping differs')
+   path=files[target]
+   require(path.stat().st_size==row['bytes'] and sha(path)==row['sha256'],'Actual authoritative parser/guard bytes differ: '+name)
+- require(groups[1]=={'scope':'long-parser','cwd':'long-parser','modules':['test_long_contract','test_phase_baseline','test_event_fetch'],'tests':42},'Exact selected-page42 guard group required')
++ require(groups[1]=={'scope':'long-parser','cwd':'long-parser','modules':['test_long_contract','test_phase_baseline','test_read_window32'],'tests':51},'Exact fixed-page32/window8|32 51 guard group required')
+  return mapping
+ 
+ def validate_inputs(gate_path,expected_sha):
+  require(hexsha(expected_sha),'Explicit root freeze SHA required')
+  gate_path=reference({'path':str(no_links(pathlib.Path(gate_path).absolute()).resolve()),'sha256':expected_sha});gate=load(gate_path)
+- require(gate['schemaVersion']==2 and gate['scope']=='ROOT_VERIFIED_EVENT_FETCH_CPU_RELEASE' and gate['rootVerified'] is True and gate['sourceUnitMetadataAndParserVerified'] is True and gate['firstCloudArmQualifiesNewArtifactFunctional'] is True and gate['newNativeBusinessQualifiedBeforeArm1'] is False,'Root long-cut evidence verification incomplete')
++ require(gate['schemaVersion']==3 and gate['scope']=='ROOT_VERIFIED_READ_WINDOW32_CPU_RELEASE' and gate['rootVerified'] is True and gate['sourceUnitMetadataAndParserVerified'] is True and gate['firstCloudArmQualifiesNewArtifactFunctional'] is True and gate['newNativeBusinessQualifiedBeforeArm1'] is False,'Root long-cut evidence verification incomplete')
+  require(gate['sourceCommit']==SOURCE_COMMIT and gate['controllerSha256']==CONTROLLER_SHA and gate['protectedManifestSha256']==PROTECTED_SHA,'Wrong final source/controller/protected pins')
+  ready_path=reference(gate['readyRelease']);ready=load(ready_path)
+  require(ready['releaseReady'] is True and ready['sourceCommit']==SOURCE_COMMIT and ready['controllerSha256']==gate['controllerSha256'] and ready['codeFingerprint']==CODE_SHA,'Actual root-frozen ready long release required')
+@@ -69,14 +72,15 @@
+  source=no_links(pathlib.Path(gate['preparationDirectory']));frozen_path=reference(gate['preparation']);require(source.is_absolute() and source==source.resolve() and frozen_path==source/'LOCAL_PREPARATION_FROZEN.json','Exact final preparation root required')
+  frozen=load(frozen_path);require(sha(frozen_path)==PREPARATION_SHA and frozen['releaseReady'] is False
+         and frozen['sourceCommit']==SOURCE_COMMIT and frozen['codeFingerprint']==CODE_SHA and frozen['controllerSha256']==CONTROLLER_SHA
+-        and isinstance(frozen['files'],dict) and len(frozen['files'])==27,'Exact immutable27file owner preparation required')
++        and isinstance(frozen['files'],dict) and len(frozen['files'])==43,'Exact immutable43file read-window32 preparation required')
+  files={}
+  for name,row in frozen['files'].items():
+   rel=pathlib.PurePosixPath(name);require(str(rel)==name and not rel.is_absolute() and '..' not in rel.parts and name not in files,'Unsafe/duplicate frozen source path')
+   path=no_links(source/name);mode=int(row['mode'],8) if isinstance(row['mode'],str) else row['mode']
+   require(path.is_file() and path.stat().st_nlink==1 and path.stat().st_size==row['bytes'] and sha(path)==row['sha256'] and stat.S_IMODE(path.stat().st_mode)==mode,'Frozen source changed: '+name);files[name]=path
+- require('cpu_event_fetch_abab.py' in files and sha(files['cpu_event_fetch_abab.py'])==gate['controllerSha256'],'Actual final long controller not frozen')
++ require('cpu_read_window32_abab.py' in files and sha(files['cpu_read_window32_abab.py'])==gate['controllerSha256'],'Actual final long controller not frozen')
+  require(sha(files['owner_poll_attestation.py'])==OWNER_VALIDATOR_SHA and ready['ownerPollValidatorSha256']==OWNER_VALIDATOR_SHA,'Unique shared owner source/selection gate differs')
++ require(sha(files['idle_attestation.py'])==IDLE_VALIDATOR_SHA,'Exact dynamic selected-window idle-role validator required')
+  require(sha(files['owned_linux_base_8eeb.py'])=='8eeb10c14d6e5a9aa3895fbb674fc5c59ceac7fd3b15a6e3e11da325f444ab87' and sha(files['shutdown_warning.py'])=='bb8725c5bc560cc9a72c80a5c5d445373edbd0da91f2cccf41eb3550569319a9','Reviewed ownership/classifier source differs')
+  require('LOCAL_PREPARATION_FROZEN.json' not in files and not any(n.startswith('release/') for n in files),'Release/proof rows are separately explicit')
+  files['LOCAL_PREPARATION_FROZEN.json']=frozen_path;files['release/release.json']=ready_path
+@@ -90,19 +94,19 @@
+   path=reference(gate['proofs'][key]);row=ready['evidenceReferences'][key]
+   require(row['path']==PREP+'/release/proofs/'+key+'.json' and row['sha256']==sha(path) and row['bytes']==path.stat().st_size<=1024**2,'Actual proof closure differs: '+key)
+   files['release/proofs/'+key+'.json']=path;values[key]=load(path)
+- require(sha(files['release/proofs/eventFetchRawParserFreeze.json'])==PARSER_FREEZE_SHA,'Actual frozen33source R2 owner parser receipt differs')
++ require(sha(files['release/proofs/readWindow32RawParserFreeze.json'])==PARSER_FREEZE_SHA,'Actual fixed-page32 read-window32 parser source freeze differs')
+  # Import definitions only; execute the same pure semantic proof gate used by preflight.
+  sys.path.insert(0,str(source))
+  try:
+-  controller=module(source/'cpu_event_fetch_abab.py','frozen_owner_poll_controller')
++  controller=module(source/'cpu_read_window32_abab.py','frozen_read_window32_controller')
+   controller.validate_release(ready)
+   require(callable(getattr(controller,'validate_prerequisite_proofs',None)),'Final corrected pure proof gate required')
+   controller.validate_prerequisite_proofs(values,ready)
+  finally:sys.path.pop(0)
+  groups=gate['linuxGuardCommands'];require(groups==frozen['linuxGuardCommands'],'Root/frozen guard commands differ');validate_guard_groups(groups,files)
+- validate_parser_closure(frozen,values['eventFetchRawParserFreeze'],files,groups)
++ validate_parser_closure(frozen,values['readWindow32RawParserFreeze'],files,groups)
+  rows={name:{'bytes':path.stat().st_size,'sha256':sha(path),'mode':stat.S_IMODE(path.stat().st_mode)} for name,path in files.items()}
+- require(12<=len(rows)<=MAX_FILES and sum(row['bytes'] for row in rows.values())<=LIMIT,'Explicit source closure exceeds64files/32MiB')
++ require(len(rows)==55 and len(rows)<=MAX_FILES and sum(row['bytes'] for row in rows.values())<=LIMIT,'Explicit source closure exceeds64files/32MiB')
+  remote_path=reference(gate['remoteHelper']);require(sha(remote_path)=='0922e32bee55b1e47503880e763fcf112626649d31f037bb62e5c4ceb588bb73','Reviewed SSH connection helper changed')
+  return {'gate':gate,'ready':ready,'files':files,'rows':rows,'receipt':values['linuxMetadataReceipt'],'remoteHelper':remote_path,'rootFreezeSha256':expected_sha,'guardGroups':groups}
+ 
+@@ -129,8 +133,8 @@
+  program='identity='+repr(identity)+'\njava='+repr(release['java'])+'\njava_sha='+repr(release['javaExecutableSha256'])+'\nrelease_sha='+repr(release['jdkReleaseSha256'])+'\nreserved_bytes='+repr(len(raw)+sum(row['bytes'] for row in rows.values()))+'\n'+r'''
+ import pathlib,hashlib,json,platform,os,shutil
+ assert platform.system()=='Linux' and platform.machine()=='x86_64' and platform.node()=='ed6c0673f5cb' and os.geteuid()==0
+-assert shutil.disk_usage('/opt/vectormatch-cpu').free>=1024**3+reserved_bytes
+-assert identity['pid']==67629 and identity['startTicks']==4772830,'Actual original metadata identity differs'
++assert shutil.disk_usage('/opt/vectormatch-cpu').free>=2116076873+reserved_bytes
++assert identity['pid']==69431 and identity['startTicks']==5325814,'Actual original metadata identity differs'
+ p=pathlib.Path('/proc')/str(identity['pid'])
+ assert not p.exists(),'Original metadata PID must be strictly absent; zombie/reuse is not absence'
+ j=pathlib.Path(java);assert hashlib.sha256(j.read_bytes()).hexdigest()==java_sha
+@@ -142,7 +146,7 @@
+  upload='target_name='+repr(target)+'\nmaximum='+repr(LIMIT)+'\nreserved_bytes='+repr(len(raw)+sum(row['bytes'] for row in rows.values()))+'\n'+r'''
+ import pathlib,sys,os,platform,shutil
+ assert platform.system()=='Linux' and platform.machine()=='x86_64' and platform.node()=='ed6c0673f5cb' and os.geteuid()==0
+-assert shutil.disk_usage('/opt/vectormatch-cpu').free>=1024**3+reserved_bytes
++assert shutil.disk_usage('/opt/vectormatch-cpu').free>=2116076873+reserved_bytes
+ p=pathlib.Path(target_name)
+ for ancestor in p.parents:assert ancestor.is_dir() and not ancestor.is_symlink()
+ os.umask(0o077);count=0
+@@ -157,7 +161,7 @@
+  program='rows='+repr(rows)+'\nprep_name='+repr(PREP)+'\ntarget_name='+repr(target)+'\nbundle_sha='+repr(sha(bundle))+'\nmaximum='+repr(LIMIT)+'\n'+r'''
+ import pathlib,hashlib,json,tarfile,os,stat,platform,shutil
+ assert platform.system()=='Linux' and platform.machine()=='x86_64' and platform.node()=='ed6c0673f5cb' and os.geteuid()==0
+-assert shutil.disk_usage('/opt/vectormatch-cpu').free>=1024**3+sum(row['bytes'] for row in rows.values())
++assert shutil.disk_usage('/opt/vectormatch-cpu').free>=2116076873+sum(row['bytes'] for row in rows.values())
+ target=pathlib.Path(target_name);assert target.is_file() and not target.is_symlink() and target.stat().st_size<=maximum
+ assert hashlib.sha256(target.read_bytes()).hexdigest()==bundle_sha
+ prep=pathlib.Path(prep_name)
+@@ -187,7 +191,7 @@
+  for group in checked['guardGroups']:
+   cwd=PREP if group['cwd']=='.' else PREP+'/'+group['cwd']
+   commands.append(('linux-'+group['scope']+'-guards',['/usr/bin/python3','-B','-m','unittest','-v']+group['modules'],cwd,group['tests'],120))
+- commands.append(('read-only-preflight',['/usr/bin/python3','-B',PREP+'/cpu_event_fetch_abab.py','--arm','1','--release-sha256',sha(out/'release.json')],PREP,None,240))
++ commands.append(('read-only-preflight',['/usr/bin/python3','-B',PREP+'/cpu_read_window32_abab.py','--arm','1','--release-sha256',sha(out/'release.json')],PREP,None,240))
+  for label,args,cwd,count,timeout in commands:
+   wrapper='args='+repr(args)+'\nprep='+repr(cwd)+'\nlimit='+repr(timeout-10)+'\n'+"import subprocess,sys,json\ntry:\n r=subprocess.run(args,cwd=prep,capture_output=True,timeout=limit)\n sys.stdout.buffer.write(r.stdout);sys.stderr.buffer.write(r.stderr);raise SystemExit(r.returncode)\nexcept subprocess.TimeoutExpired as e:\n sys.stdout.buffer.write(e.stdout or b'');sys.stderr.buffer.write(e.stderr or b'');sys.stderr.write(json.dumps({'timedOut':True,'ownedChildOnly':True,'resubmissionAllowed':False})+'\\n');raise SystemExit(124)"
+   r=remote.run('python3 -c '+shlex.quote(wrapper),timeout=timeout);(out/(label+'.stdout')).write_text(r.stdout);(out/(label+'.stderr')).write_text(r.stderr);require(r.returncode==0,label+' failed')

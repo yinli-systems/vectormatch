@@ -1,0 +1,11 @@
+--- guards-r1/test_stage_launch.py
++++ guards-r2/test_stage_launch.py
+@@ -89,7 +89,7 @@
+ class PureContract(unittest.TestCase):
+  def test_final_guard_groups_require_controller_and_authoritative_parser(self):
+   groups=[{'scope':'controller','cwd':'.','modules':['test_read_window32_delta'],'tests':27},{'scope':'long-parser','cwd':'long-parser','modules':['test_long_contract','test_phase_baseline','test_read_window32'],'tests':51}]
+-  rows={name:None for name in ('test_event_delta.py','long-parser/test_long_contract.py','long-parser/test_phase_baseline.py','long-parser/test_event_fetch.py')}
++  rows={name:None for name in ('test_read_window32_delta.py','long-parser/test_long_contract.py','long-parser/test_phase_baseline.py','long-parser/test_read_window32.py')}
+   self.assertEqual(groups,stage.validate_guard_groups(groups,rows))
+   for mutate in (lambda x:x.pop(),lambda x:x[1].update(cwd='../parser'),lambda x:x[1].update(modules=['test_missing']),lambda x:x[1].update(modules=['test_read_phase_audit']),lambda x:x[0].update(tests=0),lambda x:x[0].update(modules=['test_phase_baseline'])):
+    g=copy.deepcopy(groups);mutate(g);self.assertRaises((ValueError,KeyError),stage.validate_guard_groups,g,rows)

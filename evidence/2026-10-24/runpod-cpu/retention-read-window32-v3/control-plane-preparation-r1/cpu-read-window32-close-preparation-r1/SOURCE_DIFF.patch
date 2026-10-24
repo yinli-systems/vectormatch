@@ -1,0 +1,254 @@
+--- baseline/inspect_closed_event_arm.py
++++ inspect_closed_read_window32_arm.py
+@@ -13,16 +13,17 @@
+ import stat
+ import time
+ 
+-PREP=pathlib.Path('/opt/vectormatch-cpu/preparation/cpu-event-fetch-cloud-abab-r1')
++PREP=pathlib.Path('/opt/vectormatch-cpu/preparation/cpu-read-window32-cloud-abab-r1')
+ PROTECTED_SHA='6769aa2590668ba69692b17565c3463cc274b1fa2a777129d742c1e04899f753'
+ MAX_PROC=4096
+ FILES={}
+ MAXIMUM_PARK_NS=100000
+ OWNER_PARK_ORDER=(1000000,1000000,1000000,1000000)
+-EVENT_PAGE_ORDER=(16,32,16,32)
+-CONTROLLER_SHA='eb84eed09cad46c5097c32d980a1629f7c7c7fec3759e904544f7ef9e91e3100'
+-SOURCE_COMMIT='d92301d3058acc83cb85d5bc5b4fd2e3f0ed4df8'
+-CODE_SHA='87a7ccd092f4d3c890bf8cc8bd7c6ffcd18900838699cd2b873fd1931cddb6aa'
++EVENT_PAGE_ORDER=(32,32,32,32)
++READ_WINDOW_ORDER=(8,32,8,32)
++CONTROLLER_SHA='d0dbd4c5051ab328e94102e151382d358aa1c5dee115fbc991ad2e0d41fe8c04'
++SOURCE_COMMIT='605eb43fcafd8fa0a6287304387c93c4d1bbddf6'
++CODE_SHA='d0fbef05df5a23d7b8e27d2673005908a18373c3d0c1921a8c4e4465111591ea'
+ PROFILE_SHA='732201775469861083f9dd0798a465dec1d0ed6bff39ed281dbef58c28b9fc68'
+ 
+ 
+@@ -97,9 +98,9 @@
+     return found,count
+ 
+ 
+-def expected_parent(release,root,maximum,page):
++def expected_parent(release,root,maximum,page,window):
+     return [release['java'],'-Dvectormatch.retention.idleMaxParkNs=100000','-Dvectormatch.retention.ownerPollMaxParkNs='+str(maximum)]+release['parentJvmArguments']+[
+-        '-cp',':'.join(release['classPath']),'io.vectormatch.cluster.RetentionCapacityAeronPilotV3',str(root),'event-fetch-page-long-cuts',str(page),'42000']
++        '-cp',':'.join(release['classPath']),'io.vectormatch.cluster.RetentionCapacityAeronPilotV3',str(root),'read-window32-long-cuts',str(page),str(window),'42000']
+ 
+ 
+ def expected_node(release,root,reg,node,maximum):
+@@ -124,7 +125,8 @@
+     require(controller_sha==CONTROLLER_SHA,'Exact frozen owner-poll controller SHA required')
+     maximum=OWNER_PARK_ORDER[arm_number-1]
+     page=EVENT_PAGE_ORDER[arm_number-1]
+-    expected_args=['/usr/bin/python3','-B',str(PREP/'cpu_event_fetch_abab.py'),'--arm',str(arm_number),'--release-sha256',release_sha]
++    window=READ_WINDOW_ORDER[arm_number-1]
++    expected_args=['/usr/bin/python3','-B',str(PREP/'cpu_read_window32_abab.py'),'--arm',str(arm_number),'--release-sha256',release_sha]
+     if arm_number>1:expected_args+=['--prior-collection-sha256',prior_gate_sha]
+     expected_args+=['--start-new']
+     require(argv_sha(expected_args)==expected_controller['commandSha256'], 'Actual controller argv SHA does not bind exact one long-cut arm')
+@@ -152,11 +154,11 @@
+     release_bytes=bounded(PREP/'release/release.json',2*1024**2)
+     require(hashlib.sha256(release_bytes).hexdigest()==release_sha,'Actual ready release bytes differ')
+     release=json.loads(release_bytes)
+-    require(release['releaseReady'] is True and release['controllerSha256']==controller_sha
++    require(release['schemaVersion']==3 and release['releaseReady'] is True and release['controllerSha256']==controller_sha
+             and release['sourceCommit']==SOURCE_COMMIT
+             and release['codeFingerprint']==CODE_SHA and release['profileFingerprint']==PROFILE_SHA,
+             'Actual ready source/code/controller differs')
+-    require(hashlib.sha256(bounded(PREP/'cpu_event_fetch_abab.py',1024**2)).hexdigest()==controller_sha,
++    require(hashlib.sha256(bounded(PREP/'cpu_read_window32_abab.py',1024**2)).hexdigest()==controller_sha,
+             'Actual frozen controller source differs')
+     job=PREP/('arm-%d'%arm_number)
+     # While any registered JVM is not strictly absent, never read completion or source summary.
+@@ -173,24 +175,24 @@
+     unique={}
+     for entry in identities:
+         old=unique.get(entry['role']);require(old is None or old==entry['identity'],'Conflicting registered role identity');unique[entry['role']]=entry['identity']
+-    roles={'pilot-parent'}|{'window-8-node-%d'%n for n in range(3)}
++    roles={'pilot-parent'}|{'window-%d-node-%d'%(window,n) for n in range(3)}
+     require(set(unique)==roles,'Exact Java parent plus three node identities required')
+     require(len({r['pid'] for r in unique.values()})==4,'Four distinct registered owned JVM PIDs required')
+     root=job/'idle-arm';reg=js(root/'registration.json')
+-    require(reg['ports']==42000 and reg['readWindow']==8 and reg['appointedLeader']==0 and reg['sync']==2
++    require(reg['ports']==42000 and reg['readWindow']==window and reg['appointedLeader']==0 and reg['sync']==2
+             and reg['profileSha256']==release['profileFingerprint'] and reg['codeSha256']==release['codeFingerprint']
+             and reg['retentionIdleSelection']['maximumParkNs']==100000
+             and reg['ownerPollSelection']=={'schema':'retention-owner-poll-selection-v1','property':'vectormatch.retention.ownerPollMaxParkNs','maximumParkNs':maximum,'factor':'owner poll requested park cap only','hardRealtimeGuaranteed':False}
+             and reg['arrivals']==33792 and reg['rate']==500 and reg['batchCap']==4 and reg['archiveChunkBytes']==6144
+-            and reg['eventFetchCount']==page and reg.get('commonEventFetchEnvelope') is True and reg['commonReadWindowEnvelope'] is True and reg['commonChunkEnvelope'] is False
++            and reg['eventFetchCount']==page and reg.get('commonReadWindow32Envelope')is True and reg.get('commonEventFetchEnvelope',False)is False and reg['commonReadWindowEnvelope'] is True and reg['commonChunkEnvelope'] is False
+             and reg['workloadPreset']=='long-cuts-33792-v1' and reg['expectedFullCommandCuts']==11
+             and reg['expectedTrailingCommands']==3 and reg['equivalentFullLoadCutNumbers']==list(range(2,12)),'Exact long arm registration differs')
+-    require(unique['pilot-parent']['arguments']==expected_parent(release,root,maximum,page),'Registered actual Java parent argv differs')
++    require(unique['pilot-parent']['arguments']==expected_parent(release,root,maximum,page,window),'Registered actual Java parent argv differs')
+     handle=js(job/'parent-launch-handle.json',65536)
+-    require(handle['pid']==unique['pilot-parent']['pid'] and handle['expectedArguments']==expected_parent(release,root,maximum,page)
++    require(handle['pid']==unique['pilot-parent']['pid'] and handle['expectedArguments']==expected_parent(release,root,maximum,page,window)
+             and handle['expectedCommandSha256']==unique['pilot-parent']['commandSha256'],'Independent parent launch/kernel binding differs')
+     for n in range(3):
+-        claimed=js(root/('node-%d-identity.json'%n),65536);record=unique['window-8-node-%d'%n]
++        claimed=js(root/('node-%d-identity.json'%n),65536);record=unique['window-%d-node-%d'%(window,n)]
+         require(record['arguments']==expected_node(release,root,reg,n,maximum)
+                 and claimed['pid']==record['pid'] and claimed['linuxStartTicks']==record['startTicks']
+                 and claimed['linuxCommandSha256']==record['commandSha256']
+@@ -204,23 +206,23 @@
+     completion=js(job/'completion.json',optional=True)
+     if blocked is not None:return {'state':'BLOCKED_STOP_UNCONFIRMED','closedGate':False,'controller':observed,'blockedReason':blocked.get('reason'),'neverResubmit':True}
+     if completion is None:return {'state':'CONTROLLER_EXITED_COMPLETION_INCOMPLETE','closedGate':False,'controller':observed,'neverResubmit':True}
+-    require(completion['arm']==arm_number and completion.get('eventFetchCount')==page and completion['ownerPollMaximumParkNs']==maximum and completion['serverDriverMaximumParkNs']==100000 and completion['frozenReleaseSha256']==release_sha,'Completion scope mismatch')
++    require(completion['arm']==arm_number and completion.get('eventFetchCount')==page==32 and completion['readWindow']==window and completion['commonReadWindow32Envelope']is True and completion.get('commonEventFetchEnvelope',False)is False and completion['ownerPollMaximumParkNs']==maximum and completion['serverDriverMaximumParkNs']==100000 and completion['frozenReleaseSha256']==release_sha,'Completion scope mismatch')
+     require(completion.get('allOwnedStopped') is True,'Completion must confirm all registered JVMs stopped')
+     if completion.get('passed') is not True or completion.get('errors'):
+         return {'state':'CLOSED_FAILED_OUTCOME','closedGate':False,'safeForReadOnlyFailureCollection':True,'controller':observed,'ownership':ownership,'errors':completion.get('errors'),'allOwnedStoppedAtObservation':True}
+     before=js(job/'before.json',4*1024**2);after=js(job/'after-clean-stop.json',4*1024**2)
+     require(before['controllerSha256']==controller_sha and before['baseSha256']=='8eeb10c14d6e5a9aa3895fbb674fc5c59ceac7fd3b15a6e3e11da325f444ab87',
+             'Actual before/preflight frozen controller/ownership source differs')
+-    require(before['arm']==arm_number and before.get('eventFetchCount')==page and before['ownerPollMaximumParkNs']==maximum and before['serverDriverMaximumParkNs']==100000 and before['singleManualArmOnly'] is True and before['noJavaStarted'] is True,'One manual arm default-preflight receipt differs')
++    require(before['arm']==arm_number and before.get('eventFetchCount')==page==32 and before['readWindow']==window and before['commonReadWindow32Envelope']is True and before.get('commonEventFetchEnvelope',False)is False and before['ownerPollMaximumParkNs']==maximum and before['serverDriverMaximumParkNs']==100000 and before['singleManualArmOnly'] is True and before['noJavaStarted'] is True,'One manual arm default-preflight receipt differs')
+     result=completion['result'];require(result['passed'] is True and len(result['arms'])==1,'Full successful single-arm controller result required')
+     arm=result['arms'][0];summary=arm['functional']['actualSourceSummary'];logs=arm['nodeLogClassifications']
+-    require(arm.get('eventFetchCount')==page and arm['functional'].get('eventFetchCount')==page and arm['functional'].get('commonEventFetchEnvelope') is True
+-            and arm.get('completion',{}).get('eventFetchCount')==page and arm['completion'].get('commonEventFetchEnvelope') is True
+-            and summary.get('eventFetchCount')==page and summary.get('commonEventFetchEnvelope') is True
+-            and arm['ownerPollMaximumParkNs']==maximum and arm['serverDriverMaximumParkNs']==100000 and arm['readWindow']==8 and arm['functional']['passed'] is True
++    require(arm.get('eventFetchCount')==page and arm['functional'].get('eventFetchCount')==page and arm['functional'].get('commonReadWindow32Envelope') is True and arm['functional'].get('commonEventFetchEnvelope',False)is False and arm['functional'].get('readWindow')==window
++            and arm.get('completion',{}).get('eventFetchCount')==page and arm['completion'].get('commonReadWindow32Envelope') is True and arm['completion'].get('commonEventFetchEnvelope',False)is False and arm['completion'].get('readWindow')==window
++            and summary.get('eventFetchCount')==page and summary.get('commonReadWindow32Envelope') is True and summary.get('commonEventFetchEnvelope',False)is False
++            and arm['ownerPollMaximumParkNs']==maximum and arm['serverDriverMaximumParkNs']==100000 and arm['readWindow']==window and arm.get('commonReadWindow32Envelope')is True and arm.get('commonEventFetchEnvelope',False)is False and arm['functional']['passed'] is True
+             and summary['confirmedAcceptedUniqueOrders']==33792 and summary['notSent']==0 and summary['unknownObserved']==0 and summary['unknownFinal']==0
+             and summary['scheduledArrivals']==33792 and summary['releasedArrivals']==33792 and summary['completedLogicalReplies']==33792
+-            and summary['ratePerSecond']==500 and summary['batchCap']==4 and summary['archiveChunkBytes']==6144 and summary['readWindow']==8
++            and summary['ratePerSecond']==500 and summary['batchCap']==4 and summary['archiveChunkBytes']==6144 and summary['readWindow']==window
+             and summary['serverRejected']==0 and summary['duplicateOrOutOfRangeAcceptedOrderIds']==0 and summary['maintenanceCycles']==12
+             and summary['schedulerTimingValid'] is True and summary['schedulerLatenessOver20ms']==0 and summary['arrivalClockPausedForMaintenance'] is False
+             and len(logs)==3 and {v['node'] for v in logs}=={0,1,2}
+@@ -244,14 +246,14 @@
+     st=expected_archive.lstat();require(stat.S_ISREG(st.st_mode) and not expected_archive.is_symlink() and st.st_size==advertised['bytes']<=256*1024**2,'Stopped archive metadata differs')
+     require(identity_state(controller)['observation']=='PID_ABSENT','Controller observation changed')
+     require(all(identity_state(value)['observation']=='PID_ABSENT' for value in unique.values()),'Owned JVM absence changed during metadata inspection')
+-    return {'state':'CLOSED_PASS_CONTROL_PLANE','closedGate':True,'safeForIndependentClosedCollection':True,'controller':observed,'controllerExitCodeIndependentlyObserved':False,'javaParentNormalExitBasis':'Frozen controller passed only after parent.returncode==0 and parent.wait; not a separately observed controller exit code.','ownership':ownership,'processesObserved':proc_count,'allOwnedStoppedAtObservation':True,'allFourOwnedJvmsStrictlyPidAbsent':True,'protectedNative57Pg989ReceiptsExact':True,'protectedFinalValues':protected,'archiveMetadataOnly':advertised,'archiveFullHashReadHere':False,'fullNativeOrRawEvidenceRead':False,'independentRawAndFullArchiveCollectionStillRequired':True,'nextArmStartedByProbe':False,'benchmarkOrBusinessCommandStartedByProbe':False,'arm':arm_number,'eventFetchCount':page,'job':str(job),'ownerPollMaximumParkNs':maximum,'serverDriverMaximumParkNs':100000,'frozenReleaseSha256':release_sha,'controllerSha256':controller_sha,'controllerOriginalIdentity':controller,'controllerFullSuccessReceiptPassed':True,'schedulerTimingValidReported':summary['schedulerTimingValid'],'retainedPostCheckpointEosWarningPairs':arm['retainedPostCheckpointEosWarningPairs'],'afterSigtermWallTimeProven':False}
++    return {'state':'CLOSED_PASS_CONTROL_PLANE','closedGate':True,'safeForIndependentClosedCollection':True,'controller':observed,'controllerExitCodeIndependentlyObserved':False,'javaParentNormalExitBasis':'Frozen controller passed only after parent.returncode==0 and parent.wait; not a separately observed controller exit code.','ownership':ownership,'processesObserved':proc_count,'allOwnedStoppedAtObservation':True,'allFourOwnedJvmsStrictlyPidAbsent':True,'protectedNative57Pg989ReceiptsExact':True,'protectedFinalValues':protected,'archiveMetadataOnly':advertised,'archiveFullHashReadHere':False,'fullNativeOrRawEvidenceRead':False,'independentRawAndFullArchiveCollectionStillRequired':True,'nextArmStartedByProbe':False,'benchmarkOrBusinessCommandStartedByProbe':False,'arm':arm_number,'eventFetchCount':page,'readWindow':window,'commonReadWindow32Envelope':True,'commonEventFetchEnvelope':False,'job':str(job),'ownerPollMaximumParkNs':maximum,'serverDriverMaximumParkNs':100000,'frozenReleaseSha256':release_sha,'controllerSha256':controller_sha,'controllerOriginalIdentity':controller,'controllerFullSuccessReceiptPassed':True,'schedulerTimingValidReported':summary['schedulerTimingValid'],'retainedPostCheckpointEosWarningPairs':arm['retainedPostCheckpointEosWarningPairs'],'afterSigtermWallTimeProven':False}
+ 
+ 
+ if __name__=='__main__':
+     p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--arm',type=int,choices=(1,2,3,4),required=True);p.add_argument('--release-sha256',required=True);p.add_argument('--controller-sha256',required=True);p.add_argument('--controller-pid',type=int,required=True);p.add_argument('--controller-start-ticks',type=int,required=True);p.add_argument('--controller-argv-sha256',required=True);p.add_argument('--prior-collection-sha256');args=p.parse_args()
+     try:
+         result=inspect(args.arm,args.release_sha256,args.controller_sha256,{'pid':args.controller_pid,'startTicks':args.controller_start_ticks,'commandSha256':args.controller_argv_sha256},args.prior_collection_sha256)
+-        result.update(schemaVersion=2,probeScope='CPU_EVENT_FETCH_CLOSED_CONTROL_PLANE_PROBE',observedAtUnixNs=time.time_ns(),controlPlaneInputs=FILES,readOnly=True,networkOrSignalsOrWritesPerformed=False)
++        result.update(schemaVersion=3,probeScope='CPU_READ_WINDOW32_CLOSED_CONTROL_PLANE_PROBE',observedAtUnixNs=time.time_ns(),controlPlaneInputs=FILES,readOnly=True,networkOrSignalsOrWritesPerformed=False)
+         print(json.dumps(result,sort_keys=True));raise SystemExit(0)
+     except Exception as error:
+         print(json.dumps({'state':'INSPECTION_INDETERMINATE','closedGate':False,'errorType':type(error).__name__,'error':str(error)[:1024],'controlPlaneInputs':FILES,'readOnly':True,'neverSignalOrResubmit':True},sort_keys=True));raise SystemExit(2)
+--- baseline/test_inspect_closed_event_arm.py
++++ test_inspect_closed_read_window32_arm.py
+@@ -1,21 +1,21 @@
+ """Pure synthetic control-plane ownership guards; no process/remote actions."""
+ import ast,copy,hashlib,json,pathlib,tempfile,unittest
+ from unittest import mock
+-import inspect_closed_event_arm as p
++import inspect_closed_read_window32_arm as p
+ 
+ BASE=pathlib.Path(__file__).resolve().parent.parent
+-CONTROLLER=(BASE/'cpu-event-fetch-cloud-preparation-r1/cpu_event_fetch_abab.py').read_bytes()
++CONTROLLER=(pathlib.Path(__file__).resolve().parent/'fixtures/cpu_read_window32_abab.py').read_bytes()
+ CONTROLLER_SHA=hashlib.sha256(CONTROLLER).hexdigest()
+ 
+ class CloseGuards(unittest.TestCase):
+  def setUp(self):
+   self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.prep=pathlib.Path(self.tmp.name).resolve()/'prep';self.prep.mkdir();self.job=self.prep/'arm-1';self.job.mkdir();self.native=self.job/'idle-arm';self.archive=self.job/'pilot-after-clean-stop.tar.gz';self.archive.write_bytes(b'x')
+-  self.release=json.loads((BASE/'cpu-event-fetch-cloud-preparation-r1/release.template.json').read_text());self.release.update(releaseReady=True,controllerSha256=CONTROLLER_SHA);self.release_bytes=json.dumps(self.release).encode();self.release_sha=hashlib.sha256(self.release_bytes).hexdigest()
+-  self.reg={'ports':42000,'readWindow':8,'appointedLeader':0,'sync':2,'profileSha256':p.PROFILE_SHA,'codeSha256':p.CODE_SHA,'retentionIdleSelection':{'maximumParkNs':100000},'lineage':'capacity-pilot-fixture','arrivals':33792,'rate':500,'batchCap':4,'archiveChunkBytes':6144,'eventFetchCount':16,'commonReadWindowEnvelope':True,'commonChunkEnvelope':False,'workloadPreset':'long-cuts-33792-v1','expectedFullCommandCuts':11,'expectedTrailingCommands':3,'equivalentFullLoadCutNumbers':list(range(2,12))}
+-  args=['/usr/bin/python3','-B',str(self.prep/'cpu_event_fetch_abab.py'),'--arm','1','--release-sha256',self.release_sha,'--start-new']
++  self.release=json.loads((pathlib.Path(__file__).resolve().parent/'fixtures/release.template.json').read_text());self.release.update(releaseReady=True,controllerSha256=CONTROLLER_SHA);self.release_bytes=json.dumps(self.release).encode();self.release_sha=hashlib.sha256(self.release_bytes).hexdigest()
++  self.reg={'ports':42000,'readWindow':8,'appointedLeader':0,'sync':2,'profileSha256':p.PROFILE_SHA,'codeSha256':p.CODE_SHA,'retentionIdleSelection':{'maximumParkNs':100000},'lineage':'capacity-pilot-fixture','arrivals':33792,'rate':500,'batchCap':4,'archiveChunkBytes':6144,'eventFetchCount':32,'commonReadWindowEnvelope':True,'commonChunkEnvelope':False,'workloadPreset':'long-cuts-33792-v1','expectedFullCommandCuts':11,'expectedTrailingCommands':3,'equivalentFullLoadCutNumbers':list(range(2,12))}
++  args=['/usr/bin/python3','-B',str(self.prep/'cpu_read_window32_abab.py'),'--arm','1','--release-sha256',self.release_sha,'--start-new']
+   self.arm=1;self.prior=None
+   self.entries=[{'state':'INTENT_NO_PID_YET','expectedArguments':args,'arm':1,'frozenReleaseSha256':self.release_sha},{'state':'SPAWNED_IDENTITY_PENDING','pid':100,'arm':1},{'pid':100,'startTicks':1000,'expectedArguments':args,'arm':1,'frozenReleaseSha256':self.release_sha,'observedCommandSha256':p.argv_sha(args),'observedExecArgvMatches':True,'stableStartTicks':True}]
+-  self.parent=self.identity(101,p.expected_parent(self.release,self.native,1000000,16));self.nodes=[self.identity(102+n,p.expected_node(self.release,self.native,self.reg,n,100000)) for n in range(3)]
++  self.parent=self.identity(101,p.expected_parent(self.release,self.native,1000000,32,8));self.nodes=[self.identity(102+n,p.expected_node(self.release,self.native,self.reg,n,100000)) for n in range(3)]
+   self.summary={'confirmedAcceptedUniqueOrders':33792,'notSent':0,'unknownObserved':0,'unknownFinal':0,'scheduledArrivals':33792,'releasedArrivals':33792,'completedLogicalReplies':33792,'ratePerSecond':500,'batchCap':4,'archiveChunkBytes':6144,'readWindow':8,'serverRejected':0,'duplicateOrOutOfRangeAcceptedOrderIds':0,'maintenanceCycles':12,'schedulerTimingValid':True,'schedulerLatenessOver20ms':0,'arrivalClockPausedForMaintenance':False}
+   logs=[{'node':n,'warningPairCount':0,'afterSigtermWallTimeProven':False,'allLogLinesClassifiedAndRetained':True} for n in range(3)]
+   self.completion={'arm':1,'ownerPollMaximumParkNs':1000000,'serverDriverMaximumParkNs':100000,'frozenReleaseSha256':self.release_sha,'allOwnedStopped':True,'passed':True,'errors':[],'result':{'passed':True,'arms':[{'ownerPollMaximumParkNs':1000000,'serverDriverMaximumParkNs':100000,'readWindow':8,'functional':{'passed':True,'actualSourceSummary':self.summary},'nodeLogClassifications':logs,'retainedPostCheckpointEosWarningPairs':0}]}}
+@@ -28,30 +28,34 @@
+   self.summary['ownerPollSelection']=copy.deepcopy(self.reg['ownerPollSelection'])
+   self.summary['ownerPollActual']={'available':True,'source':'actual-constructed-owner-snapshot','ownerPollMaxParkNs':1000000,'requestedSleepOnly':True,'osLatenessBounded':False}
+   self.completion['result']['arms'][0]['ownerPollAttestation']={'passed':True,'ownerPollMaximumParkNs':1000000,'serverDriverMaximumParkNs':100000,'ownerPropertyParentOnly':True,'selectionIntentAndConstructedOwnerSnapshotReconciled':True,'actualConfiguredIdleFactoryCreations':22,'hardRealtimeOrPerformanceClaimed':False}
+-  self.reg.update(commonEventFetchEnvelope=True)
+-  self.summary.update(eventFetchCount=16,commonEventFetchEnvelope=True)
+-  self.before.update(eventFetchCount=16)
+-  self.completion.update(eventFetchCount=16)
+-  self.completion['result']['arms'][0].update(eventFetchCount=16,completion={'eventFetchCount':16,'commonEventFetchEnvelope':True})
+-  self.completion['result']['arms'][0]['functional'].update(eventFetchCount=16,commonEventFetchEnvelope=True)
++  self.reg.update(commonEventFetchEnvelope=False,commonReadWindow32Envelope=True)
++  self.summary.update(eventFetchCount=32,commonEventFetchEnvelope=False,commonReadWindow32Envelope=True)
++  self.before.update(eventFetchCount=32,readWindow=8,commonReadWindow32Envelope=True,commonEventFetchEnvelope=False)
++  self.completion.update(eventFetchCount=32,readWindow=8,commonReadWindow32Envelope=True,commonEventFetchEnvelope=False)
++  self.completion['result']['arms'][0].update(eventFetchCount=32,commonReadWindow32Envelope=True,commonEventFetchEnvelope=False,completion={'eventFetchCount':32,'commonEventFetchEnvelope':False,'commonReadWindow32Envelope':True,'readWindow':8})
++  self.completion['result']['arms'][0]['functional'].update(eventFetchCount=32,commonEventFetchEnvelope=False,commonReadWindow32Envelope=True,readWindow=8)
+  def set_arm(self,arm):
+   self.arm=arm;self.prior=None if arm==1 else'b'*64;maximum=p.OWNER_PARK_ORDER[arm-1]
+   self.job=self.prep/('arm-'+str(arm));self.job.mkdir(exist_ok=True);self.native=self.job/'idle-arm';self.archive=self.job/'pilot-after-clean-stop.tar.gz'
+   if not self.archive.exists():self.archive.write_bytes(b'x')
+-  args=['/usr/bin/python3','-B',str(self.prep/'cpu_event_fetch_abab.py'),'--arm',str(arm),'--release-sha256',self.release_sha]
++  args=['/usr/bin/python3','-B',str(self.prep/'cpu_read_window32_abab.py'),'--arm',str(arm),'--release-sha256',self.release_sha]
+   if arm>1:args+=['--prior-collection-sha256',self.prior]
+   args+=['--start-new']
+   for row in self.entries:
+    row['arm']=arm
+    if 'expectedArguments'in row:row['expectedArguments']=args
+   self.entries[2]['observedCommandSha256']=p.argv_sha(args)
+-  self.parent=self.identity(101,p.expected_parent(self.release,self.native,maximum,p.EVENT_PAGE_ORDER[arm-1]))
++  self.parent=self.identity(101,p.expected_parent(self.release,self.native,maximum,p.EVENT_PAGE_ORDER[arm-1],p.READ_WINDOW_ORDER[arm-1]))
+   self.nodes=[self.identity(102+n,p.expected_node(self.release,self.native,self.reg,n,maximum))for n in range(3)]
+   self.stop['reports']=[{'role':'window-8-node-%d'%n,'record':v,'stopped':True}for n,v in enumerate(self.nodes)]
+   self.reg['ownerPollSelection']['maximumParkNs']=maximum
+   self.summary['ownerPollSelection']=copy.deepcopy(self.reg['ownerPollSelection']);self.summary['ownerPollActual']['ownerPollMaxParkNs']=maximum
+   self.completion.update(arm=arm,ownerPollMaximumParkNs=maximum);self.completion['result']['arms'][0]['ownerPollMaximumParkNs']=maximum;self.completion['result']['arms'][0]['ownerPollAttestation']['ownerPollMaximumParkNs']=maximum
+   self.before.update(arm=arm,ownerPollMaximumParkNs=maximum);self.after['archive']['archive']['path']=str(self.archive)
++  window=p.READ_WINDOW_ORDER[arm-1]
++  self.reg['readWindow']=window;self.summary['readWindow']=window;self.before['readWindow']=window;self.completion['readWindow']=window
++  for container in [self.completion['result']['arms'][0],self.completion['result']['arms'][0]['completion'],self.completion['result']['arms'][0]['functional']]:container['readWindow']=window
++  self.stop['reports']=[{'role':'window-%d-node-%d'%(window,n),'record':v,'stopped':True}for n,v in enumerate(self.nodes)]
+   page=p.EVENT_PAGE_ORDER[arm-1];self.reg['eventFetchCount']=page;self.summary['eventFetchCount']=page;self.before['eventFetchCount']=page;self.completion['eventFetchCount']=page
+   self.completion['result']['arms'][0]['eventFetchCount']=page;self.completion['result']['arms'][0]['functional']['eventFetchCount']=page;self.completion['result']['arms'][0]['completion']['eventFetchCount']=page
+  def identity(self,pid,args):return {'pid':pid,'startTicks':pid*10,'arguments':args,'commandSha256':p.argv_sha(args)}
+@@ -59,7 +63,7 @@
+   self.reads.append(path.name)
+   if path.name=='arm-%d-execution-register.json'%self.arm:return b'\n'.join(json.dumps(v).encode() for v in self.entries)+b'\n'
+   if path.name=='release.json':return self.release_bytes
+-  if path.name=='cpu_event_fetch_abab.py':return CONTROLLER
++  if path.name=='cpu_read_window32_abab.py':return CONTROLLER
+   raise AssertionError('Unexpected bounded read '+str(path))
+  def js(self,path,*unused,**kw):
+   self.reads.append(path.name);name=path.name
+@@ -135,10 +139,29 @@
+    old=row['eventFetchCount'];row['eventFetchCount']=16
+    with self.subTest(container=id(row)),self.assertRaises(ValueError):self.call()
+    row['eventFetchCount']=old
+- def test_common_event_envelope_is_mandatory(self):
++ def test_common32_envelope_is_mandatory_and_common_event_envelope_forbidden(self):
+   for row in [self.reg,self.summary,self.completion['result']['arms'][0]['functional'],self.completion['result']['arms'][0]['completion']]:
++   row['commonEventFetchEnvelope']=True
++   with self.assertRaises(ValueError):self.call()
+    row['commonEventFetchEnvelope']=False
++   row['commonReadWindow32Envelope']=False
+    with self.assertRaises(ValueError):self.call()
+-   row['commonEventFetchEnvelope']=True
++   row['commonReadWindow32Envelope']=True
++ def test_selected_window_required_in_every_closed_container(self):
++  for arm in (1,2,3,4):
++   self.set_arm(arm);value=self.call();window=p.READ_WINDOW_ORDER[arm-1]
++   self.assertEqual(window,value['readWindow']);self.assertEqual(32,value['eventFetchCount'])
++   containers=[self.reg,self.summary,self.before,self.completion,self.completion['result']['arms'][0],self.completion['result']['arms'][0]['completion'],self.completion['result']['arms'][0]['functional']]
++   for row in containers:
++    old=row['readWindow'];row['readWindow']=32 if window==8 else 8
++    with self.subTest(arm=arm,container=id(row)),self.assertRaises(ValueError):self.call()
++    row['readWindow']=old
++ def test_common32_flags_and_fixed_page_cannot_drift_in_all_containers(self):
++  containers=[self.reg,self.summary,self.before,self.completion,self.completion['result']['arms'][0],self.completion['result']['arms'][0]['completion'],self.completion['result']['arms'][0]['functional']]
++  for row in containers:
++   for key,value in [('commonReadWindow32Envelope',False),('commonEventFetchEnvelope',True),('eventFetchCount',16)]:
++    old=row[key];row[key]=value
++    with self.subTest(container=id(row),key=key),self.assertRaises(ValueError):self.call()
++    row[key]=old
+ if __name__=='__main__':unittest.main(verbosity=2)
+ 

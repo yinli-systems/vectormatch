@@ -1,0 +1,811 @@
+--- baseline/common.py
++++ common.py
+@@ -1,8 +1,8 @@
+ """Pure local validation shared by the closed-round collector/auditors. No network at import."""
+ from pathlib import Path, PurePosixPath
+ import argparse, hashlib, json, re, sys
+-def valid_prep(value):return value=='/opt/vectormatch-cpu/preparation/cpu-event-fetch-cloud-abab-r1'
+-WINDOWS=(8,)
++def valid_prep(value):return value=='/opt/vectormatch-cpu/preparation/cpu-read-window32-cloud-abab-r1'
++SUPPORTED_WINDOWS=(8,32)
+ OWNER_VALIDATOR_SHA='868b1f426906e16602e2ad9a0e7c7bba33bb5e80ea950af171a9903ac5dc4fdd'
+ def require(value,message):
+     if not value: raise AssertionError(message)
+@@ -18,41 +18,42 @@
+     return value
+ def load_config(path):
+     c=json.loads(Path(path).read_text())
+-    require(c['schemaVersion']==5 and c['experiment']=='retention-event-fetch-long-v1' and type(c['arm'])is int and c['arm']in(1,2,3,4),'One explicit owner-poll event-fetch long arm/schema5 required')
++    require(c['schemaVersion']==6 and c['experiment']=='retention-read-window32-long-v1' and type(c['arm'])is int and c['arm']in(1,2,3,4),'One explicit owner-poll fixed-page32 read-window arm/schema6 required')
+     prep=c['remotePrep'];require(valid_prep(prep) and c['host']=='ed6c0673f5cb','Fixed long PREP/host')
+     for key,h in [('releaseLocal','releaseSha256'),('stagingReceipt','stagingReceiptSha256'),('protectedReference','protectedReferenceSha256')]:
+         require(hexsha(c[h]) and sha(c[key])==c[h],'Frozen local input differs: '+key)
+     release=json.loads(Path(c['releaseLocal']).read_text())
+-    import cpu_event_fetch_abab as controller
++    import cpu_read_window32_abab as controller
+     controller.configure_arm(c['arm']);controller.FROZEN_RELEASE_SHA=c['releaseSha256']
+     controller.validate_release(release)
+     require(c['maximumParkNs']==c['serverDriverMaximumParkNs']==controller.selected_park_ns()==100000
+         and c['ownerPollMaximumParkNs']==controller.selected_owner_park_ns()==1000000
+-        and type(c['eventFetchCount'])is int and c['eventFetchCount']==controller.selected_event_page()
++        and type(c['eventFetchCount'])is int and c['eventFetchCount']==controller.selected_event_page()==32
++        and type(c['readWindow'])is int and c['readWindow']==controller.selected_read_window()
+         and c['workloadPreset']=='long-cuts-33792-v1','Fixed server/driver100us, ordered owner cap and long preset required')
+     require(release['arms'][str(c['arm'])]=={'job':prep+'/arm-'+str(c['arm']),'armRoot':prep+'/arm-'+str(c['arm'])+'/idle-arm',
+-        'ownerPollMaximumParkNs':c['ownerPollMaximumParkNs'],'serverDriverMaximumParkNs':100000,'eventFetchCount':c['eventFetchCount']},'Owner-poll arm roots differ')
++        'ownerPollMaximumParkNs':c['ownerPollMaximumParkNs'],'serverDriverMaximumParkNs':100000,'eventFetchCount':c['eventFetchCount'],'readWindow':c['readWindow']},'Owner-poll arm roots differ')
+     staged=json.loads(Path(c['stagingReceipt']).read_text())
+     require(staged['passed']is True and isinstance(staged['stagedFiles'],dict),'Successful explicit stage required')
+     require(staged['releaseSha256']==c['releaseSha256'] and staged['controllerSha256']==release['controllerSha256'],'Stage release/controller differs')
+     require(staged['applicationStarted']is False and staged['resourceCreated']is False,'Metadata-only source stage required')
+-    expected=dict(staged['stagedFiles']);require(len(expected)==39,'Exact39 explicit stage files required')
++    expected=dict(staged['stagedFiles']);require(1<=len(expected)<=64,'Bounded explicit staged file set; exact names checked against actual sourcefreeze/release below')
+     for name,row in expected.items():
+         relative(name);require(not name.startswith(('arm-1','arm-2','arm-3','arm-4')),'Cannot collect job tree as source')
+         require(type(row['bytes'])is int and 0<=row['bytes']<=32*1024**2 and hexsha(row['sha256']),'Frozen source bytes/SHA')
+     require(expected['release/release.json']['sha256']==c['releaseSha256'],'Source release binding differs')
+     author_path=Path(__file__).with_name('controller-preparation-frozen.json')
+-    require(sha(author_path)=='10a3f6e9144e1b6a54fef342e037d2de0987aee9dfddc6c7c5573f3e83ea56f6','Frozen event-controller source inventory differs')
++    require(sha(author_path)=='3c08ef18ecb9599ccce4a7e6d03c8afeea760cdf66297f422520e5708ec1a9f0','Frozen read-window32 controller source inventory differs')
+     author=json.loads(author_path.read_text())['files']
+     release_rows={'release/release.json':{'sha256':c['releaseSha256']},
+         'release/current-stopped-original-state.json':{'sha256':c['protectedReferenceSha256']},
+         'LOCAL_PREPARATION_FROZEN.json':{'bytes':author_path.stat().st_size,'sha256':sha(author_path)}}
+     release_rows.update({'release/lib/'+Path(name).name:row for name,row in release['artifacts'].items()})
+     release_rows.update({'release/proofs/'+name+'.json':{k:row[k]for k in('bytes','sha256')}for name,row in release['evidenceReferences'].items()})
+-    require(set(expected)==set(author)|set(release_rows),'Exact39 staged source/artifact/proof names differ')
++    require(set(expected)==set(author)|set(release_rows),'Exact frozen staged source/artifact/proof names differ')
+     for name,row in {**author,**release_rows}.items():
+         require(all(expected[name].get(k)==v for k,v in row.items()),'Staged original frozen source/artifact/proof row differs: '+name)
+-    require(expected['cpu_event_fetch_abab.py']['sha256']==release['controllerSha256']==sha(Path(__file__).with_name('cpu_event_fetch_abab.py'))
++    require(expected['cpu_read_window32_abab.py']['sha256']==release['controllerSha256']==sha(Path(__file__).with_name('cpu_read_window32_abab.py'))
+         and expected['owned_linux_base_8eeb.py']['sha256']=='8eeb10c14d6e5a9aa3895fbb674fc5c59ceac7fd3b15a6e3e11da325f444ab87','Exact long controller/owned-process source required')
+     for name in ['idle_attestation.py','shutdown_warning.py','owner_poll_attestation.py']:
+         require(expected[name]['sha256']==sha(Path(__file__).with_name(name)),'Staged/local schema source differs: '+name)
+@@ -74,7 +75,7 @@
+             require(name not in expected,'Prior source must be separately explicit')
+             expected[name]={'bytes':Path(path).stat().st_size,'sha256':expected_sha}
+     controller.configure_arm(c['arm'])
+-    require(sha(Path(__file__).parent/'long_parser/SOURCE_FROZEN.json')=='468db7bdb5b2fcf29dd2fab975cef9b3dbe7ce8f9ed73d326d65a5cd74488d8b','Qualified long parser freeze differs')
++    require(sha(Path(__file__).parent/'long_parser/SOURCE_FROZEN.json')=='766ef61f32b8c0dfe8010749795637969b319ddcd19e05d8351830d0e02836ad','Qualified long parser freeze differs')
+     for name,row in json.loads((Path(__file__).parent/'long_parser/SOURCE_FROZEN.json').read_text())['sourceFiles'].items():
+         if not name.startswith(('source/','tests/')):continue
+         p=Path(__file__).parent/'long_parser'/name
+--- baseline/owner_bundle.py
++++ owner_bundle.py
+@@ -1,7 +1,7 @@
+ """Bind closed evidence to the sole frozen owner validator; no alternative policy logic."""
+ from common import require,sha,OWNER_VALIDATOR_SHA
+ from pathlib import Path
+-import cpu_event_fetch_abab as controller
++import cpu_read_window32_abab as controller
+ from owner_poll_attestation import validate_owner_bundle
+ 
+ def verify(c,release,arm,read,identities):
+@@ -9,7 +9,7 @@
+         'Unique constructed-owner validator changed')
+     controller.configure_arm(c['arm'])
+     require(c['serverDriverMaximumParkNs']==100000 and c['ownerPollMaximumParkNs']==controller.selected_owner_park_ns()==1000000
+-        and c['eventFetchCount']==controller.selected_event_page(),
++        and c['eventFetchCount']==controller.selected_event_page()==32 and c['readWindow']==controller.selected_read_window(),
+         'Registered ABAB owner cap/constant node-driver cap differ')
+     reg=read(arm/'registration.json');configuration=read(arm/'load/configuration.json');summary=read(arm/'load/load-result.json')
+     controller.validate_selected_page_observations(release,reg,configuration,summary,read(arm/'load/admission-plan.json'),
+@@ -18,9 +18,9 @@
+     require(isinstance(observations,list)and observations,'Actual measured owner transport observations required')
+     return validate_owner_bundle(registration=reg,configuration=configuration,summary=summary,
+         before=read(arm/'load/owner-before-close.json'),after=read(arm/'load/owner-after-close.json'),
+-        parent=identities['pilot-parent'],nodes={n:identities['window-8-node-'+str(n)]for n in(0,1,2)},
++        parent=identities['pilot-parent'],nodes={n:identities['window-%d-node-%d'%(c['readWindow'],n)]for n in(0,1,2)},
+         expected_owner_cap=c['ownerPollMaximumParkNs'],expected_parent_arguments=controller.parent_argv(release),
+-        expected_node_arguments={n:controller.node_argv(release,8,n,reg)for n in(0,1,2)},
++        expected_node_arguments={n:controller.node_argv(release,c['readWindow'],n,reg)for n in(0,1,2)},
+         node_idle_actuals={n:read(arm/('node-%d/idle-observations/idle-000.actual.json'%n))for n in(0,1,2)},
+         parent_idle_actuals=[v['retentionIdlePolicy']for v in observations]
+             +[summary['physicalOfferTape']['lastActualTransportObservation']['retentionIdlePolicy']])
+--- baseline/audit_native_artifacts.py
++++ audit_native_artifacts.py
+@@ -2,9 +2,9 @@
+ """Local full nested closure, actual JAR/class binding, process/config and protected-state reconciliation."""
+ from pathlib import Path,PurePosixPath
+ import hashlib,json,tarfile,zipfile,traceback
+-from common import WINDOWS,require,sha,audit_arguments
++from common import require,sha,audit_arguments
+ from shutdown_warning import classify as classify_node_log
+-import cpu_event_fetch_abab as controller
++import cpu_read_window32_abab as controller
+ from owner_bundle import verify as verify_owner_bundle
+ 
+ def driver_only_idle_report(report):
+@@ -15,9 +15,10 @@
+ 
+ def audit(a,c,release):
+     controller.configure_arm(c['arm'])
++    WINDOWS=(c['readWindow'],)
+     prep=c['remotePrep'];raw=a.collection/'raw-files';job=raw/'job';outer=json.loads((a.collection/'remote-inventory.stdout.json').read_text())
+     before=json.loads((job/'before.json').read_text());after=json.loads((job/'after-clean-stop.json').read_text());completion=json.loads((job/'completion.json').read_text())
+-    require(completion['passed'] is True and completion['errors']==[] and completion['allOwnedStopped'] is True and completion['arm']==c['arm'] and completion['serverDriverMaximumParkNs']==100000 and completion['ownerPollMaximumParkNs']==c['ownerPollMaximumParkNs']==1000000 and completion['eventFetchCount']==c['eventFetchCount'] and completion['frozenReleaseSha256']==c['releaseSha256'],'Closed successful same-release round required for PASS')
++    require(completion['passed'] is True and completion['errors']==[] and completion['allOwnedStopped'] is True and completion['arm']==c['arm'] and completion['serverDriverMaximumParkNs']==100000 and completion['ownerPollMaximumParkNs']==c['ownerPollMaximumParkNs']==1000000 and completion['eventFetchCount']==c['eventFetchCount']==32 and completion['readWindow']==c['readWindow'] and completion['frozenReleaseSha256']==c['releaseSha256'],'Closed successful same-release round required for PASS')
+     require(sha(raw/'source/release/release.json')==sha(job/'release.json')==c['releaseSha256'],'Actual release SHA differs')
+     require(sha(job/'controller-source.py')==release['controllerSha256']==before['controllerSha256'],'Actual controller source differs')
+     require(sha(job/'owned_linux_base_8eeb.py')==before['baseSha256']=='8eeb10c14d6e5a9aa3895fbb674fc5c59ceac7fd3b15a6e3e11da325f444ab87','Actual ownership source differs')
+@@ -69,7 +70,7 @@
+     arms=[]
+     for chunk in WINDOWS:
+         arm=job/'idle-arm';reg=json.loads((arm/'registration.json').read_text());art=json.loads((arm/'artifact-inventory.json').read_text())
+-        controller.validate_registration(release,8,reg)
++        controller.validate_registration(release,chunk,reg)
+         require(reg['batchCap']==4 and reg['archiveChunkBytes']==6144 and reg['readWindow']==chunk and reg['appointedLeader']==0 and reg['ports']==42000 and reg['sync']==2 and reg['arrivals']==33792 and reg['rate']==500,'Actual fixed registration')
+         require(reg['workloadPreset']=='long-cuts-33792-v1' and reg['expectedFullCommandCuts']==11
+             and reg['expectedTrailingCommands']==3 and reg['equivalentFullLoadCutNumbers']==list(range(2,12)),
+@@ -89,14 +90,14 @@
+         arms.append({'archiveChunkBytes':6144,'readWindow':chunk,'batchCap':4,'ports':reg['ports'],'lineage':reg['lineage']})
+     import types
+     from idle_attestation import validate_idle_artifacts
+-    from cpu_event_fetch_abab import load_base
++    from cpu_read_window32_abab import load_base
+     registry=types.SimpleNamespace(records={(rec['pid'],rec['startTicks']):{'role':rec['role'],'identity':rec} for rec in identities})
+-    idle=driver_only_idle_report(validate_idle_artifacts(load_base(),job/'idle-arm',registry,c['maximumParkNs']))
++    idle=driver_only_idle_report(validate_idle_artifacts(load_base(),job/'idle-arm',registry,c['maximumParkNs'],selected_window=c['readWindow']))
+     identity_map={v['role']:v for v in identities}
+     owner_actual=verify_owner_bundle(c,release,job/'idle-arm',lambda p:json.loads(p.read_text()),identity_map)
+     final=json.loads((job/'idle-arm/final-position.json').read_text()); log_reports=[]
+     for n in range(3):
+-        rec=next(v for v in identities if v['role']=='window-8-node-'+str(n))
++        rec=next(v for v in identities if v['role']=='window-%d-node-%d'%(c['readWindow'],n))
+         actual_idle=json.loads((job/('idle-arm/node-%d/idle-observations/idle-000.actual.json'%n)).read_text())
+         log_reports.append(classify_node_log((job/('idle-arm/node-%d.log'%n)).read_bytes(), node=n,pid=rec['pid'],
+             profile=release['profileFingerprint'],lineage=arms[0]['lineage'],code=release['codeFingerprint'],
+@@ -117,7 +118,7 @@
+         previous=c['priorGates'][str(c['arm']-1)]
+         require(before['priorArm']['passed'] is True and before['priorArm']['gateSha256']==previous['sha256']
+             and before['priorArm']['privatePushReceiptSha256']==previous['privatePushSha256'],'Actual immediate prior-arm collection/private-push gate binding')
+-    report={'passed':True,'arm':c['arm'],'sourceCommit':release['sourceCommit'],'releaseSha256':c['releaseSha256'],'frozenCodeFingerprintIndependentlyRecomputed':h.hexdigest(),'actualCodeSources':actual_sources,'actualJarEntries':jar_entries,'nestedFiles':len(seen),'nestedDirectories':len(dirs),'nestedLogicalBytes':inv['logicalBytes'],'nestedAllocatedBytesRecorded':inv['allocatedBytes'],'allNestedFullShaBytesModeOwnerAndEmptyDirClosureVerified':True,'allNestedFilesExactlyBoundToOuterArchive':True,'actualArguments':identities,'threeRawNodeStopReports':True,'nodeLogClassifications':log_reports,'retainedPostCheckpointEosWarningPairs':sum(v['warningPairCount'] for v in log_reports),'idleAttestation':idle,'ownerPollAttestation':owner_actual,'serverDriverMaximumParkNs':100000,'ownerPollMaximumParkNs':c['ownerPollMaximumParkNs'],'eventFetchCount':c['eventFetchCount'],'normalParentExitBasis':'Successful frozen controller requires normal returncode 0, reaps direct parent and verifies registered identity absence; parent has no fourth raw stop report. Source/result reconciliation, no new live process query.','arms':arms,'commonOperationalCapsEqual':True,'sameNewArtifactFunctionalQualified':False,'authoritativeRawQualificationStillRequired':True,'protectedOriginalBeforeAfterExactlyEqual':True,'protectedNativeFiles':sum(len(x['files']) for x in protected['nativeTrees']),'protectedPgFiles':after['protectedOriginal']['postgres']['files'],'scope':'Local closed archive/artifact/lifecycle reconciliation only. Full protected-original checks performed by wrapper before/after, not independently rehashed remotely by collector.'}
++    report={'passed':True,'arm':c['arm'],'sourceCommit':release['sourceCommit'],'releaseSha256':c['releaseSha256'],'frozenCodeFingerprintIndependentlyRecomputed':h.hexdigest(),'actualCodeSources':actual_sources,'actualJarEntries':jar_entries,'nestedFiles':len(seen),'nestedDirectories':len(dirs),'nestedLogicalBytes':inv['logicalBytes'],'nestedAllocatedBytesRecorded':inv['allocatedBytes'],'allNestedFullShaBytesModeOwnerAndEmptyDirClosureVerified':True,'allNestedFilesExactlyBoundToOuterArchive':True,'actualArguments':identities,'threeRawNodeStopReports':True,'nodeLogClassifications':log_reports,'retainedPostCheckpointEosWarningPairs':sum(v['warningPairCount'] for v in log_reports),'idleAttestation':idle,'ownerPollAttestation':owner_actual,'serverDriverMaximumParkNs':100000,'ownerPollMaximumParkNs':c['ownerPollMaximumParkNs'],'eventFetchCount':c['eventFetchCount'],'readWindow':c['readWindow'],'commonReadWindow32Envelope':True,'commonEventFetchEnvelope':False,'normalParentExitBasis':'Successful frozen controller requires normal returncode 0, reaps direct parent and verifies registered identity absence; parent has no fourth raw stop report. Source/result reconciliation, no new live process query.','arms':arms,'commonOperationalCapsEqual':True,'sameNewArtifactFunctionalQualified':False,'authoritativeRawQualificationStillRequired':True,'protectedOriginalBeforeAfterExactlyEqual':True,'protectedNativeFiles':sum(len(x['files']) for x in protected['nativeTrees']),'protectedPgFiles':after['protectedOriginal']['postgres']['files'],'scope':'Local closed archive/artifact/lifecycle reconciliation only. Full protected-original checks performed by wrapper before/after, not independently rehashed remotely by collector.'}
+     (a.out/'result.json').write_text(json.dumps(report,indent=2)+'\n');return report
+ 
+ def main():
+--- baseline/audit_raw.py
++++ audit_raw.py
+@@ -4,7 +4,7 @@
+ from pathlib import Path
+ import traceback
+ from common import require,sha,audit_arguments
+-import cpu_event_fetch_abab as controller
++import cpu_read_window32_abab as controller
+ from frozen_parser import load
+ from closed_bindings import project
+ from telemetry_audit import audit_telemetry
+@@ -13,16 +13,16 @@
+ from owner_bundle import verify as verify_owner_bundle
+ 
+ 
+-def strict_arm(parser,workload,arm,*,event_fetch_count):
++def strict_arm(parser,workload,arm,*,selected_window,event_fetch_count):
+     # Deliberately rely on the frozen function's strict False default.
+-    require(type(event_fetch_count)is int and event_fetch_count in(16,32),'Explicit selected event page16|32 required')
+-    return parser.audit_arm(8,arm,workload=workload,event_fetch_count=event_fetch_count)
++    require(type(event_fetch_count)is int and event_fetch_count==32 and type(selected_window)is int and selected_window in(8,32),'Explicit fixedpage32 and selected read8|32 required')
++    return parser.audit_read_window32_arm(selected_window,arm,workload=workload,event_fetch_count=event_fetch_count)
+ 
+ 
+ 
+-def qualify_new_artifact(report,terminal,final,event_fetch_count):
+-    require(report['eventFetchCount']==event_fetch_count and report['commonEventFetchEnvelope'] is True
+-        and report['readWindow']==8 and report['batchCap']==4 and len(report['cycles'])==12
++def qualify_new_artifact(report,terminal,final,event_fetch_count,selected_window):
++    require(report['eventFetchCount']==event_fetch_count and report['commonReadWindow32Envelope'] is True and report.get('commonEventFetchEnvelope',False)is False
++        and report['readWindow']==selected_window and report['batchCap']==4 and len(report['cycles'])==12
+         and len(report['readPhaseBindings']['readPhases'])==24 and report['schedulerTimingValidFromRaw'] is True
+         and terminal['rows']==terminal['acceptedUniqueOrders']==33792 and terminal['duplicateOrOutOfRangeAcceptedOrderIds']==0,
+         'Complete33792 strict selected-page raw/cycle/phase/unique-order qualification required')
+@@ -33,10 +33,30 @@
+     return True
+ 
+ 
++
++def validate_actual_plan_sources(linux,local,registered_plan,actual_code,*,selected_window,event_fetch_count,contract):
++    require(type(selected_window)is int and selected_window in(8,32) and event_fetch_count==32,
++        'Explicit selected window and fixed32 required')
++    require(set(linux['plans'])=={'8','32'},'Actual Linux schema must contain exactly two observed plans; never synthesize four Linux plans')
++    require(set(local['plans'])=={'page16-window8','page16-window32','page32-window8','page32-window32'},'Actual local metadata four-choice schema required')
++    for key in ('sourceCommit','sourceBaseCommit','actualCodeFingerprint','profileSha256'):
++        require(linux[key]==local[key], 'Actual local/Linux metadata identity differs: '+key)
++    require(linux['sourceCommit']=='605eb43fcafd8fa0a6287304387c93c4d1bbddf6'
++        and linux['actualCodeFingerprint']==actual_code=='d0fbef05df5a23d7b8e27d2673005908a18373c3d0c1921a8c4e4465111591ea'
++        and linux['fixedEventFetchCount']==32 and linux['actualMetadataPlatform']['osName']=='Linux',
++        'Actual new Linux metadata identity/platform required')
++    for window in(8,32):
++        name='page32-window%d'%window
++        require(linux['plans'][str(window)]==local['plans'][name], 'Actual Linux selected Plan and configuration must exactly equal real local page32 body')
++    # The qualified parser requires real local4 metadata; passing or inventing Linux4 is forbidden.
++    return contract.validate_actual_plan_observation(local,registered_plan,actual_code,
++        selected_window=selected_window,event_fetch_count=event_fetch_count)
++
++
+ def audit(a,c,release):
+     controller.configure_arm(c['arm'])
+     modules=load();parser=modules['audit_raw'];contract=modules['workload_contract'];setup_module=modules['setup_audit']
+-    require(parser.audit_arm.__kwdefaults__['local_functional_only']is False,'Frozen CPU scheduler default must remain strict')
++    require(parser.audit_read_window32_arm.__kwdefaults__['local_functional_only']is False,'Frozen CPU scheduler default must remain strict')
+     native_path=a.collection.parent/'native/result.json';native=json.loads(native_path.read_text())
+     require(native['passed']is True and native['arm']==c['arm'] and native['releaseSha256']==c['releaseSha256']
+         and native['sourceCommit']==release['sourceCommit']
+@@ -49,12 +69,15 @@
+     require(sha(job/'release.json')==c['releaseSha256'] and parser.js(job/'release.json')==release,'Actual ready release source binding differs')
+     require(cfg['actualCodeSha256']==release['codeFingerprint'] and cfg['profileSha256']==release['profileFingerprint'],'Actual source/profile differs')
+     require(parser.js(arm/'load/admission-plan.json')==controller.selected_plan(release),'Actual-JAR selected long plan differs')
+-    contract.validate_actual_plan_observation(parser.js(a.collection/'raw-files/source/release/proofs/linuxMetadataObservation.json'),
+-        parser.js(arm/'load/admission-plan.json'),release['codeFingerprint'],event_fetch_count=c['eventFetchCount'])
++    validate_actual_plan_sources(
++        parser.js(a.collection/'raw-files/source/release/proofs/linuxMetadataObservation.json'),
++        parser.js(a.collection/'raw-files/source/fixtures/actual-local-distribution-observation.json'),
++        parser.js(arm/'load/admission-plan.json'),release['codeFingerprint'],selected_window=c['readWindow'],
++        event_fetch_count=c['eventFetchCount'],contract=contract)
+     setup=setup_module.audit_setup(arm,cfg,parser)
+-    terminal=parser.terminal_inventory(8,arm,workload=contract.LONG)
+-    with(a.out/'all-arrival-terminal-inventory.json').open('x')as f:json.dump({'8':terminal},f,indent=2);f.write('\n')
+-    report=strict_arm(parser,contract.LONG,arm,event_fetch_count=c['eventFetchCount'])
++    terminal=parser.terminal_inventory(c['readWindow'],arm,workload=contract.LONG)
++    with(a.out/'all-arrival-terminal-inventory.json').open('x')as f:json.dump({str(c['readWindow']):terminal},f,indent=2);f.write('\n')
++    report=strict_arm(parser,contract.LONG,arm,selected_window=c['readWindow'],event_fetch_count=c['eventFetchCount'])
+     require(report['schedulerTimingValidFromRaw']is True and report['schedulerAdmission']['localFunctionalDiagnosticOptIn']is False
+         and report['schedulerAdmission']['performanceAdmissionAllowed']is True,'CPU long timing must pass strictly; local diagnostic flag forbidden')
+     reg=parser.js(arm/'registration.json')
+@@ -63,7 +86,7 @@
+     identities={v['role']:v for v in native['actualArguments']};idle_reports=[];log_reports=[]
+     final=parser.js(arm/'final-position.json');contract.validate_final(final)
+     for n in range(3):
+-        identity=identities['window-8-node-'+str(n)];actual=parser.js(arm/('node-%d/idle-observations/idle-000.actual.json'%n))
++        identity=identities['window-%d-node-%d'%(c['readWindow'],n)];actual=parser.js(arm/('node-%d/idle-observations/idle-000.actual.json'%n))
+         idle_reports.append(validate_actual(actual,100000,identity['pid'],n))
+         value=classify(parser.raw(arm/('node-%d.log'%n)),node=n,pid=identity['pid'],profile=cfg['profileSha256'],lineage=cfg['lineage'],code=cfg['actualCodeSha256'],final_hash=final['combinedSha256'],idle_actual=actual)
+         report['nodeLogs'][n]['logClassification']=value;log_reports.append(value)
+@@ -78,7 +101,7 @@
+     require(reference['passed']is True and reference['performedOutsideArrivalWindow']is True
+         and reference['remainingAdmittedRepliesNotObserved']==reference['earlierAdmittedRepliesNotObserved']==0
+         and reference['actualRepliesCompared']==reference['successfulPublicationAdmissions']==report['physicalReplies'],'Same-candidate positive-offer reference closure differs')
+-    qualify_new_artifact(report,terminal,final,c['eventFetchCount'])
++    qualify_new_artifact(report,terminal,final,c['eventFetchCount'],c['readWindow'])
+     telemetry=audit_telemetry([report],parser=parser,job=job)
+     before=dict(parser.INPUTS)
+     for name,row in before.items():require(hashlib.sha256(parser.raw(a.collection/name)).hexdigest()==row['sha256'],'Consumed materialized input changed')
+@@ -86,7 +109,7 @@
+     with(a.out/'ORIGINAL_TO_MATERIALIZED_BINDINGS.json').open('x')as f:json.dump({'passed':True,'scope':'Original archive mode/owner independently verified; local parser checks separately owned materialized files without claiming equal owners','outerInventorySha256':receipt['outerInventorySha256'],'nativeAuditSha256':sha(native_path),'bindings':consumed_bindings},f,indent=2);f.write('\n')
+     return {'passed':True,'arm':c['arm'],'sourceCommit':release['sourceCommit'],'releaseSha256':c['releaseSha256'],'arms':[report],
+         'setup':setup,'sameNewArtifactFunctionalQualified':True,'allOriginalRawCanonicalAndThreeSnapshotsVerified':True,'strictSchedulerTimingAdmission':True,'localFunctionalDiagnosticOptIn':False,'actualIdleAttestations':idle_reports,
+-        'ownerPollAttestation':owner_actual,'ownerPollMaximumParkNs':c['ownerPollMaximumParkNs'],'eventFetchCount':c['eventFetchCount'],'serverDriverMaximumParkNs':100000,
++        'ownerPollAttestation':owner_actual,'ownerPollMaximumParkNs':c['ownerPollMaximumParkNs'],'eventFetchCount':c['eventFetchCount'],'readWindow':c['readWindow'],'commonReadWindow32Envelope':True,'commonEventFetchEnvelope':False,'serverDriverMaximumParkNs':100000,
+         'nodeLogClassifications':log_reports,'retainedPostCheckpointEosWarningPairs':sum(v['warningPairCount']for v in log_reports),
+         'sameCandidateReferenceNotIndependentAlgorithm':reference,'telemetry':telemetry,'inputs':parser.INPUTS,
+         'frozenParserFreezeSha256':sha(Path(__file__).parent/'long_parser/SOURCE_FROZEN.json'),
+--- baseline/build_config.py
++++ build_config.py
+@@ -28,7 +28,7 @@
+ 
+ def build(arm, release, release_sha, stage, stage_sha, protected, protected_sha,
+           gates, metadata, output):
+-    from cpu_event_fetch_abab import validate_release, selected_park_ns, selected_owner_park_ns, selected_event_page, configure_arm, PREP
++    from cpu_read_window32_abab import validate_release, selected_park_ns, selected_owner_park_ns, selected_event_page, selected_read_window, configure_arm, PREP
+     require(type(arm) is int and arm in(1,2,3,4), 'One explicit owner-poll long arm required')
+     configure_arm(arm)
+     release = reference(release, release_sha); stage = reference(stage, stage_sha)
+@@ -52,9 +52,9 @@
+         shutil.copy2(path, target);shutil.copy2(push,target_push)
+         prior[str(n)] = {'local': str(target.resolve()), 'sha256': expected,
+             'privatePushLocal':str(target_push.resolve()),'privatePushSha256':push_sha}
+-    config = {'schemaVersion': 5, 'experiment':'retention-event-fetch-long-v1', 'workloadPreset':'long-cuts-33792-v1', 'arm': arm,
++    config = {'schemaVersion': 6, 'experiment':'retention-read-window32-long-v1', 'workloadPreset':'long-cuts-33792-v1', 'arm': arm,
+               'maximumParkNs': selected_park_ns(),'serverDriverMaximumParkNs':selected_park_ns(),'ownerPollMaximumParkNs':selected_owner_park_ns(),
+-              'eventFetchCount':selected_event_page(), 'remotePrep': str(PREP), 'host': actual['host'],
++              'eventFetchCount':selected_event_page(), 'readWindow':selected_read_window(), 'remotePrep': str(PREP), 'host': actual['host'],
+               'releaseLocal': str((inputs / 'release.json').resolve()), 'releaseSha256': release_sha,
+               'stagingReceipt': str((inputs / 'STAGE_SUCCESS.json').resolve()), 'stagingReceiptSha256': stage_sha,
+               'protectedReference': str((inputs / 'current-stopped-original-state.json').resolve()),
+--- baseline/collect_and_audit.py
++++ collect_and_audit.py
+@@ -14,7 +14,7 @@
+ 
+ HERE = Path(__file__).resolve().parent
+ REMOTE_SHA = '0922e32bee55b1e47503880e763fcf112626649d31f037bb62e5c4ceb588bb73'
+-CLOSE_SOURCE_SHA = '67fcfe5bd15efb8bdc488d25b156534b34878ce6584e5cb2ec3cf95ebeb2b5f2'
++CLOSE_SOURCE_SHA = '9aaa3d135b735ef0d5ef159ef295d50743096501219c45b1f9300eea806c3b2a'
+ 
+ 
+ def checked_config(path, expected):
+@@ -28,11 +28,13 @@
+ 
+ def closed_proof(path, expected, c, release):
+     x = json.loads(b.reference(path, expected).read_text())
+-    b.require(x['schemaVersion'] == 2 and x['scope'] == 'ROOT_VERIFIED_CLOSED_CPU_EVENT_FETCH_CONTROLLER'
++    b.require(x['schemaVersion'] == 3 and x['scope'] == 'ROOT_VERIFIED_CLOSED_CPU_READ_WINDOW32_CONTROLLER'
+               and x['rootVerified'] is True and x['arm'] == c['arm']
+               and x['serverDriverMaximumParkNs'] == c['serverDriverMaximumParkNs']==100000
+               and x['ownerPollMaximumParkNs'] == c['ownerPollMaximumParkNs']==1000000
+-              and x['eventFetchCount'] == c['eventFetchCount']
++              and x['eventFetchCount'] == c['eventFetchCount']==32
++              and x['readWindow'] == c['readWindow']
++              and x['commonReadWindow32Envelope'] is True and x.get('commonEventFetchEnvelope',False) is False
+               and x['frozenReleaseSha256'] == c['releaseSha256']
+               and x['controllerSha256'] == release['controllerSha256']
+               and x['job'] == c['remotePrep'] + '/arm-' + str(c['arm'])
+@@ -70,7 +72,7 @@
+     output.mkdir(parents=True, mode=0o700)
+     shutil.copy2(proof, output / 'root-controller-closed.json')
+     b.save(output / 'REGISTRATION.json', {'arm': c['arm'], 'serverDriverMaximumParkNs': c['serverDriverMaximumParkNs'],
+-           'ownerPollMaximumParkNs':c['ownerPollMaximumParkNs'], 'eventFetchCount':c['eventFetchCount'],
++           'ownerPollMaximumParkNs':c['ownerPollMaximumParkNs'], 'eventFetchCount':c['eventFetchCount'],'readWindow':c['readWindow'],'commonReadWindow32Envelope':True,'commonEventFetchEnvelope':False,
+            'configSha256': config_sha, 'rootClosureSha256': proof_sha, 'preparationSha256': prep_sha,
+            'remoteHelperSha256': REMOTE_SHA, 'sourceAllowlist': allow, 'noAutomaticRetry': True})
+     steps = []
+@@ -90,7 +92,7 @@
+                                 '--out', str(output / 'finalized')], output, 'finalize'))
+         preparation(prep_sha)
+         report = {'passed': len(steps) == 5 and all(s['exitCode'] == 0 for s in steps), 'arm': c['arm'],
+-                  'serverDriverMaximumParkNs':c['serverDriverMaximumParkNs'],'ownerPollMaximumParkNs':c['ownerPollMaximumParkNs'], 'eventFetchCount':c['eventFetchCount'],
++                  'serverDriverMaximumParkNs':c['serverDriverMaximumParkNs'],'ownerPollMaximumParkNs':c['ownerPollMaximumParkNs'], 'eventFetchCount':c['eventFetchCount'],'readWindow':c['readWindow'],'commonReadWindow32Envelope':True,'commonEventFetchEnvelope':False,
+                   'steps': steps, 'nextArmAuthorized': False,
+                   'rootGateCreated': False, 'allFailuresRetained': True, 'cpuCapacityClaimed': False}
+         b.save(output / ('SUCCESS.json' if report['passed'] else 'DIAGNOSTICS_ONLY.json'), report)
+--- baseline/collect_closed_round.py
++++ collect_closed_round.py
+@@ -16,7 +16,7 @@
+     require(sha(remote_helper)=='0922e32bee55b1e47503880e763fcf112626649d31f037bb62e5c4ceb588bb73','Exact reviewed remote helper required')
+     spec=importlib.util.spec_from_file_location('closed_round_readonly_remote',remote_helper);remote=importlib.util.module_from_spec(spec);spec.loader.exec_module(remote)
+     job=prep+'/arm-'+str(c['arm'])
+-    inventory_program='JOB='+repr(job)+'\nSOURCE='+repr(prep)+'\nALLOW='+repr(allow)+'\nEXPECTED='+repr(expected)+'\nHOST='+repr(c['host'])+'\nRELEASE_SHA='+repr(c['releaseSha256'])+'\nARM='+repr(c['arm'])+'\nMAX_PARK='+repr(c['serverDriverMaximumParkNs'])+'\nOWNER_PARK='+repr(c['ownerPollMaximumParkNs'])+'\nEVENT_PAGE='+repr(c['eventFetchCount'])+'\n'+r'''
++    inventory_program='JOB='+repr(job)+'\nSOURCE='+repr(prep)+'\nALLOW='+repr(allow)+'\nEXPECTED='+repr(expected)+'\nHOST='+repr(c['host'])+'\nRELEASE_SHA='+repr(c['releaseSha256'])+'\nARM='+repr(c['arm'])+'\nMAX_PARK='+repr(c['serverDriverMaximumParkNs'])+'\nOWNER_PARK='+repr(c['ownerPollMaximumParkNs'])+'\nEVENT_PAGE='+repr(c['eventFetchCount'])+'\nREAD_WINDOW='+repr(c['readWindow'])+'\n'+r'''
+ import hashlib,json,pathlib,stat,socket
+ assert socket.gethostname()==HOST
+ job=pathlib.Path(JOB);source=pathlib.Path(SOURCE)
+@@ -24,7 +24,7 @@
+  for x in [p]+list(p.parents):assert not x.is_symlink(),str(x)
+ no_links(job);no_links(source)
+ completion=json.loads((job/'completion.json').read_text());closed=json.loads((job/'python-owned-stop.json').read_text())
+-assert completion['allOwnedStopped'] is True and completion['arm']==ARM and completion['serverDriverMaximumParkNs']==MAX_PARK and completion['ownerPollMaximumParkNs']==OWNER_PARK and completion['eventFetchCount']==EVENT_PAGE and completion['frozenReleaseSha256']==RELEASE_SHA
++assert completion['allOwnedStopped'] is True and completion['arm']==ARM and completion['serverDriverMaximumParkNs']==MAX_PARK and completion['ownerPollMaximumParkNs']==OWNER_PARK and completion['eventFetchCount']==EVENT_PAGE==32 and completion['readWindow']==READ_WINDOW and completion['frozenReleaseSha256']==RELEASE_SHA
+ assert closed['allOwnedStopped'] is True and closed['errors']==[] and closed['forcedKill'] is False and closed['numericPidSignalFallback'] is False
+ assert not (job/'BENCHMARK_BLOCKED.json').exists()
+ rows={};dirs={}
+@@ -93,7 +93,7 @@
+     after=json.loads((dest/'raw-files/job/after-clean-stop.json').read_text());nested=dest/'pilot-after-clean-stop.tar.gz'
+     require(sha(nested)==after['archive']['archive']['sha256'] and nested.stat().st_size==after['archive']['archive']['bytes'],'Nested compressed artifact differs')
+     native=json.dumps(after['archive']['inventory'],sort_keys=True,separators=(',',':')).encode()
+-    receipt={'passed':True,'rawTapeMaterializationBudget':tape_budget,'outerInventorySha256':sha(dest/'remote-inventory.stdout.json'),'arm':c['arm'],'serverDriverMaximumParkNs':c['serverDriverMaximumParkNs'],'ownerPollMaximumParkNs':c['ownerPollMaximumParkNs'],'eventFetchCount':c['eventFetchCount'],'functionalRunPassed':inv['completion']['passed'],'allFunctionalErrorsRetained':inv['completion']['errors'],'scope':'Read-only closed JOB SSH inventory and streaming transfer; strict PREP source allowlist, no remote writes/launch/signals/PG or new resources. Local native/raw verification and independent root attestation still required.', 'frozenReleaseSha256':c['releaseSha256'],'controllerSha256':release['controllerSha256'],'outerFiles':len(seen),'outerDirectories':len(dirs),'outerLogicalBytes':sum(x['bytes'] for x in inv['files'].values()),'sourceWhitelistFiles':len(allow),'sourceRecursiveTar':False,'allOuterFileFullShaSizeModeOwnerAndEmptyDirClosureVerified':True,'fullOuterArchive':{'bytes':packed.stat().st_size,'sha256':sha(packed)},'nestedNativeArchive':{'bytes':nested.stat().st_size,'sha256':sha(nested)},'closedNativeInventorySha256':hashlib.sha256(native).hexdigest(),'nestedFullVerificationPending':True,'rootAttestationCreated':False,'originalsDeleted':False}
++    receipt={'passed':True,'rawTapeMaterializationBudget':tape_budget,'outerInventorySha256':sha(dest/'remote-inventory.stdout.json'),'arm':c['arm'],'serverDriverMaximumParkNs':c['serverDriverMaximumParkNs'],'ownerPollMaximumParkNs':c['ownerPollMaximumParkNs'],'eventFetchCount':c['eventFetchCount'],'readWindow':c['readWindow'],'commonReadWindow32Envelope':True,'commonEventFetchEnvelope':False,'functionalRunPassed':inv['completion']['passed'],'allFunctionalErrorsRetained':inv['completion']['errors'],'scope':'Read-only closed JOB SSH inventory and streaming transfer; strict PREP source allowlist, no remote writes/launch/signals/PG or new resources. Local native/raw verification and independent root attestation still required.', 'frozenReleaseSha256':c['releaseSha256'],'controllerSha256':release['controllerSha256'],'outerFiles':len(seen),'outerDirectories':len(dirs),'outerLogicalBytes':sum(x['bytes'] for x in inv['files'].values()),'sourceWhitelistFiles':len(allow),'sourceRecursiveTar':False,'allOuterFileFullShaSizeModeOwnerAndEmptyDirClosureVerified':True,'fullOuterArchive':{'bytes':packed.stat().st_size,'sha256':sha(packed)},'nestedNativeArchive':{'bytes':nested.stat().st_size,'sha256':sha(nested)},'closedNativeInventorySha256':hashlib.sha256(native).hexdigest(),'nestedFullVerificationPending':True,'rootAttestationCreated':False,'originalsDeleted':False}
+     (dest/'collection-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');return receipt
+ 
+ def main():
+--- baseline/finalize_local_collection.py
++++ finalize_local_collection.py
+@@ -4,7 +4,7 @@
+ import argparse,hashlib,json
+ from common import require,sha,load_config
+ 
+-def strict_long_reports(reports,source_commit,code,owner_cap,*,event_fetch_count):
++def strict_long_reports(reports,source_commit,code,owner_cap,*,event_fetch_count,selected_window):
+     native,raw=reports['nativeResult'],reports['rawResult']
+     require(native['sourceCommit']==raw['sourceCommit']==source_commit
+         and native['frozenCodeFingerprintIndependentlyRecomputed']==code,'Same actual long artifact required')
+@@ -12,8 +12,11 @@
+         'Local functional timing bypass cannot authorize cloud collection')
+     require(reports['collectionReceipt']['rawTapeMaterializationBudget']['passed']is True,
+         'Overbudget full archives remain diagnostics-only')
+-    require(type(event_fetch_count)is int and event_fetch_count in(16,32)
++    require(type(event_fetch_count)is int and event_fetch_count==32 and type(selected_window)is int and selected_window in(8,32)
+         and native['eventFetchCount']==raw['eventFetchCount']==event_fetch_count
++        and native['readWindow']==raw['readWindow']==selected_window
++        and native['commonReadWindow32Envelope'] is True and raw['commonReadWindow32Envelope'] is True
++        and native.get('commonEventFetchEnvelope',False)is False and raw.get('commonEventFetchEnvelope',False)is False
+         and raw['sameNewArtifactFunctionalQualified'] is True and raw['allOriginalRawCanonicalAndThreeSnapshotsVerified'] is True,
+         'Actual new-artifact selected page/full raw/canonical/three snapshots qualification required')
+     owner=native['ownerPollAttestation']
+@@ -32,13 +35,13 @@
+     require(reports['collectionReceipt']['functionalRunPassed'] is True,'Closed functional failure is retained but cannot authorize subsequent round')
+     for k,d in reports.items():require(d.get('releaseSha256',d.get('frozenReleaseSha256'))==c['releaseSha256'],'Same frozen release across local audits')
+     require(reports['nativeResult']['allNestedFullShaBytesModeOwnerAndEmptyDirClosureVerified'] is True and reports['nativeResult']['allNestedFilesExactlyBoundToOuterArchive'] is True,'Complete nested verification required')
+-    strict_long_reports(reports,r['sourceCommit'],r['codeFingerprint'],c['ownerPollMaximumParkNs'],event_fetch_count=c['eventFetchCount'])
++    strict_long_reports(reports,r['sourceCommit'],r['codeFingerprint'],c['ownerPollMaximumParkNs'],event_fetch_count=c['eventFetchCount'],selected_window=c['readWindow'])
+     collection=reports['collectionReceipt'];archive=a.collection/'pilot-after-clean-stop.tar.gz'
+     require(sha(archive)==collection['nestedNativeArchive']['sha256'],'Closed archive unchanged at finalization')
+     for item in reports['rawResult']['inputs'].items():
+         name,row=item;path=a.collection/name;require(path.stat().st_size==row['bytes'] and sha(path)==row['sha256'],'Audited raw input changed')
+     a.out.mkdir(parents=True)
+-    report={'schemaVersion':1,'passed':True,'arm':c['arm'],'ownerPollMaximumParkNs':c['ownerPollMaximumParkNs'],'eventFetchCount':c['eventFetchCount'],'serverDriverMaximumParkNs':100000,'ownerPollAttestation':reports['rawResult']['ownerPollAttestation'],'frozenReleaseSha256':c['releaseSha256'],'controllerSha256':r['controllerSha256'],'localFullMemberShaBytesModesOwnersEmptyDirsVerified':True,'allClosedRoundRawFilesAndErrorReceiptsRetained':True,'allRawInputsAndFailuresRetentionRootReviewRequired':True,'rawInputFiles':len(reports['rawResult']['inputs']),'nestedFullVerificationPending':False,'sameNewArtifactFunctionalQualified':True,'allOriginalRawCanonicalAndThreeSnapshotsVerified':True,'sourceRecursiveTar':False,'closedArchiveSha256':collection['nestedNativeArchive']['sha256'],'closedNativeInventorySha256':collection['closedNativeInventorySha256'],'files':{k:{'path':str(v.resolve()),'bytes':v.stat().st_size,'sha256':sha(v)} for k,v in paths.items()},'scope':'Local event-fetch arm collection and strict full audit complete. Root must independently review this receipt, source/failed attempts and raw evidence before signing any preceding-arm gate. No next arm authorized, no live gate written.'}
++    report={'schemaVersion':1,'passed':True,'arm':c['arm'],'ownerPollMaximumParkNs':c['ownerPollMaximumParkNs'],'eventFetchCount':c['eventFetchCount'],'readWindow':c['readWindow'],'commonReadWindow32Envelope':True,'commonEventFetchEnvelope':False,'serverDriverMaximumParkNs':100000,'ownerPollAttestation':reports['rawResult']['ownerPollAttestation'],'frozenReleaseSha256':c['releaseSha256'],'controllerSha256':r['controllerSha256'],'localFullMemberShaBytesModesOwnersEmptyDirsVerified':True,'allClosedRoundRawFilesAndErrorReceiptsRetained':True,'allRawInputsAndFailuresRetentionRootReviewRequired':True,'rawInputFiles':len(reports['rawResult']['inputs']),'nestedFullVerificationPending':False,'sameNewArtifactFunctionalQualified':True,'allOriginalRawCanonicalAndThreeSnapshotsVerified':True,'sourceRecursiveTar':False,'closedArchiveSha256':collection['nestedNativeArchive']['sha256'],'closedNativeInventorySha256':collection['closedNativeInventorySha256'],'files':{k:{'path':str(v.resolve()),'bytes':v.stat().st_size,'sha256':sha(v)} for k,v in paths.items()},'scope':'Local fixed-page32 read-window arm collection and strict full audit complete. Root must independently review this receipt, source/failed attempts and raw evidence before signing any preceding-arm gate. No next arm authorized, no live gate written.'}
+     receipt=a.out/'LOCAL_COLLECTION_COMPLETE.json';receipt.write_text(json.dumps(report,indent=2)+'\n')
+     print(json.dumps({'passed':True,'arm':c['arm'],'receiptSha256':sha(receipt),'rootAttestationCreated':False},indent=2))
+ if __name__=='__main__':main()
+--- baseline/frozen_parser.py
++++ frozen_parser.py
+@@ -5,8 +5,8 @@
+ import sys
+ from common import require,sha
+ 
+-FREEZE_SHA='468db7bdb5b2fcf29dd2fab975cef9b3dbe7ce8f9ed73d326d65a5cd74488d8b'
+-MODULES=('common','event_fetch_contract','read_phase_audit','workload_contract','archive_closure','idle_inventory','setup_audit','audit_raw')
++FREEZE_SHA='766ef61f32b8c0dfe8010749795637969b319ddcd19e05d8351830d0e02836ad'
++MODULES=('common','read_window32_contract','read_phase_audit','workload_contract','archive_closure','idle_inventory','setup_audit','audit_raw')
+ 
+ 
+ def load(root=None):
+@@ -17,7 +17,7 @@
+         for name in MODULES:
+             path=root/('source/'+name+'.py');pin=pins['source/'+name+'.py']
+             require(path.stat().st_size==pin['bytes']and sha(path)==pin['sha256'],'Frozen long parser body changed: '+name)
+-            unique='_qualified_long_'+FREEZE_SHA[:12]+'_'+name
++            unique='_qualified_read_window32_'+FREEZE_SHA[:12]+'_'+name
+             spec=importlib.util.spec_from_file_location(unique,path);module=importlib.util.module_from_spec(spec)
+             sys.modules[unique]=module;sys.modules[name]=module;spec.loader.exec_module(module);loaded[name]=module
+     finally:
+--- baseline/idle_attestation.py
++++ idle_attestation.py
+@@ -98,13 +98,20 @@
+             'hardRealtimeGuaranteed': False}
+ 
+ 
+-def validate_idle_artifacts(base, root, registry, maximum):
++def validate_idle_artifacts(base,root,registry,maximum,*,selected_window=8):
+     """Closed-only read of actual startup files/logs and owner observations."""
++    require(type(selected_window)is int and selected_window in (8,32),'Explicit read8|32 idle registry window required')
++    expected_roles={'pilot-parent'}|{'window-%d-node-%d'%(selected_window,node)for node in range(3)}
++    records=list(registry.records.values());roles=[row.get('role')for row in records]
++    require(len(records)==4 and len(set(roles))==4 and set(roles)==expected_roles,'Exact unique selected-window three-node plus parent role registry required')
++    identities=[row.get('identity')for row in records]
++    require(all(isinstance(row,dict)and type(row.get('pid'))is int and row['pid']>1 for row in identities)
++            and len({row['pid']for row in identities})==4,'Idle registry requires four distinct exact process identities')
+     root = Path(root)
+     reports = []
+     for node in range(3):
+         identity = next(row['identity'] for row in registry.records.values()
+-                        if row['role'] == 'window-8-node-' + str(node))
++                        if row['role']=='window-%d-node-%d'%(selected_window,node))
+         folder = root / ('node-%d/idle-observations' % node)
+         base.no_links(folder)
+         # This fresh, non-restarting arm expects one launch, retaining both intent and actual.
+--- baseline/telemetry_audit.py
++++ telemetry_audit.py
+@@ -10,7 +10,7 @@
+     return whole.replace(microsecond=int((match.group(2) or '').ljust(6,'0')[:6]))
+ 
+ def audit_telemetry(arms,*,parser,job):
+-    raw,js,JOB,WINDOWS=parser.raw,parser.js,job,(8,)
++    raw,js,JOB,WINDOWS=parser.raw,parser.js,job,tuple(a['readWindow']for a in arms)
+     path=JOB/'owned-cpu-rss-io-1hz.jsonl'; data=raw(path); samples=[json.loads(line) for line in data.splitlines()]
+     receipt=js(JOB/'telemetry-receipt.json')
+     require(receipt['samples'] == len(samples) and 2<=len(samples)<=512 and receipt['bytes'] == len(data) and receipt['sha256'] == hashlib.sha256(data).hexdigest(), 'Telemetry receipt closure')
+--- baseline/closed_bindings.py
++++ closed_bindings.py
+@@ -9,14 +9,14 @@
+ 
+ 
+ def materialize(name,size,plan,*,allow_tapes=True):
+-    require(plan['maximumRawTraceBytes']==185514924,'Exact actual-JAR long trace bound required')
++    require(plan['maximumRawTraceBytes']==182433396,'Exact actual-JAR long trace bound required')
+     if name in TAPES:
+         return allow_tapes and 0<=size<=plan['maximumRawTraceBytes']
+     return size<=32*1024**2 and not name.endswith(('.rec','.dat','.catalog','.jar','.class','.gz','.zip'))
+ 
+ 
+ def validate_tape_budget(files,plan):
+-    require(plan['maximumRawTraceBytes']==185514924,'Exact actual-JAR long trace bound required')
++    require(plan['maximumRawTraceBytes']==182433396,'Exact actual-JAR long trace bound required')
+     total=sum(row['bytes']for name,row in files.items()if name in TAPES)
+     return {'passed':total<=plan['maximumRawTraceBytes'],'totalOriginalTapeBytes':total,
+         'materializationLimitBytes':plan['maximumRawTraceBytes'],
+--- baseline/run_guards.py
++++ run_guards.py
+@@ -10,11 +10,11 @@
+ def run(output):
+     assert output.parent.resolve()==HERE and not output.exists(),'New immediate preparation child required'
+     files={str(p.relative_to(HERE)):{'bytes':p.stat().st_size,'sha256':sha(p)}for p in sorted(HERE.rglob('*'))if p.is_file()and not any(x.startswith(('guards-','__pycache__'))for x in p.relative_to(HERE).parts)}
+-    assert sum(v['bytes']for v in files.values())<4*1024**2
++    assert sum(v['bytes']for v in files.values())<16*1024**2
+     output.mkdir(mode=0o700)
+     with zipfile.ZipFile(output/'source.zip','x',compression=zipfile.ZIP_DEFLATED)as z:
+         for name in files:z.write(HERE/name,name)
+-    argv=[sys.executable,'-B','-m','unittest','-v','test_event_collection']
++    argv=[sys.executable,'-B','-m','unittest','-v','test_read_window32_collection']
+     save(output/'registration.json',dict(createdAtUtc=datetime.datetime.now(datetime.timezone.utc).isoformat(),command=argv,cwd=str(HERE),
+         interpreter=dict(executable=sys.executable,version=platform.python_version()),sourceFiles=files,sourceZipSha256=sha(output/'source.zip'),scope='PURE_SYNTHETIC_ADAPTER_GUARDS_NO_RAW_OR_REMOTE'))
+     with(output/'stdout').open('xb')as out,(output/'stderr').open('xb')as err:
+--- /dev/null
++++ test_read_window32_collection.py
+@@ -0,0 +1,297 @@
++"""Pure synthetic protocol/negative guards only. Never real stage, raw audit, SSH or JVM."""
++import copy
++import json
++import shutil
++import sys
++import tempfile
++import types
++import unittest
++from pathlib import Path
++from unittest.mock import patch
++HERE=Path(__file__).resolve().parent
++sys.path.insert(0,str(HERE))
++import common as c
++import cpu_read_window32_abab as controller
++import build_config
++import collect_and_audit as runner
++import closed_bindings as bindings
++import frozen_parser
++import audit_raw
++import audit_native_artifacts as native
++import owner_bundle
++import finalize_local_collection as finalize
++
++
++def write(path,value):
++    path.write_text(json.dumps(value));return c.sha(path)
++
++
++def release_fixture():
++    value=json.loads((HERE/'fixtures/release.template.json').read_text())
++    value.update(releaseReady=True,controllerSha256=c.sha(HERE/'cpu_read_window32_abab.py'))
++    for key,row in value['evidenceReferences'].items():
++        if key not in controller.PREREQUISITE_PINS:row.update(bytes=128,sha256='a'*64)
++    return value
++
++
++def prior_fixture(number,release_sha,release):
++    push=dict(schemaVersion=1,scope='ROOT_VERIFIED_PRIVATE_EVIDENCE_PUSH',repository='yinli-systems/vectormatch',visibility='private',
++        pushCompleted=True,remoteCommitVerified=True,commit='d'*40,fullOriginalEvidencePushed=True,evidenceManifestSha256='e'*64,
++        closedArchiveSha256='b'*64,closedNativeInventorySha256='c'*64)
++    gate=dict(schemaVersion=3,scope='ROOT_VERIFIED_CLOSED_CPU_READ_WINDOW32_ARM_COLLECTION',collectionComplete=True,
++        arm=number,eventFetchCount=32,readWindow=controller.READ_WINDOW_ORDER[number-1],commonReadWindow32Envelope=True,commonEventFetchEnvelope=False,
++        sameNewArtifactFunctionalQualified=True,allOriginalRawCanonicalAndThreeSnapshotsVerified=True,
++        ownerPollMaximumParkNs=1000000,serverDriverMaximumParkNs=100000,frozenReleaseSha256=release_sha,
++        controllerSha256=release['controllerSha256'],codeFingerprint=release['codeFingerprint'],
++        localFullMemberShaBytesModesOwnersEmptyDirsVerified=True,allRawInputsAndFailuresRetained=True,strictSchedulerTimingAdmission=True,
++        independentLocalCollectionReceiptSha256='f'*64,closedArchiveSha256='b'*64,closedNativeInventorySha256='c'*64)
++    return gate,push
++
++
++class Guards(unittest.TestCase):
++    def tearDown(self):controller.configure_arm(1)
++
++    def config(self,root,arm):
++        root=Path(root).resolve();protected=root/'protected.json';write(protected,{})
++        value=release_fixture();value['protectedOriginalState']['manifestSha256']=c.sha(protected)
++        release=root/'release.json';release_sha=write(release,value)
++        rows=copy.deepcopy(json.loads((HERE/'controller-preparation-frozen.json').read_text())['files'])
++        rows['LOCAL_PREPARATION_FROZEN.json']=dict(bytes=(HERE/'controller-preparation-frozen.json').stat().st_size,sha256=c.sha(HERE/'controller-preparation-frozen.json'))
++        rows['release/release.json']=dict(bytes=release.stat().st_size,sha256=release_sha)
++        rows['release/current-stopped-original-state.json']=dict(bytes=protected.stat().st_size,sha256=c.sha(protected))
++        rows.update({'release/lib/'+Path(k).name:copy.deepcopy(row)for k,row in value['artifacts'].items()})
++        rows.update({'release/proofs/'+k+'.json':{x:row[x]for x in('bytes','sha256')}for k,row in value['evidenceReferences'].items()})
++        stage=root/'stage.json';write(stage,dict(passed=True,stagedFiles=rows,releaseSha256=release_sha,
++            controllerSha256=value['controllerSha256'],applicationStarted=False,resourceCreated=False))
++        gates={}
++        for n in range(1,arm):
++            gate,push=prior_fixture(n,release_sha,value);pp=root/('push%d.json'%n);ph=write(pp,push);gate['privatePushReceiptSha256']=ph
++            gp=root/('gate%d.json'%n);gh=write(gp,gate);gates[str(n)]=dict(local=str(gp),sha256=gh,privatePushLocal=str(pp),privatePushSha256=ph)
++        cfg=dict(schemaVersion=6,experiment='retention-read-window32-long-v1',workloadPreset='long-cuts-33792-v1',arm=arm,
++            maximumParkNs=100000,serverDriverMaximumParkNs=100000,ownerPollMaximumParkNs=1000000,eventFetchCount=32,
++            readWindow=controller.READ_WINDOW_ORDER[arm-1],remotePrep=str(controller.PREP),host='ed6c0673f5cb',
++            releaseLocal=str(release),releaseSha256=release_sha,stagingReceipt=str(stage),stagingReceiptSha256=c.sha(stage),
++            protectedReference=str(protected),protectedReferenceSha256=c.sha(protected),priorGates=gates,
++            executionMetadata=['arm-%d-execution-register.json'%arm,'arm-%d-execution.stdout'%arm,'arm-%d-execution.stderr'%arm])
++        config=root/'config.json';write(config,cfg);return config,cfg,stage,value
++
++    def load(self,path):
++        # Explicit synthetic protected bytes are not actual release witnesses.
++        with patch.object(controller,'validate_release',side_effect=lambda value:value):return c.load_config(path)
++
++    def metadata(self):
++        return (json.loads((HERE/'fixtures/actual-linux-distribution-observation.json').read_text()),
++                json.loads((HERE/'fixtures/actual-local-distribution-observation.json').read_text()))
++
++    def test_real_release_requires_new_artifact_schema_and_unmodified_threshold(self):
++        value=release_fixture();self.assertIs(controller.validate_release(value),value)
++        self.assertEqual(2116076873,controller.MINIMUM_INITIAL_FREE_BYTES)
++        for key,bad in [('releaseReady',False),('schemaVersion',2),('sourceCommit','d92301d3058acc83cb85d5bc5b4fd2e3f0ed4df8'),('codeFingerprint','0'*64)]:
++            other=copy.deepcopy(value);other[key]=bad
++            with self.subTest(key=key),self.assertRaises(RuntimeError):controller.validate_release(other)
++
++    def test_four_arm_config_schema_exact_source_sets_and_all_prior_pairs(self):
++        for arm in(1,2,3,4):
++            with self.subTest(arm=arm),tempfile.TemporaryDirectory()as temp:
++                path,cfg,stage,r=self.config(temp,arm);actual,_,rows,allow=self.load(path)
++                self.assertEqual(controller.READ_WINDOW_ORDER[arm-1],actual['readWindow'])
++                self.assertEqual(len(json.loads(stage.read_text())['stagedFiles'])+2*(arm-1),len(rows))
++                self.assertEqual(len(rows)+3,len(allow));self.assertEqual(32,actual['eventFetchCount'])
++
++    def test_old_namespace_schema_wrong_selected_window_and_diagnostic_metadata_denied(self):
++        with tempfile.TemporaryDirectory()as temp:
++            path,cfg,stage,r=self.config(temp,2)
++            for key,value in [('schemaVersion',5),('experiment','retention-event-fetch-long-v1'),('readWindow',8),('readWindow',True),
++                ('eventFetchCount',16),('remotePrep','/opt/vectormatch-cpu/preparation/cpu-event-fetch-cloud-abab-r1'),
++                ('ownerPollMaximumParkNs',100000),('serverDriverMaximumParkNs',1000000),('priorGates',{}),('executionMetadata',['foreign.json'])]:
++                bad=copy.deepcopy(cfg);bad[key]=value;write(path,bad)
++                with self.subTest(key=key),self.assertRaises((AssertionError,RuntimeError,KeyError)):self.load(path)
++
++    def test_prior_pair_cannot_relabel_wrong_window_envelope_or_unpushed_state(self):
++        with tempfile.TemporaryDirectory()as temp:
++            path,cfg,stage,r=self.config(temp,2);row=cfg['priorGates']['1'];gp=Path(row['local']);original=json.loads(gp.read_text())
++            for key,value in [('readWindow',32),('eventFetchCount',16),('commonReadWindow32Envelope',False),('commonEventFetchEnvelope',True),
++                ('strictSchedulerTimingAdmission',False),('codeFingerprint','0'*64)]:
++                bad=copy.deepcopy(original);bad[key]=value;row['sha256']=write(gp,bad);write(path,cfg)
++                with self.subTest(key=key),self.assertRaises((AssertionError,RuntimeError)):self.load(path)
++            row['sha256']=write(gp,original);pp=Path(row['privatePushLocal']);push=json.loads(pp.read_text());push['remoteCommitVerified']=False
++            row['privatePushSha256']=write(pp,push);original['privatePushReceiptSha256']=row['privatePushSha256'];row['sha256']=write(gp,original);write(path,cfg)
++            with self.assertRaises(RuntimeError):self.load(path)
++
++    def test_staged_files_need_exact_reviewed_names_and_controller_validator_hash(self):
++        with tempfile.TemporaryDirectory()as temp:
++            path,cfg,stage,r=self.config(temp,1);original=json.loads(stage.read_text())
++            for name in ['owner_poll_attestation.py','cpu_read_window32_abab.py','release/release.json']:
++                bad=copy.deepcopy(original);bad['stagedFiles'][name]['sha256']='0'*64;cfg['stagingReceiptSha256']=write(stage,bad);write(path,cfg)
++                with self.subTest(name=name),self.assertRaises(AssertionError):self.load(path)
++            bad=copy.deepcopy(original);bad['stagedFiles']['unrelated.py']=bad['stagedFiles'].pop('PLAN.md');cfg['stagingReceiptSha256']=write(stage,bad);write(path,cfg)
++            with self.assertRaises(AssertionError):self.load(path)
++
++    def test_builder_only_fresh_config_and_complete_explicit_prefix(self):
++        with tempfile.TemporaryDirectory()as temp:
++            root=Path(temp).resolve();path,cfg,stage,r=self.config(root,1);out=root/'fresh'
++            with patch.object(controller,'validate_release',side_effect=lambda value:value):
++                result=build_config.build(1,Path(cfg['releaseLocal']),cfg['releaseSha256'],stage,cfg['stagingReceiptSha256'],
++                    Path(cfg['protectedReference']),cfg['protectedReferenceSha256'],{},cfg['executionMetadata'],out)
++                self.assertTrue(result.is_file())
++                with self.assertRaises(AssertionError):build_config.build(1,Path(cfg['releaseLocal']),cfg['releaseSha256'],stage,
++                    cfg['stagingReceiptSha256'],Path(cfg['protectedReference']),cfg['protectedReferenceSha256'],{},cfg['executionMetadata'],out)
++
++    def test_frozen_read32_parser_is_byte_exact_strict_and_all_aliases_restored(self):
++        previous={n:sys.modules.get(n)for n in frozen_parser.MODULES};modules=frozen_parser.load()
++        self.assertEqual(previous,{n:sys.modules.get(n)for n in frozen_parser.MODULES})
++        self.assertIs(modules['audit_raw'].audit_read_window32_arm.__kwdefaults__['local_functional_only'],False)
++        self.assertEqual(33792,modules['workload_contract'].LONG.arrivals)
++        self.assertEqual('766ef61f32b8c0dfe8010749795637969b319ddcd19e05d8351830d0e02836ad',frozen_parser.FREEZE_SHA)
++
++    def test_parser_mutated_body_refused_without_module_alias_leak(self):
++        before=sys.modules['common']
++        with tempfile.TemporaryDirectory()as temp:
++            root=Path(temp)/'parser';shutil.copytree(HERE/'long_parser',root);path=root/'source/read_window32_contract.py';path.write_bytes(path.read_bytes()+b'\n# forbidden\n')
++            with self.assertRaises(AssertionError):frozen_parser.load(root)
++        self.assertIs(sys.modules['common'],before)
++
++    def test_strict_entry_requires_both_explicit_selections_and_no_timing_opt_in(self):
++        calls=[];fake=types.SimpleNamespace(audit_read_window32_arm=lambda *args,**kw:calls.append((args,kw))or{})
++        for window in(8,32):audit_raw.strict_arm(fake,'LONG','synthetic',selected_window=window,event_fetch_count=32)
++        self.assertEqual([8,32],[a[0]for a,kw in calls]);self.assertTrue(all('local_functional_only'not in kw for a,kw in calls))
++        for window in(None,True,0,16,33):
++            with self.subTest(window=window),self.assertRaises(AssertionError):audit_raw.strict_arm(fake,'LONG','synthetic',selected_window=window,event_fetch_count=32)
++        with self.assertRaises(TypeError):audit_raw.strict_arm(fake,'LONG','synthetic',event_fetch_count=32)
++        with self.assertRaises(AssertionError):audit_raw.strict_arm(fake,'LONG','synthetic',selected_window=8,event_fetch_count=16)
++
++    def test_real_linux_two_plans_compare_to_actual_local_four_before_parser(self):
++        linux,local=self.metadata();contract=frozen_parser.load()['workload_contract']
++        for window in(8,32):
++            report=audit_raw.validate_actual_plan_sources(linux,local,local['plans']['page32-window%d'%window]['plan'],
++                linux['actualCodeFingerprint'],selected_window=window,event_fetch_count=32,contract=contract)
++            self.assertTrue(report['passed']);self.assertEqual(window,report['selectedReadWindow'])
++
++    def test_never_fabricates_four_linux_plans_or_passes_linux_to_local_four_parser(self):
++        linux,local=self.metadata();seen=[];fake=types.SimpleNamespace(validate_actual_plan_observation=lambda *a,**k:seen.append((a,k))or{})
++        audit_raw.validate_actual_plan_sources(linux,local,local['plans']['page32-window8']['plan'],linux['actualCodeFingerprint'],selected_window=8,event_fetch_count=32,contract=fake)
++        self.assertIs(local,seen[0][0][0]);self.assertEqual({'8','32'},set(linux['plans']))
++        bad=copy.deepcopy(linux);bad['plans']=copy.deepcopy(local['plans'])
++        with self.assertRaises(AssertionError):audit_raw.validate_actual_plan_sources(bad,local,{},linux['actualCodeFingerprint'],selected_window=8,event_fetch_count=32,contract=fake)
++        self.assertEqual(1,len(seen))
++
++    def test_linux_full_plan_configuration_or_identity_drift_blocks_before_parser(self):
++        linux,local=self.metadata();fake=types.SimpleNamespace(validate_actual_plan_observation=lambda *a,**k:self.fail('Parser reached before actual local/Linux equality'))
++        for key in ['plan','configuration']:
++            bad=copy.deepcopy(linux);bad['plans']['32'][key]['readWindow'if key=='configuration'else'requestedReadWindow']=8
++            with self.subTest(key=key),self.assertRaises(AssertionError):audit_raw.validate_actual_plan_sources(bad,local,{},linux['actualCodeFingerprint'],selected_window=8,event_fetch_count=32,contract=fake)
++        bad=copy.deepcopy(linux);bad['sourceCommit']='old'
++        with self.assertRaises(AssertionError):audit_raw.validate_actual_plan_sources(bad,local,{},linux['actualCodeFingerprint'],selected_window=8,event_fetch_count=32,contract=fake)
++
++    def test_full_tapes_and_new_actual_trace_bound_preserved_on_overbudget(self):
++        plan={'maximumRawTraceBytes':182433396};self.assertTrue(bindings.materialize('job/idle-arm/load/physical-replies.bin',40*1024**2,plan))
++        self.assertFalse(bindings.materialize('job/foreign.bin',40*1024**2,plan))
++        rows={name:{'bytes':60000000}for name in bindings.TAPES};budget=bindings.validate_tape_budget(rows,plan)
++        self.assertFalse(budget['passed']);self.assertIn('retain complete outer/nested TAR',budget['failurePolicy'])
++        self.assertTrue(all(not bindings.materialize(name,row['bytes'],plan,allow_tapes=False)for name,row in rows.items()))
++        with self.assertRaises(AssertionError):bindings.validate_tape_budget(rows,{'maximumRawTraceBytes':185514924})
++
++    def test_raw_qualification_requires_all_arrivals24_phases3canonical_logs(self):
++        final={'combinedSha256':'h'};terminal=dict(rows=33792,acceptedUniqueOrders=33792,duplicateOrOutOfRangeAcceptedOrderIds=0)
++        for window in(8,32):
++            report=dict(eventFetchCount=32,commonReadWindow32Envelope=True,commonEventFetchEnvelope=False,readWindow=window,batchCap=4,
++                cycles=[{}]*12,readPhaseBindings={'readPhases':[{}]*24},schedulerTimingValidFromRaw=True,
++                nodeLogs=[dict(member=n,finalCheckpointSha256='h')for n in(0,1,2)])
++            self.assertTrue(audit_raw.qualify_new_artifact(report,terminal,final,32,window))
++            for key,value in [('readWindow',32 if window==8 else 8),('commonReadWindow32Envelope',False),('commonEventFetchEnvelope',True),
++                ('schedulerTimingValidFromRaw',False),('cycles',[{}]*11),('readPhaseBindings',{'readPhases':[{}]*23}),('nodeLogs',report['nodeLogs'][:2])]:
++                bad=copy.deepcopy(report);bad[key]=value
++                with self.subTest(window=window,key=key),self.assertRaises(AssertionError):audit_raw.qualify_new_artifact(bad,terminal,final,32,window)
++            bad=copy.deepcopy(terminal);bad['acceptedUniqueOrders']=33791
++            with self.assertRaises(AssertionError):audit_raw.qualify_new_artifact(report,bad,final,32,window)
++
++    def closed(self,arm):
++        cfg=dict(arm=arm,eventFetchCount=32,readWindow=controller.READ_WINDOW_ORDER[arm-1],ownerPollMaximumParkNs=1000000,
++            serverDriverMaximumParkNs=100000,releaseSha256='a'*64,remotePrep=str(controller.PREP))
++        receipt=dict(schemaVersion=3,scope='ROOT_VERIFIED_CLOSED_CPU_READ_WINDOW32_CONTROLLER',rootVerified=True,
++            **{k:cfg[k]for k in('arm','eventFetchCount','readWindow','ownerPollMaximumParkNs','serverDriverMaximumParkNs')},
++            commonReadWindow32Envelope=True,commonEventFetchEnvelope=False,frozenReleaseSha256='a'*64,
++            controllerSha256='b'*64,job=str(controller.PREP)+'/arm-'+str(arm),controllerIdentityGone=True,allOwnedStopped=True,
++            inspectionSha256='c'*64,executedSourceSha256=runner.CLOSE_SOURCE_SHA)
++        return cfg,receipt
++
++    def test_actual_new_close_pin_required_not_old_event_or_other_hex(self):
++        with tempfile.TemporaryDirectory()as temp:
++            path=Path(temp).resolve()/'closed.json';cfg,receipt=self.closed(1);write(path,receipt)
++            self.assertTrue(c.hexsha(runner.CLOSE_SOURCE_SHA));runner.closed_proof(path,c.sha(path),cfg,dict(controllerSha256='b'*64))
++            for value in ['67fcfe5bd15efb8bdc488d25b156534b34878ce6584e5cb2ec3cf95ebeb2b5f2','f'*64,'']:
++                bad=dict(receipt,executedSourceSha256=value);write(path,bad)
++                with self.subTest(value=value),self.assertRaises(AssertionError):runner.closed_proof(path,c.sha(path),cfg,dict(controllerSha256='b'*64))
++
++    def test_closed_scope_schema_window_envelopes_and_all_pid_closure_required(self):
++        with tempfile.TemporaryDirectory()as temp:
++            path=Path(temp).resolve()/'closed.json';cfg,receipt=self.closed(2)
++            for key,value in [('schemaVersion',2),('scope','ROOT_VERIFIED_CLOSED_CPU_EVENT_FETCH_CONTROLLER'),('readWindow',8),
++                ('commonReadWindow32Envelope',False),('commonEventFetchEnvelope',True),('eventFetchCount',16),
++                ('allOwnedStopped',False),('controllerIdentityGone',False),('serverDriverMaximumParkNs',1000000)]:
++                bad=dict(receipt,**{key:value});write(path,bad)
++                with self.subTest(key=key),self.assertRaises(AssertionError):runner.closed_proof(path,c.sha(path),cfg,dict(controllerSha256='b'*64))
++
++    def test_native_dispatches_actual_selected_controller_before_io(self):
++        class Reached(Exception):pass
++        def configure(arm):self.assertEqual(2,arm);raise Reached()
++        with patch.object(native,'controller',types.SimpleNamespace(configure_arm=configure)):
++            with self.assertRaises(Reached):native.audit(object(),dict(arm=2),{})
++
++    def test_owner_bundle_binds_selected_node_roles_exact_parent_argv_and_same_validator(self):
++        for arm in(1,2,3,4):
++            controller.configure_arm(arm);window=controller.selected_read_window();release=release_fixture();root=controller.PAIR
++            envelope=dict(eventFetchCount=32,readWindow=window,commonReadWindow32Envelope=True,commonEventFetchEnvelope=False)
++            geometry=dict(envelope,batchCap=4,archiveChunkBytes=6144)
++            registration=dict(envelope,lineage='capacity-pilot-synthetic',ports=42000)
++            identities={'pilot-parent':dict(pid=100,arguments=controller.parent_argv(release))}
++            identities.update({'window-%d-node-%d'%(window,n):dict(pid=101+n,arguments=controller.node_argv(release,window,n,registration))for n in(0,1,2)})
++            summary=dict(geometry,maintenanceRpcMetrics=dict(eventFetchCount=32,readWindow=window,commonReadWindow32Envelope=True),
++                         physicalOfferTape={'lastActualTransportObservation':{'retentionIdlePolicy':{'last':'actual'}}})
++            values={'registration.json':registration,'configuration.json':dict(geometry),'load-result.json':summary,
++                'admission-plan.json':controller.selected_plan(release),'completion.json':dict(envelope),'functional-result.json':dict(envelope),
++                'transport-observations.json':[{'retentionIdlePolicy':{'sample':'actual'}}],
++                'owner-before-close.json':{'alive':True},'owner-after-close.json':{'alive':False}}
++            def read(path):
++                return {'node':int(path.parts[-3].split('-')[-1])}if path.name=='idle-000.actual.json'else values[path.name]
++            cfg=dict(arm=arm,eventFetchCount=32,readWindow=window,ownerPollMaximumParkNs=1000000,serverDriverMaximumParkNs=100000)
++            with patch.object(owner_bundle,'validate_owner_bundle',return_value={'passed':True})as sole:
++                self.assertTrue(owner_bundle.verify(cfg,release,root,read,identities)['passed'])
++                actual=sole.call_args.kwargs
++                self.assertEqual({n:identities['window-%d-node-%d'%(window,n)]for n in(0,1,2)},actual['nodes'])
++                self.assertEqual(controller.parent_argv(release),actual['expected_parent_arguments'])
++                self.assertEqual([{'sample':'actual'},{'last':'actual'}],actual['parent_idle_actuals'])
++                self.assertEqual(1000000,actual['expected_owner_cap'])
++
++    def test_failed_native_or_raw_retains_partials_and_refuses_finalization(self):
++        with tempfile.TemporaryDirectory()as temp:
++            root=Path(temp).resolve();proof=root/'proof';proof.write_bytes(b'SYNTHETIC ONLY');cfg=dict(arm=2,eventFetchCount=32,readWindow=32,serverDriverMaximumParkNs=100000,ownerPollMaximumParkNs=1000000)
++            output=root/'attempt';calls=[]
++            def invoke(args,dest,label):
++                calls.append(label)
++                if label=='strict-raw':(dest/'partial.guard').write_bytes(b'partial synthetic evidence')
++                return dict(exitCode=1 if label in('strict-native','strict-raw')else 0)
++            with patch.object(runner,'preparation',return_value={}),patch.object(runner,'checked_config',return_value=(cfg,{},[])),patch.object(runner,'closed_proof',return_value={}),\
++                patch.object(runner.b,'reference',side_effect=lambda path,h:path),patch.object(runner,'invoke',side_effect=invoke):
++                report=runner.execute(root/'config','a'*64,output,proof,'b'*64,'c'*64,root/'remote')
++            self.assertFalse(report['passed']);self.assertFalse(report['nextArmAuthorized']);self.assertFalse(report['rootGateCreated'])
++            self.assertEqual(['collect-readonly','full-native-byte-closure','strict-native','strict-raw'],calls)
++            self.assertTrue((output/'partial.guard').exists());self.assertTrue((output/'DIAGNOSTICS_ONLY.json').exists())
++
++    def test_finalizer_requires_same_window_raw_canonical_and_strict_scheduler(self):
++        owner=dict(passed=True,ownerPollMaximumParkNs=1000000,serverDriverMaximumParkNs=100000,selectionIntentAndConstructedOwnerSnapshotReconciled=True,
++            exactRegisteredParentAndThreeNodeArgumentsVerified=True,ownerPropertyParentOnly=True,actualConfiguredIdleFactoryCreations=22)
++        native_report=dict(sourceCommit='source',frozenCodeFingerprintIndependentlyRecomputed='code',eventFetchCount=32,readWindow=32,
++            commonReadWindow32Envelope=True,commonEventFetchEnvelope=False,ownerPollAttestation=owner)
++        raw=dict(sourceCommit='source',eventFetchCount=32,readWindow=32,commonReadWindow32Envelope=True,commonEventFetchEnvelope=False,
++            strictSchedulerTimingAdmission=True,localFunctionalDiagnosticOptIn=False,ownerPollAttestation=owner,
++            sameNewArtifactFunctionalQualified=True,allOriginalRawCanonicalAndThreeSnapshotsVerified=True)
++        reports=dict(nativeResult=native_report,rawResult=raw,collectionReceipt={'rawTapeMaterializationBudget':{'passed':True}})
++        finalize.strict_long_reports(reports,'source','code',1000000,event_fetch_count=32,selected_window=32)
++        for key,value in [('readWindow',8),('strictSchedulerTimingAdmission',False),('localFunctionalDiagnosticOptIn',True),
++            ('sameNewArtifactFunctionalQualified',False),('allOriginalRawCanonicalAndThreeSnapshotsVerified',False),('commonReadWindow32Envelope',False)]:
++            bad=copy.deepcopy(reports);bad['rawResult'][key]=value
++            with self.subTest(key=key),self.assertRaises(AssertionError):finalize.strict_long_reports(bad,'source','code',1000000,event_fetch_count=32,selected_window=32)
++
++
++if __name__=='__main__':unittest.main(verbosity=2)

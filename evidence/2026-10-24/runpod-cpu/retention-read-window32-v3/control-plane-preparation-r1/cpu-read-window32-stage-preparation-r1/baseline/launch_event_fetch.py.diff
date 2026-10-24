@@ -1,0 +1,28 @@
+--- baseline/launch_owner_poll.py
++++ launch_event_fetch.py
+@@ -1,6 +1,6 @@
+ """Explicit root-controlled one-shot launch. Requires a hash-reviewed successful stage; never stages or retries."""
+ import argparse,hashlib,json,pathlib,shlex,shutil
+-import stage_owner_poll as stage
++import stage_event_fetch as stage
+ 
+ def validate_stage(directory,expected_sha):
+  directory=stage.no_links(pathlib.Path(directory).absolute()).resolve();receipt=stage.load(stage.reference({'path':str(directory/'STAGE_SUCCESS.json'),'sha256':expected_sha}))
+@@ -22,7 +22,7 @@
+ def launch_arguments(arm,release_sha,prior_sha=None):
+  stage.require(type(arm)is int and arm in (1,2,3,4) and stage.hexsha(release_sha),'Exact one manual owner arm/release SHA required')
+  stage.require((arm==1 and prior_sha is None) or (arm>1 and stage.hexsha(prior_sha)),'Only arms2..4 require the actual previous closed/private-push gate')
+- args=['/usr/bin/python3','-B',stage.PREP+'/cpu_owner_poll_abab.py','--arm',str(arm),'--release-sha256',release_sha]
++ args=['/usr/bin/python3','-B',stage.PREP+'/cpu_event_fetch_abab.py','--arm',str(arm),'--release-sha256',release_sha]
+  if arm>1:args+=['--prior-collection-sha256',prior_sha]
+  return args+['--start-new']
+ 
+@@ -36,7 +36,7 @@
+  push_path=stage.reference({'path':str(stage.no_links(pathlib.Path(push_path).absolute()).resolve()),'sha256':gate['privatePushReceiptSha256']});push=stage.load(push_path)
+  source=pathlib.Path(checked['gate']['preparationDirectory']);stage.sys.path.insert(0,str(source))
+  try:
+-  controller=stage.module(source/'cpu_owner_poll_abab.py','frozen_owner_prior_gate')
++  controller=stage.module(source/'cpu_event_fetch_abab.py','frozen_owner_prior_gate')
+   controller.configure_arm(arm);controller.FROZEN_RELEASE_SHA=release_sha
+   controller.validate_prior_gate(gate,checked['ready'],arm-1);controller.validate_private_push(push,gate)
+  finally:stage.sys.path.pop(0)
