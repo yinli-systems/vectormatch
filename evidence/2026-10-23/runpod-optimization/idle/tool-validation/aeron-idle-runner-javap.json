@@ -1,0 +1,42 @@
+{
+  "finding": "For the two ThreadingMode values accepted by ClusterNodeMain, the driver-native-resource idle object is selected only under DEDICATED. Under SHARED the native resource agent executes inside the shared composite using sharedIdleStrategy. The new metadata name runnerSelected describes selection of the configured independent idle object, not whether the native resource agent runs.",
+  "input": {
+    "aeronVersion": "1.53.3",
+    "bytes": 3544128,
+    "path": "runtime/cloud/optimization-20261024/pipeline/node-e57e341909a49692b9ecbf9693803ed62a240b06/dist/cluster/lib/aeron-all-1.53.3.jar",
+    "sha256": "4c6c8a5014a2b67424051170392a005daa9a998ac963302d2819d0f3db749ef2"
+  },
+  "observedCommands": [
+    {
+      "observedExitCode": 0,
+      "shellCommand": ".tools/jdk-extract/jdk-21.0.13+9/Contents/Home/bin/javap -c -p -classpath runtime/cloud/optimization-20261024/pipeline/node-e57e341909a49692b9ecbf9693803ed62a240b06/dist/cluster/lib/aeron-all-1.53.3.jar io.aeron.driver.MediaDriver | sed -n '/private io.aeron.driver.MediaDriver/,/public static /p'",
+      "stdoutExcerpts": [
+        {
+          "purpose": "Native resource agent is local variable5",
+          "text": "      46: new           #107                // class io/aeron/driver/NativeResourceAgent\n      49: dup\n      50: aload_1\n      51: invokespecial #109                // Method io/aeron/driver/NativeResourceAgent.\"<init>\":(Lio/aeron/driver/MediaDriver$Context;)V\n      54: astore        5"
+        },
+        {
+          "purpose": "SHARED branch uses shared idle and includes native agent in composite; no native runner",
+          "text": "     246: aload_0\n     247: new           #215                // class org/agrona/concurrent/AgentRunner\n     250: dup\n     251: aload_1\n     252: invokevirtual #217                // Method io/aeron/driver/MediaDriver$Context.sharedIdleStrategy:()Lorg/agrona/concurrent/IdleStrategy;\n     255: aload         4\n     257: aload_3\n     258: new           #221                // class io/aeron/driver/FixedNameCompositeAgent\n     261: dup\n     262: ldc           #223                // String aeron-md-shd\n     264: aload_1\n     265: invokevirtual #180                // Method io/aeron/driver/MediaDriver$Context.aeronDirectoryName:()Ljava/lang/String;\n     268: iconst_4\n     269: anewarray     #184                // class org/agrona/concurrent/Agent\n     272: dup\n     273: iconst_0\n     274: aload         8\n     276: aastore\n     277: dup\n     278: iconst_1\n     279: aload         7\n     281: aastore\n     282: dup\n     283: iconst_2\n     284: aload         5\n     286: aastore\n     287: dup\n     288: iconst_3\n     289: aload         6\n     291: aastore\n     292: invokespecial #225                // Method io/aeron/driver/FixedNameCompositeAgent.\"<init>\":(Ljava/lang/String;Ljava/lang/String;[Lorg/agrona/concurrent/Agent;)V\n     295: invokespecial #228                // Method org/agrona/concurrent/AgentRunner.\"<init>\":(Lorg/agrona/concurrent/IdleStrategy;Lorg/agrona/ErrorHandler;Lorg/agrona/concurrent/status/AtomicCounter;Lorg/agrona/concurrent/Agent;)V\n     298: putfield      #196                // Field sharedRunner:Lorg/agrona/concurrent/AgentRunner;\n     301: aload_0\n     302: aconst_null\n     303: putfield      #192                // Field sharedInvoker:Lorg/agrona/concurrent/AgentInvoker;\n     306: aload_0\n     307: aconst_null\n     308: putfield      #200                // Field sharedNetworkRunner:Lorg/agrona/concurrent/AgentRunner;\n     311: aload_0\n     312: aconst_null\n     313: putfield      #203                // Field conductorRunner:Lorg/agrona/concurrent/AgentRunner;\n     316: aload_0\n     317: aconst_null\n     318: putfield      #206                // Field receiverRunner:Lorg/agrona/concurrent/AgentRunner;\n     321: aload_0\n     322: aconst_null\n     323: putfield      #209                // Field senderRunner:Lorg/agrona/concurrent/AgentRunner;\n     326: aload_0\n     327: aconst_null\n     328: putfield      #212                // Field nativeResourceAgentRunner:Lorg/agrona/concurrent/AgentRunner;"
+        },
+        {
+          "purpose": "DEDICATED branch selects native-resource-specific idle for native runner",
+          "text": "     502: aload_0\n     503: new           #215                // class org/agrona/concurrent/AgentRunner\n     506: dup\n     507: aload_1\n     508: invokevirtual #239                // Method io/aeron/driver/MediaDriver$Context.nativeResourceAgentIdleStrategy:()Lorg/agrona/concurrent/IdleStrategy;\n     511: aload         4\n     513: aload_3\n     514: aload         5\n     516: invokespecial #228                // Method org/agrona/concurrent/AgentRunner.\"<init>\":(Lorg/agrona/concurrent/IdleStrategy;Lorg/agrona/ErrorHandler;Lorg/agrona/concurrent/status/AtomicCounter;Lorg/agrona/concurrent/Agent;)V\n     519: putfield      #212                // Field nativeResourceAgentRunner:Lorg/agrona/concurrent/AgentRunner;"
+        }
+      ]
+    },
+    {
+      "observedExitCode": 0,
+      "shellCommand": ".tools/jdk-extract/jdk-21.0.13+9/Contents/Home/bin/javap -c -p -classpath runtime/cloud/optimization-20261024/pipeline/node-e57e341909a49692b9ecbf9693803ed62a240b06/dist/cluster/lib/aeron-all-1.53.3.jar 'io.aeron.driver.MediaDriver$1'",
+      "stdoutExcerpts": [
+        {
+          "purpose": "SHARED maps2,DEDICATED maps4; omitted intervening instructions have noncontiguous offsets",
+          "text": "      24: getstatic     #7                  // Field $SwitchMap$io$aeron$driver$ThreadingMode:[I\n      27: getstatic     #23                 // Field io/aeron/driver/ThreadingMode.SHARED:Lio/aeron/driver/ThreadingMode;\n      30: invokevirtual #17                 // Method io/aeron/driver/ThreadingMode.ordinal:()I\n      33: iconst_2\n      34: iastore\n      54: getstatic     #7                  // Field $SwitchMap$io$aeron$driver$ThreadingMode:[I\n      57: getstatic     #29                 // Field io/aeron/driver/ThreadingMode.DEDICATED:Lio/aeron/driver/ThreadingMode;\n      60: invokevirtual #17                 // Method io/aeron/driver/ThreadingMode.ordinal:()I\n      63: iconst_4\n      64: iastore"
+        }
+      ]
+    }
+  ],
+  "recordedAtUtc": "2026-10-24T00:38:25.598681+00:00",
+  "schemaVersion": 1,
+  "scope": "Read-only javap output observed earlier in this same agent turn. This artifact stores selected verbatim bytecode excerpts, not a fabricated complete stdout log. No javap/JVM was rerun while writing it. Bytecode offsets are method-local, not source lines. This establishes pinned implementation selection, not runtime agent liveness or CPU use."
+}

@@ -1,0 +1,80 @@
+{
+  "completedAtUtc": "2026-10-24T00:38:07.986758+00:00",
+  "diffCheck": {
+    "argv": [
+      "git",
+      "diff",
+      "--check",
+      "--",
+      "cluster/src/main/java/io/vectormatch/cluster/ClusterNodeMain.java",
+      "deploy/remote_service.py",
+      "scripts/verify-capacity-config.py"
+    ],
+    "exitCode": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  "javaContextTests": {
+    "class": "io.vectormatch.cluster.NodeDataPathIdlePolicyTest",
+    "scope": "Pure context/configuration and instance-identity assertions. Root will execute independently.",
+    "status": "prepared-not-run-by-this-agent",
+    "tests": 4
+  },
+  "metadataContract": {
+    "fixedField": "nodeDataPathMaxParkNs",
+    "launcherEnvironment": "VECTOR_DATA_PATH_MAX_PARK_NS",
+    "nodeOnly": true,
+    "nodeProperty": "vectormatch.node.dataPathMaxParkNs",
+    "policyVersion": 1,
+    "rangeInclusiveNs": [
+      1000,
+      1000000
+    ],
+    "runnerSelected": "Whether this particular independent idle-strategy object is selected for a runner by the pinned Aeron threading-mode implementation; not agent liveness, scheduling, wakeup or CPU telemetry. SHARED executes sender/receiver/native/conductor inside its shared composite while their separately configured idle objects remain unselected."
+  },
+  "pythonVersion": "3.9.6 (default, Aug 17 2026, 12:07:42) \n[Clang 21.0.0 (clang-2100.3.34.1)]",
+  "schemaVersion": 1,
+  "scope": "Lightweight local Python launch/configuration fixtures only. No JVM test/build, SSH, cloud benchmark or frozen-evidence mutation.",
+  "sourceInputs": [
+    {
+      "bytes": 17461,
+      "path": "cluster/src/main/java/io/vectormatch/cluster/ClusterNodeMain.java",
+      "sha256": "5e5a6624b39b819946f98f3f86d3460621cdd21d8256925786e345e224999a2c"
+    },
+    {
+      "bytes": 21364,
+      "path": "deploy/remote_service.py",
+      "sha256": "98e98ffa30a631d1ee1080c8a9065e89215bde20144df79598786de547405b1d"
+    },
+    {
+      "bytes": 28479,
+      "path": "scripts/verify-capacity-config.py",
+      "sha256": "7b4f10c9577595267fdbf04da11ef1ea82b92aa837428a1fd356f5c6ea81336c"
+    },
+    {
+      "bytes": 6503,
+      "path": "cluster/src/test/java/io/vectormatch/cluster/NodeDataPathIdlePolicyTest.java",
+      "sha256": "10efb10a96387529f863eb2a678a804018bab7ca34a5a0278d386b43530875cd"
+    },
+    {
+      "bytes": 11742,
+      "path": "scripts/tests/test_node_data_path_config.py",
+      "sha256": "6a31315bd4e0a5ff50930974a4b24b76557aae84f6d209154c7a269fa9edcede"
+    }
+  ],
+  "startedAtUtc": "2026-10-24T00:38:07.625933+00:00",
+  "status": "PASS",
+  "stderr": ".............................................................................\n----------------------------------------------------------------------\nRan 77 tests in 0.183s\n\nOK\n",
+  "stdout": "VERIFIED_CONFIGURATIONS 0\nVERIFIED_CONFIGURATIONS 1\nVERIFIED_CONFIGURATIONS 0\ntmp2kewklnf already running pid=42\ntmpr9i_l5k3 launched pid=42; log=/var/folders/vc/pt5skvqj7bjf3hwjdr8llcb40000gn/T/tmpr9i_l5k3/process.log; launch is not readiness\ntmpni6169bo stopped; persistent state preserved\n",
+  "testCommand": [
+    "python3",
+    "-B",
+    "-m",
+    "unittest",
+    "scripts/tests/test_capacity_config.py",
+    "deploy/test_remote_service.py",
+    "scripts/tests/test_node_data_path_config.py"
+  ],
+  "testExitCode": 0,
+  "workingDirectory": "/Users/kevin/Documents/ChatGPT/App 2"
+}

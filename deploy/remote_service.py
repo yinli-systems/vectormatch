@@ -43,6 +43,8 @@ CONFIGURATION_KEYS = {
 SOCKET_RECEIVE_BUFFER_ENV = "VECTOR_SOCKET_RECEIVE_BUFFER_BYTES"
 DRIVER_THREADING_ENV = "VECTOR_DRIVER_THREADING_MODE"
 NAK_UNICAST_DELAY_ENV = "VECTOR_NAK_UNICAST_DELAY_NS"
+DATA_PATH_MAX_PARK_ENV = "VECTOR_DATA_PATH_MAX_PARK_NS"
+DATA_PATH_MAX_PARK_PROPERTY = "vectormatch.node.dataPathMaxParkNs"
 
 
 def configuration_fingerprint(role: str, environment: dict[str, str]) -> str:
@@ -54,6 +56,8 @@ def configuration_fingerprint(role: str, environment: dict[str, str]) -> str:
         safe[DRIVER_THREADING_ENV] = environment[DRIVER_THREADING_ENV]
     if role == "node" and NAK_UNICAST_DELAY_ENV in environment:
         safe[NAK_UNICAST_DELAY_ENV] = environment[NAK_UNICAST_DELAY_ENV]
+    if role == "node" and DATA_PATH_MAX_PARK_ENV in environment:
+        safe[DATA_PATH_MAX_PARK_ENV] = environment[DATA_PATH_MAX_PARK_ENV]
     payload = {"version": CONFIGURATION_VERSION, "role": role, "settings": safe}
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -181,11 +185,24 @@ def command(role: str, node: int | None, state: Path, action: str) -> tuple[list
         for name in ("JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS", "_JAVA_OPTIONS"):
             if "aeron.nak" in environment.get(name, ""):
                 raise ValueError(f"Hidden Aeron NAK property in {name}; use VECTOR_NAK_UNICAST_DELAY_NS")
+            if "vectormatch.node.dataPath" in environment.get(name, ""):
+                raise ValueError(f"Hidden node data-path property in {name}; use VECTOR_DATA_PATH_MAX_PARK_NS")
+            if DATA_PATH_MAX_PARK_ENV in environment and any(value in environment.get(name, "") for value in (
+                    "aeron.archive.idle.strategy", "aeron.archive.recorder.idle.strategy", "aeron.archive.replayer.idle.strategy",
+                    "aeron.cluster.idle.strategy", "aeron.shared.idle.strategy", "aeron.sender.idle.strategy",
+                    "aeron.sharednetwork.idle.strategy", "aeron.receiver.idle.strategy", "aeron.conductor.idle.strategy",
+                    "aeron.driver.native.resource.idle.strategy", "aeron.driver.native.resource.agent.idle.strategy")):
+                raise ValueError(f"Hidden idle-strategy override in {name} conflicts with explicit node data-path policy")
     if role == "node" and NAK_UNICAST_DELAY_ENV in environment:
         delay = environment[NAK_UNICAST_DELAY_ENV]
         if not re.fullmatch(r"[1-9][0-9]*", delay) or not 1000 <= int(delay) <= 1000000:
             raise ValueError("VECTOR_NAK_UNICAST_DELAY_NS must be canonical decimal 1000..1000000")
         args += [f"-Daeron.nak.unicast.delay={delay}"]
+    if role == "node" and DATA_PATH_MAX_PARK_ENV in environment:
+        maximum = environment[DATA_PATH_MAX_PARK_ENV]
+        if not re.fullmatch(r"[1-9][0-9]{0,6}", maximum) or not 1000 <= int(maximum) <= 1000000:
+            raise ValueError("VECTOR_DATA_PATH_MAX_PARK_NS must be canonical decimal 1000..1000000")
+        args += [f"-D{DATA_PATH_MAX_PARK_PROPERTY}={maximum}"]
     port = positive_int("VECTOR_PORT_BASE", 19000, 1024, 65000)
     if role == "gateway":
         args += ["-Dvm.backend=cluster", f"-Dvm.runtime={state / 'workbench'}",

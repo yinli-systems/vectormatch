@@ -18,7 +18,11 @@ import org.agrona.concurrent.ShutdownSignalBarrier;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** A member of a statically configured directly-routed IPv4 cluster, local by default. */
 public final class ClusterNodeMain {
@@ -27,6 +31,8 @@ public final class ClusterNodeMain {
     static final int MAX_SOCKET_RECEIVE_BUFFER_BYTES = 4 * 1024 * 1024;
     static final long DRIVER_IDLE_MAX_SPINS = 10, DRIVER_IDLE_MAX_YIELDS = 5;
     static final long DRIVER_IDLE_MIN_PARK_NS = 1000, DRIVER_IDLE_MAX_PARK_NS = 1_000_000;
+    static final String DATA_PATH_MAX_PARK_PROPERTY = "vectormatch.node.dataPathMaxParkNs";
+    static final String DATA_PATH_MAX_PARK_ENV = "VECTOR_DATA_PATH_MAX_PARK_NS";
     private ClusterNodeMain() {}
 
     @SuppressWarnings("try")
@@ -47,7 +53,9 @@ public final class ClusterNodeMain {
             error.printStackTrace(System.err);
         };
 
-        MediaDriver.Context media = mediaDriverContext(configuration, driverDir, errors);
+        DataPathIdlePolicy dataPathIdle = configuration.dataPathMaxParkNs() == null ? null
+                : new DataPathIdlePolicy(node, configuration.driverThreading(), configuration.dataPathMaxParkNs());
+        MediaDriver.Context media = mediaDriverContext(configuration, driverDir, errors, dataPathIdle);
 
         Archive.Context archive = new Archive.Context()
                 .aeronDirectoryName(driverDir)
@@ -93,6 +101,7 @@ public final class ClusterNodeMain {
                 .snapshotChannel(transport.withRecordingMtu(ClusteredServiceContainer.Configuration.snapshotChannel()))
                 .clusteredService(new MatchingClusteredService(outboxCapacity, configuration.stateProfile()))
                 .errorHandler(errors);
+        applyDataPathIdlePolicy(dataPathIdle, archive, consensus, service);
 
         try (ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
              ClusteredMediaDriver ignoredDriver = ClusteredMediaDriver.launch(
@@ -100,32 +109,41 @@ public final class ClusterNodeMain {
                      consensus.terminationHook(barrier::signalAll));
              ClusteredServiceContainer ignoredService = ClusteredServiceContainer.launch(
                      service.terminationHook(barrier::signalAll))) {
-            System.out.printf("VECTOR_CLUSTER_STARTED node=%d pid=%d sync=%d state=%s members=%s mtu=%d profile=%s limits=%s outbox=%d checkpointMaxBytes=%d resultCachePerProducer=%d requestedSocketReceiveBufferBytes=%d driverThreading=%s driverIdleMaxSpins=%d driverIdleMaxYields=%d driverIdleMinParkNs=%d driverIdleMaxParkNs=%d nakUnicastDelayNs=%d nakUnicastRetryDelayRatio=%d%n",
+            System.out.printf("VECTOR_CLUSTER_STARTED node=%d pid=%d sync=%d state=%s members=%s mtu=%d profile=%s limits=%s outbox=%d checkpointMaxBytes=%d resultCachePerProducer=%d requestedSocketReceiveBufferBytes=%d driverThreading=%s driverIdleMaxSpins=%d driverIdleMaxYields=%d driverIdleMinParkNs=%d driverIdleMaxParkNs=%d nakUnicastDelayNs=%d nakUnicastRetryDelayRatio=%d%s%n",
                     node, ProcessHandle.current().pid(), sync, base, topology.members(), transport.mtuLength(),
                     configuration.stateProfile().id(), configuration.stateProfile().limits(), outboxCapacity,
                     configuration.stateProfile().snapshotMaxBytes(), configuration.stateProfile().resultCachePerProducer(),
                     configuration.socketReceiveBufferBytes(), configuration.driverThreading(),
-                    DRIVER_IDLE_MAX_SPINS, DRIVER_IDLE_MAX_YIELDS, DRIVER_IDLE_MIN_PARK_NS, DRIVER_IDLE_MAX_PARK_NS,
-                    media.nakUnicastDelayNs(), media.nakUnicastRetryDelayRatio());
+                    DRIVER_IDLE_MAX_SPINS, DRIVER_IDLE_MAX_YIELDS, DRIVER_IDLE_MIN_PARK_NS,
+                    configuration.dataPathMaxParkNs() == null ? DRIVER_IDLE_MAX_PARK_NS : configuration.dataPathMaxParkNs(),
+                    media.nakUnicastDelayNs(), media.nakUnicastRetryDelayRatio(),
+                    dataPathIdle == null ? "" : dataPathIdle.startupSuffix());
             barrier.await();
         }
     }
 
     record Configuration(int node, Path base, int sync, int outboxCapacity, ClusterTopology topology,
                          NetworkTransport transport, ClusterCapacity.StateProfile stateProfile,
-                         int socketReceiveBufferBytes, ThreadingMode driverThreading) {}
+                         int socketReceiveBufferBytes, ThreadingMode driverThreading, Long dataPathMaxParkNs) {}
 
     static MediaDriver.Context mediaDriverContext(Configuration configuration, String driverDir, ErrorHandler errors) {
+        DataPathIdlePolicy policy = configuration.dataPathMaxParkNs() == null ? null
+                : new DataPathIdlePolicy(configuration.node(), configuration.driverThreading(), configuration.dataPathMaxParkNs());
+        return mediaDriverContext(configuration, driverDir, errors, policy);
+    }
+
+    static MediaDriver.Context mediaDriverContext(Configuration configuration, String driverDir,
+                                                 ErrorHandler errors, DataPathIdlePolicy policy) {
         // Each role has independent backoff state. Aeron's default role factory
         // uses 20 yields; explicit 5 preserves the pre-existing shared policy.
         return new MediaDriver.Context()
                 .aeronDirectoryName(driverDir)
                 .threadingMode(configuration.driverThreading())
-                .sharedIdleStrategy(driverIdleStrategy())
-                .senderIdleStrategy(driverIdleStrategy())
-                .receiverIdleStrategy(driverIdleStrategy())
-                .conductorIdleStrategy(driverIdleStrategy())
-                .nativeResourceAgentIdleStrategy(driverIdleStrategy())
+                .sharedIdleStrategy(policy == null ? driverIdleStrategy() : policy.driver("driver-shared"))
+                .senderIdleStrategy(policy == null ? driverIdleStrategy() : policy.driver("driver-sender"))
+                .receiverIdleStrategy(policy == null ? driverIdleStrategy() : policy.driver("driver-receiver"))
+                .conductorIdleStrategy(policy == null ? driverIdleStrategy() : policy.driver("driver-conductor"))
+                .nativeResourceAgentIdleStrategy(policy == null ? driverIdleStrategy() : policy.driver("driver-native-resource"))
                 .dirDeleteOnStart(false)
                 .dirDeleteOnShutdown(true)
                 .termBufferSparseFile(true)
@@ -141,7 +159,85 @@ public final class ClusterNodeMain {
                 DRIVER_IDLE_MIN_PARK_NS, DRIVER_IDLE_MAX_PARK_NS);
     }
 
+    static void applyDataPathIdlePolicy(DataPathIdlePolicy policy, Archive.Context archive,
+                                       ConsensusModule.Context consensus, ClusteredServiceContainer.Context service) {
+        // Absence deliberately preserves the existing library/default supplier path.
+        if (policy == null) return;
+        archive.idleStrategySupplier(() -> policy.agent("archive-shared"));
+        consensus.idleStrategySupplier(() -> policy.agent("consensus"));
+        service.idleStrategySupplier(() -> policy.agent("service"));
+    }
+
+    static Long dataPathMaxParkNs(String property, Map<String, String> environment) {
+        for (String name : List.of("JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS", "_JAVA_OPTIONS")) {
+            String hidden = environment.getOrDefault(name, "");
+            if (hidden.contains("vectormatch.node.dataPath"))
+                throw new IllegalArgumentException("Hidden node data-path property in " + name);
+            if (property != null && List.of("aeron.archive.idle.strategy", "aeron.archive.recorder.idle.strategy",
+                    "aeron.archive.replayer.idle.strategy", "aeron.cluster.idle.strategy", "aeron.shared.idle.strategy",
+                    "aeron.sharednetwork.idle.strategy", "aeron.sender.idle.strategy", "aeron.receiver.idle.strategy",
+                    "aeron.conductor.idle.strategy", "aeron.driver.native.resource.agent.idle.strategy")
+                    .stream().anyMatch(hidden::contains))
+                throw new IllegalArgumentException("Hidden idle-strategy override in " + name);
+        }
+        String inherited = environment.get(DATA_PATH_MAX_PARK_ENV);
+        if (property == null) {
+            if (inherited != null) throw new IllegalArgumentException(DATA_PATH_MAX_PARK_ENV + " requires explicit JVM property " + DATA_PATH_MAX_PARK_PROPERTY);
+            return null;
+        }
+        if (!property.matches("[1-9][0-9]{0,6}"))
+            throw new IllegalArgumentException(DATA_PATH_MAX_PARK_PROPERTY + " must be canonical decimal 1000..1000000");
+        long value = Long.parseLong(property);
+        if (value < 1000 || value > 1_000_000)
+            throw new IllegalArgumentException(DATA_PATH_MAX_PARK_PROPERTY + " must be 1000..1000000");
+        if (inherited != null && !property.equals(inherited))
+            throw new IllegalArgumentException("Conflicting " + DATA_PATH_MAX_PARK_ENV + " and " + DATA_PATH_MAX_PARK_PROPERTY);
+        return value;
+    }
+
+    /** Only explicit node data-path instances enter this evidence, never client/FIFO/scheduler policy. */
+    static final class DataPathIdlePolicy {
+        private final int node;
+        private final ThreadingMode threading;
+        private final long maxParkNs;
+        private final IdentityHashMap<BackoffIdleStrategy, Integer> instances = new IdentityHashMap<>();
+        private final Set<String> observedRoles = new LinkedHashSet<>();
+
+        DataPathIdlePolicy(int node, ThreadingMode threading, long maxParkNs) {
+            if (maxParkNs < 1000 || maxParkNs > 1_000_000) throw new IllegalArgumentException("Invalid data-path max park");
+            this.node = node; this.threading = threading; this.maxParkNs = maxParkNs;
+        }
+
+        BackoffIdleStrategy driver(String role) { return create(role, 5, role.equals("driver-shared")
+                ? threading == ThreadingMode.SHARED : threading == ThreadingMode.DEDICATED); }
+        BackoffIdleStrategy agent(String role) { return create(role, 20, true); }
+
+        private synchronized BackoffIdleStrategy create(String role, long yields, boolean runnerSelected) {
+            BackoffIdleStrategy idle = new BackoffIdleStrategy(10, yields, 1000, maxParkNs);
+            if (instances.containsKey(idle)) throw new IllegalStateException("Data-path idle instance reused");
+            int instance = instances.size() + 1;
+            instances.put(idle, instance); observedRoles.add(role);
+            // Selection of this idle object is not agent liveness: in SHARED mode
+            // native-resource/sender/receiver/conductor execute in the shared composite.
+            System.out.printf("VECTOR_NODE_DATA_PATH_IDLE node=%d role=%s instanceId=%d runnerSelected=%s strategyClass=%s configuration=%s%n",
+                    node, role, instance, runnerSelected, idle.getClass().getName(), idle.toString().replace(" ", ""));
+            return idle;
+        }
+
+        synchronized String startupSuffix() {
+            Set<String> required = Set.of("driver-shared", "driver-sender", "driver-receiver", "driver-conductor",
+                    "driver-native-resource", "archive-shared", "consensus", "service");
+            if (!observedRoles.equals(required)) throw new IllegalStateException("Missing data-path idle instance evidence: " + observedRoles);
+            return " nodeDataPathIdlePolicyVersion=1 nodeDataPathMaxParkNs=" + maxParkNs
+                    + " nodeDataPathIdleInstancesDistinct=true";
+        }
+    }
+
     static Configuration configuration(String[] args, Map<String, String> environment) {
+        return configuration(args, environment, System.getProperty(DATA_PATH_MAX_PARK_PROPERTY));
+    }
+
+    static Configuration configuration(String[] args, Map<String, String> environment, String maxParkProperty) {
         if (args.length < 2 || args.length > 9) {
             throw new IllegalArgumentException("Usage: ClusterNodeMain <node> <state-dir> [port-base] [sync:0|2] [outbox-capacity] [hosts-csv] [state-profile] [receive-buffer-bytes:65536..4194304] [driver-threading:SHARED|DEDICATED]");
         }
@@ -167,6 +263,6 @@ public final class ClusterNodeMain {
         } : ThreadingMode.SHARED;
         Path base = Path.of(args[1]).toAbsolutePath().normalize().resolve("node-" + node);
         return new Configuration(node, base, sync, capacity, topology, NetworkTransport.fromEnvironment(environment), profile,
-                receiveBufferBytes, driverThreading);
+                receiveBufferBytes, driverThreading, dataPathMaxParkNs(maxParkProperty, environment));
     }
 }

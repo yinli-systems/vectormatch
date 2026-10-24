@@ -16,6 +16,9 @@ def write(path, value):
 NAK_FIXED_FIELDS = {"nakUnicastDelayNs", "clientNakUnicastDelayNs", "nakUnicastRetryDelayRatio"}
 NAK_CLIENT_FIELDS = {"clientNakUnicastDelayNs", "clientNakUnicastRetryDelayRatio"}
 TRANSPORT_FIELDS = {"clientTransportMode", "clientSessionCount"}
+NODE_DATA_PATH_PROPERTY = "vectormatch.node.dataPathMaxParkNs"
+NODE_DATA_PATH_ROLES = ("driver-shared", "driver-sender", "driver-receiver", "driver-conductor",
+                        "driver-native-resource", "archive-shared", "consensus", "service")
 UNKNOWN_GUARD = ("Confirmed-only replay skipped: {count} UNKNOWN_UNRESOLVED identities may already have executed; canonical validation is incomplete. "
                  "Preserve the original identities for same-key recovery; no core business mismatch is established.")
 
@@ -188,6 +191,62 @@ def driver_threading_argument(fixed):
     return value
 
 
+def node_data_path_max_park(fixed):
+    value = fixed.get("nodeDataPathMaxParkNs")
+    if "nodeDataPathMaxParkNs" not in fixed:
+        assert not any(name.startswith("nodeDataPathIdle") for name in fixed), "Incomplete explicit node data-path policy"
+        return None
+    assert type(value) is int and 1000 <= value <= 1000000, "Invalid explicit node data-path max park"
+    for name, expected in (("nodeDataPathIdlePolicyVersion", 1), ("nodeDataPathIdleAgentMaxYields", 20),
+                           ("nodeDataPathIdleMinParkNs", 1000)):
+        if name in fixed:
+            assert type(fixed[name]) is int and fixed[name] == expected, "Conflicting node data-path declaration: " + name
+    return value
+
+
+def verify_node_data_path_jvm_arguments(arguments, fixed):
+    maximum = node_data_path_max_park(fixed)
+    actual = [arg for arg in arguments if isinstance(arg, str) and "vectormatch.node.dataPath" in arg]
+    expected = [] if maximum is None else ["-D" + NODE_DATA_PATH_PROPERTY + "=" + str(maximum)]
+    assert actual == expected, "Node data-path JVM property missing, differing, duplicate or hidden"
+    if expected:
+        assert "-cp" in arguments and arguments.index(expected[0]) < arguments.index("-cp"), "Node data-path property is not a JVM argument"
+
+
+def verify_node_data_path_startup(fixed, startup, node=None):
+    maximum = node_data_path_max_park(fixed)
+    started = [line for line in startup.splitlines() if line.startswith("VECTOR_CLUSTER_STARTED ")]
+    evidence = [line for line in startup.splitlines() if line.startswith("VECTOR_NODE_DATA_PATH_IDLE ")]
+    if maximum is None:
+        assert not evidence and all("nodeDataPath" not in line for line in started), "Undeclared node data-path runtime opt-in"
+        return
+    assert len(started) == 1, "Require one explicit node data-path startup"
+    for name, value in (("nodeDataPathIdlePolicyVersion", "1"), ("nodeDataPathMaxParkNs", str(maximum)),
+                        ("nodeDataPathIdleInstancesDistinct", "true")):
+        assert re.findall(r"(?:^|\s)" + name + r"=([^\s]+)(?=\s|$)", started[0]) == [value], "Missing, duplicate or differing node data-path startup: " + name
+    started_node = re.findall(r"(?:^|\s)node=([0-2])(?=\s|$)", started[0])
+    assert len(started_node) == 1 and (node is None or started_node == [str(node)]), "Node data-path startup member differs"
+    threading = driver_threading_argument(fixed) or fixed.get("driverThreading", "SHARED")
+    verify_driver_threading_startup({**fixed, "driverThreadingArgument": threading}, startup)
+    roles, instances = set(), set()
+    for line in evidence:
+        pairs = re.findall(r"(?:^|\s)([A-Za-z][A-Za-z0-9]*)=([^\s]+)", line)
+        fields = dict(pairs)
+        assert len(fields) == len(pairs) and set(fields) == {"node", "role", "instanceId", "runnerSelected", "strategyClass", "configuration"}, "Invalid or duplicate data-path instance fields"
+        role = fields["role"]
+        assert role in NODE_DATA_PATH_ROLES and fields["node"] == started_node[0], "Unexpected data-path role/member"
+        instance = fields["instanceId"]
+        assert re.fullmatch(r"[1-9][0-9]*", instance) and instance not in instances, "Repeated/invalid data-path instance identity"
+        instances.add(instance); roles.add(role)
+        yields = 5 if role.startswith("driver-") else 20
+        runner_selected = (threading == "SHARED" if role == "driver-shared" else threading == "DEDICATED") if role.startswith("driver-") else True
+        expected_configuration = ("BackoffIdleStrategy{alias=backoff,maxSpins=10,maxYields=" + str(yields)
+                                  + ",minParkPeriodNs=1000,maxParkPeriodNs=" + str(maximum) + "}")
+        assert fields["runnerSelected"] == str(runner_selected).lower(), "Data-path runner-selected/configured instance differs"
+        assert fields["strategyClass"] == "org.agrona.concurrent.BackoffIdleStrategy" and fields["configuration"] == expected_configuration, "Data-path actual strategy configuration differs"
+    assert roles == set(NODE_DATA_PATH_ROLES), "Missing data-path role instance evidence"
+
+
 def maximum_cluster_sessions(fixed):
     value = fixed.get("maxClusterSessions", 128)
     assert type(value) is int and value in (128, 256), "Invalid fixed max cluster sessions"
@@ -231,7 +290,7 @@ def verify_driver_threading_startup(fixed, startup):
         return
     started = [line for line in startup.splitlines() if line.startswith("VECTOR_CLUSTER_STARTED ")]
     fields = {"driverThreading": expected, "driverIdleMaxSpins": 10, "driverIdleMaxYields": 5,
-              "driverIdleMinParkNs": 1000, "driverIdleMaxParkNs": 1000000}
+              "driverIdleMinParkNs": 1000, "driverIdleMaxParkNs": node_data_path_max_park(fixed) or 1000000}
     assert started, "Missing driver threading startup evidence"
     for name, value in fields.items():
         pattern = r"(?:^|\s)" + name + "=" + str(value) + r"(?=\s|$)"
@@ -249,6 +308,10 @@ def main(root, include_failed_unknown=False):
     maximum_cluster_sessions(fixed)  # Validate without adding/changing historical fingerprint fields.
     nak_settings(fixed)  # Optional values enter the existing fixed-configuration fingerprint unchanged.
     transport_settings(fixed)  # Historical absence leaves the fixed fingerprint unchanged.
+    data_path_maximum = node_data_path_max_park(fixed)
+    if data_path_maximum is not None:
+        fixed.update({"nodeDataPathIdlePolicyVersion": 1, "nodeDataPathIdleAgentMaxYields": 20,
+                      "nodeDataPathIdleMinParkNs": 1000})
     receive_buffer = socket_receive_buffer_argument(fixed)
     if receive_buffer is not None:
         if "socketReceiveBufferBytes" in campaign["fixed"]:
@@ -257,7 +320,7 @@ def main(root, include_failed_unknown=False):
     driver_threading = driver_threading_argument(fixed)
     if driver_threading is not None:
         expected = {"driverThreading": driver_threading, "driverIdleMaxSpins": 10, "driverIdleMaxYields": 5,
-                    "driverIdleMinParkNs": 1000, "driverIdleMaxParkNs": 1000000}
+                    "driverIdleMinParkNs": 1000, "driverIdleMaxParkNs": data_path_maximum or 1000000}
         for name, value in expected.items():
             if name in campaign["fixed"]:
                 assert campaign["fixed"][name] == value, "Conflicting driver threading/idle declaration: " + name
@@ -302,10 +365,11 @@ def main(root, include_failed_unknown=False):
             assert "-Daeron.cluster.appointed.leader.id=0" in args
             verify_maximum_cluster_sessions(args, fixed)
             verify_nak_jvm_arguments(args, fixed)
+            verify_node_data_path_jvm_arguments(args, fixed)
             assert args[args.index("-cp") + 1] == release + "/dist/cluster/lib/*"
             index = args.index("io.vectormatch.cluster.ClusterNodeMain")
             assert args[index + 1:] == node_arguments(trial, fixed, node, hosts)
-            if fixed.get("stateProfile") or receive_buffer is not None or driver_threading is not None or nak_settings(fixed) is not None:
+            if fixed.get("stateProfile") or receive_buffer is not None or driver_threading is not None or nak_settings(fixed) is not None or data_path_maximum is not None:
                 startup = (directory / f"node{node}" / "process.log").read_text()
                 if fixed.get("stateProfile"):
                     assert "profile=" + fixed["stateProfile"] in startup, "Missing state profile startup evidence"
@@ -319,6 +383,7 @@ def main(root, include_failed_unknown=False):
                         {**fixed, "socketReceiveBufferArgumentBytes": 131072 if receive_buffer is None else receive_buffer}, startup)
                 verify_driver_threading_startup(fixed, startup)
                 verify_nak_startup(fixed, startup)
+                verify_node_data_path_startup(fixed, startup, node)
                 hashes[f"node{node}/process.log"] = hashlib.sha256(startup.encode()).hexdigest()
             hashes[str(path.relative_to(directory))] = hashlib.sha256(path.read_bytes()).hexdigest()
         snapshot = directory / "prepared-snapshot.bin"
@@ -345,7 +410,8 @@ def main(root, include_failed_unknown=False):
             "rawSha256": hashes, **verification_scope,
             "scope": ("CONFIGURATION ONLY for a terminal unresolved-UNKNOWN failure; no business correctness or capacity validation. " if configuration_only else "") + ("Recorded supervisor arguments and deployment-transfer hash receipts; not a hardware, kernel fsync or independent provider durability attestation. Idle/socket settings are pinned source constants."
                       if receive_buffer is None else
-                      "Recorded supervisor arguments, startup requested receive buffer, and deployment-transfer hash receipts; actual kernel effective SO_RCVBUF, hardware/fsync and provider durability are not attested. Other idle/socket settings are pinned source constants.")})
+                      "Recorded supervisor arguments, startup requested receive buffer, and deployment-transfer hash receipts; actual kernel effective SO_RCVBUF, hardware/fsync and provider durability are not attested. Other idle/socket settings are pinned source constants.")
+                      + (" Explicit node data-path role factory instances and actual Backoff parameter strings are cross-checked; instance IDs are process-local evidence, not OS wakeup or CPU guarantees." if data_path_maximum is not None else "")})
         checked.append({"id": directory.name, "preparedSnapshotSha256": configuration["preparedSnapshotSha256"], **verification_scope})
     assert len({row["preparedSnapshotSha256"] for row in checked}) <= 1, "Initial logical state changed"
     write(root / "configuration-verification.json", {"passed": True, "runs": checked,
