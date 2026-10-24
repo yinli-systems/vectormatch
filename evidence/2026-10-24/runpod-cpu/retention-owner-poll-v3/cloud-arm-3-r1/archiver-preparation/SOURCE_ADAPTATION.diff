@@ -1,0 +1,159 @@
+--- closed-A1/archive_closed_owner_arm1.py
++++ archive_arm.py
+@@ -1,45 +1,15 @@
+-#!/usr/bin/env python3
+-"""LOCAL ONLY exact closed proof copy; no SSH, execution, sparse extraction or source mutation."""
+-import datetime,hashlib,io,json,os
++"""Explicit closed arm2..4 proof archive only; shared A1 bytes referenced immutably."""
++import argparse,datetime,hashlib,io,json,os,re,shutil,stat,tarfile,zipfile
+ from pathlib import Path,PurePosixPath
+-import re,shutil,stat,tarfile,zipfile
+-
+ WORKSPACE=Path('/Users/kevin/Documents/ChatGPT/App 2')
+ BASE=WORKSPACE/'runtime/cloud/cpu-20261024'
+-TARGET=WORKSPACE/'evidence/2026-10-24/runpod-cpu/retention-owner-poll-v3/cloud-arm-1-r1'
+ HERE=Path(__file__).resolve().parent
+-TREES={
+- 'collector-preparation-r1':BASE/'cpu-owner-poll-collection-preparation-r1',
+- 'collector-preparation-r2':BASE/'cpu-owner-poll-collection-preparation-r2',
+- 'cloud-controller-preparation':BASE/'cpu-owner-poll-cloud-preparation-r1',
+- 'collector-peer-review':BASE/'cpu-owner-poll-collector-peer-review-r1',
+- 'stage-preparation-r1':BASE/'cpu-owner-poll-stage-preparation-r1',
+- 'stage-preparation-r2':BASE/'cpu-owner-poll-stage-preparation-r2',
+- 'close-preparation':BASE/'cpu-owner-poll-close-preparation-r1',
+- 'actual-collection':BASE/'cpu-owner-poll-arm-1-collection-r1',
+- 'collection-execution':BASE/'owner-cloud-arm-1-collection-execution-r1',
+- 'actual-config':BASE/'owner-cloud-arm-1-config-r1',
+- 'config-execution':BASE/'owner-cloud-arm-1-config-execution-r1',
+- 'root-review':BASE/'owner-cloud-root-review-arm-1-r1',
+- 'root-review-preparation':BASE/'owner-cloud-root-review-preparation-r1',
+- 'actual-root-release-freeze':BASE/'owner-cloud-root-release-freeze-r1',
+- 'root-release-preparation':BASE/'owner-cloud-root-release-preparation-r1',
+- 'actual-staging':BASE/'cpu-owner-poll-cloud-staging-r1',
+- 'stage-execution':BASE/'owner-cloud-stage-execution-r1',
+- 'close-inspection-r1':BASE/'owner-cloud-arm-1-close-inspection-r1',
+- 'close-inspection-r2':BASE/'owner-cloud-arm-1-close-inspection-r2',
+- 'close-execution-preparation':BASE/'owner-cloud-close-execution-preparation-r1',
+- 'actual-launch':BASE/'owner-cloud-arm-1-launch-r1',
+- 'launch-execution':BASE/'owner-cloud-arm-1-launch-execution-r1',
+- 'comparison-preparation':BASE/'owner-poll-comparison-preparation-r1',
+- 'comparison-a1':BASE/'owner-poll-comparison-a1-r1',
+- 'next-arm-execution-preparation':BASE/'owner-cloud-next-arm-execution-preparation-r1',
+- 'collection-root-execution-preparation':BASE/'owner-cloud-collection-root-execution-preparation-r1',
+- 'repository-visibility':BASE/'owner-cloud-repository-visibility-r1',
+-}
+-SINGLE={}
++A1=WORKSPACE/'evidence/2026-10-24/runpod-cpu/retention-owner-poll-v3/cloud-arm-1-r1'
++A1_INVENTORY_SHA='539e722c181f68ac94f40c2aa6ff446e1a5b669963c20e50d63fb2cde5df327f'
++A1_CLOSED_SHA='f5500fd4b1ab1b09b4688ca893a0263e30ac5adfb348fdade75b78694492451e'
++CODE='23586ccc5b9ad88aef2eba48a4eeceb15e64fdc62142bd2971c23e028724b884'
++SOURCE='977197616ade0283174f2ea6ddfaa700547f6d15'
+ EXCLUDED_PARTS={'__pycache__','.pytest_cache'}
+-
+ def require(ok,msg):
+  if not ok:raise AssertionError(msg)
+ def sha(p):
+@@ -124,40 +94,68 @@
+    require(info.file_size<=256*1024**2,'Bounded ZIP member review')
+    with z.open(info)as f:scan_stream(f,label+'!'+info.filename)
+ 
++
++def load_config(path,expected):
++ require(sha(path)==expected,'Exact root archive-config SHA');c=json.loads(path.read_text());arm=c['arm']
++ frozen=json.loads((HERE/'SOURCE_FROZEN.json').read_text())
++ for name,pin in frozen['sourceFiles'].items():require((HERE/name).stat().st_size==pin['bytes']and sha(HERE/name)==pin['sha256'],'Prepared helper source changed')
++ require(c['schemaVersion']==1 and type(arm)is int and arm in(2,3,4),'Explicit arm2..4 only')
++ require(sha(A1/'INVENTORY.json')==A1_INVENTORY_SHA and sha(A1/'CLOSED.json')==A1_CLOSED_SHA,'Immutable shared A1 roots changed')
++ require(c['sharedA1InventorySha256']==A1_INVENTORY_SHA and c['sharedA1ClosedSha256']==A1_CLOSED_SHA,'Exact shared A1 roots required')
++ mandatory={'actual-collection','actual-config','config-execution','actual-launch','launch-execution','collection-execution','root-review','root-review-preparation'}
++ require(mandatory<=set(c['scopes']) and len(c['scopes'])<=24 and any(k.startswith('close-inspection-')for k in c['scopes']),'Explicit current-arm closed scopes required')
++ for name,path in c['scopes'].items():
++  require(safe_member(name)==name and'/'not in name,'Flat scope name');source=Path(path);require(source.is_absolute()and '..'not in source.parts and source.is_relative_to(BASE)and not source.is_symlink()and source.is_dir(),'Bounded local scope inside BASE only')
++  require(not any(p.is_symlink()for p in[source]+list(source.parents)),'No source parent symlinks')
++  if name!='root-review-preparation':require(('arm-'+str(arm))in source.name,'Only current-arm scopes may be copied; shared sources use immutable A1 refs')
++ review=Path(c['scopes']['root-review'])/'ROOT_REVIEW.json';require(sha(review)==c['rootReviewSha256'],'Exact actual root review required');r=json.loads(review.read_text());owner=(1000000,100000,1000000,100000)[arm-1]
++ require(r['passed']is True and r['arm']==arm and r['sourceCommit']==SOURCE and r['independent4AnchorCodeFingerprint']==CODE and r['allFullOuterMembersVerified']is True and r['allRawInputsUnchanged']is True and r['ownerPollMaximumParkNs']==owner and r['serverDriverMaximumParkNs']==100000,'Same actual source/owner/root closure required')
++ require(r['actualOwnerAttestation']['passed']is True and r['actualOwnerAttestation']['actualConfiguredIdleFactoryCreations']==22,'Actual owner22 prerequisite')
++ return c,r
++
+ def main():
+- require(not TARGET.exists(),'Create-new archive required')
+- require(shutil.disk_usage(WORKSPACE).free>=1024**3+300*1024**2,'Local free space floor')
+- require(sha(BASE/'cpu-owner-poll-collection-preparation-r2/LOCAL_PREPARATION_FROZEN.json')=='28f6865201389901f26b2c6a7c698622d5d8acc635bad24d09ddadff05777b56','Exact collector freeze required')
+- require(sha(BASE/'owner-cloud-root-review-preparation-r1/review_owner_collected.py')=='f59cdda64920de06f556c5108fe8a7f37945b9a84b2dabcc3efda1c3155b23a2','Exact executed root reviewer required')
+- review=json.loads((BASE/'owner-cloud-root-review-arm-1-r1/ROOT_REVIEW.json').read_text());require(review['passed']and review['allFullOuterMembersVerified']and review['allRawInputsUnchanged'],'Independent root pass required')
+- for original,pin in review['inputs'].items():
+-  p=Path(original);p=p if p.is_absolute()else WORKSPACE/p
+-  require(p.stat().st_size==pin['bytes']and sha(p)==pin['sha256'],'Root-reviewed original input changed')
+- before={key:snapshot(source)for key,source in TREES.items()}
+- require(sum(len(v['files'])for v in before.values())<=2000 and sum(r['bytes']for v in before.values()for r in v['files'].values())<=512*1024**2,'Finite2000file/512MiB copied source scope')
+- require(len(before['actual-collection']['files'])==244 and sum(r['bytes']for r in before['actual-collection']['files'].values())==202839167,'Actual244file202839167B collection closure')
+- singles={key:row(source)for key,source in SINGLE.items()}
+- TARGET.mkdir(mode=0o755)
+- save(TARGET/'REGISTRATION.json',{'createdAtUtc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'scope':'Local closed synthetic long CPU proof archive only; no new raw execution or remote actions','sourceTrees':{key:str(p)for key,p in TREES.items()},'sourceFiles':{key:str(p)for key,p in SINGLE.items()},'rootReviewSha256':sha(BASE/'owner-cloud-root-review-arm-1-r1/ROOT_REVIEW.json'),'excludedParts':sorted(EXCLUDED_PARTS),'noSparseExtraction':True,'originalsRetained':True})
+- for key,source in TREES.items():copy_tree(source,TARGET/key,before[key])
+- for key,source in SINGLE.items():
+-  p=TARGET/key;p.parent.mkdir(parents=True,exist_ok=True);require(not p.exists(),'No overwrite');shutil.copy2(source,p);require(row(p)==singles[key],'Copied singleton metadata differs')
+- save(TARGET/'SOURCE_BEFORE_COPY.json',{'trees':before,'files':singles})
+- after={key:snapshot(source)for key,source in TREES.items()}
+- require(before==after and all(row(SINGLE[k])==v for k,v in singles.items()),'Original source changed during copy')
+- save(TARGET/'SOURCE_AFTER_COPY.json',{'trees':after,'files':singles,'allOriginalBytesModesOwnersAndEmptyDirectoriesUnchanged':True})
+- shutil.copy2(Path(__file__),TARGET/'archive_closed_owner_arm1.py')
+- for p in sorted(TARGET.rglob('*')):
+-  if p.is_file():scan_file(p,str(p.relative_to(TARGET)))
+- save(TARGET/'KNOWN_CREDENTIAL_MARKER_REVIEW.json',{'passed':not HITS,'scope':'All copied regular bytes plus streamed TAR member bytes and all reachable JAR/ZIP entries; known marker classes only, not a universal absence-of-secret guarantee','markerClasses':sorted(MARKERS),'hitCount':len(HITS),'hits':HITS,'scannedObjects':len(SCANNED),'scannedBytes':sum(v['bytes']for v in SCANNED),'privateKeyOrEnvironmentFilesIntentionallyIncluded':False,'sshKeyPathStringsAreNotKeyContents':True,'protectedPgReferenceIsHashInventoryOnly':True,'scanned':SCANNED})
+- require(not HITS,'Known credential marker found; preserve incomplete archive for review')
+- (TARGET/'README.md').open('x').write("# Closed CPU owner-poll armA1 evidence\n\nOne fresh long33792@500/s lineage,67.584s planned window, source9771976/code23586ccc/profile73220177, owner requested park1ms and fixedserver/driver100us/read8/chunk6144/Fetch16/businesscap4/leader0/sync2/42000. The authoritative strict collection completed all5steps; root independently verified193outerfiles/24dirs/1,367,724,368logicalbytes and71rawinputs, all33792fresh accepted IDs, actual constructedowner/fullkernelargv/22factory objects. Scheduled-to-reply all-arrival nearest-rankp99 is527,646,352ns. This finite A1 observation alone is not an A/B speedup, sustainedcapacity, SLA or100M proof. Local SHORT native pair and old6033cohort are separate and not compared here.\n\nAll244 actualcollection files (~202.8MB) and both complete original compressedTARs are copied byte-exact, with no sparse extraction. Bothcollector source revisions/peerreview/guard attempts and historical failures; controller/actualrootreadyrelease/stage helpersR1/R2 and actualstage/launch/config/close controls; independentrootreview/source; derivedA1 comparison and unexecuted nextarm/root-execution preparations and private-repositoryvisibility receipts are retained. Later proposals are preparations, not executions or permissions. Comparison-preparation has source-only qualification until its actualA1 result; read each receipt's actualscope.\n\nCopy scope is explicit and closed. Original absolute paths in copied receipts are intentional provenance; REGISTRATION and SOURCE_BEFORE_COPY map them into named archive subtrees. Complete fileSHA/bytes/mode/uid/gid and directory/emptydir closure is verified before/after copy. Only named Python caches are excluded with explicitpaths; no source/log/failure filtering. FullTar member streams and ZIP/JAR entries undergo knowncredentialmarker review without sparse extraction. Necessaryliteral-prefix screening preserves exactly the same regular expressions and still hashes/counts every byte, including zero-filled recording segments. No localnative archive is re-scanned or duplicated here. Marker review is bounded to namedclasses, not universal secret absence.\n\nThis archive task performs no SSH/cloud/API calls, Java/JVM/business workload, rawauditor/collector rerun, signals, newresources, PGwrites, Git or deletions. The rootreview was alreadyPASS beforecopy. INVENTORY excludes only itself and CLOSED; CLOSED binds itsSHA. Independent furtherarms and ABAB analysis require separate closed raw evidence and privatepush gates.\n")
+- for filename in ['COPY_PLAN.json','SOURCE_ADAPTATION.diff','REGISTRATION.json']:shutil.copy2(HERE/filename,TARGET/('archiver-'+filename))
+- allrows=snapshot(TARGET)
+- save(TARGET/'INVENTORY.json',{'scope':'Only this new cloud-arm-1-r1 subtree; original frozen copied bytes unchanged','excludedSelfAndClosure':['INVENTORY.json','CLOSED.json'],'files':allrows['files'],'directories':allrows['directories'],'payloadFileCount':len(allrows['files']),'payloadBytes':sum(r['bytes']for r in allrows['files'].values())})
+- inventory=json.loads((TARGET/'INVENTORY.json').read_text())
+- for name,pin in inventory['files'].items():require(row(TARGET/name)==pin,'Final archive file differs')
+- save(TARGET/'CLOSED.json',{'schemaVersion':1,'passed':True,'createdAtUtc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'inventorySha256':sha(TARGET/'INVENTORY.json'),'files':len(allrows['files']),'directories':len(allrows['directories']),'payloadBytes':sum(r['bytes']for r in allrows['files'].values()),'sourceBeforeAfterEqual':True,'allCopiedPayloadShaModesOwnersAndEmptyDirectoriesVerified':True,'allFullOriginalOuterAndInnerTarsRetained':True,'knownCredentialMarkerReviewPassed':True,'noSparseExtraction':True,'noRemoteActionsOrNewBenchmark':True,'originalsRetained':True,'analysisSiblingExcluded':True,'closureExcludes':['INVENTORY.json','CLOSED.json']})
+- print(json.dumps({'passed':True,'target':str(TARGET),'inventorySha256':sha(TARGET/'INVENTORY.json'),'closedSha256':sha(TARGET/'CLOSED.json'),'files':len(allrows['files']),'payloadBytes':sum(r['bytes']for r in allrows['files'].values()),'credentialScannedObjects':len(SCANNED)}))
+-
++ ap=argparse.ArgumentParser(allow_abbrev=False);ap.add_argument('--config',required=True,type=Path);ap.add_argument('--config-sha256',required=True);args=ap.parse_args();config=args.config.absolute();c,review=load_config(config,args.config_sha256);arm=c['arm']
++ target=WORKSPACE/('evidence/2026-10-24/runpod-cpu/retention-owner-poll-v3/cloud-arm-%d-r1'%arm);require(not target.exists(),'New immutable arm archive required');require(shutil.disk_usage(WORKSPACE).free>=1024**3+512*1024**2,'1GiB floor plus bounded copyreserve')
++ trees={name:Path(path)for name,path in c['scopes'].items()};collection=trees['actual-collection'];require(sha(trees['root-review-preparation']/'review_owner_collected.py')==review['scriptSha256'],'Actual executed current root helper differs')
++ raw=json.loads((collection/'raw/result.json').read_text());final=json.loads((collection/'finalized/LOCAL_COLLECTION_COMPLETE.json').read_text());actual_config=json.loads((collection/'collection/collector-config.json').read_text())
++ require(raw['passed']is True and raw['arm']==final['arm']==actual_config['arm']==arm and raw['strictSchedulerTimingAdmission']is True and raw['localFunctionalDiagnosticOptIn']is False and final['passed']is True,'Actual strict current arm proof required')
++ require(raw['releaseSha256']==review['releaseSha256']==actual_config['releaseSha256']and len(raw['arms'])==1 and raw['sourceCommit']==SOURCE,'Exact current arm/source/release')
++ require(sha(collection/'raw/result.json')==review['rawAuditSha256'],'Reviewed raw result differs');require(sha(trees['actual-config']/'collector-config.json')==sha(collection/'collection/collector-config.json'),'Actual config-copy source differs')
++ require(set(actual_config['priorGates'])=={str(n)for n in range(1,arm)},'Exact preceding closed gate/private-push prefix')
++ singles={}
++ for number,prior in actual_config['priorGates'].items():
++  for kind,pathkey,shakey in [('collection-gate','local','sha256'),('private-push','privatePushLocal','privatePushSha256')]:
++   path=Path(prior[pathkey]);require(path.is_file()and not path.is_symlink()and path.is_relative_to(BASE)and '..'not in path.parts and sha(path)==prior[shakey],'Prior receipt source bytes changed');singles['prior-gate-receipts/arm-%s-%s.json'%(number,kind)]=path
++ for path,input_pin in review['inputs'].items():
++  source=Path(path);source=source if source.is_absolute()else WORKSPACE/source;require(source.stat().st_size==input_pin['bytes']and sha(source)==input_pin['sha256'],'Actual reviewed input changed')
++ before={name:snapshot(source)for name,source in trees.items()};single_before={name:row(source)for name,source in singles.items()}
++ require(len(before['actual-collection']['files'])==c['actualCollectionFiles']and sum(r['bytes']for r in before['actual-collection']['files'].values())==c['actualCollectionBytes'],'Exact current collection count/bytes differs')
++ require(sum(len(v['files'])for v in before.values())<=1500 and sum(r['bytes']for v in before.values()for r in v['files'].values())<=512*1024**2,'Finite1500file/512MiB currentarm source closure')
++ target.mkdir();save(target/'REGISTRATION.json',{'atUTC':datetime.datetime.now(datetime.timezone.utc).isoformat(),'arm':arm,'configSha256':args.config_sha256,'sourceTrees':{name:str(path)for name,path in trees.items()},'rootReviewSha256':c['rootReviewSha256'],'priorReceiptSources':{name:str(path)for name,path in singles.items()},'sharedA1InventorySha256':A1_INVENTORY_SHA,'sharedA1ClosedSha256':A1_CLOSED_SHA,'currentArmOnly':True,'noSparseExtraction':True})
++ for name,source in trees.items():copy_tree(source,target/name,before[name])
++ for name,source in singles.items():
++  output=target/name;output.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(source,output);require(row(output)==single_before[name],'Exact priorreceipt copy')
++ after={name:snapshot(source)for name,source in trees.items()};require(before==after and all(row(singles[name])==r for name,r in single_before.items()),'Original currentarm source closure drift')
++ save(target/'SOURCE_BEFORE_COPY.json',{'trees':before,'singles':single_before});save(target/'SOURCE_AFTER_COPY.json',{'trees':after,'singles':single_before,'allOriginalsUnchanged':True})
++ shared=json.loads((A1/'INVENTORY.json').read_text());keys=['collector-preparation-r1/HISTORICAL_R1_SOURCE_FROZEN.json','collector-preparation-r2/LOCAL_PREPARATION_FROZEN.json','cloud-controller-preparation/LOCAL_PREPARATION_FROZEN.json','actual-staging/STAGE_SUCCESS.json','actual-root-release-freeze/ROOT_FREEZE.json','actual-root-release-freeze/release/release.json','stage-preparation-r1/HELPERS_FROZEN.json','stage-preparation-r2/HELPERS_FROZEN.json']
++ # Exact referenced shared subtree rows are recorded even if a historical freeze basename differs.
++ shared_rows={name:r for name,r in shared['files'].items()if name in keys or any(name.startswith(prefix)for prefix in ['collector-preparation-r1/','collector-preparation-r2/','cloud-controller-preparation/','collector-peer-review/','stage-preparation-r1/','stage-preparation-r2/','actual-staging/','actual-root-release-freeze/','root-release-preparation/','close-preparation/','next-arm-execution-preparation/','collection-root-execution-preparation/','close-execution-preparation/'])}
++ save(target/'IMMUTABLE_SHARED_A1_REFERENCES.json',{'sharedArchive':str(A1),'inventorySha256':A1_INVENTORY_SHA,'closedSha256':A1_CLOSED_SHA,'referencedFileRows':shared_rows,'sharedBodiesNotRecopied':True,'priorPrivatePushReceiptsSeparatelyCopied':True,'noLocalNativeArchiveRechecked':True})
++ shutil.copy2(Path(__file__),target/'archive_arm.py');shutil.copy2(config,target/'archiver-config.json');shutil.copy2(HERE/'SOURCE_FROZEN.json',target/'archiver-source-freeze.json')
++ helper_sources=target/'archiver-preparation';helper_sources.mkdir()
++ for name,pin in json.loads((HERE/'SOURCE_FROZEN.json').read_text())['sourceFiles'].items():
++  source=HERE/name;require(source.stat().st_size==pin['bytes']and sha(source)==pin['sha256'],'Frozen helper source drift');shutil.copy2(source,helper_sources/name);require(sha(helper_sources/name)==pin['sha256'],'Full helper body copy binding')
++ for path in sorted(target.rglob('*')):
++  if path.is_file():scan_file(path,str(path.relative_to(target)))
++ save(target/'KNOWN_CREDENTIAL_MARKER_REVIEW.json',{'passed':not HITS,'boundedNamedMarkersOnly':True,'sameNecessaryLiteralPrefixFilterAsClosedA1':True,'markerClasses':sorted(MARKERS),'findings':HITS,'scannedObjects':len(SCANNED),'scannedBytes':sum(r['bytes']for r in SCANNED),'allCopiedFullTarStreamsAndZipJarEntriesReviewed':True,'noLocalNativeArchiveRead':True,'scanned':SCANNED});require(not HITS,'Marker findings retained; do not close')
++ metrics=raw['arms'][0]['rawMetrics'];rr=review['arms'][0];owner=(1000000,100000,1000000,100000)[arm-1]
++ require(metrics['allArrivalP99Ns']==rr['allArrivalP99Ns']and metrics['acceptedOrdersInArrivalWindow']==rr['acceptedWithinArrivalWindow'],'Root/raw metric coherence')
++ label=('A1','B1','A2','B2')[arm-1]
++ text=f'''# Closed CPU owner-poll {label} evidence\n\nOne fresh33792@500/s long lineage, source{SOURCE}/code{CODE}; owner requested maximum park{owner}ns and constantserver/driver100000ns/read8/chunk6144/Fetch16/businesscap4/leader0/sync2. Complete actualcollection: {len(before['actual-collection']['files'])} files/{sum(r['bytes']for r in before['actual-collection']['files'].values())}bytes, both originalTARs preserved. Root independently verified{review['outerFiles']}outerfiles/{review['outerDirectories']}directories/{review['outerLogicalBytes']}logicalbytes and{review['rawInputFiles']}rawinputs.\n\nActual all-arrival scheduled-to-reply nearest-rankp99 {rr['allArrivalP99Ns']}ns; acceptedwithin67.584s {rr['acceptedWithinArrivalWindow']}; windowgoodput {rr['arrivalWindowGoodputPerSecond']}/s. Accepted {metrics['confirmedAcceptedUniqueOrders']}; notSent {metrics['notSent']}; unknownObserved {metrics['unknownObserved']}; unknownFinal {metrics['unknownFinal']}; serverRejected {metrics['serverRejected']}; schedulerlate-over20ms {metrics['schedulerLatenessOver20ms']}. Values come from this arm's exact strict raw result and independent root review, not A1constants. One finite arm is not an A/Bspeedup, stability/SLA/100M guarantee or combinedendurance.\n\nCurrent collection/config/launch/close/execution/rootreview/helper and every actual priorcollection-gate/private-push pair are copied byte-exact. Sharedcollector/controller/stage/preparation/historicalfailures are referenced by immutableA1inventory{A1_INVENTORY_SHA}/closure{A1_CLOSED_SHA}, with exact sharedfile rows; their bodies are not recopied. Original absolute paths are preserved; REGISTRATION/SOURCE_BEFORE_COPY map local archive subtrees. The current fullouterTAR also retains all explicit actualstaged39sources and priorreceipts.\n\nCopybefore/after fullSHA/bytes/modes/uid/gid/directory/emptydir closure and knownmarker review include allfullTARstreams and ZIP/JARentries. No sparseextraction, rawauditor/collector/business/JVM rerun, SSH/Git/PGwrite/signals/resources/deletion. No localnative archive rescanned. INVENTORY excludes onlyitself andCLOSED; CLOSED binds it. Allfourarm ABAB interpretation is separate from this currentarm archive.\n'''
++ with(target/'README.md').open('x')as output:output.write(text)
++ require(all(snapshot(source)==before[name]for name,source in trees.items()),'Closed originals changed after markerreview')
++ allrows=snapshot(target);save(target/'INVENTORY.json',{'scope':'Only current explicit closed owner-poll arm%d'%arm,'excludedSelfAndClosure':['INVENTORY.json','CLOSED.json'],'files':allrows['files'],'directories':allrows['directories'],'payloadFileCount':len(allrows['files']),'payloadBytes':sum(r['bytes']for r in allrows['files'].values())})
++ for name,r in allrows['files'].items():require(row(target/name)==r,'Final payload SHA/mode/owner drift')
++ save(target/'CLOSED.json',{'schemaVersion':1,'passed':True,'arm':arm,'createdAtUTC':datetime.datetime.now(datetime.timezone.utc).isoformat(),'inventorySha256':sha(target/'INVENTORY.json'),'files':len(allrows['files']),'directories':len(allrows['directories']),'payloadBytes':sum(r['bytes']for r in allrows['files'].values()),'allCurrentOriginalCollectionAndTarsRetained':True,'currentSourceCopyBeforeAfterEqual':True,'fullPayloadShaModesOwnersAndEmptyDirectoryClosureVerified':True,'sharedA1ReferencesImmutable':True,'knownMarkerReviewPassed':True,'noSparseExtraction':True,'noRemoteOrBusinessOrRawAuditRerun':True,'closureExcludes':['INVENTORY.json','CLOSED.json']})
++ print(json.dumps({'passed':True,'arm':arm,'inventorySha256':sha(target/'INVENTORY.json'),'closedSha256':sha(target/'CLOSED.json'),'files':len(allrows['files']),'directories':len(allrows['directories']),'payloadBytes':sum(r['bytes']for r in allrows['files'].values())}))
+ if __name__=='__main__':main()
