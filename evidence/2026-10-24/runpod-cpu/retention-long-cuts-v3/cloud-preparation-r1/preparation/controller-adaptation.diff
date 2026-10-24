@@ -1,0 +1,412 @@
+--- baseline/cpu_idle_abab.py
++++ cpu_long_cuts.py
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""Finite source-only idle ABAB. One explicit single arm; no automatic reruns or cleanup."""
++"""One fixed long-cut CPU arm. Default read-only preflight; no retries, prior-arm gates or new resources."""
+ import argparse
+ import hashlib
+ import importlib.util
+@@ -21,22 +21,27 @@
+ BASE_SHA = '8eeb10c14d6e5a9aa3895fbb674fc5c59ceac7fd3b15a6e3e11da325f444ab87'
+ HOST = 'ed6c0673f5cb'
+ ROOT = Path('/opt/vectormatch-cpu')
+-PREP = ROOT / 'preparation/cpu-idle-cloud-abab-r1'
++PREP = ROOT / 'preparation/cpu-long-cuts-cloud-r1'
+ ARM = 1
+ JOB = PREP / 'arm-1'
+ PAIR = JOB / 'idle-arm'
+ FROZEN_RELEASE_SHA = None
+-PRIOR_GATE_SHA = None
+ WINDOWS = [8]
+-PARK_ORDER = [1000000, 100000, 1000000, 100000]
++MAXIMUM_PARK_NS = 100000
+ PROPERTY = 'vectormatch.retention.idleMaxParkNs'
+-SOURCE_COMMIT = '7aa3e98ccc77c4be89f9f4b98c98d688c18e5d23'
++SOURCE_COMMIT = 'bcf49c10b77a14708b53d3fc6c115a6a3b834408'
+ LOG_CLASSIFIER_SHA = 'bb8725c5bc560cc9a72c80a5c5d445373edbd0da91f2cccf41eb3550569319a9'
++PREREQUISITE_PINS = {
++    'longRawAudit': {'bytes': 3138, 'sha256': 'd62912c9eccad0f6b070658d39626b587c5c017543f456ed9043ac710c5da21b'},
++    'longRawParserFreeze': {'bytes': 4465, 'sha256': '1fdec3e1bd4253e6eb11f32bc8bae5fbab53cd5531ffb8dec75c0cfb31e8c7b3'},
++    'linuxMetadataObservation': {'bytes': 5151, 'sha256': '78bb2a6a46acfadde6888184caf507da934c2d22b1a532116c7d94a488795c27'},
++    'linuxMetadataReceipt': {'bytes': 4901, 'sha256': 'f136046368c57d2998b50854e2b46e5dba3ebfbc639b66ef7cd87476d5824b5f'},
++}
+ FIXED_PORTS = 42000
+ 
+ def configure_arm(number):
+     global ARM, JOB, PAIR
+-    require(type(number) is int and number in [1, 2, 3, 4], 'Only pre-registered idle arm 1..4 is supported')
++    require(type(number) is int and number == 1, 'Only the one pre-registered long-cut arm1 is supported')
+     ARM = number
+     JOB = PREP / ('arm-' + str(number))
+     PAIR = JOB / 'idle-arm'
+@@ -79,11 +84,11 @@
+     return isinstance(value, str) and len(value) == 64 and all(c in '0123456789abcdef' for c in value)
+ 
+ 
+-RELEASE_KEYS = {'profileFingerprint', 'javaExecutableSha256', 'java', 'configuration', 'releaseReady', 'jdkReleaseSha256', 'schemaVersion', 'status', 'nodeClassPath', 'arms', 'controllerSha256', 'classPath', 'artifacts', 'codeFingerprint', 'host', 'requiredEvidenceBeforeRootFreezes', 'parentJvmArguments', 'sourceCommit', 'protectedOriginalState', 'derivedPlan', 'profileId', 'logClassification'}
++RELEASE_KEYS = {'profileFingerprint', 'javaExecutableSha256', 'java', 'configuration', 'releaseReady', 'jdkReleaseSha256', 'schemaVersion', 'status', 'nodeClassPath', 'arms', 'controllerSha256', 'evidenceReferences', 'classPath', 'artifacts', 'codeFingerprint', 'host', 'requiredEvidenceBeforeRootFreezes', 'parentJvmArguments', 'sourceCommit', 'protectedOriginalState', 'derivedPlan', 'profileId', 'logClassification'}
+ PLAN_KEYS = {'requestedReadWindow', 'maxReadOnlyInFlight', 'commonReadWindowEnvelope', 'readOnlyStagingBytes', 'readOnlyFailureTraceReserveBytes', 'eventFetchCount', 'witness', 'archiveChunkBytes', 'maximumEncodedChunkReplyBytes', 'maximumWriterPayloadBytes', 'maximumEventFetchRpcs', 'maximumArchiveChunkRpcs', 'selectedMaximumArchiveChunkRpcs', 'noRetryRawTraceBytes', 'maximumBusinessFrames', 'batchCap', 'largestReplyBytes', 'commonChunkEnvelope', 'maximumArchivePayloadBytes', 'maximumSupportedArchiveChunkBytes', 'maximumLogicalMaintenanceRpcs', 'maximumPhysicalOffersPerRpc', 'maximumAllocatedGrowthBytes', 'maximumWriterPayloadFiles', 'nativeAllocatedReserveBytes', 'scope', 'maximumJournalRecords', 'arrivals', 'admitted', 'maximumEventPayloadBytes', 'maximumWriterFilesIncludingReceipts', 'archiveHeaderBytes', 'admissionRejections', 'maximumEvents', 'egressAttestationTraceReserveBytes', 'maximumArchiveEntryBytes', 'maximumNegativeOfferAttempts', 'maximumRawTraceBytes', 'worstFourOfferRawTraceBytes', 'selectedMaximumLogicalMaintenanceRpcs', 'minimumFreeRuntimeBytes', 'maximumExtraPositiveOffers', 'maximumJournalBytes', 'maximumMaintenanceCycles'}
+ 
+ def selected_park_ns():
+-    return PARK_ORDER[ARM - 1]
++    return MAXIMUM_PARK_NS
+ 
+ 
+ def selection(maximum=None):
+@@ -93,11 +98,13 @@
+ 
+ 
+ def fixed_configuration():
+-    return {'arrivals': 6400, 'ratePerSecond': 500, 'batchCap': 4,
+-            'archiveChunkBytes': 6144, 'readWindow': 8, 'maximumParkOrderNs': PARK_ORDER,
++    return {'arrivals': 33792, 'ratePerSecond': 500, 'batchCap': 4,
++            'archiveChunkBytes': 6144, 'readWindow': 8, 'maximumRequestedParkNs': MAXIMUM_PARK_NS,
++            'workloadPreset': 'long-cuts-33792-v1', 'exposureNs': 67584000000,
++            'fullCommandCuts': 11, 'trailingCommands': 3, 'equivalentFullLoadCutNumbers': list(range(2,12)),
+             'eventFetchCount': 16, 'appointedLeader': 0, 'sync': 2,
+             'workers': 128, 'queuePerWorker': 64, 'preparedArchiveCache': True,
+-            'samePortsAcrossArms': True, 'fixedBasePorts': FIXED_PORTS,
++            'fixedPortsNoFallback': True, 'fixedBasePorts': FIXED_PORTS,
+             'commonChunkEnvelope': False, 'commonReadWindowEnvelope': True, 'mtu': 1248,
+             'ownerLoopMaximumParkNsUnchanged': 1000000}
+ 
+@@ -117,15 +124,15 @@
+     require(release['host'] == HOST and release['arms'] == {str(n): {
+         'job': str(PREP / ('arm-' + str(n))),
+         'armRoot': str(PREP / ('arm-' + str(n)) / 'idle-arm'),
+-        'maximumParkNs': PARK_ORDER[n-1]} for n in [1, 2, 3, 4]},
+-        'Fixed host/four single-arm roots/order differ')
+-    require(release['sourceCommit'] == SOURCE_COMMIT, 'Exact reviewed idle feature commit required')
++        'maximumParkNs': MAXIMUM_PARK_NS} for n in [1]},
++        'Fixed host/one long-cut arm root differs')
++    require(release['sourceCommit'] == SOURCE_COMMIT, 'Exact reviewed long-cut feature commit required')
+     for field in ['codeFingerprint', 'profileFingerprint', 'javaExecutableSha256', 'jdkReleaseSha256', 'controllerSha256']:
+         require(hex_digest(release[field]), 'Actual frozen SHA required: ' + field)
+     require(release['logClassification'] == log_policy(), 'Exact reviewed warning predicate/scope required')
+     require(release['configuration'] == fixed_configuration(), 'Fixed idle pilot configuration differs')
+     require(release['java'] == '/opt/vectormatch-cpu/tools/jdk-21.0.13+9/bin/java', 'Actual canonical Java path differs')
+-    require(isinstance(release['profileId'], str) and release['profileId'], 'Actual profile ID required')
++    require(release['profileId'] == 'finite-batch-load-v3-v1' and release['profileFingerprint'] == '732201775469861083f9dd0798a465dec1d0ed6bff39ed281dbef58c28b9fc68', 'Exact unchanged finite profile required')
+     require(isinstance(release['classPath'], list) and len(release['classPath']) == 4
+             and len(set(release['classPath'])) == len(release['classPath']), 'Exact class-path closure required')
+     require(isinstance(release['nodeClassPath'], list) and len(release['nodeClassPath']) in [3, 4]
+@@ -141,16 +148,16 @@
+     plan = release['derivedPlan']
+     for arm in ['8']:
+         require(isinstance(plan, dict) and set(plan) == PLAN_KEYS, 'Unknown or missing codec-derived plan key')
+-        require(plan['arrivals'] == 6400 and plan['batchCap'] == 4 and plan['archiveChunkBytes'] == 6144
++        require(plan['arrivals'] == 33792 and plan['batchCap'] == 4 and plan['archiveChunkBytes'] == 6144
+                 and plan['requestedReadWindow'] == int(arm) and plan['maxReadOnlyInFlight'] == 8
+                 and plan['commonReadWindowEnvelope'] is True and plan['commonChunkEnvelope'] is False
+                 and plan['eventFetchCount'] == 16 and plan['admitted'] is True
+                 and plan['admissionRejections'] == [] and plan['minimumFreeRuntimeBytes'] == GIB,
+                 'Actual admitted common read-window plan differs')
+-        require(plan['maximumPhysicalOffersPerRpc'] == 4 and plan['maximumBusinessFrames'] == 6400
+-                and plan['maximumEvents'] == 12803 and plan['maximumMaintenanceCycles'] == 4
+-                and plan['maximumWriterPayloadFiles'] == 8 and plan['maximumWriterFilesIncludingReceipts'] == 16
+-                and plan['maximumJournalRecords'] == 32
++        require(plan['maximumPhysicalOffersPerRpc'] == 4 and plan['maximumBusinessFrames'] == 33792
++                and plan['maximumEvents'] == 67587 and plan['maximumMaintenanceCycles'] == 12
++                and plan['maximumWriterPayloadFiles'] == 24 and plan['maximumWriterFilesIncludingReceipts'] == 48
++                and plan['maximumJournalRecords'] == 96 and plan['maximumJournalBytes'] == 117792
+                 and type(plan['selectedMaximumArchiveChunkRpcs']) is int and plan['selectedMaximumArchiveChunkRpcs'] > 0
+                 and plan['selectedMaximumLogicalMaintenanceRpcs'] == plan['selectedMaximumArchiveChunkRpcs'] + plan['maximumEventFetchRpcs'] + 3 * plan['maximumMaintenanceCycles']
+                 and plan['maximumArchiveChunkRpcs'] == plan['selectedMaximumArchiveChunkRpcs']
+@@ -167,9 +174,20 @@
+                 'Actual codec-derived supported upper reply bound required')
+         # Prospective codec bound may include a full 64-byte counter hash while the workload uses an empty hash.
+         # It is an upper bound: no runtime reply is required to reach it.
++    require(release['codeFingerprint'] == '6033c9ebfc2a7b1836c45f858784a4930540b469eb136635761fd3217733edc8', 'Exact actual long distribution fingerprint required')
++    require(plan['maximumLogicalMaintenanceRpcs'] == 7243 and plan['maximumArchiveChunkRpcs'] == 2982
++            and plan['maximumEventFetchRpcs'] == 4225 and plan['maximumRawTraceBytes'] == 185514924
++            and plan['maximumAllocatedGrowthBytes'] == 757122377, 'Exact actual long Plan differs')
++    references = release['evidenceReferences']
++    require(isinstance(references, dict) and set(references) == {'longRawAudit','longRawParserFreeze','linuxMetadataObservation','linuxMetadataReceipt','rootEvidenceReview'}, 'Long proof references are incomplete')
++    for key, row in references.items():
++        require(set(row) == {'path','bytes','sha256'} and row['path'] == str(PREP / ('release/proofs/' + key + '.json'))
++                and type(row['bytes']) is int and 0 < row['bytes'] <= 1024**2 and hex_digest(row['sha256']), 'Actual pending prerequisite not frozen: ' + key)
++        if key in PREREQUISITE_PINS:
++            require({k: row[k] for k in ('bytes','sha256')} == PREREQUISITE_PINS[key], 'Exact actual qualified prerequisite differs: ' + key)
+     protection = release['protectedOriginalState']
+     require(set(protection) == {'manifest', 'manifestSha256'}, 'Unknown or missing protected-state key')
+-    require(hex_digest(protection['manifestSha256']) and Path(protection['manifest']).parent == PREP / 'release',
++    require(protection['manifestSha256'] == '6769aa2590668ba69692b17565c3463cc274b1fa2a777129d742c1e04899f753' and Path(protection['manifest']).parent == PREP / 'release',
+             'Current stopped original-state manifest required; initial clone is not an updated tail baseline')
+     require(release['parentJvmArguments'] == ['--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED',
+             '--add-opens=java.base/java.util.zip=ALL-UNNAMED', '-Xmx256m'], 'Fixed parent JVM flags differ')
+@@ -178,7 +196,7 @@
+ 
+ def parent_argv(release):
+     return [release['java'], '-D' + PROPERTY + '=' + str(selected_park_ns())] + release['parentJvmArguments'] + ['-cp', ':'.join(release['classPath']),
+-        MAIN, str(PAIR), 'idle-window8', str(FIXED_PORTS)]
++        MAIN, str(PAIR), 'idle-window8-long-cuts', str(FIXED_PORTS)]
+ 
+ 
+ def node_argv(release, cap, member, registration):
+@@ -191,11 +209,13 @@
+ 
+ 
+ def validate_registration(release, cap, registration):
+-    require(registration['arrivals'] == 6400 and registration['rate'] == 500
++    require(registration['arrivals'] == 33792 and registration['rate'] == 500
+             and registration['batchCap'] == 4 and registration['archiveChunkBytes'] == 6144 and registration['readWindow'] == cap
+             and registration['eventFetchCount'] == 16 and registration['commonChunkEnvelope'] is False and registration['commonReadWindowEnvelope'] is True and registration['appointedLeader'] == 0
+             and registration['sync'] == 2 and registration['profileSha256'] == release['profileFingerprint']
+             and registration['codeSha256'] == release['codeFingerprint'], 'Actual arm configuration/code/profile differs')
++    require(registration.get('workloadPreset') == 'long-cuts-33792-v1' and registration.get('expectedFullCommandCuts') == 11
++            and registration.get('expectedTrailingCommands') == 3 and registration.get('equivalentFullLoadCutNumbers') == list(range(2,12)), 'Long workload/cut declaration differs')
+     require(registration.get('retentionIdleSelection') == selection(), 'Actual arm idle selection differs')
+     require(type(registration['ports']) is int and registration['ports'] == FIXED_PORTS,
+             'Observed finite loopback port range differs')
+@@ -514,56 +534,119 @@
+             'scope': 'Same-host full logical readback; independent local collection is a separate gate'}
+ 
+ 
+-def validate_prior_gate(gate, release, prior):
+-    require(type(prior) is int and prior in [1, 2, 3] and prior == ARM - 1,
+-            'Exactly the immediate preceding arm must gate this arm')
+-    require(gate['schemaVersion'] == 2 and gate['scope'] == 'ROOT_VERIFIED_CLOSED_CPU_IDLE_ARM_COLLECTION'
+-            and gate['collectionComplete'] is True and gate['arm'] == prior
+-            and gate['maximumParkNs'] == PARK_ORDER[prior-1]
+-            and gate['frozenReleaseSha256'] == FROZEN_RELEASE_SHA
+-            and gate['controllerSha256'] == release['controllerSha256'], 'Prior arm gate/order/release differs')
+-    require(hex_digest(gate['independentLocalCollectionReceiptSha256'])
+-            and gate['localFullMemberShaBytesModesOwnersEmptyDirsVerified'] is True
+-            and gate['allRawInputsAndFailuresRetained'] is True,
+-            'Independent full collection and original failures required before another arm')
+-
+-
+-def verify_prior_arm_gate(base, release):
+-    require(hex_digest(PRIOR_GATE_SHA), 'Next arm requires explicit independently frozen collection gate SHA')
+-    previous = PREP / ('arm-' + str(ARM - 1))
+-    gate_path = PREP / ('release/arm-%d-collection-gate.json' % (ARM - 1))
+-    base.no_links(gate_path)
+-    require(digest(gate_path) == PRIOR_GATE_SHA, 'Root-frozen preceding arm collection gate differs')
+-    gate = json_bounded(base, gate_path)
+-    validate_prior_gate(gate, release, ARM - 1)
+-    completed = json_bounded(base, previous / 'completion.json')
+-    stopped = json_bounded(base, previous / 'python-owned-stop.json')
+-    after = json_bounded(base, previous / 'after-clean-stop.json', 4 * 1024**2)
+-    require(completed['passed'] is True and completed['allOwnedStopped'] is True
+-            and completed['arm'] == ARM - 1 and completed['maximumParkNs'] == PARK_ORDER[ARM-2]
+-            and completed['frozenReleaseSha256'] == FROZEN_RELEASE_SHA
+-            and stopped['allOwnedStopped'] is True and stopped['errors'] == [], 'Preceding arm did not close successfully')
+-    closure = after['archive']
+-    archive = previous / 'pilot-after-clean-stop.tar.gz'
+-    require(closure['archive']['path'] == str(archive) and archive.stat().st_size == closure['archive']['bytes']
+-            and digest(archive) == closure['archive']['sha256'] == gate['closedArchiveSha256'], 'Prior closed compressed artifact differs')
+-    inventory_raw = json.dumps(closure['inventory'], sort_keys=True, separators=(',', ':')).encode()
+-    require(hashlib.sha256(inventory_raw).hexdigest() == gate['closedNativeInventorySha256'], 'Prior exact native inventory differs')
+-    readback = verify_archive_members(archive, closure['inventory'])
+-    prior_native = previous / 'idle-arm'
+-    if prior_native.exists():
+-        actual = base.scan(prior_native, True)
+-        require(set(actual['files']) == set(closure['inventory']['files'])
+-                and actual['directories'] == closure['inventory']['directories'], 'Retained preceding native closure differs')
+-        for name, row in closure['inventory']['files'].items():
+-            require(all(actual['files'][name][key] == row[key] for key in ['bytes', 'sha256', 'mode', 'uid', 'gid']),
+-                    'Retained preceding native bytes/owner/mode differ')
+-    else:
+-        require(gate['rootReviewedExactOwnedNativeRemoval'] is True,
+-                'Missing preceding native requires separate root-reviewed exact-tree removal attestation')
+-    return {'passed': True, 'gateSha256': PRIOR_GATE_SHA, 'sameFrozenRelease': True,
+-            'archiveReadback': readback, 'retainedNativeStillPresent': prior_native.exists(),
+-            'controllerDeletesAnyFile': False, 'localCollectionIndependentlyReperformedHere': False}
++
++
++
++
++def validate_linux_metadata(observation, receipt, release):
++    """Actual metadata process/class/Plan binding; no observation gap or assumed canonical executable."""
++    root = '/opt/vectormatch-cpu/preparation/cpu-long-cuts-release-metadata-r1'
++    require(observation['noDriverOrClusterStarted'] is True
++            and observation['actualCodeFingerprint'] == release['codeFingerprint']
++            and observation['profileSha256'] == release['profileFingerprint'], 'Actual Linux metadata code/profile/scope differs')
++    workload = observation['workloads']['LONG_CUTS']
++    require(workload['arrivals'] == 33792 and workload['rate'] == 500 and workload['windowNs'] == 67584000000
++            and workload['fullCommandCuts'] == 11 and workload['trailingCommands'] == 3 and workload['cycles'] == 12
++            and workload['plan'] == release['derivedPlan'], 'Actual Linux long workload/Plan differs')
++    registration, execution = receipt['registration'], receipt['execution']
++    expected_command = [release['java'], '-Xmx128m', '--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED',
++        '-cp', root + '/classes:' + ':'.join(root + '/lib/' + Path(p).name for p in release['classPath']),
++        'io.vectormatch.cluster.LongCutsDistributionObservation', root + '/results/actual-distribution-observation.json']
++    identity = execution.get('actualProcessIdentity')
++    require(receipt['passed'] is True and receipt['root'] == root
++            and receipt['observationSha256'] == release['evidenceReferences']['linuxMetadataObservation']['sha256']
++            and registration['hostname'] == HOST and registration['command'] == expected_command
++            and registration['javaExecutable'] == registration['actualJavaExecutable'] == release['java']
++            and registration['javaExecutableSha256'] == execution['javaExecutableSha256After'] == release['javaExecutableSha256']
++            and registration['jdkReleaseSha256'] == execution['jdkReleaseSha256After'] == release['jdkReleaseSha256'],
++            'Actual Linux metadata canonical host/argv/executable/JDK differs')
++    require(execution.get('processIdentityObservationGap') is False and isinstance(identity, dict)
++            and type(identity.get('pid')) is int and identity['pid'] > 1
++            and type(identity.get('startTicks')) is int and identity['startTicks'] > 0
++            and execution['ownedParentPid'] == identity['pid']
++            and identity.get('actualExecutable') == release['java']
++            and identity.get('commandSha256') == hashlib.sha256(b'\0'.join(os.fsencode(a) for a in expected_command) + b'\0').hexdigest()
++            and execution['exitCode'] == 0 and execution['timedOut'] is False
++            and execution['metadataJvmExited'] is True and execution['allInputsUnchanged'] is True,
++            'Actual Linux metadata PID/start/argv observation gap, input drift or non-exit')
++    rows = receipt['stagedFiles']
++    require(rows == registration['inputInventory'] and len(rows) == 6, 'Exact six metadata inputs required')
++    require(set(rows) == {'lib/' + Path(p).name for p in release['classPath']} | {
++        'LongCutsDistributionObservation.java', 'classes/io/vectormatch/cluster/LongCutsDistributionObservation.class'},
++        'Actual metadata input closure differs')
++    for path, frozen in release['artifacts'].items():
++        actual = rows['lib/' + Path(path).name]
++        require(actual['bytes'] == frozen['bytes'] and actual['sha256'] == frozen['sha256'] and actual['mode'] == 0o644,
++                'Actual Linux metadata JAR differs')
++    require(rows['LongCutsDistributionObservation.java']['sha256'] == 'ed07ec998dabcdd8d22b51ea8745766ae2c788cc84a407d1118276a83b090d78'
++            and rows['classes/io/vectormatch/cluster/LongCutsDistributionObservation.class']['sha256'] == '308eb3eb86dd79977fcd92da3a6fb11ec2c2771829a226a93705199f1c603433',
++            'Actual Linux Java metadata helper source/class differs')
++    bindings = {'io.vectormatch.cluster.RetentionCapacityAeronPilotV3': 'cluster-0.1.0-SNAPSHOT.jar',
++        'io.vectormatch.cluster.RetentionNodeMainV3': 'cluster-0.1.0-SNAPSHOT.jar',
++        'io.vectormatch.core.MatchingEngine': 'core-0.1.0-SNAPSHOT.jar',
++        'io.aeron.driver.MediaDriver': 'aeron-all-1.53.3.jar', 'org.agrona.DirectBuffer': 'aeron-all-1.53.3.jar'}
++    actual = observation['actualCodeSources']
++    require(len(actual) == len(bindings) and {r['class'] for r in actual} == set(bindings), 'Actual Linux class-source set differs')
++    for row in actual:
++        name = bindings[row['class']];frozen = release['artifacts'][str(PREP / 'release/lib' / name)]
++        require(row['path'] == root + '/lib/' + name and row['bytes'] == frozen['bytes'] and row['sha256'] == frozen['sha256'],
++                'Actual Linux loaded class/JAR binding differs')
++    return True
++
++
++def validate_prerequisite_proofs(values, release):
++    """Pure semantic gate shared with stage; caller first verifies each original file's SHA/bytes."""
++    require(set(values) == set(release['evidenceReferences']), 'Prerequisite proof value closure differs')
++    validate_linux_metadata(values['linuxMetadataObservation'], values['linuxMetadataReceipt'], release)
++    audit, parser, review = values['longRawAudit'], values['longRawParserFreeze'], values['rootEvidenceReview']
++    require(audit['schemaVersion'] == 1 and audit['scope'] == 'QUALIFIED_LOCAL_LONG_NATIVE_AUDIT_FUNCTIONAL_ONLY'
++            and audit['readOnlyAuditPassed'] is True and audit['sourceCommit'] == release['sourceCommit']
++            and audit['actualCodeFingerprint'] == release['codeFingerprint'] and audit['profileFingerprint'] == release['profileFingerprint'],
++            'Qualified local long audit scope/source/code/profile differs')
++    require(audit['workload'] == {'arrivals':33792,'ratePerSecond':500,'windowSeconds':67.584,'batchCap':4,
++            'archiveChunkBytes':6144,'eventFetchCount':16,'readWindow':8,'logicalWorkers':128,'taskQueueCapacityPerWorker':64}
++            and audit['cycles'] == 12 and audit['readPhases'] == 24 and audit['equivalentFullLoadCuts'] == 10
++            and audit['confirmedAcceptedUniqueOrders'] == 33792 and audit['notSent'] == audit['unknownObserved'] == audit['unknownFinal'] == audit['serverRejected'] == 0,
++            'Qualified local long audit workload/outcome/phase counts differ')
++    require(audit['schedulerTimingValid'] is False and audit['schedulerLatenessOver20ms'] == 26
++            and audit['localFunctionalOnly'] is True and audit['noCapacityClaim'] is True
++            and audit['futureCpuSchedulerGateDefaultStrict'] is True
++            and audit['actualIdleFactoryCreations'] == 22 and audit['warnings'] == 0
++            and audit['allConsumedInputsManifestBoundAndRehashed'] is True and audit['consumedInputFiles'] == 80
++            and audit['originalOwnedStopReceiptsVerified'] is True and audit['liveProcessProbePerformed'] is False
++            and audit['setupPositionHashIndependentlyReconstructed'] is False
++            and audit['setupBusinessReplyHashesIntentionallyEmpty'] is True and audit['sameCandidateReferenceIsNotIndependentAlgorithm'] is True,
++            'Local diagnostic qualification must remain timing-invalid/functional-only; no CPU timing bypass')
++    require(audit['fullArchiveReadback'] == {'passed':True,'entries':191,'files':159,'directories':32,'logicalBytes':1334578086,
++            'sha256':'b73ad6c3333007f6938eb6989ab528461d83b17b6d3ab0170d6d805e5c56cc3b',
++            'modeOwnerEmptyDirectoryClosureVerified':True,'sparseExtractionPerformed':False}
++            and audit['manifestSha256'] == 'b6239c05b7949f844971f2b1dd6e416ba2ce80769eff245623ad4405bacacea7'
++            and audit['fullResult']['bytes'] == 1701830 and audit['fullResult']['sha256'] == '68d3cda87612b9c7369c20558f474b75b6c77b890fc32d1a2cdbdb223824161a',
++            'Actual full local archive/result closure differs; full result stays outside bounded release JSON')
++    require({k:audit['parserFreeze'][k] for k in ('bytes','sha256')} == PREREQUISITE_PINS['longRawParserFreeze']
++            == {k:release['evidenceReferences']['longRawParserFreeze'][k] for k in ('bytes','sha256')}, 'Audit/parser freeze cross-binding differs')
++    require(parser['schemaVersion'] == 1 and parser['sourceCommitUnderAudit'] == release['sourceCommit']
++            and parser['actualCodeFingerprintUnderAudit'] == release['codeFingerprint'] and parser['guardTests'] == 33
++            and parser['baselineOriginalsAndCopiesUnchanged'] is True and parser['legacy6400DefaultAndOriginalPhaseCap8Unchanged'] is True
++            and parser['defaultImportedSchedulerAdmissionStrict'] is True and parser['localFunctionalDiagnosticOptInIsExplicitRunnerOnly'] is True
++            and parser['legacyCollectorCliNotReused'] is True and parser['firstFailedAuditPreserved'] is True
++            and parser['rawParserEntry'] == 'source/audit_raw.py:audit_arm(selected_window,arm_override,workload=LONG,local_functional_only=False)',
++            'Authoritative long parser source/strict default/failed audit preservation differs')
++    require(set(parser['sourceFiles']) == {'run_audit.py','source/archive_closure.py','source/audit_raw.py','source/common.py',
++            'source/idle_inventory.py','source/read_phase_audit.py','source/setup_audit.py','source/workload_contract.py',
++            'tests/test_long_contract.py','tests/test_phase_baseline.py'}
++            and all(type(r['bytes']) is int and r['bytes'] > 0 and hex_digest(r['sha256']) for r in parser['sourceFiles'].values()),
++            'Authoritative parser source manifest closure differs')
++    expected_bindings = {key:{k:row[k] for k in ('bytes','sha256')} for key,row in release['evidenceReferences'].items() if key != 'rootEvidenceReview'}
++    require(review['scope'] == 'ROOT_REVIEWED_LONG_NATIVE_CLOUD_PREREQUISITES' and review['passed'] is True
++            and review['sourceCommit'] == release['sourceCommit'] and review['codeFingerprint'] == release['codeFingerprint']
++            and review['profileFingerprint'] == release['profileFingerprint'] and review['controllerSha256'] == release['controllerSha256']
++            and review['sourceReviewSha256'] == 'a9561e676b19892a58590b16fc51b6e63962261aede70858fa0d48b0d8bd23db'
++            and review['nativeReviewSha256'] == '55b3bf21ea23dca8a34bb7a1c2baaf7235cce2ddbf6ec38100fe5a0edc0dd49d'
++            and review['proofBindings'] == expected_bindings and review['guardsPassed'] is True
++            and review['strictCpuSchedulerRequired'] is True and review['noNewResources'] is True,
++            'Root prerelease evidence review failed/scope/source/code/controller/proof binding differs')
++    return True
+ 
+ 
+ def preflight(base, release):
+@@ -583,13 +666,18 @@
+     for path, row in release['artifacts'].items():
+         base.no_links(path)
+         require(Path(path).stat().st_size == row['bytes'] and digest(path) == row['sha256'], 'Frozen loaded artifact differs')
++    prerequisite_values = {}
++    for key, row in release['evidenceReferences'].items():
++        path = Path(row['path']); base.no_links(path)
++        require(path.is_file() and path.stat().st_size == row['bytes'] and digest(path) == row['sha256'], 'Actual root-frozen prerequisite proof differs')
++        prerequisite_values[key] = json_bounded(base, path)
++    validate_prerequisite_proofs(prerequisite_values, release)
+     idle = strict_idle(base)
+-    prior_arm = verify_prior_arm_gate(base, release) if ARM > 1 else {'notApplicableFirstArm': True}
+     minimum = allocation_limit(release) + GIB + MAX_ARCHIVE
+     require(shutil.disk_usage(ROOT).free >= minimum, 'Initial free space below exact finite single-arm+archive+1GiB floor bound')
+     require(base.memory_headroom() >= 8 * GIB, 'Initial memory headroom below 8GiB')
+     return {'passed': True, 'atUtc': base.now(), 'idle': idle, 'protectedOriginal': protected_state(base, release),
+-            'arm': ARM, 'priorArm': prior_arm, 'minimumInitialFreeBytes': minimum, 'maximumAllocatedGrowthBytes': allocation_limit(release),
++            'arm': ARM, 'singleManualArmOnly': True, 'minimumInitialFreeBytes': minimum, 'maximumAllocatedGrowthBytes': allocation_limit(release),
+             'controllerSha256': digest(__file__), 'baseSha256': BASE_SHA, 'noJavaStarted': True}
+ 
+ 
+@@ -730,9 +818,22 @@
+     return new
+ 
+ 
++def validate_long_summary(summary, cap):
++    require(summary['scheduledArrivals'] == 33792 and summary['releasedArrivals'] == 33792
++            and summary['ratePerSecond'] == 500 and summary['batchCap'] == 4 and summary['archiveChunkBytes'] == 6144 and summary['readWindow'] == cap
++            and summary['arrivalClockPausedForMaintenance'] is False
++            and summary['unknownFinal'] == 0 and summary['unknownObserved'] == 0 and summary['maintenanceCycles'] == 12
++            and summary['schedulerTimingValid'] is True and summary['schedulerLatenessOver20ms'] == 0
++            and summary['confirmedAcceptedUniqueOrders'] == 33792 and summary['notSent'] == 0
++            and summary['serverRejected'] == 0 and summary['duplicateOrOutOfRangeAcceptedOrderIds'] == 0
++            and summary['completedLogicalReplies'] == 33792,
++            'Long source must close all original orders/12cycles with strict actual scheduler; diagnostic timing bypass forbidden')
++    return True
++
++
+ def validate_result(base, registry, release):
+     registry.discover()
+-    require(set(registry.registrations) == set(WINDOWS), 'Both actual arm registrations required')
++    require(set(registry.registrations) == {8}, 'One actual long-cut arm registration required')
+     require(len(registry.records) == 4 and {r['role'] for r in registry.records.values()} == {'pilot-parent'} |
+             {'window-%d-node-%d' % (c, n) for c in WINDOWS for n in range(3)}, 'Three node identities plus parent required')
+     result = json_bounded(base, PAIR / 'completion.json')
+@@ -760,14 +861,7 @@
+         idle_actual = validate_idle_artifacts(base, root, registry, selected_park_ns())
+         summary = functional['actualSourceSummary']
+         require(summary.get('retentionIdleSelection') == selection(), 'Summary idle selection missing/drifted')
+-        require(summary['scheduledArrivals'] == 6400 and summary['releasedArrivals'] == 6400
+-                and summary['ratePerSecond'] == 500 and summary['batchCap'] == 4 and summary['archiveChunkBytes'] == 6144 and summary['readWindow'] == cap
+-                and summary['arrivalClockPausedForMaintenance'] is False
+-                and summary['unknownFinal'] == 0 and summary['maintenanceCycles'] == 3
+-                and summary['confirmedAcceptedUniqueOrders'] == 6400 and summary['notSent'] == 0
+-                and summary['serverRejected'] == 0 and summary['duplicateOrOutOfRangeAcceptedOrderIds'] == 0
+-                and summary['completedLogicalReplies'] == 6400,
+-                'Functional source must close UNKNOWN and cross at least two maintenance cycles')
++        validate_long_summary(summary, cap)
+         require(summary['maintenanceRpcMetrics']['readWindow'] == cap
+                 and summary['physicalOfferTape']['readWindow'] == cap
+                 and summary['physicalOfferTape']['readBusinessControlPhaseExclusionEnforced'] is True
+@@ -934,16 +1028,14 @@
+ 
+ def main(argv=None):
+     parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False)
+-    parser.add_argument('--arm', type=int, choices=[1, 2, 3, 4], required=True)
+-    parser.add_argument('--prior-collection-sha256', help='Arms2..4: immediate preceding independent root collection gate SHA')
++    parser.add_argument('--arm', type=int, choices=[1], required=True)
+     parser.add_argument('--release', type=Path, default=PREP / 'release/release.json')
+     parser.add_argument('--release-sha256', help='Explicit SHA from root independent release freeze')
+     parser.add_argument('--start-new', action='store_true', help='One root-reviewed frozen attempt; default preflight only')
+     options = parser.parse_args(argv)
+     configure_arm(options.arm)
+-    global FROZEN_RELEASE_SHA, PRIOR_GATE_SHA
+-    FROZEN_RELEASE_SHA, PRIOR_GATE_SHA = options.release_sha256, options.prior_collection_sha256
+-    require(ARM > 1 or PRIOR_GATE_SHA is None, 'First arm must not use a prior collection gate')
++    global FROZEN_RELEASE_SHA
++    FROZEN_RELEASE_SHA = options.release_sha256
+     base = load_base()
+     release = runtime_manifest(base, options.release, options.release_sha256)
+     result = execute(base, release, options.release) if options.start_new else preflight(base, release)

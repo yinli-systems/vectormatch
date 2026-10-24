@@ -1,0 +1,122 @@
+{
+  "status": "READ_ONLY_REVIEW_CLOSED_FIXES_REQUIRED_BEFORE_READY_FREEZE",
+  "atUTC": "2026-10-24T08:51:41.959191+00:00",
+  "reviewedControllerSha256": "b3af11f354a3c591f62770ae1ba27c4f41a0f185392c6cc5f4cb9a3932a6c9ab",
+  "sourcePins": [
+    {
+      "path": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-cloud-preparation-r1/cpu_long_cuts.py",
+      "bytes": 65195,
+      "sha256": "b3af11f354a3c591f62770ae1ba27c4f41a0f185392c6cc5f4cb9a3932a6c9ab"
+    },
+    {
+      "path": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-cloud-preparation-r1/idle_attestation.py",
+      "bytes": 10136,
+      "sha256": "8598dc1bc5d1795c3e088425816d8ce75f08918c37969a46b715da166c7bec24"
+    },
+    {
+      "path": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-cloud-preparation-r1/shutdown_warning.py",
+      "bytes": 5317,
+      "sha256": "bb8725c5bc560cc9a72c80a5c5d445373edbd0da91f2cccf41eb3550569319a9"
+    },
+    {
+      "path": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-cloud-preparation-r1/owned_linux_base_8eeb.py",
+      "bytes": 24396,
+      "sha256": "8eeb10c14d6e5a9aa3895fbb674fc5c59ceac7fd3b15a6e3e11da325f444ab87"
+    },
+    {
+      "path": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-cloud-preparation-r1/release.template.json",
+      "bytes": 7649,
+      "sha256": "766dc9bbff8486a951cb442982025d8415cf4b9a1fbbc6e6512d75b30a585d92"
+    },
+    {
+      "path": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-cloud-preparation-r1/DRAFT_PENDING_INPUTS.json",
+      "bytes": 422,
+      "sha256": "f50ad5cc799c9b1bac1a7e9119de5c21620a3def745bbb7aca73d93795cd3097"
+    },
+    {
+      "path": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-cloud-preparation-r1/PLAN.md",
+      "bytes": 5003,
+      "sha256": "e20f41dc932226f272702991da8934ceb123827f317989541587678b5aebcec4"
+    },
+    {
+      "path": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-cloud-preparation-r1/test_long_delta.py",
+      "bytes": 13568,
+      "sha256": "dbdcbf4da5a1af4a0d6174d36606700cfbd4386b01b5762d8684d687c9d8234a"
+    },
+    {
+      "path": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-cloud-preparation-r1/test_long_metadata.py",
+      "bytes": 3610,
+      "sha256": "70ad2943c8b643ecf9cb3c3623dbb2f5742621d2633435c452d6085a50ba3e29"
+    },
+    {
+      "path": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-long-cuts-cloud-preparation-r1/controller-adaptation.diff",
+      "bytes": 26990,
+      "sha256": "7e764e6201e2b954d6b4810b8bc5b66d0b02e2800a3f024f36cb82a980d33b16"
+    }
+  ],
+  "unchangedBaselineFunctionsAndClasses": [
+    "Registry",
+    "Telemetry",
+    "allocated_scan",
+    "allocation_limit",
+    "clean_all",
+    "collect_stopped",
+    "digest",
+    "execute",
+    "global_metrics",
+    "hex_digest",
+    "json_bounded",
+    "kernel_record_from_json",
+    "load_base",
+    "log_policy",
+    "monitor",
+    "node_argv",
+    "owned_metrics",
+    "protected_state",
+    "require",
+    "runtime_manifest",
+    "selection",
+    "strict_idle",
+    "validate_egress",
+    "validate_egress_progress",
+    "verify_archive_members"
+  ],
+  "findings": [
+    {
+      "priority": "P1",
+      "path": "cpu_long_cuts.py",
+      "line": 548,
+      "issue": "Metadata receipt.observationSha256 is never cross-bound to the frozen observation file SHA; independent file references alone do not reject a wrong observation/receipt pairing",
+      "requestedGuard": "Reject mismatched receipt observation SHA against release.evidenceReferences.linuxMetadataObservation.sha256; runtime preflight already verifies that exact file bytes"
+    },
+    {
+      "priority": "P2",
+      "path": "cpu_long_cuts.py",
+      "line": 554,
+      "issue": "Metadata execution.ownedParentPid is not required equal actualProcessIdentity.pid",
+      "requestedGuard": "Require exact integer direct child PID equality before accepting observed identity"
+    },
+    {
+      "priority": "P1",
+      "path": "cpu_long_cuts.py",
+      "line": 604,
+      "issue": "longRawAudit, longRawParserFreeze and rootEvidenceReview are hashed/loaded but their semantic contents are unused",
+      "requestedGuard": "Use actual approved parser/audit/root-review schemas, reject failed/wrong workload/source/parser/closure evidence; preserve invalid local scheduler as functional-only, not a performance promotion"
+    }
+  ],
+  "noOtherConcreteBlockerFound": true,
+  "covered": [
+    "One explicit arm1; defaultreadonlypreflight; fixed namespace/preset/42000/100us/no previous-arm CLI",
+    "33792@500/67.584s,11fullcuts plus trailing3,12cycles, strictactualscheduler and originalunknown closure",
+    "Exact6033 fingerprint/profile/longPlan185514924raw/757122377growth and unchangedhard2GiB/2.5GiB caps",
+    "Initialreserve+1GiBfloor, runtimeallocationmonitor, boundedtelemetry/archive/logs and stoppedfullreadback",
+    "Unchanged ownedPID/start/fullargv/pidfdnoescalationcleanup; exact6769protected57native+PG989",
+    "ActualLinuxcanonicalJDK/6inputs/helperclass/5classsourcebindings and longPlan semantics"
+  ],
+  "phaseAuditBoundary": "24read phases/exact correlation/cycle proof is supplied by separately owned authoritative long raw audit, not independently rebuilt by the controller summary gate",
+  "actualDraftOrTestsExecuted": false,
+  "JavaSshGitOrSignalsExecuted": false,
+  "sourceOrEvidenceEdited": false,
+  "parentAndAuthorNotified": true,
+  "authorCorrectedSourceNeedsNewReadBinding": true
+}
