@@ -8,6 +8,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.net.URI;
 import java.net.http.*;
 import java.nio.file.Path;
+import java.nio.file.Files;
 import java.time.Duration;
 import java.util.concurrent.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -16,6 +17,30 @@ class WorkbenchServerTest {
     @TempDir Path directory;
     private final ObjectMapper mapper = new ObjectMapper();
     private final HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
+
+    @Test void passiveServerDoesNotWriteBusinessDuringDelayedBindAndServesWithFlowAlreadyDisabled() throws Exception {
+        String oldBootstrap = System.getProperty("vm.bootstrap.enabled");
+        String oldFlow = System.getProperty("vm.flow.enabled");
+        System.setProperty("vm.bootstrap.enabled", "false");
+        System.setProperty("vm.flow.enabled", "false");
+        Path journal = directory.resolve("passive.vmj");
+        try (WorkbenchServer server = new WorkbenchServer(journal, directory)) {
+            assertEquals(8, Files.size(journal), "only the journal header may exist before bind");
+            Thread.sleep(350); // Allow several scheduled ticks while no HTTP socket/control route exists.
+            assertEquals(8, Files.size(journal), "neither seed nor clock flow may append before bind");
+            int port = server.start(0);
+            JsonNode state = get(port, "/api/state");
+            assertFalse(state.at("/health/flowEnabled").asBoolean(true));
+            assertEquals(0, state.at("/metrics/commandsTotal").asLong(-1));
+            assertEquals(0, state.at("/health/mirrorCommandSeq").asLong(-1));
+            assertEquals(8, Files.size(journal));
+        } finally {
+            if (oldBootstrap == null) System.clearProperty("vm.bootstrap.enabled");
+            else System.setProperty("vm.bootstrap.enabled", oldBootstrap);
+            if (oldFlow == null) System.clearProperty("vm.flow.enabled");
+            else System.setProperty("vm.flow.enabled", oldFlow);
+        }
+    }
 
     @Test void realApiRetriesCancelsAndRecoversFromTheJournal() throws Exception {
         Path journal = directory.resolve("workbench.vmj");

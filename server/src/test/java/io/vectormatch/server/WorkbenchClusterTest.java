@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -22,6 +23,32 @@ import static org.junit.jupiter.api.Assertions.*;
 class WorkbenchClusterTest {
     private final ObjectMapper json = new ObjectMapper();
     @TempDir Path directory;
+
+    @Test void passiveStartupSendsNoBusinessBeforeHttpBindEvenWhileScheduledTicksRun() throws Exception {
+        String oldBootstrap = System.getProperty("vm.bootstrap.enabled");
+        String oldFlow = System.getProperty("vm.flow.enabled");
+        System.setProperty("vm.bootstrap.enabled", "false");
+        System.setProperty("vm.flow.enabled", "false");
+        Backend backend = new Backend();
+        // Retain a nonempty authoritative state; the gateway may only read and mirror it.
+        backend.external(new Deposit(1, "existing", 1, Asset.QUOTE, 1000));
+        byte[] before = backend.readSnapshot(Duration.ofSeconds(1));
+        try (Workbench workbench = new Workbench(directory.resolve("unused-passive.vmj"), json, backend)) {
+            // WorkbenchServer calls this constructor before it binds its HTTP socket.
+            // No HTTP control request is issued; both constructor seeding and clock flow must be absent.
+            assertEquals(0, backend.writeCalls, "constructor must not send bootstrap commands");
+            assertTrue(backend.idleTicks.await(3, TimeUnit.SECONDS), "actual scheduled idle ticks must execute");
+            assertEquals(0, backend.writeCalls, "flow must already be disabled before HTTP can bind");
+            assertArrayEquals(before, backend.readSnapshot(Duration.ofSeconds(1)));
+            assertEquals(false, ((Map<?, ?>) workbench.state().get("health")).get("flowEnabled"));
+            assertEquals("SYNCHRONIZED", ((Map<?, ?>) workbench.state().get("health")).get("mirrorStatus"));
+        } finally {
+            if (oldBootstrap == null) System.clearProperty("vm.bootstrap.enabled");
+            else System.setProperty("vm.bootstrap.enabled", oldBootstrap);
+            if (oldFlow == null) System.clearProperty("vm.flow.enabled");
+            else System.setProperty("vm.flow.enabled", oldFlow);
+        }
+    }
 
     @Test void authorityReplaySuppressesEventsEvenWhenTheStaleMirrorAppliesTheCommandForTheFirstTime() {
         MatchingEngine authority = new MatchingEngine();
@@ -103,6 +130,7 @@ class WorkbenchClusterTest {
         private final MatchingEngine core = new MatchingEngine();
         volatile boolean failNext, fullNext;
         volatile int snapshotReads, writeCalls;
+        final CountDownLatch idleTicks = new CountDownLatch(3);
         @Override public synchronized CommandCodec.Reply execute(Command command, Duration timeout) {
             writeCalls++;
             if (failNext) { failNext = false; core.execute(command); throw new IllegalStateException("transport failed after commit"); }
@@ -115,7 +143,7 @@ class WorkbenchClusterTest {
             return new CommandCodec.Reply(1, null, false, core.lastCommandSeq(), core.lastEventSeq(), core.lastMarketSeq(), "", "");
         }
         @Override public synchronized byte[] readSnapshot(Duration timeout) { snapshotReads++; return core.snapshot(); }
-        @Override public int pollKeepAlive() { return 0; }
+        @Override public int pollKeepAlive() { idleTicks.countDown(); return 0; }
         @Override public void close() {}
     }
     private static void await(BooleanSupplier condition) throws InterruptedException {
