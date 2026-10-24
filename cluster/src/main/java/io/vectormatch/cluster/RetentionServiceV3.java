@@ -242,6 +242,7 @@ public final class RetentionServiceV3 {
         throw new IllegalArgumentException("not a maintenance operation");
     }
 
+    public void validateBatchReplyTextCompatibility() { requireWriter(); core.validateBatchReplyTextCompatibility(); }
     public Scope scope() { return scope; }
     public Profile profile() { return profile; }
     public String lineageId() { return lineageId; }

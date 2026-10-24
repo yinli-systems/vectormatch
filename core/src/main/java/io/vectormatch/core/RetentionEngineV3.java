@@ -215,6 +215,19 @@ public final class RetentionEngineV3 {
         return new Admission(this, command, predictedEvents, reserve);
     }
 
+    /**
+     * One-time opt-in endpoint compatibility check, not a snapshot-format or legacy restore rule.
+     * Fresh engine reasons are fixed ASCII; historical V3 snapshots permitted arbitrary bounded UTF-16.
+     * A batch endpoint must reject an unencodable retained reason before its first mutation.
+     */
+    public void validateBatchReplyTextCompatibility() {
+        for (Result result : engine.retentionCachedResults()) {
+            if (result.reason() == null || result.reason().length() > MAX_TEXT_CHARS
+                    || !java.nio.charset.StandardCharsets.UTF_8.newEncoder().canEncode(result.reason()))
+                throw new IllegalArgumentException("retained V3 result reason is not compatible with strict UTF-8 batch replies");
+        }
+    }
+
     public Execution execute(Command command) { return apply(previewAdmission(command)); }
 
     /** Apply only on the same writer with no intervening core mutation. */

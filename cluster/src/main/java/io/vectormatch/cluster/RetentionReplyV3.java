@@ -24,7 +24,102 @@ public final class RetentionReplyV3 {
                 throw new IllegalArgumentException("invalid V3 reply counters");
         }
     }
-    public sealed interface Payload permits State, Events, Descriptor, Chunk {}
+    public static final int MAX_RESULT_REASON_CHARS = 256;
+    public static final int MAX_RESULT_REASON_UTF8_BYTES = 1024;
+    public sealed interface Payload permits State, Events, Descriptor, Chunk, Batch {}
+    /** APPLIED means handed to core, including a business rejection or an idempotent replay. */
+    public enum BatchStatus { APPLIED, ADMISSION_REJECTED, NOT_ATTEMPTED }
+    public record Frontier(long applicationMutation, long businessSeq, long eventSeq, long marketSeq) {
+        public Frontier {
+            if (applicationMutation < businessSeq || businessSeq < 0 || eventSeq < 0 || marketSeq < 0 || marketSeq > eventSeq)
+                throw new IllegalArgumentException("invalid V3 batch frontier");
+        }
+    }
+    public record BatchEntry(int index, BusinessIdentity identity, String commandSha256, Result result,
+                             boolean replayed, BatchStatus status, Frontier frontier) {
+        public BatchEntry {
+            if (index < 0 || index >= MAX_BUSINESS_BATCH || identity == null || commandSha256 == null
+                    || !commandSha256.matches("[0-9a-f]{64}") || status == null || frontier == null)
+                throw new IllegalArgumentException("invalid V3 batch reply entry");
+            if (status == BatchStatus.APPLIED) {
+                if (result == null) throw new IllegalArgumentException("applied V3 batch entry requires a core result");
+                validateBatchResult(result);
+                if (result.commandSeq() > frontier.businessSeq())
+                    throw new IllegalArgumentException("V3 batch result exceeds its business frontier");
+            } else if (result != null || replayed)
+                throw new IllegalArgumentException("unapplied V3 batch entry cannot carry a result or replay");
+        }
+    }
+    public record Batch(List<BatchEntry> entries) implements Payload {
+        public Batch {
+            if (entries == null || entries.isEmpty() || entries.size() > MAX_BUSINESS_BATCH)
+                throw new IllegalArgumentException("V3 batch reply count must be 1..4");
+            entries = new ArrayList<>(entries);
+            var producers = new HashSet<BatchProducer>();
+            boolean stopped = false;
+            Frontier previous = null;
+            for (int index = 0; index < entries.size(); index++) {
+                BatchEntry entry = entries.get(index);
+                if (entry == null || entry.index() != index
+                        || !producers.add(new BatchProducer(entry.identity().accountId(), entry.identity().producerId())))
+                    throw new IllegalArgumentException("invalid index or duplicate producer in V3 batch reply");
+                if (entry.status() == BatchStatus.NOT_ATTEMPTED && !stopped
+                        || entry.status() != BatchStatus.NOT_ATTEMPTED && stopped)
+                    throw new IllegalArgumentException("V3 batch reply must be an applied prefix, optional rejection, then unattempted suffix");
+                if (entry.status() == BatchStatus.ADMISSION_REJECTED) stopped = true;
+                Frontier current = entry.frontier();
+                if (previous != null) {
+                    if (entry.status() == BatchStatus.APPLIED) {
+                        if (previous.applicationMutation() == Long.MAX_VALUE
+                                || current.applicationMutation() != previous.applicationMutation() + 1
+                                || current.businessSeq() < previous.businessSeq() || current.eventSeq() < previous.eventSeq()
+                                || current.marketSeq() < previous.marketSeq())
+                            throw new IllegalArgumentException("V3 batch applied frontier is not monotonic");
+                    } else if (!current.equals(previous))
+                        throw new IllegalArgumentException("unapplied V3 batch frontier changed");
+                }
+                previous = current;
+            }
+            entries = List.copyOf(entries);
+        }
+    }
+    private record BatchProducer(long accountId, String producerId) {}
+
+    /**
+     * Exact attainable maximum for this batch layout, including the entire outer envelope.
+     * A valid UTF-8 string of <=256 UTF-16 units uses at most 3*256 bytes (astral characters
+     * use two units for four bytes), below the separate 1024-byte reason guard.
+     */
+    public static int maxEncodedBatchReplyBytes(int count) {
+        if (count < 1 || count > MAX_BUSINESS_BATCH) throw new IllegalArgumentException("invalid V3 batch count");
+        int reasonBytes = Math.min(MAX_RESULT_REASON_UTF8_BYTES, 3 * MAX_RESULT_REASON_CHARS);
+        int outer = 4 + 2 + (4 + 64) + (4 + 64) + 8 + 7 * 8 + (4 + 64) + (4 + 128)
+                + 1 + 4; // magic/version, scope, correlation, counters/hash, error, tag/count
+        int result = 1 + (4 + reasonBytes) + 3 * 8 + 4; // code, reason, result longs, trades
+        int entry = 4 + 8 + (4 + 48) + 8 + (4 + 64) + 1 + 1 + result + 1 + 4 * 8;
+        return outer + count * entry; // index, identity, command hash, status/present/result/replay, frontier
+    }
+    /** Size/admission proof only; does not inspect an engine's retained results or mutate it. */
+    public static void validateBatchReplyBudget(Request request) {
+        if (request == null || !(request.operation() instanceof BusinessBatch batch))
+            throw new IllegalArgumentException("V3 batch reply budget requires a batch request");
+        RetentionWireV3.encode(request); // also proves complete canonical request before the first mutation
+        if (maxEncodedBatchReplyBytes(batch.commands().size()) > MAX_REPLY_BYTES)
+            throw new IllegalArgumentException("V3 batch reply budget exceeds complete envelope cap");
+    }
+    private static void validateBatchResult(Result result) {
+        if (result.code() == null || result.reason() == null || result.reason().length() > MAX_RESULT_REASON_CHARS
+                || result.commandSeq() < 0 || result.orderId() < 0 || result.remainingQuantity() < 0 || result.tradeCount() < 0)
+            throw new IllegalArgumentException("invalid bounded V3 batch result");
+        try {
+            var utf8 = StandardCharsets.UTF_8.newEncoder().onMalformedInput(CodingErrorAction.REPORT)
+                    .onUnmappableCharacter(CodingErrorAction.REPORT).encode(java.nio.CharBuffer.wrap(result.reason()));
+            if (utf8.remaining() > MAX_RESULT_REASON_UTF8_BYTES)
+                throw new IllegalArgumentException("oversized V3 batch result reason");
+        } catch (java.nio.charset.CharacterCodingException invalid) {
+            throw new IllegalArgumentException("invalid V3 batch result UTF-8", invalid);
+        }
+    }
     public record State(Result result, boolean replayed, RetentionServiceV3.MaintenanceResult maintenance) implements Payload {
         public State {
             if (result != null && maintenance != null) throw new IllegalArgumentException("mixed V3 result types");
@@ -80,6 +175,12 @@ public final class RetentionReplyV3 {
             } else if (payload instanceof Events events && (events.batch.lastEventSeq() != counters.eventSeq
                     || events.batch.exportedSeq() != counters.exportedEventSeq))
                 throw new IllegalArgumentException("event response counters disagree");
+            else if (payload instanceof Batch batch) {
+                Frontier last = batch.entries().getLast().frontier();
+                if (last.applicationMutation() != counters.applicationMutation() || last.businessSeq() != counters.businessSeq()
+                        || last.eventSeq() != counters.eventSeq() || last.marketSeq() != counters.marketSeq())
+                    throw new IllegalArgumentException("V3 batch final frontier disagrees with reply counters");
+            }
         }
     }
     private RetentionReplyV3() {}
@@ -104,6 +205,20 @@ public final class RetentionReplyV3 {
                 out.writeInt(batch.events().size()); for (Event e : batch.events()) CommandCodec.writeEvent(out, e);
             } else if (reply.payload instanceof Descriptor descriptor) {
                 out.writeByte(3); RetentionWireV3.writeAck(out, descriptor.acknowledgement); out.writeInt(descriptor.totalBytes);
+            } else if (reply.payload instanceof Batch batch) {
+                out.writeByte(5); out.writeInt(batch.entries().size());
+                for (BatchEntry entry : batch.entries()) {
+                    out.writeInt(entry.index()); out.writeLong(entry.identity().accountId());
+                    text(out, entry.identity().producerId(), 48); out.writeLong(entry.identity().requestSeq());
+                    text(out, entry.commandSha256(), 64); out.writeByte(entry.status().ordinal());
+                    out.writeBoolean(entry.result() != null);
+                    if (entry.result() != null) {
+                        Result r = entry.result(); out.writeByte(r.code().ordinal()); text(out, r.reason(), MAX_RESULT_REASON_UTF8_BYTES);
+                        out.writeLong(r.commandSeq()); out.writeLong(r.orderId()); out.writeLong(r.remainingQuantity()); out.writeInt(r.tradeCount());
+                    }
+                    out.writeBoolean(entry.replayed()); Frontier f = entry.frontier();
+                    out.writeLong(f.applicationMutation()); out.writeLong(f.businessSeq()); out.writeLong(f.eventSeq()); out.writeLong(f.marketSeq());
+                }
             } else {
                 Chunk chunk = (Chunk) reply.payload; out.writeByte(4); RetentionWireV3.writeAck(out, chunk.acknowledgement);
                 out.writeInt(chunk.totalBytes); out.writeInt(chunk.offset); out.writeInt(chunk.data.length); out.write(chunk.data);
@@ -137,6 +252,28 @@ public final class RetentionReplyV3 {
                 case 4 -> { var ack = RetentionWireV3.readAck(in); int total = in.readInt(), offset = in.readInt(), count = in.readInt();
                     if (count < 1 || count > MAX_ARCHIVE_CHUNK || count > in.available()) throw new IOException("bad archive chunk count");
                     payload = new Chunk(ack, total, offset, in.readNBytes(count)); }
+                case 5 -> {
+                    int count = in.readInt();
+                    if (count < 1 || count > MAX_BUSINESS_BATCH) throw new IOException("bad V3 batch reply count");
+                    List<BatchEntry> entries = new ArrayList<>(count);
+                    for (int i = 0; i < count; i++) {
+                        int index = in.readInt();
+                        BusinessIdentity identity = new BusinessIdentity(in.readLong(), text(in, 48), in.readLong());
+                        String hash = text(in, 64); int status = in.readUnsignedByte();
+                        if (status >= BatchStatus.values().length) throw new IOException("bad V3 batch status");
+                        Result result = null;
+                        if (flag(in)) {
+                            int code = in.readUnsignedByte();
+                            if (code >= ResultCode.values().length) throw new IOException("bad batch result enum");
+                            result = new Result(ResultCode.values()[code], text(in, MAX_RESULT_REASON_UTF8_BYTES),
+                                    in.readLong(), in.readLong(), in.readLong(), in.readInt());
+                        }
+                        boolean replayed = flag(in);
+                        Frontier frontier = new Frontier(in.readLong(), in.readLong(), in.readLong(), in.readLong());
+                        entries.add(new BatchEntry(index, identity, hash, result, replayed, BatchStatus.values()[status], frontier));
+                    }
+                    payload = new Batch(entries);
+                }
                 default -> throw new IOException("bad V3 reply tag");
             }
             Reply reply = new Reply(scope, correlation, c, payload, error);

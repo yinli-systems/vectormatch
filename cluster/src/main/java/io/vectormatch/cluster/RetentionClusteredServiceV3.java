@@ -18,11 +18,12 @@ public final class RetentionClusteredServiceV3 implements ClusteredService {
     private final String lineage;
     private RetentionServiceV3 state;
     private Cluster cluster;
+    private boolean batchReplyTextChecked;
     public RetentionClusteredServiceV3(RetentionServiceV3.Profile profile, String lineage) {
         this.profile = Objects.requireNonNull(profile); this.lineage = new Scope(profile.fingerprint(), lineage).lineageId();
     }
     @Override public void onStart(Cluster cluster, Image snapshotImage) {
-        this.cluster = cluster;
+        this.cluster = cluster; batchReplyTextChecked = false;
         state = snapshotImage == null ? new RetentionServiceV3(profile, lineage)
                 : RetentionServiceV3.restore(RetentionSnapshotTransportV3.read(snapshotImage, cluster.idleStrategy(), profile.maxCombinedSnapshotBytes()), profile, lineage);
         System.out.printf("VECTOR_V3_SERVICE_READY profile=%s lineage=%s restored=%s hash=%s%n",
@@ -40,7 +41,19 @@ public final class RetentionClusteredServiceV3 implements ClusteredService {
         if (!state.scope().equals(request.scope())) return error(request.correlationId(), "SCOPE_MISMATCH");
         try {
             Payload payload;
-            if (request.operation() instanceof FetchEvents fetch) {
+            if (request.operation() instanceof BusinessBatch batch) {
+                // Complete envelope, identity and worst-case reply space are checked before item zero.
+                RetentionWireV3.encode(request);
+                RetentionReplyV3.validateBatchReplyBudget(request);
+                if (!batchReplyTextChecked) { state.validateBatchReplyTextCompatibility(); batchReplyTextChecked = true; }
+                try {
+                    payload = executeBatch(request, batch);
+                    return RetentionReplyV3.encode(new Reply(state.scope(), request.correlationId(), counters(false), payload, ""));
+                } catch (IllegalArgumentException invariant) {
+                    // An unexpected post-admission codec/value failure must not masquerade as rollback.
+                    return error(request.correlationId(), "BATCH_RESULT_UNKNOWN");
+                }
+            } else if (request.operation() instanceof FetchEvents fetch) {
                 // A malformed historical event cannot turn into an unbounded response.
                 payload = new Events(state.fetchEvents(fetch.fromEventSeq(), fetch.count()));
             } else if (request.operation() instanceof PrepareArchive prepare) {
@@ -67,6 +80,30 @@ public final class RetentionClusteredServiceV3 implements ClusteredService {
         } catch (IllegalArgumentException invalid) {
             return error(request.correlationId(), "INVALID_REQUEST_OR_RESPONSE_BOUND");
         }
+    }
+    private Batch executeBatch(Request request, BusinessBatch batch) {
+        List<BatchEntry> entries = new ArrayList<>(batch.commands().size());
+        boolean blocked = false;
+        for (int index = 0; index < batch.commands().size(); index++) {
+            var command = batch.commands().get(index);
+            io.vectormatch.core.MatchingEngine.Result result = null;
+            boolean replayed = false;
+            BatchStatus status;
+            if (blocked) status = BatchStatus.NOT_ATTEMPTED;
+            else {
+                try {
+                    // A reservation belongs to this exact frontier: never pre-preview the entire batch.
+                    var reply = state.handle(new Request(request.scope(), request.correlationId(), new Business(command)));
+                    result = reply.execution().result(); replayed = reply.execution().replayed();
+                    status = BatchStatus.APPLIED; // A normal business rejection is still a complete result.
+                } catch (RetentionServiceV3.AdmissionRejectedException | io.vectormatch.core.RetentionEngineV3.HistoryBackpressureException full) {
+                    status = BatchStatus.ADMISSION_REJECTED; blocked = true;
+                }
+            }
+            entries.add(new BatchEntry(index, businessIdentity(command), businessCanonicalSha256(command),
+                    result, replayed, status, new Frontier(state.applicationMutation(), state.businessSeq(), state.eventSeq(), state.marketSeq())));
+        }
+        return new Batch(entries);
     }
     private Counters counters(boolean withHash) {
         return new Counters(state.applicationMutation(), state.businessSeq(), state.eventSeq(), state.marketSeq(),

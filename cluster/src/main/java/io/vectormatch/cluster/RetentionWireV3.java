@@ -13,6 +13,12 @@ import java.nio.CharBuffer;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.HexFormat;
+import java.util.List;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.regex.Pattern;
 
 /** Explicit V3 requests. Legacy services and the legacy wire envelope remain separate. */
@@ -21,7 +27,8 @@ public final class RetentionWireV3 {
     private static final int VERSION = 3;
     public static final int MAX_REQUEST_BYTES = 4096;
     private static final int BUSINESS = 1, ARCHIVE_COMMIT = 2, EVENT_ACK = 3, POSITION = 4,
-            FETCH_EVENTS = 5, PREPARE_ARCHIVE = 6, ARCHIVE_CHUNK = 7;
+            FETCH_EVENTS = 5, PREPARE_ARCHIVE = 6, ARCHIVE_CHUNK = 7, BUSINESS_BATCH = 8;
+    public static final int MAX_BUSINESS_BATCH = 4;
     public static final int MAX_ARCHIVE_CHUNK = 3072;
     private static final Pattern HASH = Pattern.compile("[0-9a-f]{64}");
     private static final Pattern LINEAGE = Pattern.compile("[A-Za-z0-9_.-]{1,64}");
@@ -44,10 +51,64 @@ public final class RetentionWireV3 {
         }
     }
 
-    public sealed interface Operation permits Business, ArchiveCommit, EventAck, Position, FetchEvents, PrepareArchive, ArchiveChunk {}
+    public sealed interface Operation permits Business, BusinessBatch, ArchiveCommit, EventAck, Position, FetchEvents, PrepareArchive, ArchiveChunk {}
 
     public record Business(Command command) implements Operation {
         public Business { requireNonNull(command, "business command"); }
+    }
+
+    /** Complete logical identity; transport correlation is deliberately excluded. */
+    public record BusinessIdentity(long accountId, String producerId, long requestSeq) {
+        public BusinessIdentity {
+            if (accountId <= 0 || producerId == null || !PRODUCER.matcher(producerId).matches() || requestSeq <= 0)
+                throw new IllegalArgumentException("invalid V3 batch business identity");
+        }
+    }
+
+    /** One command per account/producer keeps each producer's unresolved result window bounded. */
+    public record BusinessBatch(List<Command> commands) implements Operation {
+        public BusinessBatch {
+            if (commands == null || commands.isEmpty() || commands.size() > MAX_BUSINESS_BATCH)
+                throw new IllegalArgumentException("V3 business batch count must be 1..4");
+            commands = new ArrayList<>(commands);
+            var producers = new HashSet<BatchProducer>();
+            long operationBytes = 1L + Integer.BYTES;
+            for (Command command : commands) {
+                BusinessIdentity id = businessIdentity(command);
+                if (!producers.add(new BatchProducer(id.accountId(), id.producerId())))
+                    throw new IllegalArgumentException("duplicate account/producer in V3 business batch");
+                operationBytes += Integer.BYTES + canonicalBusinessBytes(command).length;
+            }
+            // Largest complete outer request: magic/version + two bounded scope strings + correlation.
+            if (6L + 2L * (4 + 64) + 8 + operationBytes > MAX_REQUEST_BYTES)
+                throw new IllegalArgumentException("V3 complete business batch request too large");
+            commands = List.copyOf(commands);
+        }
+    }
+    private record BatchProducer(long accountId, String producerId) {}
+
+    public static BusinessIdentity businessIdentity(Command command) {
+        requireNonNull(command, "batch command");
+        return new BusinessIdentity(command.accountId(), command.producerId(), command.requestSeq());
+    }
+
+    /** SHA-256 of the complete canonical legacy business envelope with correlation fixed to zero. */
+    public static String businessCanonicalSha256(Command command) {
+        businessIdentity(command);
+        try {
+            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(canonicalBusinessBytes(command)));
+        } catch (NoSuchAlgorithmException impossible) { throw new IllegalStateException(impossible); }
+    }
+
+    private static byte[] canonicalBusinessBytes(Command command) {
+        try {
+            requireUtf8(command.producerId());
+            if (command instanceof Place place) requireUtf8(place.clientOrderId());
+            byte[] nested = CommandCodec.request(0, command);
+            if (nested.length > CommandCodec.MAX_COMMAND_BYTES)
+                throw new IOException("nested V3 business request too large");
+            return nested;
+        } catch (IOException invalid) { throw new IllegalArgumentException("invalid canonical V3 business command", invalid); }
     }
 
     public record ArchiveCommit(MaintenanceIdentity identity, ArchiveAck acknowledgement) implements Operation {
@@ -136,6 +197,14 @@ public final class RetentionWireV3 {
             if (nested.length > CommandCodec.MAX_COMMAND_BYTES)
                 throw new IOException("nested V3 business request too large");
             out.writeInt(nested.length); out.write(nested);
+        } else if (operation instanceof BusinessBatch batch) {
+            // Revalidate even when called through the cache/snapshot operation encoder.
+            batch = new BusinessBatch(batch.commands());
+            out.writeByte(BUSINESS_BATCH); out.writeInt(batch.commands().size());
+            for (Command command : batch.commands()) {
+                byte[] nested = canonicalBusinessBytes(command);
+                out.writeInt(nested.length); out.write(nested);
+            }
         } else if (operation instanceof ArchiveCommit commit) {
             out.writeByte(ARCHIVE_COMMIT);
             writeIdentity(out, commit.identity());
@@ -175,6 +244,25 @@ public final class RetentionWireV3 {
                 if (!Arrays.equals(nested, CommandCodec.request(0, request.command())))
                     throw new IOException("noncanonical nested V3 business request");
                 yield new Business(request.command());
+            }
+            case BUSINESS_BATCH -> {
+                int count = in.readInt();
+                if (count < 1 || count > MAX_BUSINESS_BATCH) throw new IOException("invalid V3 business batch count");
+                List<Command> commands = new ArrayList<>(count);
+                for (int i = 0; i < count; i++) {
+                    int length = in.readInt();
+                    if (length <= 0 || length > CommandCodec.MAX_COMMAND_BYTES || length > in.available())
+                        throw new IOException("invalid nested V3 batch command length");
+                    byte[] nested = in.readNBytes(length);
+                    CommandCodec.Request request = CommandCodec.decodeRequest(nested);
+                    if (request.correlationId() != 0 || request.command() == null
+                            || (request.operation() != CommandCodec.DEPOSIT && request.operation() != CommandCodec.PLACE
+                            && request.operation() != CommandCodec.CANCEL)
+                            || !Arrays.equals(nested, canonicalBusinessBytes(request.command())))
+                        throw new IOException("noncanonical V3 batch business command");
+                    commands.add(request.command());
+                }
+                yield new BusinessBatch(commands);
             }
             case ARCHIVE_COMMIT -> {
                 MaintenanceIdentity identity = readIdentity(in);
