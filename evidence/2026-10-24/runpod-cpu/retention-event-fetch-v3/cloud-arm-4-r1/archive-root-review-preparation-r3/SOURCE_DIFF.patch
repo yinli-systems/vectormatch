@@ -1,0 +1,26 @@
+--- baseline/verify-r2.py
++++ verify.py
+@@ -50,6 +50,14 @@
+     assert after['sourceTrees'][name] == row['inventory']
+     assert inventory(source) == expected, ('source changed', name)
+     assert inventory(archive / name) == expected, ('incomplete mirror', name)
++single_files = {}
++if (archive / 'SOURCE_SINGLE_FILES_BEFORE_COPY.json').exists():
++    single_files = read(archive / 'SOURCE_SINGLE_FILES_BEFORE_COPY.json')
++    assert single_files == after['sourceFiles']
++    for name, row in single_files.items():
++        assert not Path(name).is_absolute() and '..' not in Path(name).parts
++        assert inventory(Path(row['source']))['files']['.'] == row['pin']
++        assert inventory(archive / name)['files']['.'] == row['pin']
+ collection = BASE / ('cpu-event-fetch-arm-%d-collection-r1' % a.arm)
+ assert inventory(collection) == inventory(archive / 'actual-collection')
+ review = read(archive / 'root-review/ROOT_REVIEW.json')
+@@ -76,7 +84,7 @@
+               scope='Independent local full archive/source-mirror SHA bytes modes UID GID empty-directory verification; no business audit rerun',
+               inventorySha256=sha(archive / 'INVENTORY.json'), closedSha256=sha(archive / 'CLOSED.json'),
+               payloadFiles=len(actual['files']), directories=len(actual['directories']),
+-              payloadBytes=c['payloadBytes'], explicitFullSourceScopes=len(before),
++              payloadBytes=c['payloadBytes'], explicitFullSourceScopes=len(before), explicitSingleFileSources=len(single_files),
+               exactCompleteCollectionMirror=True, allSourceInventoriesUnchanged=True,
+               allRootReviewInputBodiesBoundAndUnchanged=True,
+               localFullMemberShaBytesModesOwnersEmptyDirsVerified=True,

@@ -1,0 +1,96 @@
+{
+  "allFailuresRetained": true,
+  "arm": 4,
+  "cpuCapacityClaimed": false,
+  "eventFetchCount": 32,
+  "nextArmAuthorized": false,
+  "ownerPollMaximumParkNs": 1000000,
+  "passed": true,
+  "rootGateCreated": false,
+  "serverDriverMaximumParkNs": 100000,
+  "steps": [
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-event-fetch-collection-preparation-r1/collect_closed_round.py",
+        "--config",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/event-cloud-arm-4-config-r1/collector-config.json",
+        "--dest",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-event-fetch-arm-4-collection-r1/collection",
+        "--remote-helper",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/remote.py",
+        "--collect-readonly"
+      ],
+      "exitCode": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "3ce257307592c446f58969149e5728704f257d5669facfae5628bde8b6a0b4c5"
+    },
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-event-fetch-collection-preparation-r1/verify_closed_archives.py",
+        "--collection",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-event-fetch-arm-4-collection-r1/collection",
+        "--output",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-event-fetch-arm-4-collection-r1/all-outcome-bytes"
+      ],
+      "exitCode": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "891fba22198ed70e0c4b91299130c37815e6beebb234e704537b8ad1f29f5295"
+    },
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-event-fetch-collection-preparation-r1/audit_native_artifacts.py",
+        "--config",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/event-cloud-arm-4-config-r1/collector-config.json",
+        "--collection",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-event-fetch-arm-4-collection-r1/collection",
+        "--out",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-event-fetch-arm-4-collection-r1/native"
+      ],
+      "exitCode": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "2ca919277dbb548f64cf049252d4d64cb0fdee5e571e594d8f672b69635e17c6"
+    },
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-event-fetch-collection-preparation-r1/audit_raw.py",
+        "--config",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/event-cloud-arm-4-config-r1/collector-config.json",
+        "--collection",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-event-fetch-arm-4-collection-r1/collection",
+        "--out",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-event-fetch-arm-4-collection-r1/raw"
+      ],
+      "exitCode": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "59fc32eec6e77d7a9fdeab8384e1c3d6bbebe7ccafd004032b2ffd71e2fb34bc"
+    },
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-event-fetch-collection-preparation-r1/finalize_local_collection.py",
+        "--config",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/event-cloud-arm-4-config-r1/collector-config.json",
+        "--collection",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-event-fetch-arm-4-collection-r1/collection",
+        "--native-audit",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-event-fetch-arm-4-collection-r1/native",
+        "--raw-audit",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-event-fetch-arm-4-collection-r1/raw",
+        "--out",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-event-fetch-arm-4-collection-r1/finalized"
+      ],
+      "exitCode": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "e2665c05bf16cee2c01515ff3438b189fef44c5230f0d6a6db2c6086efa048d2"
+    }
+  ]
+}
