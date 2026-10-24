@@ -55,6 +55,8 @@ Observed:
 - Post-fix: all **3/3 sequence-boundary tests** pass.
 - Independent event ledger: **2/2 tests** pass, including the deliberate tamper-negative case.
 - Full core suite after both test additions: **47/47**, no failures, errors or skipped tests.
+- Post-fix three-process same-host `./gradlew :cluster:failoverSmoke`: **VECTOR_FAILOVER_PASS / BUILD SUCCESSFUL in 15s**, sync level 2, leader 0→1, kill-to-next-confirmed command **11,198.727 ms**, chunked snapshot and outbox backpressure/recovery verified. This is **not** a multi-machine failover result.
+- Preserved verification bundle: `/workspace/vectormatch-read32-native-r1/core-ledger-overflow-failover-2026-10-24-r1.tar.zst` (154 KiB compressed; includes module JUnit XML, test source snapshots and three-process failover artifacts). SHA-256: `e482b7b005b58a714746dad317bf8839f69a7e738965f0db3cbe6edc028af799`; `zstd -t` **PASS**. This is archived on RunPod's network-backed volume for traceability, not physical-disk durability.
 - Full Java project suite with the core fix: **BUILD SUCCESSFUL in 3m13s**. The combined JUnit report after the extra core tests registered **358 cases**, with **0 failures, 0 errors and 11 skipped integration cases**; thus **347 executed/passed**. The remaining skips must not be reported as passes.
 
 The tests were run on a **single native Linux CPU container overlay**. They do not establish SSD power-loss durability, a multi-host failover guarantee, production trading compliance, or an independently deployed full matching oracle. The associated Pull Request remains a draft.
