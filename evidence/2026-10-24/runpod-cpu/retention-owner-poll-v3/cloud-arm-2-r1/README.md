@@ -1,0 +1,9 @@
+# Closed CPU owner-poll B1 evidence
+
+One fresh33792@500/s long lineage, source977197616ade0283174f2ea6ddfaa700547f6d15/code23586ccc5b9ad88aef2eba48a4eeceb15e64fdc62142bd2971c23e028724b884; owner requested maximum park100000ns and constantserver/driver100000ns/read8/chunk6144/Fetch16/businesscap4/leader0/sync2. Complete actualcollection: 246 files/202865216bytes, both originalTARs preserved. Root independently verified195outerfiles/24directories/1367722706logicalbytes and71rawinputs.
+
+Actual all-arrival scheduled-to-reply nearest-rankp99 529979126ns; acceptedwithin67.584s 33789; windowgoodput 499.9556107954545/s. Accepted 33792; notSent 0; unknownObserved 0; unknownFinal 0; serverRejected 0; schedulerlate-over20ms 0. Values come from this arm's exact strict raw result and independent root review, not A1constants. One finite arm is not an A/Bspeedup, stability/SLA/100M guarantee or combinedendurance.
+
+Current collection/config/launch/close/execution/rootreview/helper and every actual priorcollection-gate/private-push pair are copied byte-exact. Sharedcollector/controller/stage/preparation/historicalfailures are referenced by immutableA1inventory539e722c181f68ac94f40c2aa6ff446e1a5b669963c20e50d63fb2cde5df327f/closuref5500fd4b1ab1b09b4688ca893a0263e30ac5adfb348fdade75b78694492451e, with exact sharedfile rows; their bodies are not recopied. Original absolute paths are preserved; REGISTRATION/SOURCE_BEFORE_COPY map local archive subtrees. The current fullouterTAR also retains all explicit actualstaged39sources and priorreceipts.
+
+Copybefore/after fullSHA/bytes/modes/uid/gid/directory/emptydir closure and knownmarker review include allfullTARstreams and ZIP/JARentries. No sparseextraction, rawauditor/collector/business/JVM rerun, SSH/Git/PGwrite/signals/resources/deletion. No localnative archive rescanned. INVENTORY excludes onlyitself andCLOSED; CLOSED binds it. Allfourarm ABAB interpretation is separate from this currentarm archive.

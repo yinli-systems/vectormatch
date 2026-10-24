@@ -1,0 +1,95 @@
+{
+  "allFailuresRetained": true,
+  "arm": 2,
+  "cpuCapacityClaimed": false,
+  "nextArmAuthorized": false,
+  "ownerPollMaximumParkNs": 100000,
+  "passed": true,
+  "rootGateCreated": false,
+  "serverDriverMaximumParkNs": 100000,
+  "steps": [
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-owner-poll-collection-preparation-r2/collect_closed_round.py",
+        "--config",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/owner-cloud-arm-2-config-r1/collector-config.json",
+        "--dest",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-owner-poll-arm-2-collection-r1/collection",
+        "--remote-helper",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/remote.py",
+        "--collect-readonly"
+      ],
+      "exitCode": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "57c7ff22b9fc0f7226261879a92a8b8a7126ebb0f792c0e620127b1aa3401836"
+    },
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-owner-poll-collection-preparation-r2/verify_closed_archives.py",
+        "--collection",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-owner-poll-arm-2-collection-r1/collection",
+        "--output",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-owner-poll-arm-2-collection-r1/all-outcome-bytes"
+      ],
+      "exitCode": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "e04243a23743520fdebcb3f1c5503605a7f1cc45ae2c849d3b7ed891a102565a"
+    },
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-owner-poll-collection-preparation-r2/audit_native_artifacts.py",
+        "--config",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/owner-cloud-arm-2-config-r1/collector-config.json",
+        "--collection",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-owner-poll-arm-2-collection-r1/collection",
+        "--out",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-owner-poll-arm-2-collection-r1/native"
+      ],
+      "exitCode": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "4e7b9ecdd1375727b0dab0114828b903852e50c680766d9d58f999f27f92fc4a"
+    },
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-owner-poll-collection-preparation-r2/audit_raw.py",
+        "--config",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/owner-cloud-arm-2-config-r1/collector-config.json",
+        "--collection",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-owner-poll-arm-2-collection-r1/collection",
+        "--out",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-owner-poll-arm-2-collection-r1/raw"
+      ],
+      "exitCode": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "091dba4d09a5fe6e00a9524c85b8ab8b74ac9dacba9febd2fb9bf279b558a755"
+    },
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-owner-poll-collection-preparation-r2/finalize_local_collection.py",
+        "--config",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/owner-cloud-arm-2-config-r1/collector-config.json",
+        "--collection",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-owner-poll-arm-2-collection-r1/collection",
+        "--native-audit",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-owner-poll-arm-2-collection-r1/native",
+        "--raw-audit",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-owner-poll-arm-2-collection-r1/raw",
+        "--out",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/cpu-owner-poll-arm-2-collection-r1/finalized"
+      ],
+      "exitCode": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "6755b7bf3c18fb0a80d406963652b278005c759556b9da07d23b12e06f4fe28d"
+    }
+  ]
+}
