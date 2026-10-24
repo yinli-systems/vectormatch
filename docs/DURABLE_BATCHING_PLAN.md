@@ -1,6 +1,6 @@
 # 保留同步语义的批量业务候选：实施合同
 
-状态：只读设计审查完成，尚未实现或测得性能收益。独立源代码工作树 `runtime/cloud/cpu-20261024/retention-batch-v3-worktree`、分支 `codex/retention-batch-v3` 已从固定 `9fda247d392432761a670de7c4d8040c7caff283` 建立；仅检出源码，旧候选分支不变。
+状态：首阶段功能候选已冻结为 `973ff8f9bc4d9266c52d21866480dd45b31c39f9`，并 push 到 `codex/retention-batch-v3`。它基于 `9fda247d392432761a670de7c4d8040c7caff283`，尚未提升默认配置，也尚未测得性能收益。三节点均在本地同一机器，功能及原生归档证据归入 `evidence/2026-10-24/runpod-cpu/retention-batch-v3`；云端容量对照仍待新 owner 完成。
 
 动机来自[完整四轮Archive遥测](../evidence/2026-10-24/runpod-cpu/derived/archive-path-client-abab-all4/README.md)和[独立八点force(true)诊断](../evidence/2026-10-24/runpod-cpu/force-path-experiment/comparison-r2/README.md)。后者单写线程force中位数1.35–1.40ms，三写线程2.51–2.77ms、行p99为4.65–4.99ms。它们支持优先验证批量提交，不能证明唯一硬件瓶颈或预测交易收益。现有V2的18k/s有限稳定点仅作背景，新V3必须重建同源对照。
 
@@ -8,7 +8,7 @@
 
 首版每条业务请求最多4项，完整请求仍不超过4096B、完整回复不超过8192B；同时按实际编码字节装包。完整解码、canonical校验、逐项格式、重复producer检查和回复最坏空间预留，都必须在首项mutation之前完成。
 
-拟定回复布局逐项保留index、完整 `(account, producer, requestSeq)` 身份、command SHA、完整Result及reason、replayed、执行状态和counter frontier。保守预算公共387B、每项1328B（reason仍按1024B UTF-8），4项为5699B。**这是待codec落实的布局预算，必须补完整信封的byte-exact边界测试。** 不截断reason、不丢项、不只在mutation后检查encode是否超限。16项同布局需21635B，留待有界分页回复的独立版本。
+实际回复逐项保留index、完整 `(account, producer, requestSeq)` 身份、command SHA、完整Result及reason、replayed、执行状态和counter frontier。byte-exact测试构造出可达到的完整最大请求2639B及最大回复4315B；回复为公共411B加4×976B。reason同时受原有256个UTF-16单元和1024B UTF-8上限约束，有效严格UTF-8可达768B；因此替换设计阶段5699B的保守估算。编码前校验最坏回复空间，不截断reason、不丢项。缓存中不兼容UTF-8的旧reason在批量入口首次使用及恢复后预检，拒绝发生在mutation之前。16项和分页回复不在首版范围。
 
 采用顺序prefix-commit，明确不承诺批事务原子性。每项即时调用现有preview/apply；不得先preview全部Admission，因为首项后其余token的generation/sequence已失效。普通业务拒绝仍返回完整逐项业务结果。第j项遇到history/outbox等资源背压时，前缀保持已执行，第j项标为“未执行背压”，后缀标为“未尝试”。
 

@@ -1,0 +1,44 @@
+{
+  "passed": true,
+  "sourceRevision": "973ff8f9bc4d9266c52d21866480dd45b31c39f9",
+  "nativeProofs": [
+    {
+      "proofId": "root-rerun-batch",
+      "manifest": "native-proofs/root-rerun-batch/manifest.json",
+      "manifestSha256": "b9420170f3447985cd9bc8918505c5e7c0624069191c652fd572af8275f5aa6b",
+      "archive": {
+        "path": "native-tree.tar.gz",
+        "bytes": 8901299,
+        "sha256": "aec034ae9b81824c8121875c44c903b301522ab2e40cea99e3e08d01af8ade76"
+      },
+      "logicalBytes": 2029141013,
+      "files": 62,
+      "provenance": "Explicit root --rerun-tasks independent local smoke execution; XML source-validation/root-rerun-tests/cluster/TEST-io.vectormatch.cluster.RetentionBatchThreeJvmV3Test.xml",
+      "artifactEntriesVerified": 110
+    },
+    {
+      "proofId": "root-rerun-reference",
+      "manifest": "native-proofs/root-rerun-reference/manifest.json",
+      "manifestSha256": "830e23acab2fdd14c4c1294d60f428af7402dca1aa24b822999d9cabe528e088",
+      "archive": {
+        "path": "native-tree.tar.gz",
+        "bytes": 8903296,
+        "sha256": "7749d4535af7c2bb7387730ae1e918aff92426483eae9a712330b6bce6cb41e1"
+      },
+      "logicalBytes": 2029150920,
+      "files": 59,
+      "provenance": "Explicit root --rerun-tasks independent local smoke execution; XML source-validation/root-rerun-tests/cluster/TEST-io.vectormatch.cluster.RetentionThreeJvmV3Test.xml",
+      "artifactEntriesVerified": 110
+    }
+  ],
+  "distinctNativeTrees": 2,
+  "initialCompileFailure": {
+    "exitCode": 1,
+    "phase": "compileTestJava; no tests/smoke executed",
+    "diagnostic": "RetentionBatchAdapterV3Test.java:84: cannot find symbol: method baseAvailable(); location: class AccountView",
+    "resolution": "Use the actual AccountView.base().available() API. No production behavior was changed by this correction.",
+    "provenance": "Exact diagnostic copied from the actual first tool result; stdout/stderr were not redirected for that initial command."
+  },
+  "rootFirstFullcheck": "core:test and cluster:test were UP-TO-DATE; reused final agent XML. New bench/projector/server tasks ran. No new smoke credited.",
+  "scope": "All local functional evidence; no capacity, independent host, external durability or 100M result."
+}
