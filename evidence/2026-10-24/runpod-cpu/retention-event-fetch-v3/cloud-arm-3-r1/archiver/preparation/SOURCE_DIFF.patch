@@ -1,0 +1,453 @@
+--- baseline/archive.py
++++ archive.py
+@@ -1,6 +1,7 @@
+ """Copy and known-marker scan of one explicit CLOSED Event Fetch arm; never re-audit business."""
+ from pathlib import Path, PurePosixPath
+-import datetime, hashlib, importlib.util, io, json, shutil, stat, sys, tarfile, zipfile
++import argparse, datetime, hashlib, importlib.util, io, json, shutil, stat, sys, tarfile, zipfile
++from archive_contract import validate_identity, selected_page, render_readme
+ sys.dont_write_bytecode = True
+ HERE = Path(__file__).resolve().parent
+ BASE = HERE.parent
+@@ -127,66 +128,85 @@
+             walk_container(source, label, selected, 0)
+ 
+ def verify_receipts(trees, plan):
+-    review = load(trees['root-review'] / 'ROOT_REVIEW.json')
+-    collection = trees['actual-collection']
+-    success = load(collection / 'SUCCESS.json')
+-    final = load(collection / 'finalized/LOCAL_COLLECTION_COMPLETE.json')
+-    raw = load(collection / 'raw/result.json')
+-    require(review['passed'] is True and review['arm'] == 1 and review['eventFetchCount'] == 16,
+-            'Exact closed first16 root review')
+-    require(review['sourceCommit'] == plan['sourceCommit'] and review['independent4AnchorCodeFingerprint'] == plan['codeFingerprint']
+-            and review['releaseSha256'] == plan['releaseSha256'], 'Exact new artifact source/release/FP')
+-    require(review['allFullOuterMembersVerified'] is True and review['allRawInputsUnchanged'] is True
+-            and review['allOriginalRawCanonicalAndThreeSnapshotsVerified'] is True
+-            and review['sameNewArtifactFunctionalQualified'] is True, 'Root complete actual qualification receipt')
+-    require(review['ownerPollMaximumParkNs'] == 1000000 and review['serverDriverMaximumParkNs'] == 100000,
+-            'Fixed owner1ms/driver100us')
+-    require(p.sha(trees['root-review'] / 'ROOT_REVIEW.json') == plan['rootReviewSha256'], 'Pinned actual root receipt')
+-    require(p.sha(trees['root-review-preparation-r2'] / 'review_event_collected.py') == review['scriptSha256'],
+-            'Executed root helper body retained')
+-    require(success['passed'] is True and len(success['steps']) == 5 and all(x['exitCode'] == 0 for x in success['steps']),
+-            'Five closed collection steps')
+-    require(final['passed'] is True and final['eventFetchCount'] == 16 and final['frozenReleaseSha256'] == plan['releaseSha256']
+-            and final['controllerSha256'] == plan['controllerSha256'], 'Actual completed collection identity')
+-    require(raw['passed'] is True and raw['strictSchedulerTimingAdmission'] is True
+-            and raw['localFunctionalDiagnosticOptIn'] is False and p.sha(collection / 'raw/result.json') == review['rawAuditSha256'],
+-            'Strict root-bound raw audit receipt, no execution')
+-    require(p.sha(trees['actual-config'] / 'collector-config.json') == p.sha(collection / 'collection/collector-config.json'),
+-            'Actual config-copy binding')
+-    active = load(trees['close-inspection-r1'] / 'stdout.json')
+-    closed = load(trees['close-inspection-r2'] / 'stdout.json')
+-    gate = load(trees['closed-controller-gate'] / 'root-controller-closed.json')
+-    require(active['state'] == 'CONTROLLER_RUNNING' and active['closedGate'] is False and len(active['controlPlaneInputs']) == 1,
+-            'Historical ACTIVE single-register probe preserved')
+-    require(closed['state'] == 'CLOSED_PASS_CONTROL_PLANE' and closed['allFourOwnedJvmsStrictlyPidAbsent'] is True
+-            and closed['controller']['observation'] == 'PID_ABSENT', 'Actual closed control plane receipt')
+-    require(gate['inspectionSha256'] == p.sha(trees['close-inspection-r2'] / 'stdout.json')
+-            and gate['executedSourceSha256'] == plan['closeProbeSha256'], 'Exact executed close source/gate binding')
+-    return review
++    page=validate_identity(plan);arm=plan['arm']
++    review=load(trees['root-review']/'ROOT_REVIEW.json')
++    collection=trees['actual-collection']
++    success=load(collection/'SUCCESS.json');final=load(collection/'finalized/LOCAL_COLLECTION_COMPLETE.json');raw=load(collection/'raw/result.json')
++    for report in (review,success,final,raw):
++        require(report['passed'] is True and report['arm']==arm and report['eventFetchCount']==page
++                and report['ownerPollMaximumParkNs']==1000000 and report['serverDriverMaximumParkNs']==100000,
++                'Actual same arm/page/fixed owner and driver receipts required')
++    require(review['sourceCommit']==raw['sourceCommit']==plan['sourceCommit']
++            and review['independent4AnchorCodeFingerprint']==plan['codeFingerprint']
++            and review['releaseSha256']==raw['releaseSha256']==final['frozenReleaseSha256']==plan['releaseSha256']
++            and final['controllerSha256']==plan['controllerSha256'],'Exact same NEW source/release/artifact/controller')
++    require(review['allFullOuterMembersVerified'] is True and review['allRawInputsUnchanged'] is True,
++            'Independent full outer and original inputs closure')
++    for report in (final,raw,review):
++        require(report['allOriginalRawCanonicalAndThreeSnapshotsVerified'] is True
++                and report['sameNewArtifactFunctionalQualified'] is True,'Actual qualified raw/canonical/three-checkpoint receipts')
++    require(p.sha(trees['root-review']/'ROOT_REVIEW.json')==plan['rootReviewSha256'],'Exact actual root review SHA')
++    require(p.sha(trees['root-review-preparation-r2']/'review_event_collected.py')==review['scriptSha256'],'Actual executed root helper retained')
++    require(len(success['steps'])==5 and all(x['exitCode']==0 for x in success['steps']),'All five actual closed collection steps')
++    require(raw['strictSchedulerTimingAdmission'] is True and raw['localFunctionalDiagnosticOptIn'] is False
++            and p.sha(collection/'raw/result.json')==review['rawAuditSha256'],'Actual strict root-bound raw receipt')
++    require(p.sha(trees['actual-config']/'collector-config.json')==p.sha(collection/'collection/collector-config.json'),'Exact actual config copy')
++    gate=load(trees['closed-controller-gate']/'root-controller-closed.json')
++    require(gate['arm']==arm and gate['eventFetchCount']==page and gate['executedSourceSha256']==plan['closeProbeSha256']
++            and gate['controllerSha256']==plan['controllerSha256'] and gate['frozenReleaseSha256']==plan['releaseSha256'],
++            'Actual same-arm closed-controller gate')
++    probes=[];matching=[]
++    for name,path in sorted(trees.items()):
++        if not name.startswith('close-inspection-r'):continue
++        output=path/'stdout.json';wire=p.sha(output)
++        try:value=load(output);state=value.get('state','MISSING_STATE_PRESERVED')
++        except (ValueError,UnicodeError):value={};state='NON_JSON_STDOUT_PRESERVED'
++        probes.append(dict(scope=name,state=state,stdoutSha256=wire))
++        if wire==gate['inspectionSha256']:
++            require(value['state']=='CLOSED_PASS_CONTROL_PLANE' and value['allFourOwnedJvmsStrictlyPidAbsent'] is True
++                    and value['controller']['observation']=='PID_ABSENT' and value['arm']==arm and value['eventFetchCount']==page,
++                    'Gate must bind one actually present successful closed observation')
++            matching.append(name)
++    require(1<=len(probes)<=16 and matching,'All actual existing attempts preserved and one exact gate-bound closed proof required')
++    return review,probes
++
+ 
+ def main():
+-    plan = load(HERE / 'COPY_PLAN.json')
++    parser=argparse.ArgumentParser(allow_abbrev=False)
++    parser.add_argument('--config',type=Path,required=True);parser.add_argument('--config-sha256',required=True)
++    args=parser.parse_args();config=args.config.absolute()
++    require(config.is_relative_to(BASE) and config.name=='COPY_PLAN.json' and '..'not in config.parts
++            and not any(x.is_symlink()for x in(config,*config.parents)),'Explicit canonical local current plan')
++    require(p.sha(config)==args.config_sha256,'Explicit exact root-created plan SHA')
++    plan=load(config);validate_identity(plan)
+     freeze = load(HERE / 'SOURCE_FROZEN.json')
+     for name, pin in freeze['sourceFiles'].items():
+         require(p.row(HERE / name) == pin, 'Frozen new archiver/helper body changed')
++    require(p.sha(HERE/'SOURCE_FROZEN.json')==plan['preparationSha256'],'Exact frozen R2 source closure')
+     require(p.sha(PRIMITIVES) == plan['primitivesSha256'], 'Reviewed R2 primitives changed')
+     target = Path(plan['target'])
++    require(target==WORKSPACE/('evidence/2026-10-24/runpod-cpu/retention-event-fetch-v3/cloud-arm-%d-r1'%plan['arm'])
++            and not any(x.is_symlink()for x in(target,*target.parents)),'Exact fresh current arm archive only')
+     require(not target.exists(), 'Fresh immutable target only')
+     trees = {name: Path(scope['source']) for name, scope in plan['sourceTrees'].items()}
+     for name, source in trees.items():
+         require(source.is_relative_to(BASE) and not any(x.is_symlink() for x in [source] + list(source.parents)), 'Explicit local regular scope')
+         require(p.snapshot(source) == plan['sourceTrees'][name]['inventory'], 'Initial closed source pin: ' + name)
+-    source_bytes = sum(r['bytes'] for x in plan['sourceTrees'].values() for r in x['inventory']['files'].values())
++    singles={name:Path(row['source']) for name,row in plan['sourceFiles'].items()}
++    for name,path in singles.items():
++        safe(name);require(path.is_relative_to(BASE) and not any(x.is_symlink()for x in(path,*path.parents))
++                           and p.row(path)==plan['sourceFiles'][name]['pin'],'Explicit source-only single file changed')
++    source_bytes = sum(r['bytes'] for x in plan['sourceTrees'].values() for r in x['inventory']['files'].values())+sum(row['pin']['bytes']for row in plan['sourceFiles'].values())
+     require(source_bytes + 32 * 1024**2 <= LIMIT, '512MiB copy cap with32MiB metadata reserve')
+     require(shutil.disk_usage(WORKSPACE).free >= FLOOR + LIMIT, '1GiB floor plus512MiB archive reserve')
+-    review = verify_receipts(trees, plan)
+-    shared = Path(plan['sharedPreparation']['path'])
+-    for name, expected in plan['sharedPreparation']['receipts'].items():
+-        require(p.row(shared / name) == expected, 'Immutable shared deployment archive reference')
+-    attempt = HERE / 'attempt-r1'
++    review,probes = verify_receipts(trees, plan)
++    for reference in plan['sharedArchives']:
++        shared=Path(reference['path'])
++        for name,expected in reference['receipts'].items():require(p.row(shared/name)==expected,'Immutable shared archive reference')
++    attempt = config.parent/'archive-attempt-r1'
+     attempt.mkdir()
+     save(attempt / 'REGISTRATION.json', {'atUTC': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+-         'archiverSourceSha256': p.sha(Path(__file__)), 'copyPlanSha256': p.sha(HERE / 'COPY_PLAN.json'),
++         'archiverSourceSha256': p.sha(Path(__file__)), 'copyPlanSha256': p.sha(config),
+          'sourceFreezeSha256': p.sha(HERE / 'SOURCE_FROZEN.json'), 'sourceBytes': source_bytes,
+          'target': str(target), 'freeBytesBefore': shutil.disk_usage(WORKSPACE).free,
+          'noSshJavaTestsBusinessRawAuditGit': True, 'rootReviewSha256': plan['rootReviewSha256']})
+@@ -194,7 +214,11 @@
+         target.mkdir(parents=True)
+         for name, source in trees.items():
+             p.copy_tree(source, target / name, plan['sourceTrees'][name]['inventory'])
++        for name,path in singles.items():
++            destination=target/name;destination.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(path,destination)
++            require(p.row(destination)==plan['sourceFiles'][name]['pin'],'Exact source-only single copy')
+         save(target / 'SOURCE_BEFORE_COPY.json', plan['sourceTrees'])
++        save(target/'SOURCE_SINGLE_FILES_BEFORE_COPY.json',plan['sourceFiles'])
+         portable = {}
+         for original, pin in review['inputs'].items():
+             source = Path(original)
+@@ -203,6 +227,8 @@
+             for name, root in trees.items():
+                 if source.is_relative_to(root):
+                     destinations.append(name + '/' + str(source.relative_to(root)))
++            for name,path in singles.items():
++                if source==path:destinations.append(name)
+             if not destinations:
+                 old_base = BASE / 'cpu-event-fetch-cloud-staging-r1'
+                 require(source.is_relative_to(old_base), 'Every external root input explicitly mapped')
+@@ -213,30 +239,17 @@
+         save(target / 'ROOT_REVIEW_INPUT_PORTABLE_BINDINGS.json', {'passed': True, 'inputs': portable,
+              'mappingOnlyNoBusinessReaudit': True, 'originalAbsolutePathsUnchanged': True})
+         save(target / 'SHARED_DEPLOYMENT_REFERENCES.json', plan['sharedPreparation'])
++        save(target/'IMMUTABLE_SHARED_ARCHIVE_REFERENCES.json',plan['sharedArchives'])
+         archiver = target / 'archiver'
+         archiver.mkdir()
+         for source, name in [(Path(__file__), 'archive.py'), (PRIMITIVES, 'owner_r2_snapshot_copy_marker_primitives.py'),
+-                             (HERE / 'COPY_PLAN.json', 'COPY_PLAN.json'), (HERE / 'REGISTRATION.json', 'REGISTRATION.json'),
++                             (config, 'COPY_PLAN.json'), (config.parent / 'REGISTRATION.json', 'REGISTRATION.json'),
+                              (HERE / 'SOURCE_FROZEN.json', 'SOURCE_FROZEN.json'),
+                              (attempt / 'REGISTRATION.json', 'ATTEMPT_REGISTRATION.json')]:
+             shutil.copy2(source, archiver / name)
+         # Preserve the exact prior helper/config/freeze provenance without importing their main.
+-        p.copy_tree(HERE / 'baseline', archiver / 'baseline', p.snapshot(HERE / 'baseline'))
+-        metrics = review['arms'][0]
+-        (target / 'README.md').open('x').write(f'''# Closed Event Fetch first16 arm evidence
+-
+-One finite one-host loopback LONG lineage:33792 scheduled arrivals at500/s over67.584s,12maintenance cycles/24read phases. Source{plan['sourceCommit']}, actual code{plan['codeFingerprint']}, controller{plan['controllerSha256']}, release{plan['releaseSha256']}. Selectedevent page16, fixedowner maximum park1000000ns/server anddriver100000ns, read8/businesscap4/chunk6144/leader0term0/sync2. Configured maximum park is not actual OS sleep duration or a hard realtime guarantee.
+-
+-The independent root receipt reports nearest-rank all-arrival scheduled-to-replyp99 {metrics['allArrivalP99Ns']}ns, accepted inside arrivalwindow{metrics['acceptedWithinArrivalWindow']}, windowgoodput{metrics['arrivalWindowGoodputPerSecond']}/s, summed maintenance-cycle wall{metrics['maintenanceCycleWallNs']}ns, offeredhighwater{metrics['offeredHighWater']}, retainedWARNpairs{metrics['retainedPostCheckpointEosWarningPairs']}. These are copied facts from the exact root/raw receipts, not a new calculation. One arm does not establish sustainedcapacity, a16/32speedup, a platform upperbound, zero latency or100M scale; it does not authorize/start the nextarm. Three checkpointlog matches are not independent binary snapshot-record decoding.
+-
+-Entire251-file original collection tree is copied without exclusions: both complete compressed TARs, every original tape/CSV/writer payload/reference, every auditor and its sources/config/receipt/failure, full original staged39rows/JAR/proofs inside the outerTAR, materialized actual4JARs, strictfull native/raw/finalizer receipts. Root verified193outerfiles/24directories/1367606404logicalbytes and73rawinputs. RemoteTAR owner/mode/emptydir facts remain in original manifests; copied localfilesystem UID/GID is recorded separately and is not substituted for remote ownership.
+-
+-All actual launch/config/outer collection/rootexecution records, the ACTIVE first probe reading onlyoneexecutionregister, CLOSED secondprobe and exactrootclosedgate are retained. The first roothelper preparation failed before anycandidatefile write/rawread because of generated AST whitespaceTrueand; only its available diagnostic exists and no missinginvalidsource is invented. R2 fullsource/helper/freeze/prepare/diff and subsequent actualPASS are retained. Historical generation-time pending/firstNativeNotYetRun fields remain unchanged. Actual qualification of this new artifact comes from the fullclosed first16 raw/canonical/threecheckpoint/owner/archive receipts plus independent root review, not an oldartifact's native proof.
+-
+-Shared deployment preparations are referenced by siblingcloud-preparation-r1 exactINVENTORY/CLOSED; all39actual stagedsource/JAR/proof bytes are nevertheless retained in this arm's fullouterTAR. ROOT_REVIEW_INPUT_PORTABLE_BINDINGS maps every original rootinput to its copiedbody or exactsharedreceipt. Original absolute paths are preserved, not silently made runnable in relocation.
+-
+-Archiveonly: fullbefore/after sourceSHA/size/mode/uid/gid/emptydir closure and every copiedfile plus recursiveTAR/ZIP/JAR/tape knownmarker scan. Large native.rec members are streamed with boundedmemory; no native sparse/full extraction. No collector/auditor/business/test/JVM/Gradle/SSH/network/Git action, signals/resources/deletion. Named-marker review is bounded and does not establish universal secretabsence. INVENTORY excludes onlyitself andCLOSED; CLOSED bindsit.
+-''')
++        p.copy_tree(HERE,archiver/'preparation',p.snapshot(HERE))
++        (target/'README.md').open('x').write(render_readme(plan,review,plan['sourceTrees']['actual-collection']['inventory'],probes))
+         for path in sorted(target.rglob('*')):
+             if path.is_file():
+                 scan_file(path, str(path.relative_to(target)))
+@@ -252,7 +265,8 @@
+             current = p.snapshot(source)
+             require(current == plan['sourceTrees'][name]['inventory'], 'Closed original aftercopy drift: ' + name)
+             after[name] = current
+-        save(target / 'SOURCE_AFTER_COPY.json', {'passed': True, 'allOriginalsUnchanged': True, 'sourceTrees': after})
++        for name,path in singles.items():require(p.row(path)==plan['sourceFiles'][name]['pin'],'Source-only single aftercopy drift')
++        save(target / 'SOURCE_AFTER_COPY.json', {'passed': True, 'allOriginalsUnchanged': True, 'sourceTrees': after,'sourceFiles':plan['sourceFiles']})
+         inventory = p.snapshot(target)
+         total = sum(x['bytes'] for x in inventory['files'].values())
+         require(total <= LIMIT, '512MiB final archive cap')
+@@ -261,14 +275,14 @@
+              'excludedSelfAndClosure': ['INVENTORY.json', 'CLOSED.json']})
+         for name, pin in inventory['files'].items():
+             require(p.row(target / name) == pin, 'Final payload closure drift')
+-        result = {'schemaVersion': 1, 'passed': True, 'arm': 1, 'eventFetchCount': 16,
++        result = {'schemaVersion': 1, 'passed': True, 'arm': plan['arm'], 'eventFetchCount': selected_page(plan['arm']),
+                   'atUTC': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                   'inventorySha256': p.sha(target / 'INVENTORY.json'), 'payloadFiles': len(inventory['files']),
+                   'directories': len(inventory['directories']), 'payloadBytes': total,
+                   'allExplicitClosedScopesRetainedWithoutExclusions': True,
+                   'allOriginalCollectionAndBothCompleteTarsRetained': True,
+                   'sourceCopyBeforeAfterEqual': True, 'fullShaSizeModeUidGidEmptyDirectoryClosureVerified': True,
+-                  'rootActualReviewAndBothProbeAttemptsRetained': True, 'allKnownMarkerScansPassed': True,
++                  'rootActualReviewAndAllExistingProbeAttemptsRetained': True,'actualCloseProbeAttempts':len(probes), 'allKnownMarkerScansPassed': True,
+                   'noBusinessAuditTestsJavaSshGitExecuted': True, 'noSparseExtraction': True,
+                   'noCapacityOrSpeedupClaimed': True, 'closureExcludes': ['INVENTORY.json', 'CLOSED.json']}
+         save(target / 'CLOSED.json', result)
+--- /dev/null
++++ archive_contract.py
+@@ -0,0 +1,43 @@
++"""Explicit closed arm archive contract; no IO or benchmark calculations."""
++SOURCE='d92301d3058acc83cb85d5bc5b4fd2e3f0ed4df8'
++CODE='87a7ccd092f4d3c890bf8cc8bd7c6ffcd18900838699cd2b873fd1931cddb6aa'
++RELEASE='0ebad5d1ae1bd7900fc6dad7d78994d11ec3281f4077cfb7eba9b1bb3f506d59'
++CONTROLLER='eb84eed09cad46c5097c32d980a1629f7c7c7fec3759e904544f7ef9e91e3100'
++CLOSE='67fcfe5bd15efb8bdc488d25b156534b34878ce6584e5cb2ec3cf95ebeb2b5f2'
++PAGES=(16,32,16,32)
++
++def need(ok,message):
++    if not ok:raise AssertionError(message)
++
++def selected_page(arm):
++    need(type(arm)is int and arm in (2,3,4),'Explicit closed arm2..4 only')
++    return PAGES[arm-1]
++
++def hexsha(value):
++    return isinstance(value,str)and len(value)==64 and all(c in '0123456789abcdef'for c in value)
++
++def validate_identity(plan):
++    page=selected_page(plan['arm'])
++    need(plan['schemaVersion']==2 and plan['eventFetchCount']==page and plan['sourceCommit']==SOURCE
++         and plan['codeFingerprint']==CODE and plan['releaseSha256']==RELEASE and plan['controllerSha256']==CONTROLLER
++         and plan['closeProbeSha256']==CLOSE and hexsha(plan['rootReviewSha256']),'Exact same new artifact and explicit selected arm/page')
++    return page
++
++def render_readme(plan,review,collection_inventory,probes):
++    arm=plan['arm'];page=selected_page(arm);m=review['arms'][0]
++    count=len(collection_inventory['files']);size=sum(r['bytes']for r in collection_inventory['files'].values())
++    observations=', '.join(row['scope']+'='+str(row['state']) for row in probes)
++    return f'''# Closed Event Fetch arm{arm}, page{page} evidence
++
++One finite one-host loopback LONG lineage:33792 scheduled arrivals at500/s over67.584s,12maintenance cycles/24read phases. Source{SOURCE}/actualcode{CODE}, controller{CONTROLLER}, release{RELEASE}; selected page{page}, fixedowner maximumpark1000000ns/server-driver100000ns, read8/businesscap4/chunk6144/leader0term0/sync2. Configured maximumpark is not actual OS sleep duration or a hard realtime guarantee.
++
++The actual independent root receipt reports all-arrival scheduled-to-reply nearest-rankp99 {m['allArrivalP99Ns']}ns, acceptedwithinarrivalwindow{m['acceptedWithinArrivalWindow']}, windowgoodput{m['arrivalWindowGoodputPerSecond']}/s, summed maintenancecyclewall{m['maintenanceCycleWallNs']}ns, offeredhighwater{m['offeredHighWater']}, retainedWARNpairs{m['retainedPostCheckpointEosWarningPairs']}. These are copied receipt values, not recomputation. This finite arm alone is not a16/32speedup, sustainedcapacity, upperbound, zero-latency or100M proof and does not start/authorize anotherarm. Matching threecheckpointlogs is not independent binarysnapshot-record decoding.
++
++Entire original current collection ({count}files/{size}bytes) is copied without exclusions: completeouter+innerTARs, every tape/CSV/writer/reference, source/auditor/config/receipt/error, actualstagedsource/JAR/proof rows insidefullouter and materialized runtimeJARs. Root verified{review['outerFiles']}outerfiles/{review['outerDirectories']}directories/{review['outerLogicalBytes']}logicalbytes/{review['rawInputFiles']}rawinputs. Original remoteTAR metadata remains in its originalmanifest; localcopiedfile UID/GID is separately recorded.
++
++All actual current launch/config/collection/rootexecution and closedgate records are retained. Exactly{len(probes)}actuallyexistingcloseattempts are copied: {observations}. No missingACTIVE attempt is invented. Failed/nonJSON probe stdout is preserved without treating it as successful; the actual rootclosedgate must bind a real CLOSED_PASS_CONTROL_PLANE observation. Historical source-generation fields and failures remain unchanged.
++
++The explicit continuation scopes preserve actual precedingarm priorpair/freeze/upload/executions, private visibility and Gitblob readback, plus new helper/source/guard and independent archive-review failures/successes. Firstinline/AST preparation or wrapper failures retain only artifacts that actually existed; missing invaliddrafts or rawstderr are never fabricated. Only capture.py is copied from the generic execution helper directory. Shared deployment and prior helper provenance archives are referenced by exactINVENTORY/CLOSED; fullactualstagedrows and allpriorpairs remain inside this arm's outerTAR.
++
++AllsourceSHA/size/mode/uid/gid/emptydirectory before/after and recursive rawfile/TAR/ZIP/JAR/tape knownmarker scans are retained. Large native.rec leaves stream in boundedmemory with no nativeextraction. Namedmarker scans are bounded, not universal secretabsence. No business/auditor/collector/test/JVM/Gradle/SSH/network/Git rerun, launch/signals/resources/cleanup/deletion occurred. Original absolute paths remain intact; portablebindings map them to copiedbodies or exactsharedreceipts. INVENTORY excludes onlyitself andCLOSED; CLOSED bindsit.
++'''
+--- /dev/null
++++ build_plan.py
+@@ -0,0 +1,100 @@
++"""Only root runs after actual collection/root-review closure; no copy/scan/business/SSH/Git."""
++from pathlib import Path
++import argparse,datetime,json,re,sys
++sys.dont_write_bytecode=True
++import archive as helper
++from archive_contract import *
++HERE=Path(__file__).resolve().parent
++BASE=HERE.parent
++ROOT=BASE.parents[2]
++
++def parser():
++    p=argparse.ArgumentParser(allow_abbrev=False)
++    p.add_argument('--arm',type=int,choices=[2,3,4],required=True)
++    p.add_argument('--root-review',type=Path,required=True)
++    p.add_argument('--root-review-sha256',required=True)
++    p.add_argument('--output',type=Path,required=True)
++    return p
++
++def discover_closes(base,arm):
++    prefix='event-cloud-arm-%d-close-inspection-r'%arm
++    values=[]
++    for path in base.glob(prefix+'*'):
++        suffix=path.name[len(prefix):]
++        need(re.fullmatch('[1-9][0-9]*',suffix)is not None and path.is_dir()and not path.is_symlink(),'Only actual bounded regular closeattempt directories')
++        values.append((int(suffix),path))
++    need(1<=len(values)<=16,'At least one actuallyexisting closeprobe; never invent missingattempts')
++    return {'close-inspection-r%d'%n:path for n,path in sorted(values)}
++
++def tree_sources(base,arm,root_review):
++    values={
++      'actual-collection':base/('cpu-event-fetch-arm-%d-collection-r1'%arm),
++      'actual-config':base/('event-cloud-arm-%d-config-r1'%arm),
++      'config-execution':base/('event-cloud-arm-%d-config-execution-r1'%arm),
++      'actual-launch':base/('event-cloud-arm-%d-launch-r1'%arm),
++      'launch-execution':base/('event-cloud-arm-%d-launch-execution-r1'%arm),
++      'closed-controller-gate':base/('event-cloud-arm-%d-controller-closed-r1'%arm),
++      'collection-execution':base/('event-cloud-arm-%d-collection-execution-r1'%arm),
++      'root-review':root_review.parent,
++      'root-review-execution':base/('event-cloud-arm-%d-root-review-execution-r1'%arm),
++      'root-review-preparation-r2':base/'event-cloud-root-review-preparation-r2',
++      'close-execution-preparation':base/'event-cloud-close-execution-preparation-r1'}
++    values.update(discover_closes(base,arm))
++    close_gate_execution=base/('event-cloud-arm-%d-close-gate-execution-r1'%arm)
++    if close_gate_execution.exists():values['close-gate-execution']=close_gate_execution
++    prior=arm-1
++    for name,suffix in [('prior-pair','prior-gate-r1'),('prior-freeze-execution','prior-freeze-execution-r1'),
++                        ('prior-upload','prior-upload-r1'),('prior-upload-execution','prior-upload-execution-r1'),
++                        ('prior-private-readback','private-readback-r1'),('prior-archive-root-review','archive-root-review-r1')]:
++        values[name]=base/('event-cloud-arm-%d-%s'%(prior,suffix))
++    values['private-repository-visibility']=base/'event-cloud-repository-visibility-r1'
++    if arm==2:
++        values.update({
++          'continuation-prior-gate-preparation':base/'event-cloud-prior-gate-preparation-r1',
++          'archive-root-review-preparation-r1':base/'event-cloud-archive-root-review-preparation-r1',
++          'archive-root-review-preparation-r2':base/'event-cloud-archive-root-review-preparation-r2'})
++    return values
++
++def safe_source(path):
++    need(path.is_absolute()and path.is_relative_to(BASE)and '..'not in path.parts
++         and not any(p.is_symlink()for p in(path,*path.parents)),'Explicit closed regular source below BASE only')
++
++def main():
++    a=parser().parse_args();selected=selected_page(a.arm);review_path=a.root_review.absolute()
++    safe_source(review_path)
++    need(review_path.name=='ROOT_REVIEW.json'and hexsha(a.root_review_sha256)
++         and helper.p.sha(review_path)==a.root_review_sha256,'Root-selected actual closed review SHA')
++    review=helper.load(review_path)
++    need(review['passed']is True and review['arm']==a.arm and review['eventFetchCount']==selected
++         and review['sourceCommit']==SOURCE and review['independent4AnchorCodeFingerprint']==CODE
++         and review['releaseSha256']==RELEASE and review['allFullOuterMembersVerified']is True
++         and review['allRawInputsUnchanged']is True,'Actual sameartifact current closed root review required')
++    sources=tree_sources(BASE,a.arm,review_path)
++    trees={}
++    for name,path in sources.items():
++        safe_source(path);trees[name]={'source':str(path),'inventory':helper.p.snapshot(path)}
++    capture=BASE/'event-cloud-execution-preparation-r1/capture.py';safe_source(capture)
++    singles={'capture-runner-source/capture.py':dict(source=str(capture),pin=helper.p.row(capture))}
++    shared=ROOT/'evidence/2026-10-24/runpod-cpu/retention-event-fetch-v3/cloud-preparation-r1'
++    refs=[{'path':str(shared),'receipts':{n:helper.p.row(shared/n)for n in('INVENTORY.json','CLOSED.json')},'deploymentProvenance':True}]
++    if a.arm>=3:
++        old=ROOT/'evidence/2026-10-24/runpod-cpu/retention-event-fetch-v3/cloud-arm-2-r1'
++        refs.append({'path':str(old),'receipts':{n:helper.p.row(old/n)for n in('INVENTORY.json','CLOSED.json')},'arm2ContinuationSourceProvenance':True})
++    output=a.output.absolute();safe_source(output)
++    need(output.parent==BASE and output.name.startswith('event-cloud-arm-%d-archive-plan-r'%a.arm)and not output.exists(),'Fresh explicit current arm plan only')
++    plan=dict(schemaVersion=2,arm=a.arm,eventFetchCount=selected,sourceCommit=SOURCE,codeFingerprint=CODE,releaseSha256=RELEASE,
++              controllerSha256=CONTROLLER,closeProbeSha256=CLOSE,rootReviewSha256=a.root_review_sha256,
++              preparationSha256=helper.p.sha(HERE/'SOURCE_FROZEN.json'),primitivesSha256=helper.p.sha(helper.PRIMITIVES),
++              sourceTrees=trees,sourceFiles=singles,sharedPreparation=refs[0],sharedArchives=refs,
++              target=str(ROOT/('evidence/2026-10-24/runpod-cpu/retention-event-fetch-v3/cloud-arm-%d-r1'%a.arm)),
++              noExclusions=True,noActualCopyScanBusinessAuditSshGit=True)
++    validate_identity(plan);helper.verify_receipts(sources,plan)
++    output.mkdir(mode=0o700)
++    helper.save(output/'COPY_PLAN.json',plan)
++    helper.save(output/'REGISTRATION.json',dict(atUTC=datetime.datetime.now(datetime.timezone.utc).isoformat(),arm=a.arm,
++        rootReviewSha256=a.root_review_sha256,planBuilderSha256=helper.p.sha(Path(__file__)),
++        preparationSha256=plan['preparationSha256'],sourceScopes=len(trees),sourceSingleFiles=len(singles),copyOrScanExecuted=False))
++    print(json.dumps(dict(preparedOnly=True,arm=a.arm,eventFetchCount=selected,config=str(output/'COPY_PLAN.json'),
++                         configSha256=helper.p.sha(output/'COPY_PLAN.json'),sourceScopes=len(trees),copyOrScanExecuted=False)))
++
++if __name__=='__main__':main()
+--- /dev/null
++++ adapt_sources.py
+@@ -0,0 +1,77 @@
++"""Deterministic source-only R1 adaptation; does not run a plan, copy evidence or scan payload."""
++from pathlib import Path
++HERE=Path(__file__).resolve().parent
++OLD=HERE.parent/'event-cloud-arm-archive-preparation-r1/archive.py'
++source=OLD.read_text()
++
++def change(old,new):
++    global source
++    assert source.count(old)==1,repr(old)
++    source=source.replace(old,new)
++
++source=source.replace('import datetime, hashlib, importlib.util, io, json, shutil, stat, sys, tarfile, zipfile',
++                      'import argparse, datetime, hashlib, importlib.util, io, json, shutil, stat, sys, tarfile, zipfile\nfrom archive_contract import validate_identity, selected_page, render_readme')
++begin=source.index('def verify_receipts(');end=source.index('\ndef main():',begin)
++source=source[:begin]+'''def verify_receipts(trees, plan):
++    page=validate_identity(plan);arm=plan['arm']
++    review=load(trees['root-review']/'ROOT_REVIEW.json')
++    collection=trees['actual-collection']
++    success=load(collection/'SUCCESS.json');final=load(collection/'finalized/LOCAL_COLLECTION_COMPLETE.json');raw=load(collection/'raw/result.json')
++    for report in (review,success,final,raw):
++        require(report['passed'] is True and report['arm']==arm and report['eventFetchCount']==page
++                and report['ownerPollMaximumParkNs']==1000000 and report['serverDriverMaximumParkNs']==100000,
++                'Actual same arm/page/fixed owner and driver receipts required')
++    require(review['sourceCommit']==raw['sourceCommit']==plan['sourceCommit']
++            and review['independent4AnchorCodeFingerprint']==plan['codeFingerprint']
++            and review['releaseSha256']==raw['releaseSha256']==final['frozenReleaseSha256']==plan['releaseSha256']
++            and final['controllerSha256']==plan['controllerSha256'],'Exact same NEW source/release/artifact/controller')
++    require(review['allFullOuterMembersVerified'] is True and review['allRawInputsUnchanged'] is True,
++            'Independent full outer and original inputs closure')
++    for report in (final,raw,review):
++        require(report['allOriginalRawCanonicalAndThreeSnapshotsVerified'] is True
++                and report['sameNewArtifactFunctionalQualified'] is True,'Actual qualified raw/canonical/three-checkpoint receipts')
++    require(p.sha(trees['root-review']/'ROOT_REVIEW.json')==plan['rootReviewSha256'],'Exact actual root review SHA')
++    require(p.sha(trees['root-review-preparation-r2']/'review_event_collected.py')==review['scriptSha256'],'Actual executed root helper retained')
++    require(len(success['steps'])==5 and all(x['exitCode']==0 for x in success['steps']),'All five actual closed collection steps')
++    require(raw['strictSchedulerTimingAdmission'] is True and raw['localFunctionalDiagnosticOptIn'] is False
++            and p.sha(collection/'raw/result.json')==review['rawAuditSha256'],'Actual strict root-bound raw receipt')
++    require(p.sha(trees['actual-config']/'collector-config.json')==p.sha(collection/'collection/collector-config.json'),'Exact actual config copy')
++    gate=load(trees['closed-controller-gate']/'root-controller-closed.json')
++    require(gate['arm']==arm and gate['eventFetchCount']==page and gate['executedSourceSha256']==plan['closeProbeSha256']
++            and gate['controllerSha256']==plan['controllerSha256'] and gate['frozenReleaseSha256']==plan['releaseSha256'],
++            'Actual same-arm closed-controller gate')
++    probes=[];matching=[]
++    for name,path in sorted(trees.items()):
++        if not name.startswith('close-inspection-r'):continue
++        output=path/'stdout.json';wire=p.sha(output)
++        try:value=load(output);state=value.get('state','MISSING_STATE_PRESERVED')
++        except (ValueError,UnicodeError):value={};state='NON_JSON_STDOUT_PRESERVED'
++        probes.append(dict(scope=name,state=state,stdoutSha256=wire))
++        if wire==gate['inspectionSha256']:
++            require(value['state']=='CLOSED_PASS_CONTROL_PLANE' and value['allFourOwnedJvmsStrictlyPidAbsent'] is True
++                    and value['controller']['observation']=='PID_ABSENT' and value['arm']==arm and value['eventFetchCount']==page,
++                    'Gate must bind one actually present successful closed observation')
++            matching.append(name)
++    require(1<=len(probes)<=16 and matching,'All actual existing attempts preserved and one exact gate-bound closed proof required')
++    return review,probes
++
++''' +source[end:]
++change("    plan = load(HERE / 'COPY_PLAN.json')", "    parser=argparse.ArgumentParser(allow_abbrev=False)\n    parser.add_argument('--config',type=Path,required=True);parser.add_argument('--config-sha256',required=True)\n    args=parser.parse_args();config=args.config.absolute()\n    require(p.sha(config)==args.config_sha256,'Explicit exact root-created plan SHA')\n    plan=load(config);validate_identity(plan)")
++change("    require(p.sha(PRIMITIVES) == plan['primitivesSha256'], 'Reviewed R2 primitives changed')", "    require(p.sha(HERE/'SOURCE_FROZEN.json')==plan['preparationSha256'],'Exact frozen R2 source closure')\n    require(p.sha(PRIMITIVES) == plan['primitivesSha256'], 'Reviewed R2 primitives changed')")
++change("    source_bytes = sum(r['bytes'] for x in plan['sourceTrees'].values() for r in x['inventory']['files'].values())", "    singles={name:Path(row['source']) for name,row in plan['sourceFiles'].items()}\n    for name,path in singles.items():\n        safe(name);require(path.is_relative_to(BASE) and p.row(path)==plan['sourceFiles'][name]['pin'],'Explicit source-only single file changed')\n    source_bytes = sum(r['bytes'] for x in plan['sourceTrees'].values() for r in x['inventory']['files'].values())+sum(row['pin']['bytes']for row in plan['sourceFiles'].values())")
++change("    review = verify_receipts(trees, plan)", "    review,probes = verify_receipts(trees, plan)")
++change("    shared = Path(plan['sharedPreparation']['path'])\n    for name, expected in plan['sharedPreparation']['receipts'].items():\n        require(p.row(shared / name) == expected, 'Immutable shared deployment archive reference')", "    for reference in plan['sharedArchives']:\n        shared=Path(reference['path'])\n        for name,expected in reference['receipts'].items():require(p.row(shared/name)==expected,'Immutable shared archive reference')")
++change("    attempt = HERE / 'attempt-r1'", "    attempt = config.parent/'archive-attempt-r1'")
++change("p.sha(HERE / 'COPY_PLAN.json')", "p.sha(config)")
++change("        save(target / 'SOURCE_BEFORE_COPY.json', plan['sourceTrees'])", "        for name,path in singles.items():\n            destination=target/name;destination.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(path,destination)\n            require(p.row(destination)==plan['sourceFiles'][name]['pin'],'Exact source-only single copy')\n        save(target / 'SOURCE_BEFORE_COPY.json', plan['sourceTrees'])\n        save(target/'SOURCE_SINGLE_FILES_BEFORE_COPY.json',plan['sourceFiles'])")
++change("            if not destinations:", "            for name,path in singles.items():\n                if source==path:destinations.append(name)\n            if not destinations:")
++change("        save(target / 'SHARED_DEPLOYMENT_REFERENCES.json', plan['sharedPreparation'])", "        save(target / 'SHARED_DEPLOYMENT_REFERENCES.json', plan['sharedPreparation'])\n        save(target/'IMMUTABLE_SHARED_ARCHIVE_REFERENCES.json',plan['sharedArchives'])")
++change("(HERE / 'COPY_PLAN.json', 'COPY_PLAN.json'), (HERE / 'REGISTRATION.json', 'REGISTRATION.json')", "(config, 'COPY_PLAN.json'), (config.parent / 'REGISTRATION.json', 'REGISTRATION.json')")
++change("        p.copy_tree(HERE / 'baseline', archiver / 'baseline', p.snapshot(HERE / 'baseline'))", "        p.copy_tree(HERE,archiver/'preparation',p.snapshot(HERE))")
++begin=source.index("        metrics = review['arms'][0]");end=source.index("        for path in sorted(target.rglob('*')):",begin)
++source=source[:begin]+"        (target/'README.md').open('x').write(render_readme(plan,review,plan['sourceTrees']['actual-collection']['inventory'],probes))\n"+source[end:]
++change("        save(target / 'SOURCE_AFTER_COPY.json', {'passed': True, 'allOriginalsUnchanged': True, 'sourceTrees': after})", "        for name,path in singles.items():require(p.row(path)==plan['sourceFiles'][name]['pin'],'Source-only single aftercopy drift')\n        save(target / 'SOURCE_AFTER_COPY.json', {'passed': True, 'allOriginalsUnchanged': True, 'sourceTrees': after,'sourceFiles':plan['sourceFiles']})")
++change("result = {'schemaVersion': 1, 'passed': True, 'arm': 1, 'eventFetchCount': 16,", "result = {'schemaVersion': 1, 'passed': True, 'arm': plan['arm'], 'eventFetchCount': selected_page(plan['arm']),")
++change("'rootActualReviewAndBothProbeAttemptsRetained': True", "'rootActualReviewAndAllExistingProbeAttemptsRetained': True,'actualCloseProbeAttempts':len(probes)")
++compile(source,str(HERE/'archive.py'),'exec')
++with(HERE/'archive.py').open('x')as out:out.write(source)
