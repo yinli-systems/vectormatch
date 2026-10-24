@@ -161,7 +161,7 @@ class RetentionMaintenanceReadWindowV3Test {
     }
 
     @Test void bothWindowsExportExactPrefixesDespiteReversedDuplicateRepliesAndFenceBothAcks()throws Exception{
-        for(int window:new int[]{1,8})try(var f=new Fixture("success-"+window,window,false)){
+        for(int window:new int[]{1,8,32})try(var f=new Fixture("success-"+window,window,false)){
             var cycle=f.coordinator.exportThrough(COMMANDS);assertEquals(COMMANDS,cycle.entries().size());assertEquals(COMMANDS,cycle.throughEventSeq());
             assertArrayEquals(f.io.archive,Files.readAllBytes(cycle.archiveFile()));assertTrue(Files.size(cycle.eventFile())>0);assertEquals(2,f.io.controls());
             assertEquals(0,((Number)f.owner.snapshot().get("readOnlyRetained")).intValue());
@@ -175,9 +175,45 @@ class RetentionMaintenanceReadWindowV3Test {
                 else{assertEquals("0",values[9]);assertEquals("0",values[10]);assertEquals("",values[11]);assertEquals("",values[12]);}
             }
             assertEquals(2,phases.size());assertTrue(Files.readString(f.directory.resolve("raw/cycle-1.verified.txt")).contains("readWindow="+window));
-            if(window==8){long firstChunk=f.io.offers.stream().filter(r->r.operation() instanceof ArchiveChunk).findFirst().orElseThrow().correlationId();assertNotEquals(firstChunk,f.io.deliveredReads.getFirst());}
+            if(window>=8){long firstChunk=f.io.offers.stream().filter(r->r.operation() instanceof ArchiveChunk).findFirst().orElseThrow().correlationId();assertNotEquals(firstChunk,f.io.deliveredReads.getFirst());}
         }
     }
+    @Test void window32WrongEventAmongAllThirtyTwoCompletedRepliesFencesBothAcks()throws Exception{
+        try(var f=new Fixture("read32-event-mismatch",32,false,16)){
+            f.io.corruptEvents=true;
+            var error=assertThrows(RetentionBatchMaintenanceV3.ReadPhaseFailureException.class,()->f.coordinator.exportThrough(COMMANDS));
+            assertEquals(32,error.originalWires().size());
+            assertEquals(32,error.observations().size());
+            assertTrue(error.getCause().getMessage().contains("outbox/history event differs"));
+            assertTrue(error.originalWires().stream().allMatch(wire->RetentionWireV3.decode(wire).operation() instanceof FetchEvents));
+            byte[] original=error.originalWires().getFirst().clone();error.originalWires().getFirst()[0]^=1;
+            assertArrayEquals(original,error.originalWires().getFirst(),"failure originals must be defensive clones");
+            f.assertFailedFence();
+            assertTrue(Files.isRegularFile(f.directory.resolve("writer/0001-archive.bin.verified.txt")));
+            assertFalse(Files.exists(f.directory.resolve("writer/0002-events.bin.verified.txt")));
+            assertEquals(0,f.io.controls());
+        }
+    }
+
+    @Test void page32AndReadWindow32ExportTheSameCanonicalPrefixesAsEightCredits()throws Exception{
+        byte[] expectedArchive=null;
+        List<io.vectormatch.core.MatchingEngine.Event> expectedEvents=null;
+        for(int window:new int[]{8,32})try(var f=new Fixture("page32-window-"+window,window,false,32)){
+            var cycle=f.coordinator.exportThrough(COMMANDS);
+            byte[] archive=Files.readAllBytes(cycle.archiveFile());
+            if(expectedArchive==null)expectedArchive=archive;else assertArrayEquals(expectedArchive,archive);
+            var events=new ArrayList<io.vectormatch.core.MatchingEngine.Event>();
+            try(var input=new DataInputStream(Files.newInputStream(cycle.eventFile()))){
+                while(input.available()>0){int length=input.readInt();var reply=RetentionReplyV3.decode(input.readNBytes(length));events.addAll(((Events)reply.payload()).batch().events());}
+            }
+            if(expectedEvents==null)expectedEvents=events;else assertEquals(expectedEvents,events);
+            assertEquals(COMMANDS,events.size());assertEquals(COMMANDS/32,f.io.offers.stream().filter(r->r.operation() instanceof FetchEvents).count());
+            assertEquals(0,((Number)f.owner.snapshot().get("readOnlyRetained")).intValue());
+            assertEquals(2,f.io.controls());
+            assertEquals(32,f.coordinator.snapshot().get("eventFetchCount"));
+        }
+    }
+
     @Test void originalSinkFailurePreservesAllEightUnarmedWiresWithoutAnyReadOffer()throws Exception{
         try(var f=new Fixture("request-failure",8,false)){
             failSink(f.coordinator,"requests",true);
