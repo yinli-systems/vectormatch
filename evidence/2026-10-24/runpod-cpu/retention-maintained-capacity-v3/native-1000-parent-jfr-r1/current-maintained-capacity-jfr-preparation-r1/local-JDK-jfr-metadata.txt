@@ -1,0 +1,191 @@
+@Name("jdk.ActiveRecording")
+@Label("Flight Recording")
+@Category("Flight Recorder")
+class ActiveRecording extends jdk.jfr.Event {
+  @Label("Start Time")
+  @Timestamp("TICKS")
+  long startTime;
+
+  @Label("Duration")
+  @Timespan("TICKS")
+  long duration;
+
+  @Label("Event Thread")
+  @Description("Thread in which event was committed in")
+  Thread eventThread;
+
+  @Label("Stack Trace")
+  @Description("Stack Trace starting from the method the event was committed in")
+  StackTrace stackTrace;
+
+  @Label("Id")
+  long id;
+
+  @Label("Name")
+  String name;
+
+  @Label("Destination")
+  String destination;
+
+  @Label("To Disk")
+  boolean disk;
+
+  @Label("Max Age")
+  @Timespan("MILLISECONDS")
+  long maxAge;
+
+  @Label("Flush Interval")
+  @Timespan("MILLISECONDS")
+  long flushInterval;
+
+  @Label("Max Size")
+  @DataAmount("BYTES")
+  long maxSize;
+
+  @Label("Start Time")
+  @Timestamp("MILLISECONDS_SINCE_EPOCH")
+  long recordingStart;
+
+  @Label("Recording Duration")
+  @Timespan("MILLISECONDS")
+  long recordingDuration;
+}
+
+@Name("jdk.ActiveSetting")
+@Label("Recording Setting")
+@Category("Flight Recorder")
+class ActiveSetting extends jdk.jfr.Event {
+  @Label("Start Time")
+  @Timestamp("TICKS")
+  long startTime;
+
+  @Label("Duration")
+  @Timespan("TICKS")
+  long duration;
+
+  @Label("Event Thread")
+  @Description("Thread in which event was committed in")
+  Thread eventThread;
+
+  @Label("Stack Trace")
+  @Description("Stack Trace starting from the method the event was committed in")
+  StackTrace stackTrace;
+
+  @Label("Event Id")
+  long id;
+
+  @Label("Setting Name")
+  String name;
+
+  @Label("Setting Value")
+  String value;
+}
+
+@Name("jdk.DataLoss")
+@Category("Flight Recorder")
+@Label("Data Loss")
+@Description("Data could not be copied out from a buffer, typically because of contention")
+class DataLoss extends jdk.jfr.Event {
+  @Label("Start Time")
+  @Timestamp("TICKS")
+  long startTime;
+
+  @Unsigned
+  @DataAmount("BYTES")
+  @Label("Amount")
+  @Description("Amount lost data")
+  long amount;
+
+  @Unsigned
+  @DataAmount("BYTES")
+  @Label("Total")
+  @Description("Total lost amount for thread")
+  long total;
+}
+
+@Name("jdk.FileForce")
+@Label("File Force")
+@Category("Java Application")
+@Description("Force updates to be written to file")
+class FileForce extends jdk.jfr.Event {
+  @Label("Start Time")
+  @Timestamp("TICKS")
+  long startTime;
+
+  @Label("Duration")
+  @Timespan("TICKS")
+  long duration;
+
+  @Label("Event Thread")
+  @Description("Thread in which event was committed in")
+  Thread eventThread;
+
+  @Label("Stack Trace")
+  @Description("Stack Trace starting from the method the event was committed in")
+  StackTrace stackTrace;
+
+  @Label("Path")
+  @Description("Full path of the file")
+  String path;
+
+  @Label("Update Metadata")
+  @Description("Whether the file metadata is updated")
+  boolean metaData;
+}
+
+@Name("jdk.FileWrite")
+@Label("File Write")
+@Category("Java Application")
+@Description("Writing data to a file")
+class FileWrite extends jdk.jfr.Event {
+  @Label("Start Time")
+  @Timestamp("TICKS")
+  long startTime;
+
+  @Label("Duration")
+  @Timespan("TICKS")
+  long duration;
+
+  @Label("Event Thread")
+  @Description("Thread in which event was committed in")
+  Thread eventThread;
+
+  @Label("Stack Trace")
+  @Description("Stack Trace starting from the method the event was committed in")
+  StackTrace stackTrace;
+
+  @Label("Path")
+  @Description("Full path of the file, or N/A if a file descriptor was used to create the stream, for example System.out and System.err")
+  String path;
+
+  @Label("Bytes Written")
+  @Description("Number of bytes written to the file")
+  @DataAmount("BYTES")
+  long bytesWritten;
+}
+
+@Name("jdk.GCPhasePause")
+@Category({"Java Virtual Machine", "GC", "Phases"})
+@Label("GC Phase Pause")
+class GCPhasePause extends jdk.jfr.Event {
+  @Label("Start Time")
+  @Timestamp("TICKS")
+  long startTime;
+
+  @Label("Duration")
+  @Timespan("TICKS")
+  long duration;
+
+  @Label("Event Thread")
+  @Description("Thread in which event was committed in")
+  Thread eventThread;
+
+  @Unsigned
+  @GcId
+  @Label("GC Identifier")
+  int gcId;
+
+  @Label("Name")
+  String name;
+}
+
