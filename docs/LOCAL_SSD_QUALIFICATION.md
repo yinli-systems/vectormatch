@@ -54,6 +54,8 @@ The preflight checks:
 
 The report deliberately always sets `strictPhysicalDurabilityProven: false`, even on a positive candidate. Models and block metadata may be virtualized or mislabeled. NVMe transport, nonrotational status and ext4/XFS do **not** themselves prove local physical placement.
 
+**Actual RunPod host preflight, 2026-10-24:** executing this checker against the existing persistent evidence directory under `/workspace` returned **exit code 2**, `candidateForDiskBackedExperiment=false`, and `strictPhysicalDurabilityProven=false`. The effective mount was `/workspace`, type **`fuse`**, with an **MFS network-volume source**, major:minor `0:46`. Although it reported ample free capacity and a read-write mount, the direct block-device, ext4/XFS and physical locality gates correctly rejected it. No new paid Pod or physical disk was provisioned by this validation.
+
 ## Additional acceptance gates for strong durability claims
 
 1. Obtain **provider/operator attestation** that the exact device is local non-network SSD, including instance type, disk model/serial when safely exposed, topology and ephemerality. The preflight is a consistency check, not a replacement for this evidence.
