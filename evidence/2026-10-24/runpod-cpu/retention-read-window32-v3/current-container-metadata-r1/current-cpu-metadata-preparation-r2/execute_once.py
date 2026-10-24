@@ -1,0 +1,16 @@
+from pathlib import Path
+import json,hashlib,subprocess,shlex,base64,datetime
+R=Path.cwd();B=R/'runtime/cloud/cpu-20261024';P=Path(__file__).resolve().parent;E=B/'current-cpu-metadata-execution-r1'
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+f=json.loads((P/'SOURCE_FROZEN.json').read_text());c=json.loads((P/'metadata-config.json').read_text())
+assert sha(P/'remote_metadata.py')==f['remoteSourceSha256'] and sha(P/'metadata-config.json')==f['configSha256'] and sha(P/'metadata-inputs.tar.gz')==f['bundleSha256']
+assert sha(B/'current-cpu-qualification-r2/stdout.json')==f['newContainerQualificationSha256']
+args=['ssh','-i',str(Path.home()/'.ssh/id_ed25519'),'-o','IdentitiesOnly=yes','-o','BatchMode=yes','-o','ConnectTimeout=12','-o','StrictHostKeyChecking=yes','-o','UserKnownHostsFile=runtime/cloud/cpu-20261024/current-cpu-connection-r1/known_hosts','-p','40184','root@185.226.156.243','python3 -B -c '+shlex.quote((P/'remote_metadata.py').read_text())+' '+shlex.quote(base64.b64encode(json.dumps(c).encode()).decode())]
+E.mkdir(mode=0o700);(E/'REGISTRATION.json').write_text(json.dumps(dict(atUTC=datetime.datetime.now(datetime.timezone.utc).isoformat(),command=args,preparationFreezeSha256=sha(P/'SOURCE_FROZEN.json'),sourceSha256=sha(P/'remote_metadata.py'),configSha256=sha(P/'metadata-config.json'),oneAttemptOnly=True,metadataOnly=True),indent=2)+'\n')
+r=subprocess.run(args,input=(P/'metadata-inputs.tar.gz').read_bytes(),capture_output=True,timeout=120);(E/'ssh.stdout.json').write_bytes(r.stdout);(E/'ssh.stderr').write_bytes(r.stderr);(E/'EXECUTION.json').write_text(json.dumps(dict(exitCode=r.returncode,stdoutSha256=hashlib.sha256(r.stdout).hexdigest(),stderrSha256=hashlib.sha256(r.stderr).hexdigest(),noAutomaticRetry=True),indent=2)+'\n');assert r.returncode==0
+response=json.loads(r.stdout);assert response['passed'];raw=base64.b64decode(response['observationRawBase64'],validate=True);a=json.loads(raw);assert hashlib.sha256(raw).hexdigest()==response['observationSha256'];(E/'actual-linux-observation.json').write_bytes(raw)
+x=response['execution'];assert x['exitCode']==0 and x['strictOwnedPidAbsentAfterWait'] and not x['processIdentityObservationGap'] and x['allInputsUnchanged'] and response['stagedFiles']==c['rows'] and response['registration']['hostname']==c['host']
+local=json.loads((B/'read-window32-local-preparation-r1/metadata-r1/observation.json').read_text());assert a['actualCodeFingerprint']==local['actualCodeFingerprint'] and a['sourceCommit']==local['sourceCommit']
+for w in ['8','32']:assert a['plans'][w]==local['plans']['page32-window'+w]
+assert not a['performanceEvidence'] and a['noDriverOrClusterStarted'] and not a['nativeUdpOrBusinessSessionStarted']
+(E/'SUCCESS.json').write_text(json.dumps(dict(passed=True,atUTC=datetime.datetime.now(datetime.timezone.utc).isoformat(),actualCurrentHostname=c['host'],observationSha256=response['observationSha256'],actualFingerprint=a['actualCodeFingerprint'],allSixFilesUnchanged=True,actualPid=x['ownedParentPid'],actualStartTicks=x['actualProcessIdentity']['startTicks'],normalExit0AndStrictAbsent=True,fixedPage32Window8And32PlansEqualActualLocal=True,metadataOnlyNoBenchmark=True),indent=2)+'\n');print((E/'SUCCESS.json').read_text())

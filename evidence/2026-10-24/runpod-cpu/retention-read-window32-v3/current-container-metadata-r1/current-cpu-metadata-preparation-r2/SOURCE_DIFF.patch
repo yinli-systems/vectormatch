@@ -1,0 +1,15 @@
+--- baseline/remote_metadata.py
++++ remote_metadata.py
+@@ -19,10 +19,10 @@
+     return {'pid':pid,'startTicks':ticks,'commandSha256':hashlib.sha256(raw).hexdigest(),'argv':raw.rstrip(b'\0').split(b'\0'),'actualExecutable':os.readlink(str(p/'exe'))}
+ def encoded_identity(row):return {k:v for k,v in row.items() if k!='argv'}
+ def observe(c):
+-    root=pathlib.Path(c['root']);require(str(root)=='/opt/vectormatch-cpu/preparation/cpu-read-window32-release-metadata-r1','Wrong metadata root')
++    root=pathlib.Path(c['root']);require(str(root)=='/opt/vectormatch-cpu/tools/cpu-read-window32-current-container-metadata-r1','Wrong metadata root')
+     require(platform.system()=='Linux' and platform.machine()=='x86_64' and os.geteuid()==0,'Exact Linux/x86_64/root required')
+     for parent in root.parents:require(parent.is_dir() and not parent.is_symlink(),'Unsafe metadata parent')
+-    require(socket.gethostname()==c['host']=='ed6c0673f5cb','Wrong CPU host');require(not root.exists() and not root.is_symlink(),'Metadata root already exists; preserve, do not resume')
++    require(socket.gethostname()==c['host']=='33ace3d92505','Wrong CPU host');require(not root.exists() and not root.is_symlink(),'Metadata root already exists; preserve, do not resume')
+     require(not pathlib.Path('/opt/vectormatch-cpu/preparation/cpu-read-window32-cloud-abab-r1').exists(),'Canonical benchmark preparation unexpectedly exists')
+     free=shutil.disk_usage(root.parent).free;require(free>1024**3+sum(r['bytes'] for r in c['rows'].values())+64*1024**2,'Metadata free-space floor')
+     java=pathlib.Path(c['java']);release=java.parent.parent/'release'
