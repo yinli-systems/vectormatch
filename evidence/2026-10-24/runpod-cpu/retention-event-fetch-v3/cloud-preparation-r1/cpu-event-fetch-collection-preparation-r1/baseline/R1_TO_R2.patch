@@ -1,0 +1,97 @@
+--- frozen-r1/audit_native_artifacts.py
++++ corrected-r2/audit_native_artifacts.py
+@@ -6,6 +6,12 @@
+ from shutdown_warning import classify as classify_node_log
+ import cpu_owner_poll_abab as controller
+ from owner_bundle import verify as verify_owner_bundle
++
++def driver_only_idle_report(report):
++    result=dict(report)
++    result['historicalValidatorScope']=result.pop('scope')
++    result['scope']='Actual node and owner MediaDriver strategies only; load-owner polling is attested separately'
++    return result
+ 
+ def audit(a,c,release):
+     controller.configure_arm(c['arm'])
+@@ -52,8 +58,8 @@
+     reports=stop['reports'];require(len(reports)==3 and {r['role'] for r in reports}=={'window-%d-node-%d'%(v,n) for v in WINDOWS for n in range(3)} and all(r['stopped'] for r in reports),'Three actual node stop reports required')
+     parent=json.loads((job/'identity-observation-000.json').read_text());launch=json.loads((job/'parent-launch-handle.json').read_text());require(parent['role']=='pilot-parent' and parent['origin']=='independent-direct-child-proc','Actual parent exec observation')
+     record=parent['kernelIdentity'];require(record['pid']==launch['pid'] and record['arguments']==launch['expectedArguments'] and record['commandSha256']==launch['expectedCommandSha256'],'Parent launch/kernel binding')
+-    controller=(job/'controller-source.py').read_text()
+-    for fragment in ['require(parent.returncode == 0','parent.wait(timeout=',"require(base.matching_identity(row['identity']) is None"]:require(fragment in controller,'Normal parent exit/absence source basis missing')
++    controller_text=(job/'controller-source.py').read_text()
++    for fragment in ['require(parent.returncode == 0','parent.wait(timeout=',"require(base.matching_identity(row['identity']) is None"]:require(fragment in controller_text,'Normal parent exit/absence source basis missing')
+     records=reports+[{'role':'pilot-parent','record':record}];identities=[];pair=prep+'/arm-'+str(c['arm'])+'/idle-arm'
+     for r in records:
+         rec=r['record'];args=rec['arguments'];require(hashlib.sha256(b''.join(x.encode()+b'\0' for x in args)).hexdigest()==rec['commandSha256'],'Actual argv SHA')
+@@ -84,7 +90,7 @@
+     from idle_attestation import validate_idle_artifacts
+     from cpu_owner_poll_abab import load_base
+     registry=types.SimpleNamespace(records={(rec['pid'],rec['startTicks']):{'role':rec['role'],'identity':rec} for rec in identities})
+-    idle=validate_idle_artifacts(load_base(),job/'idle-arm',registry,c['maximumParkNs'])
++    idle=driver_only_idle_report(validate_idle_artifacts(load_base(),job/'idle-arm',registry,c['maximumParkNs']))
+     identity_map={v['role']:v for v in identities}
+     owner_actual=verify_owner_bundle(c,release,job/'idle-arm',lambda p:json.loads(p.read_text()),identity_map)
+     final=json.loads((job/'idle-arm/final-position.json').read_text()); log_reports=[]
+--- frozen-r1/collect_and_audit.py
++++ corrected-r2/collect_and_audit.py
+@@ -14,6 +14,7 @@
+ 
+ HERE = Path(__file__).resolve().parent
+ REMOTE_SHA = '0922e32bee55b1e47503880e763fcf112626649d31f037bb62e5c4ceb588bb73'
++CLOSE_SOURCE_SHA = '852546a1525b015df1baf38bb43d16e6ab68d2717fb57be648775de7bae0f51e'
+ 
+ 
+ def checked_config(path, expected):
+@@ -38,6 +39,7 @@
+               'Root must independently confirm this exact controller and all4 owned JVMs closed')
+     for key in ['inspectionSha256', 'executedSourceSha256']:
+         b.require(b.hexsha(x[key]), 'Root closure inspection source/result SHA required')
++    b.require(x['executedSourceSha256'] == CLOSE_SOURCE_SHA, 'Exact frozen strictPIDabsence close852546 source required')
+     return x
+ 
+ 
+--- frozen-r1/test_owner_collection.py
++++ corrected-r2/test_owner_collection.py
+@@ -11,6 +11,7 @@
+ import closed_bindings as bindings
+ import frozen_parser
+ import audit_raw
++import audit_native_artifacts as native
+ import owner_bundle
+ import finalize_local_collection as finalize
+ 
+@@ -150,11 +151,32 @@
+             x=copy.deepcopy(v);x[path][key]=value
+             with self.subTest(key=key),self.assertRaises((AssertionError,KeyError)):finalize.strict_long_reports(x,'source','code',100000)
+         with self.assertRaises(AssertionError):finalize.strict_long_reports(v,'source','code',1000000)
++    def test_native_audit_entry_dispatches_to_actual_controller_before_io(self):
++        class DispatchReached(Exception):pass
++        def configure(arm):
++            self.assertEqual(arm,1);raise DispatchReached()
++        with patch.object(native,'controller',types.SimpleNamespace(configure_arm=configure)):
++            with self.assertRaises(DispatchReached):native.audit(object(),{'arm':1},{})
++    def test_driver_report_preserves_historical_scope_without_repeating_it_as_current(self):
++        report={'passed':True,'scope':'owner loop remains unchanged at up to1ms','actualFactoryCreations':22}
++        result=native.driver_only_idle_report(report)
++        self.assertEqual(report['scope'],result['historicalValidatorScope']);self.assertEqual(22,result['actualFactoryCreations'])
++        self.assertEqual('owner loop remains unchanged at up to1ms',report['scope'])
++        self.assertIn('MediaDriver strategies only',result['scope']);self.assertNotIn('1ms',result['scope'])
++    def test_closed_receipt_rejects_other_valid_hex_source_not_only_malformed_sha(self):
++        with tempfile.TemporaryDirectory()as t:
++            path=Path(t).resolve()/'closed.json';cfg=dict(arm=1,ownerPollMaximumParkNs=1000000,serverDriverMaximumParkNs=100000,releaseSha256='a'*64,remotePrep=str(controller.PREP));release=dict(controllerSha256='b'*64)
++            receipt=dict(schemaVersion=2,scope='ROOT_VERIFIED_CLOSED_CPU_OWNER_POLL_CONTROLLER',rootVerified=True,arm=1,ownerPollMaximumParkNs=1000000,serverDriverMaximumParkNs=100000,
++                frozenReleaseSha256='a'*64,controllerSha256='b'*64,job=str(controller.PREP)+'/arm-1',controllerIdentityGone=True,allOwnedStopped=True,inspectionSha256='c'*64,executedSourceSha256=runner.CLOSE_SOURCE_SHA)
++            write(path,receipt);self.assertIsNotNone(runner.closed_proof(path,c.sha(path),cfg,release))
++            for wrong in ('f'*64,'d'*64,'852546a1525b015df1baf38bb43d16e6ab68d2717fb57be648775de7bae0f51f'):
++                bad=dict(receipt,executedSourceSha256=wrong);write(path,bad)
++                with self.subTest(wrong=wrong),self.assertRaises(AssertionError):runner.closed_proof(path,c.sha(path),cfg,release)
+     def test_closed_receipt_exact_owner_driver_scope_and_source(self):
+         with tempfile.TemporaryDirectory()as t:
+             p=Path(t).resolve()/'closed.json';cfg=dict(arm=2,ownerPollMaximumParkNs=100000,serverDriverMaximumParkNs=100000,releaseSha256='a'*64,remotePrep=str(controller.PREP));release=dict(controllerSha256='b'*64)
+             x=dict(schemaVersion=2,scope='ROOT_VERIFIED_CLOSED_CPU_OWNER_POLL_CONTROLLER',rootVerified=True,arm=2,ownerPollMaximumParkNs=100000,serverDriverMaximumParkNs=100000,
+-                frozenReleaseSha256='a'*64,controllerSha256='b'*64,job=str(controller.PREP)+'/arm-2',controllerIdentityGone=True,allOwnedStopped=True,inspectionSha256='c'*64,executedSourceSha256='d'*64)
++                frozenReleaseSha256='a'*64,controllerSha256='b'*64,job=str(controller.PREP)+'/arm-2',controllerIdentityGone=True,allOwnedStopped=True,inspectionSha256='c'*64,executedSourceSha256=runner.CLOSE_SOURCE_SHA)
+             write(p,x);runner.closed_proof(p,c.sha(p),cfg,release)
+             for key,value in [('scope','ROOT_VERIFIED_CLOSED_CPU_LONG_CUTS_CONTROLLER'),('ownerPollMaximumParkNs',1000000),('serverDriverMaximumParkNs',1000000),('allOwnedStopped',False),('controllerIdentityGone',False),('executedSourceSha256',''),('arm',1)]:
+                 y=copy.deepcopy(x);y[key]=value;write(p,y)

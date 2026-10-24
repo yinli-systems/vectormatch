@@ -1,0 +1,7 @@
+New source-only event-page campaign candidate. No SSH/JVM/Gradle/native/Git or actual raw reads. Existing owner controller and strict ownership/protection/stop/archive sources remain unchanged.
+
+Fixed LONG33792@500, read8/cap4/chunk6144, Fetch16/32/16/32, explicit parent owner1ms and server/driver100us, leader0 term0/sync2/42000. Every arm is a separate manual invocation under the SAME new87a7 four-JAR distribution and fresh lineage. Both actual Plan containers are pinned; all common operational storage/raw/offer caps are identical.
+
+No new-artifact native business qualification exists before arm1. Arm1 is explicitly the first-cloud functional qualification attempt, requiring all original raw wires/canonical/reference/three snapshots/strict scheduler/full closed archive plus independent root review and private push before arm2. Controller exit0 alone cannot qualify. Subsequent arms require the immediately preceding same-release full gate and private-push receipt. Failure retains stopped originals and prevents next-arm progression.
+
+Default preflight only; root alone can create a ready release and execute. Unknown root/source-unit review refs stay empty. No automatic next arm, cleanup, retry, page substitution or resource creation. Strict 2GiB raw/2.5GiB allocated bounds,1GiB floor, pidfd identity, protected57/PG989 baseline and normal four-JVM stop remain. Actual free space must pass per-arm reserve; this draft does not authorize cleanup.

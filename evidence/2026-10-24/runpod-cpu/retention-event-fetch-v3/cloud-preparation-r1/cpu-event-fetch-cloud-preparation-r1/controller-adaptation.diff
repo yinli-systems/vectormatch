@@ -1,0 +1,538 @@
+--- baseline/cpu_owner_poll_abab.py
++++ cpu_event_fetch_abab.py
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""One explicit owner-poll LONG arm. Default readonly preflight; manual ABAB with strict previous collection/private-push gate; no retry/new resources."""
++"""One explicit event-fetch LONG arm. Default readonly preflight; manual ABAB with strict previous collection/private-push gate; no retry/new resources."""
+ import argparse
+ import hashlib
+ import importlib.util
+@@ -22,7 +22,7 @@
+ BASE_SHA = '8eeb10c14d6e5a9aa3895fbb674fc5c59ceac7fd3b15a6e3e11da325f444ab87'
+ HOST = 'ed6c0673f5cb'
+ ROOT = Path('/opt/vectormatch-cpu')
+-PREP = ROOT / 'preparation/cpu-owner-poll-cloud-abab-r1'
++PREP = ROOT / 'preparation/cpu-event-fetch-cloud-abab-r1'
+ ARM = 1
+ JOB = PREP / 'arm-1'
+ PAIR = JOB / 'idle-arm'
+@@ -30,25 +30,15 @@
+ WINDOWS = [8]
+ MAXIMUM_PARK_NS = 100000
+ PROPERTY = 'vectormatch.retention.idleMaxParkNs'
+-SOURCE_COMMIT = '977197616ade0283174f2ea6ddfaa700547f6d15'
+-CODE_FINGERPRINT = '23586ccc5b9ad88aef2eba48a4eeceb15e64fdc62142bd2971c23e028724b884'
++SOURCE_COMMIT = 'd92301d3058acc83cb85d5bc5b4fd2e3f0ed4df8'
++CODE_FINGERPRINT = '87a7ccd092f4d3c890bf8cc8bd7c6ffcd18900838699cd2b873fd1931cddb6aa'
+ OWNER_PROPERTY = 'vectormatch.retention.ownerPollMaxParkNs'
+-OWNER_PARK_ORDER = (1000000, 100000, 1000000, 100000)
++OWNER_PARK_ORDER = (1000000, 1000000, 1000000, 1000000)
++EVENT_PAGE_ORDER = (16, 32, 16, 32)
+ PRIOR_GATE_SHA = None
+ LOG_CLASSIFIER_SHA = 'bb8725c5bc560cc9a72c80a5c5d445373edbd0da91f2cccf41eb3550569319a9'
+-PREREQUISITE_PINS = {
+-    'linuxMetadataObservation': {'bytes': 6341, 'sha256': 'ea339f6080d0d8fa52f544d1cddddf899487f342bb6e128329b32d8ee34662a2'},
+-    'linuxMetadataReceipt': {'bytes': 4914, 'sha256': '6809473e64dd79de9d45ae37e8c6bdd3bbbf163091224857d2269c4002cd3fe2'},
+-}
+-LONG_PARSER_BASELINE_ROWS = {'archive_closure.py': {'bytes': 2513, 'sha256': '02fc1951ae0064719d970a03df02a3a3906de5aae189691646fb5d7b183d8e14'},
+- 'audit_raw.py': {'bytes': 46632, 'sha256': '9d6c3b8b899aaf626bd7542baac3da869279767af211fffcb44c90f66739e139'},
+- 'common.py': {'bytes': 9623, 'sha256': '54d981300381f802c8db8247859e00b3f45cea806b59dd40d4f5eeed05a85783'},
+- 'idle_inventory.py': {'bytes': 4146, 'sha256': 'f220b55e81e5dc1f3211c9473519b5d08ed4b152cac9ef25679883e510df8ec0'},
+- 'read_phase_audit.py': {'bytes': 10886, 'sha256': 'e2ecece320bd15afc934f5a925a8e272bc74f76cd89581de839e3d078f78f44a'},
+- 'setup_audit.py': {'bytes': 4019, 'sha256': '3d896be265ca0fc72068bb3cace047e6fa772d859e0ab51dc7229c840b9d70b2'},
+- 'test_long_contract.py': {'bytes': 10105, 'sha256': '0a160ce01737fbe479744cd0f14cfce85ba456366637b1d075084c20fa2afe3f'},
+- 'test_phase_baseline.py': {'bytes': 8519, 'sha256': '0ca11d5411db573bded7f440d27ffe95047a6906984e1a79cb6957d59c8b79d9'},
+- 'workload_contract.py': {'bytes': 4019, 'sha256': '1e420087e443e8f78df3199427d65358bd3a512a05961ea545028646fbfbaaf0'}}
++PREREQUISITE_PINS = {'linuxMetadataObservation': {'bytes': 9725, 'sha256': 'd80b1dc33cb916060a9fcb8268b207ab361b4edc2bbe28772d35ae97784c6370'}, 'linuxMetadataReceipt': {'bytes': 4970, 'sha256': '005649f54e4e371e07aab8ef8fc515d2be80f8ebab764cfdca10e81711381e5c'}}
++PARSER_FREEZE_SHA = "468db7bdb5b2fcf29dd2fab975cef9b3dbe7ce8f9ed73d326d65a5cd74488d8b"
+ FIXED_PORTS = 42000
+ 
+ def configure_arm(number):
+@@ -96,14 +86,19 @@
+     return isinstance(value, str) and len(value) == 64 and all(c in '0123456789abcdef' for c in value)
+ 
+ 
+-RELEASE_KEYS = {'profileFingerprint', 'javaExecutableSha256', 'java', 'configuration', 'releaseReady', 'jdkReleaseSha256', 'schemaVersion', 'status', 'nodeClassPath', 'arms', 'controllerSha256', 'ownerPollValidatorSha256', 'evidenceReferences', 'classPath', 'artifacts', 'codeFingerprint', 'host', 'requiredEvidenceBeforeRootFreezes', 'parentJvmArguments', 'sourceCommit', 'protectedOriginalState', 'derivedPlan', 'profileId', 'logClassification'}
+-PLAN_KEYS = {'requestedReadWindow', 'maxReadOnlyInFlight', 'commonReadWindowEnvelope', 'readOnlyStagingBytes', 'readOnlyFailureTraceReserveBytes', 'eventFetchCount', 'witness', 'archiveChunkBytes', 'maximumEncodedChunkReplyBytes', 'maximumWriterPayloadBytes', 'maximumEventFetchRpcs', 'maximumArchiveChunkRpcs', 'selectedMaximumArchiveChunkRpcs', 'noRetryRawTraceBytes', 'maximumBusinessFrames', 'batchCap', 'largestReplyBytes', 'commonChunkEnvelope', 'maximumArchivePayloadBytes', 'maximumSupportedArchiveChunkBytes', 'maximumLogicalMaintenanceRpcs', 'maximumPhysicalOffersPerRpc', 'maximumAllocatedGrowthBytes', 'maximumWriterPayloadFiles', 'nativeAllocatedReserveBytes', 'scope', 'maximumJournalRecords', 'arrivals', 'admitted', 'maximumEventPayloadBytes', 'maximumWriterFilesIncludingReceipts', 'archiveHeaderBytes', 'admissionRejections', 'maximumEvents', 'egressAttestationTraceReserveBytes', 'maximumArchiveEntryBytes', 'maximumNegativeOfferAttempts', 'maximumRawTraceBytes', 'worstFourOfferRawTraceBytes', 'selectedMaximumLogicalMaintenanceRpcs', 'minimumFreeRuntimeBytes', 'maximumExtraPositiveOffers', 'maximumJournalBytes', 'maximumMaintenanceCycles'}
++RELEASE_KEYS = {'profileFingerprint', 'javaExecutableSha256', 'java', 'configuration', 'releaseReady', 'jdkReleaseSha256', 'schemaVersion', 'status', 'nodeClassPath', 'arms', 'controllerSha256', 'ownerPollValidatorSha256', 'evidenceReferences', 'classPath', 'artifacts', 'codeFingerprint', 'host', 'requiredEvidenceBeforeRootFreezes', 'parentJvmArguments', 'sourceCommit', 'protectedOriginalState', 'derivedPlan', 'derivedPlans', 'profileId', 'logClassification'}
+ 
+ def selected_park_ns():
+     return MAXIMUM_PARK_NS
+ 
+ def selected_owner_park_ns():
+     return OWNER_PARK_ORDER[ARM-1]
++
++def selected_event_page():
++    return EVENT_PAGE_ORDER[ARM-1]
++
++def selected_plan(release):
++    return release['derivedPlans'][str(selected_event_page())]
+ 
+ 
+ def selection(maximum=None):
+@@ -117,7 +112,7 @@
+             'archiveChunkBytes': 6144, 'readWindow': 8, 'maximumRequestedParkNs': MAXIMUM_PARK_NS,
+             'workloadPreset': 'long-cuts-33792-v1', 'exposureNs': 67584000000,
+             'fullCommandCuts': 11, 'trailingCommands': 3, 'equivalentFullLoadCutNumbers': list(range(2,12)),
+-            'eventFetchCount': 16, 'appointedLeader': 0, 'sync': 2,
++            'eventFetchCountOrder': list(EVENT_PAGE_ORDER), 'commonEventFetchEnvelope': True, 'appointedLeader': 0, 'sync': 2,
+             'workers': 128, 'queuePerWorker': 64, 'preparedArchiveCache': True,
+             'fixedPortsNoFallback': True, 'fixedBasePorts': FIXED_PORTS,
+             'commonChunkEnvelope': False, 'commonReadWindowEnvelope': True, 'mtu': 1248,
+@@ -131,6 +126,39 @@
+             'phaseProof': 'node-log-order-only', 'afterSigtermWallTimeProven': False,
+             'eventCanInitiateElection': True, 'originalFailedGatesRetained': True}
+ 
++
++
++def qualification_policy():
++    return dict(schemaVersion=1,scope='EVENT_FETCH_FIRST_CLOUD_ARM_FUNCTIONAL_QUALIFICATION_POLICY',
++        sourceCommit=SOURCE_COMMIT,codeFingerprint=CODE_FINGERPRINT,configurationOnly=True,
++        newNativeBusinessQualifiedBeforeArm1=False,firstCloudArm=1,firstCloudEventFetchCount=16,
++        continuationRequiresIndependentFullRawCanonicalThreeSnapshots=True,
++        continuationRequiresSameNewArtifact=True,continuationRequiresStrictScheduler=True,
++        continuationRequiresFullArchiveAndPrivatePush=True,noLocalPerformanceClaim=True)
++
++def validate_common_plans(release):
++    fixture=HERE/'fixtures/actual-linux-distribution-observation.json'
++    require(digest(fixture)==PREREQUISITE_PINS['linuxMetadataObservation']['sha256'],'Actual Linux Plan source fixture differs')
++    observed=json.loads(fixture.read_text())
++    require(release['derivedPlans']=={key:row['plan'] for key,row in observed['plans'].items()}
++        and release['derivedPlan']==observed['commonPlanObservation'],'Exact two selected Plans/common bound required')
++    allowed={'eventFetchCount','selectedMaximumLogicalMaintenanceRpcs','selectedMaximumEventFetchRpcs'}
++    for page in (16,32):
++        p=release['derivedPlans'][str(page)]
++        require({k:v for k,v in p.items() if k not in allowed}==release['derivedPlan'],'Common envelope must be exactly equal')
++        require(p['eventFetchCount']==page and p['commonEventFetchEnvelope'] is True and p['arrivals']==33792
++            and p['batchCap']==4 and p['archiveChunkBytes']==6144 and p['requestedReadWindow']==8 and p['maxReadOnlyInFlight']==8
++            and p['maximumPhysicalOffersPerRpc']==4 and p['maximumMaintenanceCycles']==12 and p['maximumEvents']==67587
++            and p['maximumJournalRecords']==96 and p['maximumJournalBytes']==117792
++            and p['maximumWriterPayloadFiles']==24 and p['maximumWriterFilesIncludingReceipts']==48
++            and p['maximumRawTraceBytes']==185514924 and p['maximumAllocatedGrowthBytes']==757122377
++            and p['minimumFreeRuntimeBytes']==GIB and p['maximumEncodedChunkReplyBytes']==6919
++            and 6763<=p['largestReplyBytes']<=6919 and p['admitted'] is True and p['admissionRejections']==[], 'Unchanged admitted finite bounds required')
++        require(p['selectedMaximumEventFetchRpcs']==(4225 if page==16 else 2113)
++            and p['selectedMaximumLogicalMaintenanceRpcs']==(7243 if page==16 else 5131)
++            and p['maximumEventFetchRpcs']==4225 and p['maximumLogicalMaintenanceRpcs']==7243
++            and p['selectedMaximumArchiveChunkRpcs']==p['maximumArchiveChunkRpcs']==2982,'Selected event RPC bound/common union differs')
++    return True
+ 
+ def validate_release(release):
+     require(isinstance(release, dict) and set(release) in [RELEASE_KEYS, RELEASE_KEYS | {'rootReview'}], 'Unknown or missing frozen release key')
+@@ -139,7 +167,7 @@
+     require(release['host'] == HOST and release['arms'] == {str(n): {
+         'job': str(PREP / ('arm-' + str(n))),
+         'armRoot': str(PREP / ('arm-' + str(n)) / 'idle-arm'),
+-        'ownerPollMaximumParkNs': OWNER_PARK_ORDER[n-1], 'serverDriverMaximumParkNs': MAXIMUM_PARK_NS} for n in range(1,5)},
++        'ownerPollMaximumParkNs': OWNER_PARK_ORDER[n-1], 'serverDriverMaximumParkNs': MAXIMUM_PARK_NS, 'eventFetchCount': EVENT_PAGE_ORDER[n-1]} for n in range(1,5)},
+         'Fixed host/four manual owner-poll arm roots differ')
+     require(release['sourceCommit'] == SOURCE_COMMIT, 'Exact reviewed long-cut feature commit required')
+     for field in ['codeFingerprint', 'profileFingerprint', 'javaExecutableSha256', 'jdkReleaseSha256', 'controllerSha256', 'ownerPollValidatorSha256']:
+@@ -161,8 +189,8 @@
+                 and type(row['bytes']) is int and 0 < row['bytes'] <= 32 * 1024**2
+                 and hex_digest(row['sha256']), 'Unsafe/unfrozen artifact row')
+     names = ['cluster-0.1.0-SNAPSHOT.jar','core-0.1.0-SNAPSHOT.jar','aeron-all-1.53.3.jar','agrona-2.6.1.jar']
+-    expected = {'cluster-0.1.0-SNAPSHOT.jar': (572783,'69d732599f79cc19389adf9c02fecedb08185dfc3eb21b66a240e03ba5852844'),
+-                'core-0.1.0-SNAPSHOT.jar': (81916,'98ce523c71bb9c5a5f53a6989104106b5a189bd0646f03a6499844a4f24ae264'),
++    expected = {'cluster-0.1.0-SNAPSHOT.jar': (576393,'d69b2441c5809af714e65a55b00d968a9e88170c440da76818c78e3052e644dc'),
++                'core-0.1.0-SNAPSHOT.jar': (81916,'3355c405ae4ee7fc9797607ec4301f21767de70b74812f4f54f12888652846b1'),
+                 'aeron-all-1.53.3.jar': (3544128,'4c6c8a5014a2b67424051170392a005daa9a998ac963302d2819d0f3db749ef2'),
+                 'agrona-2.6.1.jar': (491990,'84c07eb02695c06bfda3d6c3a20c1984e3ff1bbd617b2f8e678140baf973fa28')}
+     require(release['classPath'] == [str(artifact_root/n) for n in names]
+@@ -172,41 +200,10 @@
+     require(release['ownerPollValidatorSha256'] == '868b1f426906e16602e2ad9a0e7c7bba33bb5e80ea950af171a9903ac5dc4fdd'
+             and digest(HERE/'owner_poll_attestation.py') == release['ownerPollValidatorSha256'],
+             'Unique frozen actual owner validator source differs')
+-    plan = release['derivedPlan']
+-    for arm in ['8']:
+-        require(isinstance(plan, dict) and set(plan) == PLAN_KEYS, 'Unknown or missing codec-derived plan key')
+-        require(plan['arrivals'] == 33792 and plan['batchCap'] == 4 and plan['archiveChunkBytes'] == 6144
+-                and plan['requestedReadWindow'] == int(arm) and plan['maxReadOnlyInFlight'] == 8
+-                and plan['commonReadWindowEnvelope'] is True and plan['commonChunkEnvelope'] is False
+-                and plan['eventFetchCount'] == 16 and plan['admitted'] is True
+-                and plan['admissionRejections'] == [] and plan['minimumFreeRuntimeBytes'] == GIB,
+-                'Actual admitted common read-window plan differs')
+-        require(plan['maximumPhysicalOffersPerRpc'] == 4 and plan['maximumBusinessFrames'] == 33792
+-                and plan['maximumEvents'] == 67587 and plan['maximumMaintenanceCycles'] == 12
+-                and plan['maximumWriterPayloadFiles'] == 24 and plan['maximumWriterFilesIncludingReceipts'] == 48
+-                and plan['maximumJournalRecords'] == 96 and plan['maximumJournalBytes'] == 117792
+-                and type(plan['selectedMaximumArchiveChunkRpcs']) is int and plan['selectedMaximumArchiveChunkRpcs'] > 0
+-                and plan['selectedMaximumLogicalMaintenanceRpcs'] == plan['selectedMaximumArchiveChunkRpcs'] + plan['maximumEventFetchRpcs'] + 3 * plan['maximumMaintenanceCycles']
+-                and plan['maximumArchiveChunkRpcs'] == plan['selectedMaximumArchiveChunkRpcs']
+-                and plan['maximumLogicalMaintenanceRpcs'] == plan['selectedMaximumLogicalMaintenanceRpcs'],
+-                'Common read-window RPC/control finite plan differs')
+-        require(type(plan['maximumAllocatedGrowthBytes']) is int and 0 < plan['maximumAllocatedGrowthBytes'] <= 5 * GIB // 2
+-                and type(plan['maximumRawTraceBytes']) is int and 0 < plan['maximumRawTraceBytes'] <= 2 * GIB,
+-                'Hard 2GiB raw / 2.5GiB growth cap required')
+-        require(type(plan['readOnlyStagingBytes']) is int and plan['readOnlyStagingBytes'] > 0
+-                and type(plan['readOnlyFailureTraceReserveBytes']) is int and plan['readOnlyFailureTraceReserveBytes'] > 0,
+-                'Shared eight-slot staging/failure-original trace reserves required')
+-        require(plan['maximumSupportedArchiveChunkBytes'] == 6144 and plan['maximumEncodedChunkReplyBytes'] == 6919
+-                and type(plan['largestReplyBytes']) is int and 6727 <= plan['largestReplyBytes'] <= 8192,
+-                'Actual codec-derived supported upper reply bound required')
+-        # Prospective codec bound may include a full 64-byte counter hash while the workload uses an empty hash.
+-        # It is an upper bound: no runtime reply is required to reach it.
+-    require(release['codeFingerprint'] == CODE_FINGERPRINT, 'Exact actual long distribution fingerprint required')
+-    require(plan['maximumLogicalMaintenanceRpcs'] == 7243 and plan['maximumArchiveChunkRpcs'] == 2982
+-            and plan['maximumEventFetchRpcs'] == 4225 and plan['maximumRawTraceBytes'] == 185514924
+-            and plan['maximumAllocatedGrowthBytes'] == 757122377, 'Exact actual long Plan differs')
++    validate_common_plans(release)
++    require(release['codeFingerprint'] == CODE_FINGERPRINT, 'Exact actual new event-fetch fingerprint required')
+     references = release['evidenceReferences']
+-    require(isinstance(references, dict) and set(references) == {'ownerPollNativeAudit','ownerPollRawParserFreeze','linuxMetadataObservation','linuxMetadataReceipt','rootEvidenceReview'}, 'Long proof references are incomplete')
++    require(isinstance(references, dict) and set(references) == {'campaignQualificationPolicy','eventFetchRawParserFreeze','linuxMetadataObservation','linuxMetadataReceipt','rootEvidenceReview'}, 'Long proof references are incomplete')
+     for key, row in references.items():
+         require(set(row) == {'path','bytes','sha256'} and row['path'] == str(PREP / ('release/proofs/' + key + '.json'))
+                 and type(row['bytes']) is int and 0 < row['bytes'] <= 1024**2 and hex_digest(row['sha256']), 'Actual pending prerequisite not frozen: ' + key)
+@@ -223,7 +220,7 @@
+ 
+ def parent_argv(release):
+     return [release['java'], '-D' + PROPERTY + '=' + str(selected_park_ns()), '-D' + OWNER_PROPERTY + '=' + str(selected_owner_park_ns())] + release['parentJvmArguments'] + ['-cp', ':'.join(release['classPath']),
+-        MAIN, str(PAIR), 'idle-window8-long-cuts', str(FIXED_PORTS)]
++        MAIN, str(PAIR), 'event-fetch-page-long-cuts', str(selected_event_page()), str(FIXED_PORTS)]
+ 
+ 
+ def node_argv(release, cap, member, registration):
+@@ -238,7 +235,7 @@
+ def validate_registration(release, cap, registration):
+     require(registration['arrivals'] == 33792 and registration['rate'] == 500
+             and registration['batchCap'] == 4 and registration['archiveChunkBytes'] == 6144 and registration['readWindow'] == cap
+-            and registration['eventFetchCount'] == 16 and registration['commonChunkEnvelope'] is False and registration['commonReadWindowEnvelope'] is True and registration['appointedLeader'] == 0
++            and registration['eventFetchCount'] == selected_event_page() and registration.get('commonEventFetchEnvelope') is True and registration['commonChunkEnvelope'] is False and registration['commonReadWindowEnvelope'] is True and registration['appointedLeader'] == 0
+             and registration['sync'] == 2 and registration['profileSha256'] == release['profileFingerprint']
+             and registration['codeSha256'] == release['codeFingerprint'], 'Actual arm configuration/code/profile differs')
+     require(registration.get('workloadPreset') == 'long-cuts-33792-v1' and registration.get('expectedFullCommandCuts') == 11
+@@ -568,64 +565,66 @@
+ 
+ 
+ def validate_linux_metadata(observation, receipt, release):
+-    """Actual metadata process/class/Plan binding; no observation gap or assumed canonical executable."""
+-    root = '/opt/vectormatch-cpu/preparation/cpu-owner-poll-release-metadata-r1'
+-    require(observation['noDriverOrClusterStarted'] is True
+-            and observation['actualCodeFingerprint'] == release['codeFingerprint']
+-            and observation['profileSha256'] == release['profileFingerprint']
+-            and observation['ownerConstructed'] is False and observation['ownerRuntimeObservationAvailable'] is False
+-            and observation['ownerPollAbsentSelection'] == {'explicit':False}
+-            and observation['ownerPollAbsentEffectiveMaximumParkNs'] == 1000000
+-            and observation['ownerPollSelections'] == {str(v):expected_owner_selection(v) for v in (1000000,100000)}, 'Actual Linux metadata code/profile/scope differs')
+-    workload = observation['workloads']['LONG_CUTS']
+-    require(workload['arrivals'] == 33792 and workload['rate'] == 500 and workload['windowNs'] == 67584000000
+-            and workload['fullCommandCuts'] == 11 and workload['trailingCommands'] == 3 and workload['cycles'] == 12
+-            and workload['plan'] == release['derivedPlan'], 'Actual Linux long workload/Plan differs')
+-    registration, execution = receipt['registration'], receipt['execution']
+-    expected_command = [release['java'], '-Xmx128m', '--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED',
+-        '-cp', root + '/classes:' + ':'.join(root + '/lib/' + Path(p).name for p in sorted(release['classPath'])),
+-        'io.vectormatch.cluster.OwnerPollDistributionObservation', root + '/results/actual-distribution-observation.json']
+-    identity = execution.get('actualProcessIdentity')
+-    require(receipt['passed'] is True and receipt['root'] == root
+-            and receipt['observationSha256'] == release['evidenceReferences']['linuxMetadataObservation']['sha256']
+-            and registration['hostname'] == HOST and registration['command'] == expected_command
+-            and registration['javaExecutable'] == registration['actualJavaExecutable'] == release['java']
+-            and registration['javaExecutableSha256'] == execution['javaExecutableSha256After'] == release['javaExecutableSha256']
+-            and registration['jdkReleaseSha256'] == execution['jdkReleaseSha256After'] == release['jdkReleaseSha256'],
+-            'Actual Linux metadata canonical host/argv/executable/JDK differs')
+-    require(execution.get('processIdentityObservationGap') is False and isinstance(identity, dict)
+-            and type(identity.get('pid')) is int and identity['pid'] > 1
+-            and type(identity.get('startTicks')) is int and identity['startTicks'] > 0
+-            and execution['ownedParentPid'] == identity['pid']
+-            and identity.get('actualExecutable') == release['java']
+-            and identity.get('commandSha256') == hashlib.sha256(b'\0'.join(os.fsencode(a) for a in expected_command) + b'\0').hexdigest()
+-            and execution['exitCode'] == 0 and execution['timedOut'] is False
+-            and execution['metadataJvmExited'] is True and execution['allInputsUnchanged'] is True,
+-            'Actual Linux metadata PID/start/argv observation gap, input drift or non-exit')
+-    rows = receipt['stagedFiles']
+-    require(rows == registration['inputInventory'] and len(rows) == 6, 'Exact six metadata inputs required')
+-    require(set(rows) == {'lib/' + Path(p).name for p in release['classPath']} | {
+-        'OwnerPollDistributionObservation.java', 'classes/io/vectormatch/cluster/OwnerPollDistributionObservation.class'},
+-        'Actual metadata input closure differs')
+-    for path, frozen in release['artifacts'].items():
+-        actual = rows['lib/' + Path(path).name]
+-        require(actual['bytes'] == frozen['bytes'] and actual['sha256'] == frozen['sha256'] and actual['mode'] == 0o644,
+-                'Actual Linux metadata JAR differs')
+-    require(rows['OwnerPollDistributionObservation.java']['sha256'] == '3578a34c82e48396efe670fd0fe40cde3ff408cd2fc1ec0ef125184186dc0035'
+-            and rows['classes/io/vectormatch/cluster/OwnerPollDistributionObservation.class']['sha256'] == 'e9863142e557248dd4d94d900e63491524ee207710020dc51388bef38af6df4a',
+-            'Actual Linux Java metadata helper source/class differs')
+-    bindings = {'io.vectormatch.cluster.RetentionCapacityAeronPilotV3': 'cluster-0.1.0-SNAPSHOT.jar',
+-        'io.vectormatch.cluster.RetentionNodeMainV3': 'cluster-0.1.0-SNAPSHOT.jar',
+-        'io.vectormatch.cluster.RetentionBatchOwnerV3':'cluster-0.1.0-SNAPSHOT.jar',
+-        'io.vectormatch.cluster.RetentionOwnerPollPolicyV3':'cluster-0.1.0-SNAPSHOT.jar',
+-        'io.vectormatch.core.MatchingEngine': 'core-0.1.0-SNAPSHOT.jar',
+-        'io.aeron.driver.MediaDriver': 'aeron-all-1.53.3.jar', 'org.agrona.DirectBuffer': 'aeron-all-1.53.3.jar'}
+-    actual = observation['actualCodeSources']
+-    require(len(actual) == len(bindings) and {r['class'] for r in actual} == set(bindings), 'Actual Linux class-source set differs')
++    """Actual new helper/class/selected-plan process binding, never native qualification."""
++    root='/opt/vectormatch-cpu/preparation/cpu-event-fetch-release-metadata-r1'
++    require(observation['sourceCommit']==SOURCE_COMMIT and observation['actualCodeFingerprint']==release['codeFingerprint']
++        and observation['profileSha256']==release['profileFingerprint'] and observation['selectionIntentOnly'] is True
++        and observation['noDriverOrClusterStarted'] is True and observation['ownerConstructed'] is False
++        and observation['ownerRuntimeObservationAvailable'] is False and observation['driverConstructed'] is False
++        and observation['clientConstructed'] is False and observation['cliExecuted'] is False
++        and observation['nativeUdpOrBusinessSessionStarted'] is False and observation['performanceEvidence'] is False
++        and observation['ownerPollAbsentSelection']=={'explicit':False}
++        and observation['ownerPollAbsentEffectiveMaximumParkNs']==1000000
++        and observation['ownerPollExplicit1msSelection']==expected_owner_selection(1000000)
++        and observation['serverDriver100usSelection']==selection(), 'Actual event metadata source/selection-only scope differs')
++    require(set(observation['plans'])=={'16','32'} and observation['commonEnvelopeEqualExceptSelectedFields'] is True,
++        'Actual two event page Plan containers required')
++    for page in (16,32):
++        row=observation['plans'][str(page)]
++        require(row['configuration']==dict(arrivals=33792,ratePerSecond=500,windowNs=67584000000,batchCap=4,
++            archiveChunkBytes=6144,readWindow=8,eventFetchCount=page,commonReadWindowEnvelope=True,commonEventFetchEnvelope=True)
++            and row['plan']==release['derivedPlans'][str(page)], 'Actual selected-page configuration/Plan differs')
++    require(observation['commonPlanObservation']==release['derivedPlan']
++        and set(observation['planDifferenceKeys'])=={'eventFetchCount','selectedMaximumLogicalMaintenanceRpcs','selectedMaximumEventFetchRpcs'},
++        'Common operational envelope differs')
++    registration, execution=receipt['registration'],receipt['execution']
++    expected_command=[release['java'],'-Xmx128m','--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED',
++        '-cp',root+'/classes:'+':'.join(root+'/lib/'+Path(p).name for p in sorted(release['classPath'])),
++        'io.vectormatch.cluster.EventFetchDistributionObservation',root+'/results/actual-distribution-observation.json']
++    identity=execution.get('actualProcessIdentity')
++    require(receipt['passed'] is True and receipt['root']==root
++        and receipt['observationSha256']==release['evidenceReferences']['linuxMetadataObservation']['sha256']
++        and registration['hostname']==HOST and registration['command']==expected_command
++        and registration['javaExecutable']==registration['actualJavaExecutable']==release['java']
++        and registration['javaExecutableSha256']==execution['javaExecutableSha256After']==release['javaExecutableSha256']
++        and registration['jdkReleaseSha256']==execution['jdkReleaseSha256After']==release['jdkReleaseSha256'], 'Actual canonical Linux metadata command/JDK differs')
++    require(execution.get('processIdentityObservationGap') is False and isinstance(identity,dict)
++        and type(identity.get('pid')) is int and identity['pid']>1 and type(identity.get('startTicks')) is int and identity['startTicks']>0
++        and identity['pid']==execution['ownedParentPid'] and identity.get('actualExecutable')==release['java']
++        and identity.get('commandSha256')==hashlib.sha256(b'\0'.join(os.fsencode(a) for a in expected_command)+b'\0').hexdigest()
++        and execution['exitCode']==0 and execution['timedOut'] is False and execution['metadataJvmExited'] is True
++        and execution['strictOwnedPidAbsentAfterWait'] is True and execution['allInputsUnchanged'] is True,
++        'Actual Linux metadata PID/start/argv/non-exit/strict absence differs')
++    rows=receipt['stagedFiles'];require(rows==registration['inputInventory'] and len(rows)==6,'Exact six metadata inputs required')
++    require(set(rows)=={'lib/'+Path(p).name for p in release['classPath']}|{'EventFetchDistributionObservation.java',
++        'classes/io/vectormatch/cluster/EventFetchDistributionObservation.class'},'Actual metadata input closure differs')
++    for path,frozen in release['artifacts'].items():
++        actual=rows['lib/'+Path(path).name]
++        require(actual==dict(bytes=frozen['bytes'],sha256=frozen['sha256'],mode=0o644),'Actual metadata full JAR differs')
++    require(rows['EventFetchDistributionObservation.java']==dict(bytes=7072,mode=0o644,sha256='fe3ec25ad7c83c24e1d228c99a790c8c60c420fa9d5a342aa5fec519f3d26b8c')
++        and rows['classes/io/vectormatch/cluster/EventFetchDistributionObservation.class']==dict(bytes=9991,mode=0o644,sha256='df72aaf902a05f5a2443bd3af532d059a2f6976cdf3e7f56d9fff19ae24689fc'), 'Actual event helper source/class differs')
++    bindings={'io.vectormatch.cluster.RetentionCapacityAeronPilotV3':'cluster-0.1.0-SNAPSHOT.jar',
++        'io.vectormatch.cluster.RetentionNodeMainV3':'cluster-0.1.0-SNAPSHOT.jar','io.vectormatch.cluster.RetentionBatchOwnerV3':'cluster-0.1.0-SNAPSHOT.jar',
++        'io.vectormatch.cluster.RetentionOwnerPollPolicyV3':'cluster-0.1.0-SNAPSHOT.jar','io.vectormatch.core.MatchingEngine':'core-0.1.0-SNAPSHOT.jar',
++        'io.aeron.driver.MediaDriver':'aeron-all-1.53.3.jar','org.agrona.DirectBuffer':'aeron-all-1.53.3.jar'}
++    actual=observation['actualCodeSources'];require(len(actual)==7 and {r['class'] for r in actual}==set(bindings),'Actual class-source set differs')
+     for row in actual:
+-        name = bindings[row['class']];frozen = release['artifacts'][str(PREP / 'release/lib' / name)]
+-        require(row['path'] == root + '/lib/' + name and row['bytes'] == frozen['bytes'] and row['sha256'] == frozen['sha256'],
+-                'Actual Linux loaded class/JAR binding differs')
++        name=bindings[row['class']];frozen=release['artifacts'][str(PREP/'release/lib'/name)]
++        require(row==dict({'class':row['class'],'path':root+'/lib/'+name},**frozen),'Actual loaded class/JAR binding differs')
++    require(set(observation['distributionJars'])=={Path(p).name for p in release['classPath']},'Four complete distribution bodies required')
++    for name,row in observation['distributionJars'].items():
++        frozen=release['artifacts'][str(PREP/'release/lib'/name)]
++        require(row==dict(path=root+'/lib/'+name,**frozen),'Actual complete distribution-JAR body differs')
+     return True
+ 
+ 
+@@ -635,59 +634,44 @@
+     return True
+ 
+ 
+-def validate_native_proof(native, release):
+-    require(native['schemaVersion']==1 and native['scope']=='OWNER_POLL_NEW_ARTIFACT_FUNCTIONAL_PAIR' and native['passed'] is True
+-            and native['sourceCommit']==release['sourceCommit'] and native['codeFingerprint']==release['codeFingerprint']
+-            and native['profileSha256']==release['profileFingerprint'] and native['sameNewArtifact'] is True
+-            and native['localPerformanceClaimed'] is False and native['allInputsUnchanged'] is True, 'NEW same-artifact local functional pair required')
+-    require(len(native['arms'])==2, 'Exactly two qualified native functional modes required')
+-    for row,maximum in zip(native['arms'],[1000000,100000]):
+-        require(row['ownerPollMaximumParkNs']==maximum and row['serverDriverMaximumParkNs']==100000
+-                and row['arrivals']==row['accepted']==6400 and row['rawFunctionalPassed'] is True
+-                and row['ownerActualAttestationPassed'] is True and type(row['schedulerTimingValid']) is bool
+-                and hex_digest(row['fullNativeArchiveSha256']) and hex_digest(row['inventorySha256']),
+-                'Local SHORT6400 functional/actual-owner/full-archive pair differs; timing validity must remain observed not invented')
+-    external_reference(native['fullAuditResult']);external_reference(native['sourceFreeze'])
++def validate_qualification_policy(policy, release):
++    require(policy==qualification_policy(),'Explicit first-cloud-arm native functional qualification policy required; old local native cannot qualify this artifact')
+     return True
+ 
+ 
+ def validate_parser_freeze(parser, release):
+-    require(parser['schemaVersion']==1 and parser['scope']=='OWNER_POLL_RAW_AUDIT_SOURCE_CLOSURE'
+-            and parser['sourceCommit']==release['sourceCommit'] and parser['codeFingerprint']==release['codeFingerprint']
+-            and parser['longBaselineFreezeSha256']=='1fdec3e1bd4253e6eb11f32bc8bae5fbab53cd5531ffb8dec75c0cfb31e8c7b3'
+-            and parser['shortBaselineParserSha256']=='801475c4c4769e9da68db08440717efe39b140dd7cf9ac3fd6699ebb48a7ade8' and type(parser['guardCount']) is int and parser['guardCount']>0,
+-            'Qualified unchanged nativeSHORT/cloudLONG parser plus new owner wrapper/guards required')
+-    rows=parser['sourceFiles'];require(isinstance(rows,dict) and 1<=len(rows)<=64, 'Bounded exact parser source closure required')
+-    for name,row in rows.items():
+-        p=Path(name);require(not p.is_absolute() and '..' not in p.parts and str(p)==name
+-                and set(row)=={'bytes','sha256'} and type(row['bytes']) is int and row['bytes']>0 and hex_digest(row['sha256']), 'Unsafe/unfrozen parser source row')
+-    require(rows['owner_poll_attestation.py']=={'bytes':5686,'sha256':release['ownerPollValidatorSha256']}, 'Native/cloud must use the unique actual owner validator bytes')
+-    require(any(row['sha256']==parser['shortBaselineParserSha256'] for row in rows.values()), 'Exact unchanged SHORT parser body is missing from source closure')
+-    for name,expected in LONG_PARSER_BASELINE_ROWS.items():
+-        require(any(Path(path).name==name and row==expected for path,row in rows.items()), 'Exact unchanged LONG parser/guard body missing: '+name)
++    fixture=HERE/'fixtures/event-fetch-parser-source-freeze.json'
++    require(digest(fixture)==PARSER_FREEZE_SHA and parser==json.loads(fixture.read_text()),'Exact new selected-page parser source closure required')
++    require(parser['scope']=='EVENT_FETCH_LONG_RAW_AUDIT_SOURCE_CLOSURE' and parser['schemaVersion']==1
++        and parser['sourceCommit']==release['sourceCommit'] and parser['actualLocalMetadataCodeFingerprint']==release['codeFingerprint']
++        and parser['actualPureGuardMethods']==42 and parser['defaultCpuSchedulerStrict'] is True
++        and parser['selectedPageHasNoDefault'] is True and parser['requiredSelectedEventPages']==[16,32]
++        and parser['runtimeOrPerformanceClaimed'] is False,'New parser selection/strict scheduler/source scope differs')
++    for original,row in parser['sourceFiles'].items():
++        if original.startswith('source/') or original.startswith('tests/'):
++            target=HERE/'long-parser'/Path(original).name
++            require(target.is_file() and target.stat().st_size==row['bytes'] and digest(target)==row['sha256'],
++                'Staged actual selected-page parser/guard bytes differ: '+original)
+     return True
+ 
+ 
+ def validate_prerequisite_proofs(values, release):
+-    require(set(values)==set(release['evidenceReferences']), 'Prerequisite proof closure differs')
++    require(set(values)==set(release['evidenceReferences']),'Prerequisite closure differs')
+     validate_linux_metadata(values['linuxMetadataObservation'],values['linuxMetadataReceipt'],release)
+-    native,parser,review=values['ownerPollNativeAudit'],values['ownerPollRawParserFreeze'],values['rootEvidenceReview']
+-    validate_native_proof(native,release);validate_parser_freeze(parser,release)
+-    reviewed_inputs=review.get('prerequisiteReviewInputs')
+-    require(isinstance(reviewed_inputs,dict) and set(reviewed_inputs)=={'unitCompletion','unitRootReview','independentSourceReview'},
+-            'Actual source and unit review receipt closure required')
+-    for row in reviewed_inputs.values():
+-        require(isinstance(row,dict) and set(row)=={'bytes','sha256'} and type(row['bytes']) is int and row['bytes']>0 and hex_digest(row['sha256']),
+-                'Actual positive bytes/SHA of source and unit review receipts required')
+-    bindings={key:{k:row[k]for k in ('bytes','sha256')}for key,row in release['evidenceReferences'].items()if key!='rootEvidenceReview'}
+-    require(review['scope']=='ROOT_REVIEWED_OWNER_POLL_CLOUD_PREREQUISITES' and review['passed'] is True
+-            and review['sourceCommit']==release['sourceCommit'] and review['codeFingerprint']==release['codeFingerprint']
+-            and review['profileFingerprint']==release['profileFingerprint'] and review['controllerSha256']==release['controllerSha256']
+-            and review['ownerPollValidatorSha256']==release['ownerPollValidatorSha256'] and review['proofBindings']==bindings
+-            and review['nativeFullAuditResultSha256']==native['fullAuditResult']['sha256']
+-            and review['nativeSourceFreezeSha256']==native['sourceFreeze']['sha256']
+-            and review['guardsPassed'] is True and review['strictCpuSchedulerRequired'] is True and review['noNewResources'] is True,
+-            'Actual independent root source/native/parser/metadata evidence review incomplete')
++    validate_qualification_policy(values['campaignQualificationPolicy'],release)
++    validate_parser_freeze(values['eventFetchRawParserFreeze'],release)
++    review=values['rootEvidenceReview'];inputs=review.get('prerequisiteReviewInputs')
++    require(isinstance(inputs,dict) and set(inputs)=={'unitCompletion','unitRootReview','independentSourceReview'},'Actual source/unit review receipt closure required')
++    for row in inputs.values():
++        require(isinstance(row,dict) and set(row)=={'bytes','sha256'} and type(row['bytes']) is int and row['bytes']>0 and hex_digest(row['sha256']), 'Actual source/unit review bytes/SHA required')
++    bindings={key:{k:row[k] for k in ('bytes','sha256')} for key,row in release['evidenceReferences'].items() if key!='rootEvidenceReview'}
++    require(review['scope']=='ROOT_REVIEWED_EVENT_FETCH_CLOUD_PREREQUISITES' and review['passed'] is True
++        and review['sourceCommit']==release['sourceCommit'] and review['codeFingerprint']==release['codeFingerprint']
++        and review['profileFingerprint']==release['profileFingerprint'] and review['controllerSha256']==release['controllerSha256']
++        and review['ownerPollValidatorSha256']==release['ownerPollValidatorSha256'] and review['proofBindings']==bindings
++        and review['parserSourceFreezeSha256']==PARSER_FREEZE_SHA and review['firstCloudArmQualifiesNewArtifactFunctional'] is True
++        and review['newNativeBusinessQualifiedBeforeArm1'] is False and review['guardsPassed'] is True
++        and review['strictCpuSchedulerRequired'] is True and review['noNewResources'] is True,'Actual independent root source/parser/metadata/policy review incomplete')
+     return True
+ 
+ 
+@@ -704,12 +688,13 @@
+ 
+ def validate_prior_gate(gate, release, prior):
+     require(type(prior)is int and prior in (1,2,3) and prior==ARM-1, 'Only actual immediately preceding arm may gate this arm')
+-    require(gate['schemaVersion']==2 and gate['scope']=='ROOT_VERIFIED_CLOSED_CPU_OWNER_POLL_ARM_COLLECTION'
++    require(gate['schemaVersion']==2 and gate['scope']=='ROOT_VERIFIED_CLOSED_CPU_EVENT_FETCH_ARM_COLLECTION'
+             and gate['collectionComplete'] is True and gate['arm']==prior
+-            and gate['ownerPollMaximumParkNs']==OWNER_PARK_ORDER[prior-1] and gate['serverDriverMaximumParkNs']==100000
++            and gate['eventFetchCount']==EVENT_PAGE_ORDER[prior-1] and gate['ownerPollMaximumParkNs']==1000000 and gate['serverDriverMaximumParkNs']==100000
+             and gate['frozenReleaseSha256']==FROZEN_RELEASE_SHA and gate['controllerSha256']==release['controllerSha256']
+             and gate['codeFingerprint']==release['codeFingerprint'] and gate['localFullMemberShaBytesModesOwnersEmptyDirsVerified'] is True
+-            and gate['allRawInputsAndFailuresRetained'] is True and gate['strictSchedulerTimingAdmission'] is True,
++            and gate['allRawInputsAndFailuresRetained'] is True and gate['strictSchedulerTimingAdmission'] is True
++            and gate['sameNewArtifactFunctionalQualified'] is True and gate['allOriginalRawCanonicalAndThreeSnapshotsVerified'] is True,
+             'Actual prior same NEW artifact/full original/raw/strict-timing gate required')
+     for key in ('independentLocalCollectionReceiptSha256','closedArchiveSha256','closedNativeInventorySha256','privatePushReceiptSha256'):
+         require(hex_digest(gate[key]), 'Prior actual independent closure or private-push SHA missing')
+@@ -725,7 +710,7 @@
+     require(digest(push_path)==gate['privatePushReceiptSha256'],'Original private-push receipt differs');validate_private_push(json_bounded(base,push_path),gate)
+     completed=json_bounded(base,previous/'completion.json');stopped=json_bounded(base,previous/'python-owned-stop.json');after=json_bounded(base,previous/'after-clean-stop.json',4*1024**2)
+     require(completed['passed'] is True and completed['allOwnedStopped'] is True and completed['arm']==prior
+-            and completed['ownerPollMaximumParkNs']==OWNER_PARK_ORDER[prior-1] and completed['serverDriverMaximumParkNs']==100000
++            and completed['eventFetchCount']==EVENT_PAGE_ORDER[prior-1] and completed['ownerPollMaximumParkNs']==1000000 and completed['serverDriverMaximumParkNs']==100000
+             and completed['frozenReleaseSha256']==FROZEN_RELEASE_SHA and stopped['allOwnedStopped'] is True and stopped['errors']==[], 'Prior actual successful clean closure differs')
+     closure=after['archive'];archive=previous/'pilot-after-clean-stop.tar.gz';base.no_links(archive)
+     require(closure['archive']['path']==str(archive) and archive.stat().st_size==closure['archive']['bytes']
+@@ -774,7 +759,7 @@
+     require(shutil.disk_usage(ROOT).free >= minimum, 'Initial free space below exact finite single-arm+archive+1GiB floor bound')
+     require(base.memory_headroom() >= 8 * GIB, 'Initial memory headroom below 8GiB')
+     return {'passed': True, 'atUtc': base.now(), 'idle': idle, 'protectedOriginal': protected_state(base, release),
+-            'arm': ARM, 'singleManualArmOnly': True, 'priorArm': prior, 'ownerPollMaximumParkNs': selected_owner_park_ns(), 'serverDriverMaximumParkNs': 100000, 'minimumInitialFreeBytes': minimum, 'maximumAllocatedGrowthBytes': allocation_limit(release),
++            'arm': ARM, 'singleManualArmOnly': True, 'priorArm': prior, 'ownerPollMaximumParkNs': selected_owner_park_ns(), 'eventFetchCount': selected_event_page(), 'serverDriverMaximumParkNs': 100000, 'minimumInitialFreeBytes': minimum, 'maximumAllocatedGrowthBytes': allocation_limit(release),
+             'controllerSha256': digest(__file__), 'baseSha256': BASE_SHA, 'noJavaStarted': True}
+ 
+ 
+@@ -928,13 +913,29 @@
+     return True
+ 
+ 
++def validate_selected_page_observations(release, registration, configuration, summary, plan, completion, functional):
++    """Selection binding only; original wire/prefix proof belongs to the strict raw auditor."""
++    for label, value in [('registration', registration), ('configuration', configuration), ('summary', summary),
++                         ('plan', plan), ('completion', completion), ('functional', functional)]:
++        require(value.get('eventFetchCount') == selected_event_page() and value.get('commonEventFetchEnvelope') is True,
++                'Actual selected page/common envelope differs: ' + label)
++    for value in [configuration, summary, plan]:
++        require(value.get('readWindow', value.get('requestedReadWindow')) == 8
++                and value.get('batchCap') == 4 and value.get('archiveChunkBytes') == 6144,
++                'Actual page arm read8/cap4/chunk6144 differs')
++    require(plan == selected_plan(release)
++            and summary['maintenanceRpcMetrics'].get('eventFetchCount') == selected_event_page(),
++            'Actual selected Plan/coordinator differs')
++    return True
++
++
+ def validate_result(base, registry, release):
+     registry.discover()
+     require(set(registry.registrations) == {8}, 'One actual long-cut arm registration required')
+     require(len(registry.records) == 4 and {r['role'] for r in registry.records.values()} == {'pilot-parent'} |
+             {'window-%d-node-%d' % (c, n) for c in WINDOWS for n in range(3)}, 'Three node identities plus parent required')
+     result = json_bounded(base, PAIR / 'completion.json')
+-    require(result['passed'] is True and result['archiveChunkBytes'] == 6144 and result['readWindow'] == 8 and result['retentionIdleSelection'] == selection(), 'Single idle arm did not complete')
++    require(result['passed'] is True and result['archiveChunkBytes'] == 6144 and result['readWindow'] == 8 and result['eventFetchCount'] == selected_event_page() and result['commonEventFetchEnvelope'] is True, 'Single idle arm did not complete')
+     arms = []
+     for cap in WINDOWS:
+         root = PAIR
+@@ -950,7 +951,7 @@
+             require(artifact['bytes'] == frozen['bytes'] and artifact['sha256'] == frozen['sha256'],
+                     'Actual loaded JAR bytes differ from frozen release')
+         actual_plan = json_bounded(base, root / 'load/admission-plan.json')
+-        require(actual_plan == release['derivedPlan'], 'Actual codec-derived plan differs from pre-registered arm bound')
++        require(actual_plan == selected_plan(release), 'Actual codec-derived plan differs from pre-registered arm bound')
+         require(completion['passed'] is True and completion['allOwnedStopped'] is True
+                 and completion['fixedLeader'] == 0 and stop['allOwnedStopped'] is True
+                 and functional['passed'] is True and functional['noCapacityPromotion'] is True,
+@@ -958,9 +959,12 @@
+         idle_actual = dict(validate_idle_artifacts(base, root, registry, selected_park_ns()))
+         idle_actual['historicalValidatorScope'] = idle_actual.pop('scope')
+         idle_actual['scope'] = 'Actual node and owner MediaDriver strategies only; load-owner polling is attested separately'
++        require(functional.get('eventFetchCount')==selected_event_page() and functional.get('commonEventFetchEnvelope') is True, 'Functional selected event page differs')
+         summary = functional['actualSourceSummary']
+         require(summary.get('retentionIdleSelection') == selection(), 'Summary idle selection missing/drifted')
+         validate_long_summary(summary, cap)
++        require(summary.get('eventFetchCount')==selected_event_page() and summary.get('commonEventFetchEnvelope') is True
++            and summary['maintenanceRpcMetrics'].get('eventFetchCount')==selected_event_page(), 'Summary/coordinator actual selected page differs')
+         require(summary['maintenanceRpcMetrics']['readWindow'] == cap
+                 and summary['physicalOfferTape']['readWindow'] == cap
+                 and summary['physicalOfferTape']['readBusinessControlPhaseExclusionEnforced'] is True
+@@ -998,8 +1002,10 @@
+         require(original_summary==summary, 'Functional/source original summary differs')
+         parent=next(row['identity']for row in registry.records.values()if row['role']=='pilot-parent')
+         nodes={member:next(row['identity']for row in registry.records.values()if row['role']=='window-8-node-'+str(member))for member in (0,1,2)}
++        configuration=json_bounded(base,root/'load/configuration.json')
++        validate_selected_page_observations(release,registry.registrations[cap],configuration,original_summary,actual_plan,completion,functional)
+         owner_actual=validate_owner_bundle(registration=registry.registrations[cap],
+-            configuration=json_bounded(base,root/'load/configuration.json'),summary=original_summary,
++            configuration=configuration,summary=original_summary,
+             before=json_bounded(base,root/'load/owner-before-close.json'),after=json_bounded(base,root/'load/owner-after-close.json'),
+             parent=parent,nodes=nodes,expected_owner_cap=selected_owner_park_ns(),expected_parent_arguments=parent_argv(release),
+             expected_node_arguments={member:node_argv(release,cap,member,registry.registrations[cap])for member in (0,1,2)},
+@@ -1028,7 +1034,7 @@
+                 require('VECTOR_V3_ROLE role=LEADER' in text, 'Actual node0 leader role was not observed')
+             # Follower roles during clean shutdown are outside the load window. The owner
+             # transport's initial/final observations and all onNewLeader callbacks gate it.
+-        arms.append({'batchCap': 4, 'archiveChunkBytes': 6144, 'readWindow': cap, 'serverDriverMaximumParkNs': selected_park_ns(), 'ownerPollMaximumParkNs': selected_owner_park_ns(), 'idleAttestation': idle_actual, 'ownerPollAttestation': owner_actual, 'nodeLogClassifications': log_reports, 'retainedPostCheckpointEosWarningPairs': sum(r['warningPairCount'] for r in log_reports), 'completion': completion, 'functional': functional})
++        arms.append({'batchCap': 4, 'archiveChunkBytes': 6144, 'readWindow': cap, 'serverDriverMaximumParkNs': selected_park_ns(), 'ownerPollMaximumParkNs': selected_owner_park_ns(), 'eventFetchCount': selected_event_page(), 'idleAttestation': idle_actual, 'ownerPollAttestation': owner_actual, 'nodeLogClassifications': log_reports, 'retainedPostCheckpointEosWarningPairs': sum(r['warningPairCount'] for r in log_reports), 'completion': completion, 'functional': functional})
+     return {'passed': True, 'arms': arms, 'functionalPilotOnly': True, 'capacityOrEnduranceProven': False}
+ 
+ 
+@@ -1131,9 +1137,9 @@
+     base.save(JOB / 'after-clean-stop.json', {'archive': archived, 'protectedOriginal': after_protected})
+     base.save(JOB / 'completion.json', {'passed': not errors and result is not None, 'result': result, 'errors': errors,
+         'allOwnedStopped': True, 'functionalPilotOnly': True, 'capacityOrEnduranceProven': False,
+-        'arm': ARM, 'serverDriverMaximumParkNs': selected_park_ns(), 'ownerPollMaximumParkNs': selected_owner_park_ns(), 'frozenReleaseSha256': FROZEN_RELEASE_SHA, 'noNewResources': True, 'hardKernelDeadlineGuaranteed': False, 'atUtc': base.now()})
++        'arm': ARM, 'serverDriverMaximumParkNs': selected_park_ns(), 'ownerPollMaximumParkNs': selected_owner_park_ns(), 'eventFetchCount': selected_event_page(), 'frozenReleaseSha256': FROZEN_RELEASE_SHA, 'noNewResources': True, 'hardKernelDeadlineGuaranteed': False, 'atUtc': base.now()})
+     require(not errors and result is not None, 'Functional pilot failed; complete stopped raw attempt retained; no rerun')
+-    return {'passed': True, 'job': str(JOB), 'arm': ARM, 'serverDriverMaximumParkNs': selected_park_ns(), 'ownerPollMaximumParkNs': selected_owner_park_ns(), 'functionalPilotOnly': True}
++    return {'passed': True, 'job': str(JOB), 'arm': ARM, 'serverDriverMaximumParkNs': selected_park_ns(), 'ownerPollMaximumParkNs': selected_owner_park_ns(), 'eventFetchCount': selected_event_page(), 'functionalPilotOnly': True, 'authoritativeRawQualificationStillRequired': True}
+ 
+ 
+ def main(argv=None):
