@@ -1,6 +1,6 @@
-# Read credits 8 vs 32: local candidate
+# Read credits 8 vs 32: CPU candidate
 
-Source `605eb43fcafd8fa0a6287304387c93c4d1bbddf6` is pushed on private branch `codex/read-window32-v3`. It is not merged into main or deployed. Its actual installed-JAR fingerprint is `d0fbef05df5a23d7b8e27d2673005908a18373c3d0c1921a8c4e4465111591ea`.
+Source `605eb43fcafd8fa0a6287304387c93c4d1bbddf6` is pushed on private branch `codex/read-window32-v3`. It is not merged into main; its JARs have been staged only for metadata inspection, with no native benchmark started. Its actual installed-JAR fingerprint is `d0fbef05df5a23d7b8e27d2673005908a18373c3d0c1921a8c4e4465111591ea`.
 
 The separate `read-window32-long-cuts` mode selects page 16 or 32 and read credits 8 or 32. A future comparison must keep one page fixed. Each arm remains 33,792 arrivals at 500/s over 67.584s, leader 0, sync 2, batch 4, chunk 6144, owner 1ms and driver 100us. Existing modes, default constructors and their eight-credit budgets remain unchanged.
 
@@ -12,4 +12,8 @@ All five preparation/validation attempts are preserved with their available arti
 
 The independent review bound 119 registered inputs, 340 artifact files, 304 class artifacts, every application JAR class and all 17 classpath bodies. The complete available source/build/test/metadata evidence and limitations are in [local-unit-validation-r1](../evidence/2026-10-24/runpod-cpu/retention-read-window32-v3/local-unit-validation-r1/README.md).
 
-Only local installed-JAR metadata has executed. Linux metadata, native functional qualification and an 8/32/8/32 performance comparison remain pending. The previous artifact's event-page results do not qualify this new artifact. No speedup, higher stable throughput, 100M endurance or hard realtime result is claimed for this candidate.
+Actual Linux installed-JAR metadata inspection completed on the existing CPU Pod using the pinned Linux JDK 21.0.13+9. All four full JAR bodies, seven class origins and both fixed-page32 selected-window Plans match the actual local build. The helper's observed PID/start/full argv/executable identity, normal exit0 and recorded post-wait PID absence passed root and independent review. No driver, cluster or business session was started. The complete source preparation, real execution, reviews and available failure diagnostics are in [linux-metadata-r1](../evidence/2026-10-24/runpod-cpu/retention-read-window32-v3/linux-metadata-r1/README.md).
+
+A separate strict LONG parser passed 51 pure Python guards. These exercise protocol and schema fixtures; they are not captured native traffic or performance results. Its fixed page32/read8-or32 entry preserves strict scheduler admission and the original correlation, canonical-prefix, full-outcome and force/readback-before-ACK checks. Actual Linux metadata has two Plan containers, while the prior local observation has four; a new collector must verify the two corresponding fixed-page32 Plans without inventing Linux observations for page16.
+
+Native functional qualification and an 8/32/8/32 performance comparison remain pending. The cloud had 1,990,320,128 free bytes before metadata staging, below the unchanged 2,116,076,873-byte per-arm benchmark gate; the next campaign also needs space to retain every arm. The previous four native test directories remain retained while a separate backup/restore and exact retirement procedure is prepared. The previous artifact's event-page results do not qualify this new artifact. No speedup, higher stable throughput, 100M endurance or hard realtime result is claimed for this candidate.
