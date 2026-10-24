@@ -2,6 +2,8 @@
 
 准备进展：原e1db源的85路径应用包已同源重建；固定Linux PostgreSQL18.6制品已在CPU上通过file/readelf/ldd及`postgres --version`，未启动数据库。收据在[恢复准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/root-scope.json)和[实际加载探针](../evidence/2026-10-24/runpod-cpu/restoration-preparation/loader-probe-r1/receipt.json)。此减缩PG制品没有`pg_controldata`/`pg_config`；原PGDATA、locale、lineage及应用恢复仍待验收，不能将二进制加载成功视为恢复完成。
 
+新增准备：固定官方18.6源码的两工具构建器已通过20项离线守卫，尚未在CPU原生编译；源码来源及脚本在[工具准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg18-tools-source/README.md)。无损稀疏解包器已核对三份固定SHA备份的1041文件/3,701,302,583逻辑字节清单，并在空闲CPU上通过10项微型合成文件测试，含实际Linux稀疏分配与完整字节读回。收据见[Linux守卫](../evidence/2026-10-24/runpod-cpu/restoration-preparation/sparse-native-guards-r1/receipt.json)；这些不是完整原生状态恢复或数据库恢复证明。开发Mac的APFS微型文件没有显示空间节省，因此空间效率只引用实际Linux守卫。
+
 此文是已核验备份和源码后的执行计划，不是恢复成功收据。**只能在 CPU 上所有 benchmark、容量负载及其采集/归档作业结束并确认进程停止后执行**。恢复另登记唯一 job、配置、源版本和制品 SHA；不复用容量试验目录或控制器，不修改原始备份与既有证据。CPU 仍是同一台主机上的三个 JVM，不能称为三台独立机器或跨机网络恢复。
 
 ## 备份与版本基线
