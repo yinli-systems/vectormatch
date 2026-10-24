@@ -1,0 +1,99 @@
+{
+  "actualBenchmarkRawRead": false,
+  "actualPilotOrFormalSummarizationExecuted": false,
+  "command": [
+    "python3",
+    "-B",
+    "evidence/2026-10-23/runpod-optimization/pipeline/tool-validation/summarize-pipeline-attribution.py",
+    "--self-test"
+  ],
+  "createdAtUtc": "2026-10-24T00:02:33.688961+00:00",
+  "exitCode": 0,
+  "frozenFunctionSources": {
+    "cncHelper": {
+      "bytes": 24328,
+      "path": "scripts/summarize-capacity-telemetry.py",
+      "sha256": "21f77b02b872051906f284d9d0709d768ba681d0dce648fb27d7bc28b1d0b0b0"
+    },
+    "core": {
+      "bytes": 36056,
+      "path": "evidence/2026-10-23/runpod-optimization/tool-validation/summarize-attribution.py",
+      "sha256": "b868baa93ded4f343379d4b4a77e84f55594e39059522c871947ff7dd12e755f"
+    },
+    "network": {
+      "bytes": 10972,
+      "path": "evidence/2026-10-23/runpod-optimization/network/tool-validation/summarize-network-attribution.py",
+      "sha256": "df9cefa9332488fe683484afa8f5fd8a660c84c46213ddfa4831e69f4e91645d"
+    },
+    "threading": {
+      "bytes": 13295,
+      "path": "evidence/2026-10-23/runpod-optimization/threading/tool-validation/summarize-threading-attribution.py",
+      "sha256": "c97b74a777c2a5423ec33ad03a3bd6d1171702b380ceb9d0023c624e3649c964"
+    },
+    "window": {
+      "bytes": 15495,
+      "path": "evidence/2026-10-23/runpod-optimization/window350k/tool-validation/summarize-window-attribution.py",
+      "sha256": "1bc8929607b2b58debb8961ce9324057d4cc87af982d1342e52acbf0053f6f6a"
+    }
+  },
+  "frozenNakWrapper": {
+    "bytes": 26686,
+    "path": "evidence/2026-10-23/runpod-optimization/nak/tool-validation/summarize-nak-attribution.py",
+    "sha256": "e4eba79229bd21fcb439a45af488298254ae2438f3e91868544f8b37099a931d"
+  },
+  "inMemorySourceAdaptations": [
+    {
+      "after": "'pilot'",
+      "before": "'pilot100us'",
+      "occurrences": 4
+    },
+    {
+      "after": "'direct'",
+      "before": "'delay1000'",
+      "occurrences": 1
+    },
+    {
+      "after": "'multiplexed'",
+      "before": "'delay100000'",
+      "occurrences": 1
+    },
+    {
+      "after": "plan.get('fixedNakNodeAndLoadNs')",
+      "before": "tasks[0].get('nakDelayNs')",
+      "occurrences": 1
+    },
+    {
+      "after": "            failure = optional_json(directory / 'failure.json', core, inputs)\n            if load is None and isinstance(failure, dict) and isinstance(failure.get('loadSummary'), dict):\n                load = failure['loadSummary']  # Actual failed-run evidence, in memory only; never a fake result.\n",
+      "before": "            failure = optional_json(directory / 'failure.json', core, inputs)\n",
+      "occurrences": 1
+    }
+  ],
+  "measuredReportFilesCreated": false,
+  "scope": "Preparation validation only: AST, pure synthetic plan/metadata/invalidity checks and pinned frozen source compilation/loading. No cloud, SSH, checkpoint, raw benchmark read or measured resource computation. Formal defaults to exact4 completed registered attempts; pilot is separate. A failed terminal failure.loadSummary can supply diagnostic input in memory when load-result is absent, without creating result.json; no measurable origin/complete export still blocks curve output.",
+  "sourceControllerOrFrozenReportFilesModified": false,
+  "status": "PASS",
+  "stderr": "",
+  "stdout": "{\"status\": \"PASS\", \"checks\": [\"formal-four-required\", \"partial-refused\", \"pilot-separate\", \"actual-mode-session-count\", \"typed-session-count-not-bool\", \"logical-window-and-FIFO-pinned\", \"NAK1000-pinned\", \"prepared-digest-pinned\", \"failed-not-promoted\", \"valid-finite-separate-from-stable\", \"analyzer-invalid-diagnostics-only\", \"frozen-source-hash\", \"in-memory-only-adaptation\", \"terminal-failure-fallback-source-compiled\", \"exact-unknown-retained\"], \"actualRawSummarizationExecuted\": false}\n",
+  "syntheticChecks": [
+    "formal-four-required",
+    "partial-refused",
+    "pilot-separate",
+    "actual-mode-session-count",
+    "typed-session-count-not-bool",
+    "logical-window-and-FIFO-pinned",
+    "NAK1000-pinned",
+    "prepared-digest-pinned",
+    "failed-not-promoted",
+    "valid-finite-separate-from-stable",
+    "analyzer-invalid-diagnostics-only",
+    "frozen-source-hash",
+    "in-memory-only-adaptation",
+    "terminal-failure-fallback-source-compiled",
+    "exact-unknown-retained"
+  ],
+  "wrapper": {
+    "bytes": 22195,
+    "path": "evidence/2026-10-23/runpod-optimization/pipeline/tool-validation/summarize-pipeline-attribution.py",
+    "sha256": "5ebfecadc6271df7f16b8f10834cdb61b91e174ebb19dd4b36246d61afffe2a5"
+  }
+}

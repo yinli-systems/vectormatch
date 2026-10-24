@@ -124,15 +124,32 @@ B两轮完成canonical终态、逐条业务回复和资产验证，且初次/最
 
 ## 物理session与网络所有权对照
 
-新源 `e57e341909a49692b9ecbf9693803ed62a240b06` 已完成128项Java测试和不可变上传，云端容量尚待测量。两组统一W128、128个独立producer身份、每worker FIFO64和总FIFO8192、一个共享MediaDriver、NAK1000ns、相同2GiB/sync2节点与fixture；direct保留128个物理Aeron session，multiplexed使用一个session和一个网络owner，逻辑在途数不变。session数量、网络所有权与分发方式共同变化，不能将收益单独归于撮合引擎。
+新源 `e57e341909a49692b9ecbf9693803ed62a240b06` 已完成128项Java测试和不可变上传，完整350k pilot及正式四轮对照均已完成，四轮全部有效且过载。两组统一W128、128个独立producer身份、每worker FIFO64和总FIFO8192、一个共享MediaDriver、NAK1000ns、相同2GiB/sync2节点与fixture；direct保留128个物理Aeron session，multiplexed使用一个session和一个网络owner，逻辑在途数不变。session数量、网络所有权与分发方式共同变化，不能将收益单独归于撮合引擎。
 
 先执行35秒、350k全部接受的multiplexed pilot，正确性、时间有效性及零未发送/拒绝/error/最终unknown均通过后才登记26k/s的A/B/A/B。每次API调用有独立发送截止时间；同key重试复用pending与correlation，截止后只轮询响应，不自动延长发送期限。新的失败路径先保存CSV/backlog/failure再抛出原错误，未知终态继续失败。测试与[预登记协议](../evidence/2026-10-23/runpod-optimization/pipeline/PRE_REGISTRATION.md)不替代实测结果。
+
+该pilot的350000条全部接受、0未发送/拒绝/error/初次与最终unknown；窗口goodput **9997.771/s**，全量计划到确认p99 **41.871ms**，drain **6.684ms**，分类`OBSERVED_STABLE_WINDOW`。完整57,682,277字节终态与同MatchingEngine重放的expected逐字节相同；172.049秒终态验证在到达窗口外。独立一次流式审计核对全部350k行及原始/压缩SHA，平均初次API执行6.297ms、窗口平均活跃62.963/128槽位。独立[归因](../evidence/2026-10-23/runpod-optimization/pipeline/analysis/pilot-attribution-summary.json)核对45项input/tool SHA；35秒pilot只证明新路径在这一点的有限稳定性，不能与旧profile拼接、提前断言26k性能或替代重复对照。完整方法与实际进度见[pipeline README](../evidence/2026-10-23/runpod-optimization/pipeline/README.md)。
+
+| 顺序 | 物理session | 窗口goodput /s | 已接受条件p99 ms | 未发送 | 判定 |
+|---|---:|---:|---:|---:|---|
+| A1 direct | 128 | 14,810.491 | 607.846 | 142,336 | 有效，过载 |
+| B1 multiplexed | 1 | 14,908.549 | 668.094 | 141,037 | 有效，过载 |
+| A2 direct | 128 | 14,829.806 | 635.632 | 142,092 | 有效，过载 |
+| B2 multiplexed | 1 | 15,373.354 | 608.066 | 134,745 | 有效，过载 |
+
+四轮均为26k/s、350k计划到达，逐条业务回复、canonical终态、资产、配置与leader校验通过；初次/最终unknown、业务拒绝和server error全为0，全量接受p99全为null。B对对应A的goodput只高约0.66%/3.67%，条件p99一次升高、一次下降，没有建立新的稳定容量或一致的p99改善。前三轮平均活跃槽位均约127.95/128，平均API执行约8.59–8.65ms，与约14.9k/s的同步窗口关系相符；这不识别8.6ms的唯一来源。独立18k/s A/B/A/B已登记并执行，用于补相同业务配置的更低负载点；不把26k过载goodput称作稳定吞吐上限。
+
+独立[正式归因](../evidence/2026-10-23/runpod-optimization/pipeline/analysis/attribution-summary.json)核对140个raw/tool SHA，确认资源下降可重复：node0 JVM由A的2.562/2.589核降到B的1.263/1.394核，负载由4.072/4.105核降到1.724/1.855核；node0 FD/UDP由553/134降到45/7，负载FD/UDP由400/129降到19/2，线程约299降到172–175。严格窗口内node0/load/node2四轮owned socket drops均0，node1日志socket A为315/91、B为0/0，未出现NAK风暴。node0总quota未持续耗尽，A限流24.53/1.94ms、B为0；累计限流不是单请求延迟。单session在本配置下节省资源成立，稳定吞吐与p99改善仍未成立；下一独立node-only park因子两组统一保留multiplexed路径，分别比较1ms与100µs上限，未把两种改动的总变化归给单个因素。
 
 ## 已完成的代码验证
 
 新负载版本从已提交源码 `git archive` 建立隔离 checkout，运行全部 Java tests 与 `:cluster:installDist`，记录 **109 tests、0 failures、0 errors、0 skipped**，见 [Java 验证](../evidence/2026-10-23/runpod-optimization/tool-validation/java-tests.json)。测试覆盖共享 driver 下独立 session/Aeron、关闭一个客户端后其他客户端继续工作、连接失败不关闭借用 driver、错误模式/固定端口拒绝、运行元数据及固定到达调度等路径；这些检查不替代云端容量测量。
 
 独立网络与线程节点包分别完成 110 / 112 项 Java tests，均无失败或跳过；构建日志、XML、类内容比对与三台 launcher 校验保存在各自 tool-validation / deployment receipts。这些验证仍不替代云端容量测量。
+
+新的独立流式证据分析器已完成15项定向测试，并对三个冻结的真实350k案例（multiplexed pilot、direct A1、NAK失败A1）逐trial全部字段比对一致，没有排除任何指标、判定、异常或input SHA。三个案例只运行新工具，既有摘要和旧工具不重跑。新进程耗时6.061/9.664/4.861秒，峰值RSS80,412,672/45,056,000/47,415,296字节，见[完整验证收据](../evidence/2026-10-23/runpod-optimization/tool-validation/streaming-analyzer-validation.json)。这是后处理效率验证，不是云端撮合吞吐收益或与旧工具同时测得的加速倍数；当前26k正式四轮仍保留原分析器。
+
+新分析器与旁置legacy依赖从已提交源码`3fd86fe535fc0858e300e0337d4da154f622ae32`另建不可变本地postprocessor，分别记录source archive、两文件SHA、Python二进制/版本和parity receipt；analysis身份独立于e57 node/load/buildTools。未登记的后续容量对照只有在原四轮完整归档、配置与清理通过后才可统一使用该工具，旧摘要不被覆盖。
 
 归因观察器在三台 Linux Pod 各完成 14 项测试与有界采样 smoke：[node0](../evidence/2026-10-23/runpod-optimization/tool-validation/attribution-node0.json)、[node1](../evidence/2026-10-23/runpod-optimization/tool-validation/attribution-node1.json)、[node2](../evidence/2026-10-23/runpod-optimization/tool-validation/attribution-node2.json)。配置验证器另用四组历史真实 command SHA 回归，拒绝 mode/count 错配、部分运行声明、非法 JVM 属性，并验证显式默认属性同样进入 NUL 分隔的完整参数摘要。
 
