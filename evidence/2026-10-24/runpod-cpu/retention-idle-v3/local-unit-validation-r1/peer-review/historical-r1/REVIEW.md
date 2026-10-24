@@ -1,0 +1,24 @@
+# Retention idle candidate: bounded read-only review
+
+This is a source review of the developing `latency-idle-v3-worktree`, not a compiled/native validation. No source, build, JVM, SSH or Git operation was performed by this reviewer. The snapshot bindings accompany this note; a later source change needs a new review observation. The new dedicated idle guard file was not yet present at this observation, so its absence is an unfinished implementation item, not a test failure.
+
+The new explicit `idle-window8` route is coherent in the inspected source. It validates the exact JVM property before binding its test ports or creating the fresh arm directory. It fixes cap4/chunk6144/Fetch16/window8 and creates only one fresh arm; it does not silently execute the earlier window1/8 pair. The same artifact can therefore compare 100,000ns and1,000,000ns without changing the selected read window or resource plan. The exposure remains finite and offers no kernel realtime guarantee.
+
+Actual strategy association is stronger than a property label. `RetentionIdlePolicyV3` creates separate mutable Backoff instances per selected role, retains those references, verifies the installed shared-driver object, verifies the three agent supplier identities, and requires all expected factories to have been consumed before producing the post-launch node attestation. `RetentionNodeMainV3` writes that attestation before READY. The owner transport passes its selected object into the actual driver context and includes its checked policy in runtime transport observations. Selected driver roles retain10spins/5yields/1000ns minimum park, agent roles10/20/1000; only their common maximum park differs between arms. This is one policy factor across selected roles, not an isolation of which individual agent causes the improvement.
+
+With the property absent, the inspected branches retain the earlier no-argument driver Backoff construction, leave Archive/Consensus/Service suppliers untouched, add no idle identity suffix and emit no selected-policy attestation. Existing control/setup clients remain outside the new selected policy in both arms. Their behavior must not be described as measured policy coverage.
+
+One concrete boundary issue was sent to the owner immediately: public legacy pair methods `run`, `runArchiveChunks` and `runReadWindows` currently create their pair directory before constructor-field `systemSelection()` detects an invalid property (pilot lines62/82/95 versus32 in this observation). Node and owner transport validate early, and the new idle single-arm route already validates early. If fail-before-filesystem is a contract for every pilot entry, validate at the public legacy boundaries too; otherwise narrow the stated guarantee explicitly to the new route. No cloud action should depend on this ambiguity.
+
+Useful focused guards before launch:
+
+1. Absent property preserves supplied sentinel agent factories/objects and the exact empty identity suffix; it must not merely compare the parsed flag.
+2. Invalid canonical values and conflicting hidden/property overrides fail through actual node, transport and single-arm entry paths before the target directory exists; no driver is opened.
+3. Both accepted values produce driver and agent instances with identical spins/yields/minimum park and only the selected maximum park difference.
+4. Independent roles have distinct mutable objects; invoking an already consumed role factory again fails closed rather than sharing backoff state.
+5. A missing factory consumption or replaced supplier fails node attestation, and a replaced driver object or wrong threading mode fails the actual driver check.
+6. Child argv inserts the exact explicit property once, retains the same executable/main/classpath/other flags and rejects an already supplied duplicate. The actual child process argv and three node identity files must later bind that value.
+7. The explicit single-arm CLI rejects missing selection, invalid ports and an existing state root; its config stays6400@500/cap4/chunk6144/Fetch16/window8 under the common resource envelope.
+8. The later native collection requires three PID-bound node attestations plus the actual owner-driver attestation, exact role inventory/configuration and unchanged image/header evidence. A claimed launch property alone is insufficient.
+
+The first inspected selected-role paths contain no settled blocker for the new explicit route. This does not replace focused compilation/guards, actual native factory consumption or closed cloud evidence. A forthcoming cloud controller must bind the actual per-node and owner attestations, source/JAR fingerprint, fixed leader/term/sync/ports and both arm policies; the old default1ms runtime observations are not proof that the new explicit100us factories were consumed.

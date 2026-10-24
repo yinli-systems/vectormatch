@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Immutable legacy V2 behavior and complete snapshot byte compatibility; normal tests have no regeneration entrypoint.",
+  "baselineRevision": "433f02bebe2f3109ec363291fa562d5c509c0723",
+  "baselineSourcePath": "core/src/main/java/io/vectormatch/core/MatchingEngine.java",
+  "baselineSourceSha256": "b6e56f5884c7a2204726c4bca206f281558b4c967717cc3e46583d01db64db90",
+  "captureAtUtc": "2026-10-24T03:31:13.014596+00:00",
+  "captureDirectory": "/private/tmp/vectormatch-legacy-v2-capture-taq8drjl",
+  "captureSourceSha256": "f15497fce493c32b9a930534da0b898c87a3ada83f1d3c304422c2e20be36587",
+  "captureSourceBytes": 10674,
+  "traceSourceSha256": "e8df66d73578a203b3e8c2d929c1b892d6ada9af78767d4c6e80054393a67eb1",
+  "captureSourcePath": "/private/tmp/vectormatch-legacy-v2-capture-taq8drjl/io/vectormatch/core/LegacyV2Capture.java",
+  "fixtureSha256": "b24955f5e391649fdf7f4865ea0c3ae80e0aea3812a7afc3666f9308d6c38505",
+  "fixtureBytes": 350108,
+  "fixtureFormat": [
+    "scenario",
+    "prefix (0 = initial state)",
+    "maximumEventsFor before command (-1 for prefix 0)",
+    "base64 UTF-8 complete Execution.toString (empty for prefix 0)",
+    "base64 complete snapshot including embedded SHA-256"
+  ],
+  "prefixRowsIncludingInitial": {
+    "legacy-default-mixed": 54,
+    "legacy-bounded-cache": 23,
+    "legacy-capacity-bounds": 15
+  },
+  "commandCount": 89,
+  "rowCount": 92,
+  "resultCodeOccurrences": {
+    "ACCEPTED": 45,
+    "REJECTED": 28,
+    "IDEMPOTENCY_CONFLICT": 3,
+    "INVALID_REQUEST": 7,
+    "STALE_SEQUENCE": 6
+  },
+  "eventTypeOccurrences": {
+    "DEPOSIT": 15,
+    "ORDER_ACCEPTED": 20,
+    "TRADE": 9,
+    "ORDER_CANCELLED": 6,
+    "ORDER_EXPIRED": 3
+  },
+  "reasonOccurrences": {
+    "deposited": 17,
+    "accepted": 21,
+    "cancelled": 7,
+    "order is no longer active": 3,
+    "order not found for account": 2,
+    "client order id already used": 1,
+    "unknown account": 1,
+    "insufficient available balance": 1,
+    "same sequence has different payload": 3,
+    "deposit must have a positive amount and asset": 5,
+    "invalid limit order": 8,
+    "order notional overflow": 2,
+    "client order id exceeds 128 characters": 1,
+    "invalid request identity": 6,
+    "sequence no longer retained; not executed": 6,
+    "account capacity reached": 2,
+    "producer capacity reached": 1,
+    "asset supply overflow": 1,
+    "retained order capacity reached": 1
+  },
+  "baselineCaptureValidation": {
+    "exactPreviewEventCount": true,
+    "previewDidNotMutate": true,
+    "invariantsEveryPrefix": true,
+    "everyPrefixRestoreBytes": true,
+    "everyRestoreRemainingSuffixFullExecutionPreviewAndSnapshot": true
+  },
+  "javaVersion": "openjdk version \"21.0.13\" 2026-10-20 LTS\nOpenJDK Runtime Environment Temurin-21.0.13+9 (build 21.0.13+9-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.13+9 (build 21.0.13+9-LTS, mixed mode, sharing)",
+  "javaExecutableSha256": "0f642542ea1f0be6957557c0db96653ec128113bb5a4aaa7c2534d1d72ddb51f",
+  "javacExecutableSha256": "40425235eaac99cccf8ed57522d946313d8b5200161d1faf846b3e60d554c2ed",
+  "commands": [
+    [
+      "/Users/kevin/Documents/ChatGPT/App 2/.tools/jdk/bin/javac",
+      "--release",
+      "21",
+      "-d",
+      "/private/tmp/vectormatch-legacy-v2-capture-taq8drjl/classes",
+      "/private/tmp/vectormatch-legacy-v2-capture-taq8drjl/io/vectormatch/core/MatchingEngine.java",
+      "/private/tmp/vectormatch-legacy-v2-capture-taq8drjl/io/vectormatch/core/LegacyV2Capture.java"
+    ],
+    [
+      "/Users/kevin/Documents/ChatGPT/App 2/.tools/jdk/bin/java",
+      "-cp",
+      "/private/tmp/vectormatch-legacy-v2-capture-taq8drjl/classes",
+      "io.vectormatch.core.LegacyV2Capture"
+    ]
+  ],
+  "limitations": [
+    "No performance claim or cloud operation.",
+    "Compatibility applies to these deterministic traces, not all possible commands.",
+    "Fixture source was obtained via git show of pinned revision, independent of modified worktree sources."
+  ]
+}
