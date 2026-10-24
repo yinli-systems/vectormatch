@@ -1,0 +1,411 @@
+--- base/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchOwnerV3.java
++++ candidate-r2/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchOwnerV3.java
+@@ -418,9 +418,14 @@
+     private long nextCorrelation, lastOrdinal, acceptedLogical, acceptedPhysical, resends, unaccepted,
+             applied, notSent, creditBlocked, lateReplies, admissionReplies, retiredFrames;
+     private int pendingHighWater, frameHighWater;
++    private final long ownerPollMaxParkNs;
+ 
+-    public RetentionBatchOwnerV3(Config config, IOFactory factory) { this(config, factory, System::nanoTime); }
+-    RetentionBatchOwnerV3(Config config, IOFactory factory, LongSupplier clock) {
++    public RetentionBatchOwnerV3(Config config, IOFactory factory) { this(config, factory, System::nanoTime, MAX_PARK_NS); }
++    /** Explicit load-owner polling cap; Config.flushDelayNs retains its independent legacy1ms bound. */
++    public RetentionBatchOwnerV3(Config config, IOFactory factory, long ownerPollMaxParkNs) { this(config, factory, System::nanoTime, ownerPollMaxParkNs); }
++    RetentionBatchOwnerV3(Config config, IOFactory factory, LongSupplier clock) { this(config, factory, clock, MAX_PARK_NS); }
++    RetentionBatchOwnerV3(Config config, IOFactory factory, LongSupplier clock, long ownerPollMaxParkNs) {
++        this.ownerPollMaxParkNs = RetentionOwnerPollPolicyV3.requireMaximum(ownerPollMaxParkNs);
+         this.config = Objects.requireNonNull(config); this.scope = new Scope(config.profile().fingerprint(), config.lineage());
+         this.clock = Objects.requireNonNull(clock); Objects.requireNonNull(factory);
+         slots = new Slot[config.logicalWorkers()]; workerProducers = new Producer[slots.length];
+@@ -593,8 +598,8 @@
+         }
+         return work;
+     }
+-    private long parkDuration(long now) {
+-        long delay = MAX_PARK_NS;
++    long parkDuration(long now) {
++        long delay = ownerPollMaxParkNs;
+         if (!admissionStopped && !maintenanceStopped && !ready.isEmpty()) delay = Math.min(delay, Math.max(0, config.flushDelayNs() - (now - ready.peekFirst().readyNs)));
+         for (Slot slot : ready) delay = Math.min(delay, Math.max(0, slot.permitDeadline - now));
+         for (Frame frame : frames.values()) {
+@@ -656,7 +661,10 @@
+             out.put("externalTaskQueuePositions", (long) slots.length * config.taskQueueCapacityPerWorker());
+             out.put("taskQueueOwnership", "external scheduler; this owner allocates no task FIFO");
+             out.put("internalPendingCapacity", slots.length); out.put("maximumFrames", slots.length); out.put("batchCap", config.batchCap());
+-            out.put("flushDeadlineNs", config.flushDelayNs()); out.put("waitPolicy", "deadline-aware park up to 1ms; OS lateness is not bounded");
++            out.put("flushDeadlineNs", config.flushDelayNs());
++            out.put("ownerPollMaxParkNs", ownerPollMaxParkNs);
++            out.put("ownerPollRequestedSleepOnly", true);out.put("ownerPollOsLatenessBounded", false);
++            out.put("waitPolicy", ownerPollMaxParkNs==MAX_PARK_NS ? "deadline-aware park up to 1ms; OS lateness is not bounded" : "deadline-aware park up to 100us; OS lateness is not bounded");
+             out.put("globalCreditCapacity", config.globalCreditCapacity()); out.put("perProducerCreditCapacity", config.perProducerCreditCapacity());
+             out.put("pendingLogicalCommands", pendingCount()); out.put("readyLogicalCommands", ready.stream().filter(s -> s.terminal == null).count());
+             out.put("activeFrames", frames.values().stream().filter(f -> f.slots.stream().anyMatch(s -> s.terminal == null)).count());
+--- base/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityExperimentV3.java
++++ candidate-r2/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityExperimentV3.java
+@@ -39,6 +39,7 @@
+     private final RetentionCapacityPlanV3.Plan plan;
+     private final RetentionCapacityDiskGuardV3 disk;
+     private final RetentionIdlePolicyV3.Selection idleSelection;
++    private final RetentionOwnerPollPolicyV3.Selection ownerPollSelection;
+     private final RetentionCapacityLedgerV3 rows;
+     private final AtomicReference<Throwable> abort=new AtomicReference<>();
+     private final AtomicBoolean stopping=new AtomicBoolean(),schedulerDone=new AtomicBoolean();
+@@ -59,6 +60,7 @@
+     private Throwable primary;
+ 
+     private RetentionCapacityExperimentV3(Path newRoot,Path ownedStateRoot,Config config,RetentionServiceV3.Profile profile,String lineage,RetentionCapacityPlanV3.Plan plan,RetentionCapacityDiskGuardV3 disk)throws IOException{
++        ownerPollSelection=RetentionOwnerPollPolicyV3.systemSelection();
+         idleSelection=RetentionIdlePolicyV3.systemSelection();
+         this.config=Objects.requireNonNull(config);this.profile=Objects.requireNonNull(profile);this.plan=Objects.requireNonNull(plan);plan.requireAdmitted();this.disk=Objects.requireNonNull(disk);
+         if(plan.arrivals()!=config.arrivals()||plan.batchCap()!=config.batchCap()||plan.archiveChunkBytes()!=config.archiveChunkBytes()||plan.requestedReadWindow()!=config.readWindow()||plan.commonReadWindowEnvelope()!=config.commonReadWindowEnvelope()||!disk.plan().equals(plan)||!disk.ownedRoot().equals(ownedStateRoot.toAbsolutePath().normalize()))throw new IllegalArgumentException("exact config/plan/full-owned-root disk binding required");
+@@ -84,7 +86,7 @@
+             // Exact finite admission/disk plan is recorded separately; no cloud resource is created here.
+             disk.check();RetentionCapacityJsonV3.writeNew(root.resolve("admission-plan.json"),plan.observation());
+             writer=new RetentionDurableWriterV3(root.resolve("writer"),profile.core().maxPendingSerializedBytes()+1024,1024L*1024*1024,512);
+-            owner=new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(profile,lineage,config.batchCap()),()->tape.attach(factory.open()));
++            owner=new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(profile,lineage,config.batchCap()),()->tape.attach(factory.open()),ownerPollSelection.effectiveMaximumParkNs());
+             maintenance=new RetentionBatchMaintenanceV3(owner,writer,profile,lineage,root.resolve("maintenance"),journalBudget,plan.maximumLogicalMaintenanceRpcs(),config.archiveChunkBytes(),config.readWindow());
+             Instant wall=Instant.now();long mono=System.nanoTime();origin=mono+TimeUnit.SECONDS.toNanos(1);originUtc=wall.plusNanos(origin-mono).toString();windowEnd=origin+config.windowNs();
+             writeConfiguration();scheduler=new Thread(this::schedule,"v3-capacity-arrivals");sampler=new Thread(this::sample,"v3-capacity-backlog-observer");scheduler.start();sampler.start();
+@@ -112,7 +114,7 @@
+     }
+     private void recordFailure(Throwable failure){if(primary==null)primary=failure;else if(primary!=failure)primary.addSuppressed(failure);}
+     private void writeConfiguration()throws IOException{
+-        var values=new LinkedHashMap<String,Object>();values.put("schema","retention-v3-openloop-capacity-v1");values.put("arrivals",config.arrivals());values.put("ratePerSecond",config.rate());values.put("windowSeconds",config.windowNs()/1e9);values.put("batchCap",config.batchCap());values.put("archiveChunkBytes",config.archiveChunkBytes());values.put("eventFetchCount",16);values.put("commonChunkEnvelope",plan.commonChunkEnvelope());values.put("readWindow",config.readWindow());values.put("commonReadWindowEnvelope",plan.commonReadWindowEnvelope());values.put("maintenanceTimingSchema","13cols-correlation-phase-window-v1");values.put("readCreditPolicy","reserve+flush before arm; completed-unconsumed holds credit; consume after reply/timing flush");values.put("logicalWorkers",WORKERS);values.put("taskQueueCapacityPerWorker",QUEUE_CAPACITY);values.put("externalQueuePositions",8192);values.put("internalPendingCapacity",128);values.put("physicalSessions",1);values.put("sharedMediaDrivers",1);values.put("producerIdentityRule","worker=index%128;sequence=1+index/128;queue rejection leaves a legal gap");values.put("taskLifetimeNs",TASK_LIFETIME_NS);values.put("physicalOfferPermitNsFromDispatch",RPC_PERMIT_NS);values.put("physicalAdmissionTimestampSemantics","monotonic return observation after the first nonnegative publication.offer; not an exact internal Aeron admission instant");values.put("drainAdmissionNs",DRAIN_NS);values.put("batchFlushNs",50000);values.put("profileSha256",profile.fingerprint());values.put("actualCodeSha256",RetentionNodeMainV3.codeFingerprint());values.put("lineage",lineage);values.put("scheduledOriginUTC",originUtc);values.put("scheduledOriginMonotonicNs",origin);values.put("primitiveArrivalColumnBytes",rows.primitiveColumnBytes());values.put("arrivalClockPausesForMaintenance",false);values.put("maintenanceDispatchPolicy","drain pending while arrivals keep enqueuing/rejecting; exactprefix force/readback thenACK");values.put("scope","Finite openloop source; external canonical/leader/config proof required before any stability or capacity claim");if(idleSelection.explicit())values.put("retentionIdleSelection",idleSelection.observation());RetentionCapacityJsonV3.writeNew(root.resolve("configuration.json"),values);
++        var values=new LinkedHashMap<String,Object>();values.put("schema","retention-v3-openloop-capacity-v1");values.put("arrivals",config.arrivals());values.put("ratePerSecond",config.rate());values.put("windowSeconds",config.windowNs()/1e9);values.put("batchCap",config.batchCap());values.put("archiveChunkBytes",config.archiveChunkBytes());values.put("eventFetchCount",16);values.put("commonChunkEnvelope",plan.commonChunkEnvelope());values.put("readWindow",config.readWindow());values.put("commonReadWindowEnvelope",plan.commonReadWindowEnvelope());values.put("maintenanceTimingSchema","13cols-correlation-phase-window-v1");values.put("readCreditPolicy","reserve+flush before arm; completed-unconsumed holds credit; consume after reply/timing flush");values.put("logicalWorkers",WORKERS);values.put("taskQueueCapacityPerWorker",QUEUE_CAPACITY);values.put("externalQueuePositions",8192);values.put("internalPendingCapacity",128);values.put("physicalSessions",1);values.put("sharedMediaDrivers",1);values.put("producerIdentityRule","worker=index%128;sequence=1+index/128;queue rejection leaves a legal gap");values.put("taskLifetimeNs",TASK_LIFETIME_NS);values.put("physicalOfferPermitNsFromDispatch",RPC_PERMIT_NS);values.put("physicalAdmissionTimestampSemantics","monotonic return observation after the first nonnegative publication.offer; not an exact internal Aeron admission instant");values.put("drainAdmissionNs",DRAIN_NS);values.put("batchFlushNs",50000);values.put("profileSha256",profile.fingerprint());values.put("actualCodeSha256",RetentionNodeMainV3.codeFingerprint());values.put("lineage",lineage);values.put("scheduledOriginUTC",originUtc);values.put("scheduledOriginMonotonicNs",origin);values.put("primitiveArrivalColumnBytes",rows.primitiveColumnBytes());values.put("arrivalClockPausesForMaintenance",false);values.put("maintenanceDispatchPolicy","drain pending while arrivals keep enqueuing/rejecting; exactprefix force/readback thenACK");values.put("scope","Finite openloop source; external canonical/leader/config proof required before any stability or capacity claim");if(idleSelection.explicit())values.put("retentionIdleSelection",idleSelection.observation());if(ownerPollSelection.explicit()){values.put("ownerPollSelection",ownerPollSelection.observation());values.put("ownerPollActual",ownerPollSelection.actualObservation(owner));}RetentionCapacityJsonV3.writeNew(root.resolve("configuration.json"),values);
+     }
+     private void schedule(){
+         try{
+@@ -204,7 +206,7 @@
+                 }else{serverRejected++;String key=rows.resultCode[i]<0?"MISSING":ResultCode.values()[rows.resultCode[i]].name();rejectCodes.merge(key,1,Integer::sum);}
+             }
+         }
+-        var out=new LinkedHashMap<String,Object>();if(idleSelection.explicit())out.put("retentionIdleSelection",idleSelection.observation());out.put("schema","retention-v3-openloop-capacity-v1");out.put("scheduledArrivals",config.arrivals());out.put("releasedArrivals",rows.released.get());out.put("ratePerSecond",config.rate());out.put("batchCap",config.batchCap());out.put("archiveChunkBytes",config.archiveChunkBytes());out.put("eventFetchCount",16);out.put("commonChunkEnvelope",plan.commonChunkEnvelope());out.put("readWindow",config.readWindow());out.put("commonReadWindowEnvelope",plan.commonReadWindowEnvelope());out.put("arrivalWindowSeconds",config.windowNs()/1e9);out.put("scheduledOriginUTC",originUtc);out.put("scheduledOriginMonotonicNs",origin);
++        var out=new LinkedHashMap<String,Object>();if(idleSelection.explicit())out.put("retentionIdleSelection",idleSelection.observation());if(ownerPollSelection.explicit()){out.put("ownerPollSelection",ownerPollSelection.observation());out.put("ownerPollActual",ownerPollSelection.actualObservation(owner));}out.put("schema","retention-v3-openloop-capacity-v1");out.put("scheduledArrivals",config.arrivals());out.put("releasedArrivals",rows.released.get());out.put("ratePerSecond",config.rate());out.put("batchCap",config.batchCap());out.put("archiveChunkBytes",config.archiveChunkBytes());out.put("eventFetchCount",16);out.put("commonChunkEnvelope",plan.commonChunkEnvelope());out.put("readWindow",config.readWindow());out.put("commonReadWindowEnvelope",plan.commonReadWindowEnvelope());out.put("arrivalWindowSeconds",config.windowNs()/1e9);out.put("scheduledOriginUTC",originUtc);out.put("scheduledOriginMonotonicNs",origin);
+         out.put("schedulerLatenessOver20ms",rows.lateOver20ms);out.put("schedulerMaxLatenessNs",rows.maxSchedulerLateness);out.put("schedulerTimingValid",rows.lateOver20ms==0&&rows.released.get()==config.arrivals()&&exposureEnd-origin>=config.windowNs());out.put("arrivalClockPausedForMaintenance",false);
+         out.put("completedLogicalReplies",applied);out.put("notSent",notSent);out.put("unknownObserved",unknownObserved);out.put("unknownFinal",unknown);out.put("serverRejected",serverRejected);out.put("serverAdmissionRejectedObserved",admissionRejected);out.put("serverNotAttemptedObserved",notAttempted);out.put("serverRejectionCodes",rejectCodes);out.put("replyReplayed",replay);out.put("confirmedAcceptedUniqueOrders",uniqueAccepted);out.put("duplicateOrOutOfRangeAcceptedOrderIds",duplicateOrder);out.put("setupBusinessCommands",3);out.put("setupAcceptedOrders",1);out.put("acceptedOrdersInArrivalWindow",withinWindow);out.put("arrivalWindowGoodputPerSecond",withinWindow/(config.windowNs()/1e9));out.put("lastKnownReplyDrainNs",Math.max(0,lastEnd-windowEnd));out.put("totalSourceDrainNs",drainEnd==MISSING?null:Math.max(0,drainEnd-windowEnd));out.put("completedReplyConditionalP99Ns",quantile(confirmed,cn,0.99));out.put("acceptedOrderConditionalP99Ns",quantile(accepted,an,0.99));out.put("allArrivalReplyP99Ns",notSent==0&&unknown==0&&applied==config.arrivals()?quantile(confirmed,cn,0.99):null);Long allAcceptedP99=allAcceptedP99(config.arrivals(),applied,notSent,unknown,serverRejected,duplicateOrder,uniqueAccepted,accepted,an);out.put("allArrivalAcceptedOrderP99Ns",allAcceptedP99);out.put("allArrivalP99Ns",allAcceptedP99);out.put("allArrivalP99Policy","all planned arrivals must each confirm one distinct ACCEPTED order; null on notSent, unknown, unreleased, business rejection or duplicate/out-of-range orderId; allArrivalReplyP99Ns instead includes finite business-reject replies");
+         out.put("maintenanceCycles",cycles);out.put("maintenanceRpcMetrics",maintenance==null?null:maintenance.snapshot());out.put("diskGuard",disk.snapshot());out.put("journalRunBudget",journalBudget.snapshot());out.put("maximumObservedQueueSizePerWorker",rows.queueHighWater);out.put("primitiveArrivalColumnBytes",rows.primitiveColumnBytes());out.put("traceBytes",rawBudget.used.get());out.put("arrivalCsvBytes",rawBudget.csvBytes);out.put("rawTraceByteLimit",rawBudget.limit);out.put("physicalOfferTape",tape.snapshot());out.put("externalCorrectnessVerificationRequired",true);out.put("finiteStabilityClaimed",false);out.put("scope","Finite same-system openloop source; no percentile SLA, sustained/infinite capacity or 100M claim. All-arrival p99 undefined when any arrival is notSent/unknown/unreleased.");return out;
+--- base/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityAeronPilotV3.java
++++ candidate-r2/cluster/src/main/java/io/vectormatch/cluster/RetentionCapacityAeronPilotV3.java
+@@ -44,6 +44,7 @@
+     private final RetentionServiceV3.Profile profile=RetentionBatchProfilesV3.finiteLoadProfile();
+     private final String code=RetentionNodeMainV3.codeFingerprint();
+     private final RetentionIdlePolicyV3.Selection idleSelection=RetentionIdlePolicyV3.systemSelection();
++    private final RetentionOwnerPollPolicyV3.Selection ownerPollSelection=RetentionOwnerPollPolicyV3.systemSelection();
+     private final List<Owned> owned=new ArrayList<>();
+     private final RetentionCapacityPlanV3.Plan plan;
+     private final RetentionCapacityDiskGuardV3 disk;
+@@ -75,10 +76,11 @@
+         registration.put("archiveChunkBytes",archiveChunkBytes);registration.put("eventFetchCount",16);registration.put("commonChunkEnvelope",commonEnvelope);registration.put("readWindow",readWindow);registration.put("commonReadWindowEnvelope",readWindowExperiment);
+         if(workload==Workload.LONG_CUTS){registration.put("workloadPreset","long-cuts-33792-v1");registration.put("expectedFullCommandCuts",workload.fullCommandCuts());registration.put("expectedTrailingCommands",workload.trailingCommands());registration.put("equivalentFullLoadCutNumbers",List.of(2,3,4,5,6,7,8,9,10,11));}
+         if(idleSelection.explicit())registration.put("retentionIdleSelection",idleSelection.observation());
++        if(ownerPollSelection.explicit())registration.put("ownerPollSelection",ownerPollSelection.observation());
+         write("registration.json",registration);writeArtifactInventory();
+     }
+     public static Path run(Path newPairRoot)throws Exception{
+-        RetentionIdlePolicyV3.systemSelection(); // Reject invalid opt-in before a pair directory is created.
++        RetentionOwnerPollPolicyV3.systemSelection();RetentionIdlePolicyV3.systemSelection(); // Reject invalid opt-in before a pair directory is created.
+         Path pair=newPairRoot.toAbsolutePath().normalize();Files.createDirectory(pair);int ports=ports();
+         for(int cap:List.of(1,4)){
+             var pilot=new RetentionCapacityAeronPilotV3(pair.resolve("cap-"+cap),cap,ports);
+@@ -96,9 +98,9 @@
+         return pair;
+     }
+     /** Single factor: both arms cap4, all operational caps from the same union envelope. */
+-    public static Path runArchiveChunks(Path newPairRoot)throws Exception{RetentionIdlePolicyV3.systemSelection();return runArchiveChunks(newPairRoot,ports());}
++    public static Path runArchiveChunks(Path newPairRoot)throws Exception{RetentionOwnerPollPolicyV3.systemSelection();RetentionIdlePolicyV3.systemSelection();return runArchiveChunks(newPairRoot,ports());}
+     public static Path runArchiveChunks(Path newPairRoot,int ports)throws Exception{
+-        RetentionIdlePolicyV3.systemSelection();
++        RetentionOwnerPollPolicyV3.systemSelection();RetentionIdlePolicyV3.systemSelection();
+         verifyChunkPorts(ports); // Explicit occupied port fails before any registration/business; no fallback.
+         Path pair=newPairRoot.toAbsolutePath().normalize();Files.createDirectory(pair);
+         for(int chunk:List.of(DEFAULT_ARCHIVE_CHUNK,MAX_SUPPORTED_ARCHIVE_CHUNK)){
+@@ -111,9 +113,9 @@
+         RetentionCapacityJsonV3.writeNew(pair.resolve("pair-completion.json"),Map.of("passed",true,"archiveChunkBytes",List.of(DEFAULT_ARCHIVE_CHUNK,MAX_SUPPORTED_ARCHIVE_CHUNK),"fixedBusinessBatchCap",4,"scope","Single-factor local functional chunk comparison; not a capacity or speedup proof"));return pair;
+     }
+     /** Single factor: same cap4/chunk6144 artifact, exclusive read window1 versus8. */
+-    public static Path runReadWindows(Path pair)throws Exception{RetentionIdlePolicyV3.systemSelection();return runReadWindows(pair,ports());}
++    public static Path runReadWindows(Path pair)throws Exception{RetentionOwnerPollPolicyV3.systemSelection();RetentionIdlePolicyV3.systemSelection();return runReadWindows(pair,ports());}
+     public static Path runReadWindows(Path newPairRoot,int ports)throws Exception{
+-        RetentionIdlePolicyV3.systemSelection();
++        RetentionOwnerPollPolicyV3.systemSelection();RetentionIdlePolicyV3.systemSelection();
+         verifyChunkPorts(ports);Path pair=newPairRoot.toAbsolutePath().normalize();Files.createDirectory(pair);
+         for(int window:List.of(1,8)){
+             var pilot=new RetentionCapacityAeronPilotV3(pair.resolve("window-"+window),4,ports,MAX_SUPPORTED_ARCHIVE_CHUNK,false,window,true);
+@@ -135,7 +137,7 @@
+         return runIdleWindow8(newArmRoot,ports,Workload.LONG_CUTS);
+     }
+     private static Path runIdleWindow8(Path newArmRoot,int ports,Workload workload)throws Exception{
+-        requireIdleSelection(RetentionIdlePolicyV3.systemSelection());
++        RetentionOwnerPollPolicyV3.systemSelection();requireIdleSelection(RetentionIdlePolicyV3.systemSelection());
+         verifyChunkPorts(ports); // Selection validation precedes ports and the first filesystem mutation.
+         var config=workload.idleConfig();
+         var pilot=new RetentionCapacityAeronPilotV3(newArmRoot,config.batchCap(),ports,config.archiveChunkBytes(),false,config.readWindow(),true,workload);
+@@ -154,10 +156,11 @@
+         if(!selection.explicit())throw new IllegalArgumentException("idle-window8 requires explicit JVM property "+RetentionIdlePolicyV3.PROPERTY+"=100000|1000000 before launch");
+     }
+     public static void main(String[] args)throws Exception{
++        RetentionOwnerPollPolicyV3.systemSelection();
+         if(args.length!=1&&!((args.length==2||args.length==3)&&(args[1].equals("archive-chunks")||args[1].equals("read-windows")||args[1].equals("idle-window8")||args[1].equals("idle-window8-long-cuts"))))throw new IllegalArgumentException("RetentionCapacityAeronPilotV3 <new-directory> [archive-chunks|read-windows|idle-window8|idle-window8-long-cuts [fixed-port-base]]");
+         if(args.length==3&&!args[2].matches("[1-9][0-9]{3,4}"))throw new IllegalArgumentException("canonical fixed UDP port base required");
+         if(args.length>=2&&(args[1].equals("idle-window8")||args[1].equals("idle-window8-long-cuts"))){
+-            requireIdleSelection(RetentionIdlePolicyV3.systemSelection());
++            RetentionOwnerPollPolicyV3.systemSelection();requireIdleSelection(RetentionIdlePolicyV3.systemSelection());
+             Path result=runIdleWindow8(Path.of(args[0]),args.length==3?Integer.parseInt(args[2]):ports(),args[1].equals("idle-window8")?Workload.SHORT:Workload.LONG_CUTS);
+             System.out.println("VECTOR_V3_CAPACITY_SOURCE_PILOT_PASS evidence="+result);return;
+         }
+--- base/cluster/src/test/java/io/vectormatch/cluster/RetentionBatchOwnerV3Test.java
++++ candidate-r2/cluster/src/test/java/io/vectormatch/cluster/RetentionBatchOwnerV3Test.java
+@@ -49,6 +49,7 @@
+         final RetentionBatchOwnerV3 owner;
+         boolean expectFailure;
+         Fixture(int cap) { owner = new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(profile,"owner-tests",cap), () -> io, clock::get); }
++        Fixture(int cap,long maximumParkNs) { owner = new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(profile,"owner-tests",cap), () -> io, clock::get,maximumParkNs); }
+         Command command(int worker, long seq) { return new Deposit(1,"worker-"+worker,seq,Asset.BASE,1); }
+         RetentionBatchOwnerV3.Ticket submit(int worker, long seq) { return owner.submit(worker,command(worker,seq),clock.get()+TimeUnit.SECONDS.toNanos(1)); }
+         void advance(long ns) { clock.addAndGet(ns); owner.wake(); }
+--- base/cluster/src/test/java/io/vectormatch/cluster/RetentionReadBankV3Test.java
++++ candidate-r2/cluster/src/test/java/io/vectormatch/cluster/RetentionReadBankV3Test.java
+@@ -86,6 +86,10 @@
+         boolean expectOwnerFailure;
+         Fixture()throws Exception{
+             owner=new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(io.profile,LINEAGE,4),()->io,()->{clockHook.run();return clock.get();});
++            assertTrue(io.ready.await(2,TimeUnit.SECONDS),"owner initializes the real service");
++        }
++        Fixture(long maximumParkNs)throws Exception{
++            owner=new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(io.profile,LINEAGE,4),()->io,()->{clockHook.run();return clock.get();},maximumParkNs);
+             assertTrue(io.ready.await(2,TimeUnit.SECONDS),"owner initializes the real service");
+         }
+         long deadline(){return clock.get()+TimeUnit.SECONDS.toNanos(1);}
+--- base/cluster/src/main/java/io/vectormatch/cluster/RetentionOwnerPollPolicyV3.java
++++ candidate-r2/cluster/src/main/java/io/vectormatch/cluster/RetentionOwnerPollPolicyV3.java
+@@ -0,0 +1,60 @@
++package io.vectormatch.cluster;
++
++import java.util.HashMap;
++import java.util.List;
++import java.util.Map;
++import java.util.Objects;
++
++/** Load-owner polling only. Does not configure an Aeron driver, node or batch flush delay. */
++final class RetentionOwnerPollPolicyV3 {
++    static final String PROPERTY = "vectormatch.retention.ownerPollMaxParkNs";
++    static final long LEGACY_MAXIMUM_PARK_NS = 1_000_000L;
++    private static final List<String> HIDDEN_OPTIONS = List.of("JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS", "_JAVA_OPTIONS");
++
++    static long requireMaximum(long value) {
++        if (value != 100_000L && value != LEGACY_MAXIMUM_PARK_NS)
++            throw new IllegalArgumentException("owner poll comparison requires100000 or1000000ns");
++        return value;
++    }
++
++    record Selection(Long maximumParkNs) {
++        Selection { if (maximumParkNs != null) requireMaximum(maximumParkNs); }
++        boolean explicit() { return maximumParkNs != null; }
++        long effectiveMaximumParkNs() { return explicit() ? maximumParkNs : LEGACY_MAXIMUM_PARK_NS; }
++        Map<String,Object> observation() {
++            return explicit() ? Map.of("schema", "retention-owner-poll-selection-v1", "property", PROPERTY,
++                    "maximumParkNs", maximumParkNs, "factor", "owner poll requested park cap only",
++                    "hardRealtimeGuaranteed", false) : Map.of("explicit", false);
++        }
++        Map<String,Object> actualObservation(RetentionBatchOwnerV3 owner) {
++            if (owner == null) return Map.of("available", false, "reason", "owner_not_constructed");
++            var actual = owner.snapshot();
++            if (!Objects.equals(actual.get("ownerPollMaxParkNs"), effectiveMaximumParkNs()))
++                throw new IllegalStateException("constructed owner polling cap differs from captured selection");
++            return Map.of("available", true, "schema", "retention-owner-poll-actual-v1",
++                    "source", "actual-constructed-owner-snapshot", "ownerPollMaxParkNs", actual.get("ownerPollMaxParkNs"),
++                    "waitPolicy", actual.get("waitPolicy"), "requestedSleepOnly", actual.get("ownerPollRequestedSleepOnly"),
++                    "osLatenessBounded", actual.get("ownerPollOsLatenessBounded"));
++        }
++    }
++
++    static Selection selection(Map<String,String> properties, Map<String,String> environment) {
++        for (String name : HIDDEN_OPTIONS)
++            if (environment.getOrDefault(name, "").contains(PROPERTY))
++                throw new IllegalArgumentException("owner poll selection must be explicit, not hidden in " + name);
++        String requested = properties.get(PROPERTY);
++        if (requested == null) return new Selection(null);
++        if (!requested.equals("100000") && !requested.equals("1000000"))
++            throw new IllegalArgumentException(PROPERTY + " must be exactly100000 or1000000");
++        return new Selection(Long.valueOf(requested));
++    }
++
++    static Selection systemSelection() {
++        var properties = new HashMap<String,String>();
++        String value = System.getProperty(PROPERTY);
++        if (value != null) properties.put(PROPERTY, value);
++        return selection(properties, System.getenv());
++    }
++
++    private RetentionOwnerPollPolicyV3() {}
++}
+--- base/cluster/src/test/java/io/vectormatch/cluster/RetentionOwnerPollPolicyV3Test.java
++++ candidate-r2/cluster/src/test/java/io/vectormatch/cluster/RetentionOwnerPollPolicyV3Test.java
+@@ -0,0 +1,146 @@
++package io.vectormatch.cluster;
++
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.io.TempDir;
++import org.junit.jupiter.api.parallel.ResourceLock;
++
++import java.nio.file.Files;
++import java.nio.file.Path;
++import java.time.Duration;
++import java.util.*;
++import java.util.concurrent.TimeUnit;
++import java.util.concurrent.atomic.AtomicInteger;
++
++import static io.vectormatch.cluster.RetentionWireV3.*;
++import static io.vectormatch.cluster.RetentionReplyV3.*;
++import static org.junit.jupiter.api.Assertions.*;
++
++/** Deterministic requested-deadline and semantic tests; no OS-sleep or throughput assertions. */
++@ResourceLock("java.lang.System.properties")
++class RetentionOwnerPollPolicyV3Test {
++    private static final String PROPERTY=RetentionOwnerPollPolicyV3.PROPERTY;
++    private static RetentionOwnerPollPolicyV3.Selection selection(String value){
++        return RetentionOwnerPollPolicyV3.selection(value==null?Map.of():Map.of(PROPERTY,value),Map.of());
++    }
++
++    @Test void defaultAndExplicitCanonicalValuesAreIndependentFromNodeAndDriverPolicy(){
++        var absent=selection(null);assertFalse(absent.explicit());assertEquals(1_000_000L,absent.effectiveMaximumParkNs());
++        assertEquals(Map.of("explicit",false),absent.observation());
++        for(String value:List.of("100000","1000000")){
++            var selected=selection(value);assertTrue(selected.explicit());assertEquals(Long.parseLong(value),selected.effectiveMaximumParkNs());
++            assertEquals(PROPERTY,selected.observation().get("property"));assertEquals(false,selected.observation().get("hardRealtimeGuaranteed"));
++            assertFalse(RetentionIdlePolicyV3.selection(Map.of(PROPERTY,value),Map.of()).explicit());
++        }
++        assertFalse(RetentionOwnerPollPolicyV3.selection(Map.of(RetentionIdlePolicyV3.PROPERTY,"100000"),Map.of()).explicit());
++        var child=List.of("java","-cp","unchanged-libs","RetentionNodeMainV3");
++        var nodeSelection=RetentionIdlePolicyV3.selection(Map.of(RetentionIdlePolicyV3.PROPERTY,"100000",PROPERTY,"100000"),Map.of());
++        assertEquals(List.of("java","-D"+RetentionIdlePolicyV3.PROPERTY+"=100000","-cp","unchanged-libs","RetentionNodeMainV3"),nodeSelection.childArguments(child));
++        assertTrue(nodeSelection.childArguments(child).stream().noneMatch(value->value.contains(PROPERTY)));
++        assertFalse(RetentionOwnerPollPolicyV3.selection(Map.of(),Map.of("JAVA_TOOL_OPTIONS","-D"+RetentionIdlePolicyV3.PROPERTY+"=100000")).explicit());
++    }
++
++    @Test void unsupportedValuesAndHiddenOwnerInjectionAreRejected(){
++        for(String value:List.of("","0","-1","1000","100001","0100000","100000 "," 100000","1e5","+100000","1000000.0"))
++            assertThrows(IllegalArgumentException.class,()->selection(value),value);
++        for(String name:List.of("JAVA_TOOL_OPTIONS","JDK_JAVA_OPTIONS","_JAVA_OPTIONS"))
++            assertThrows(IllegalArgumentException.class,()->RetentionOwnerPollPolicyV3.selection(Map.of(),Map.of(name,"-D"+PROPERTY+"=100000")));
++    }
++
++    @Test void invalidExplicitConstructorDoesNotOpenFactory(){
++        var profile=RetentionBatchProfilesV3.finiteLoadProfile();var config=RetentionBatchOwnerV3.Config.forBatch(profile,"invalid-owner-park",4);
++        var calls=new AtomicInteger();
++        for(long value:new long[]{-1,0,1000,100001,1_000_001})
++            assertThrows(IllegalArgumentException.class,()->new RetentionBatchOwnerV3(config,()->{calls.incrementAndGet();throw new AssertionError("factory must not run");},value));
++        assertEquals(0,calls.get());
++    }
++
++    @Test void invalidPropertyFailsAllPilotBoundariesAndExperimentBeforeFilesPortsOrFactory(@TempDir Path temp){
++        String prior=System.getProperty(PROPERTY);System.setProperty(PROPERTY,"100001");
++        try{
++            Path fresh=temp.resolve("fresh");
++            assertThrows(IllegalArgumentException.class,()->RetentionCapacityAeronPilotV3.run(fresh));
++            assertThrows(IllegalArgumentException.class,()->RetentionCapacityAeronPilotV3.runArchiveChunks(fresh));
++            assertThrows(IllegalArgumentException.class,()->RetentionCapacityAeronPilotV3.runArchiveChunks(fresh,42000));
++            assertThrows(IllegalArgumentException.class,()->RetentionCapacityAeronPilotV3.runReadWindows(fresh));
++            assertThrows(IllegalArgumentException.class,()->RetentionCapacityAeronPilotV3.runReadWindows(fresh,42000));
++            assertThrows(IllegalArgumentException.class,()->RetentionCapacityAeronPilotV3.runIdleWindow8(fresh,42000));
++            assertThrows(IllegalArgumentException.class,()->RetentionCapacityAeronPilotV3.runIdleWindow8LongCuts(fresh,42000));
++            assertThrows(IllegalArgumentException.class,()->RetentionCapacityAeronPilotV3.main(new String[]{fresh.toString(),"idle-window8","42000"}));
++            var profile=RetentionBatchProfilesV3.finiteLoadProfile();var calls=new AtomicInteger();
++            var config=new RetentionCapacityExperimentV3.Config(6400,500,4,6144,8);
++            assertThrows(IllegalArgumentException.class,()->RetentionCapacityExperimentV3.run(fresh,temp,config,profile,"invalid-owner-poll",
++                    ()->{calls.incrementAndGet();throw new AssertionError("factory must not run");},null,null));
++            assertFalse(Files.exists(fresh));assertEquals(0,calls.get());
++        }finally{if(prior==null)System.clearProperty(PROPERTY);else System.setProperty(PROPERTY,prior);}
++    }
++
++    @Test void oldConstructorsRemainLegacyOneMsAndFlushBoundRemainsIndependent(){
++        try(var f=new RetentionBatchOwnerV3Test.Fixture(4)){
++            assertEquals(1_000_000L,f.owner.parkDuration(f.clock.get()));
++            assertEquals(1_000_000L,f.owner.snapshot().get("ownerPollMaxParkNs"));
++            assertEquals("deadline-aware park up to 1ms; OS lateness is not bounded",f.owner.snapshot().get("waitPolicy"));
++        }
++        var io=new RetentionBatchOwnerV3Test.FakeIO();var profile=RetentionBatchProfilesV3.finiteLoadProfile();
++        try(var owner=new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(profile,"default-public-owner",4),()->io)){
++            assertEquals(1_000_000L,owner.snapshot().get("ownerPollMaxParkNs"));
++        }
++        var config=new RetentionBatchOwnerV3.Config(profile,"flush-independent",128,64,4,1_000_000L);
++        try(var owner=new RetentionBatchOwnerV3(config,()->new RetentionBatchOwnerV3Test.FakeIO(),()->1_000_000L,100_000L)){
++            assertEquals(1_000_000L,owner.snapshot().get("flushDeadlineNs"));assertEquals(100_000L,owner.parkDuration(1_000_000L));
++        }
++        assertThrows(IllegalArgumentException.class,()->new RetentionBatchOwnerV3.Config(profile,"flush-too-large",128,64,4,1_000_001L));
++    }
++
++    @Test void actualObservationComesFromConstructedOwnerAndMissingOrMismatchedOwnerIsNotVerified(){
++        for(long maximum:new long[]{1_000_000L,100_000L})try(var f=new RetentionBatchOwnerV3Test.Fixture(4,maximum)){
++            var selected=selection(Long.toString(maximum));var actual=selected.actualObservation(f.owner);
++            assertEquals(true,actual.get("available"));assertEquals("actual-constructed-owner-snapshot",actual.get("source"));
++            assertEquals(maximum,actual.get("ownerPollMaxParkNs"));assertEquals(f.owner.snapshot().get("waitPolicy"),actual.get("waitPolicy"));
++            assertEquals(true,actual.get("requestedSleepOnly"));assertEquals(false,actual.get("osLatenessBounded"));
++            var other=selection(Long.toString(maximum==100_000L?1_000_000L:100_000L));
++            assertThrows(IllegalStateException.class,()->other.actualObservation(f.owner));
++            assertEquals(Map.of("available",false,"reason","owner_not_constructed"),selected.actualObservation(null));
++        }
++    }
++
++    @Test void bothCapsPreserveOriginalWireIdentityUnknownCreditAndLateCompletion()throws Exception{
++        for(long maximum:new long[]{1_000_000L,100_000L})try(var f=new RetentionBatchOwnerV3Test.Fixture(4,maximum)){
++            var tickets=new ArrayList<RetentionBatchOwnerV3.Ticket>();for(int worker=0;worker<4;worker++)tickets.add(f.submit(worker,1));
++            byte[] original=f.io.take();Request request=RetentionWireV3.decode(original);
++            RetentionBatchOwnerV3Test.eventually(()->((Number)f.owner.snapshot().get("acceptedPhysicalOffers")).longValue()==1);
++            assertEquals(4,((BusinessBatch)request.operation()).commands().size());assertEquals(maximum,f.owner.parkDuration(f.clock.get()));
++            tickets.getFirst().revoke();
++            for(var ticket:tickets){
++                var unknown=assertThrows(RetentionBatchOwnerV3.UnresolvedCommandException.class,()->ticket.await(Duration.ofMillis(1)));
++                assertArrayEquals(original,unknown.originalWire());assertTrue(unknown.mayHaveExecuted());assertFalse(unknown.mayStillBeOffered());
++            }
++            assertEquals(4L,f.owner.snapshot().get("globalCreditSpan"));
++            Reply reply=f.execute(original);f.reply(reply);
++            for(var ticket:tickets){var outcome=ticket.await(Duration.ofSeconds(1));assertEquals(RetentionBatchOwnerV3.Terminal.APPLIED,outcome.terminal());assertTrue(outcome.result().accepted());}
++            RetentionBatchOwnerV3Test.eventually(()->((Number)f.owner.snapshot().get("retiredFrames")).longValue()>=1);
++            f.reply(reply);RetentionBatchOwnerV3Test.eventually(()->((Number)f.owner.snapshot().get("ignoredLateReplies")).longValue()>=1);
++            assertEquals(0L,f.owner.snapshot().get("globalCreditSpan"));assertEquals(1,f.io.offerCount.get());
++            assertEquals(true,f.owner.snapshot().get("ownerThreadAlive"));
++        }
++    }
++
++    @Test void bothCapsKeepReadBankCreditsPhaseFencesAndReverseDuplicateReplyBinding()throws Exception{
++        for(long maximum:new long[]{1_000_000L,100_000L})try(var f=new RetentionReadBankV3Test.Fixture(maximum)){
++            var bank=f.owner.openReadBank(8);var tickets=new ArrayList<RetentionBatchOwnerV3.MaintenanceTicket>();
++            for(int i=0;i<8;i++)tickets.add(bank.reserve(new FetchEvents(i+1,1),f.deadline()));
++            for(var ticket:tickets)ticket.arm();RetentionBatchOwnerV3Test.eventually(()->f.io.offerCount.get()==8);
++            assertThrows(IllegalStateException.class,()->f.owner.submitMaintenance(new Position(),f.deadline()));
++            f.release(true);
++            for(int i=0;i<8;i++){
++                Reply reply=tickets.get(i).await(Duration.ofSeconds(1));
++                assertEquals(RetentionWireV3.decode(tickets.get(i).originalWire()).correlationId(),reply.correlationId());
++                assertEquals(i+1L,((Events)reply.payload()).batch().events().getFirst().eventSeq());
++            }
++            assertEquals(8L,f.snapshot("readOnlyRetained"));assertEquals(8L,f.snapshot("readOnlyCompletedUnconsumed"));
++            assertThrows(IllegalStateException.class,bank::close);
++            for(var ticket:tickets)bank.consume(ticket);bank.close();
++            assertEquals(0L,f.snapshot("readOnlyRetained"));assertEquals(8L,f.snapshot("readOnlyRetainedHighWater"));
++            assertEquals(maximum,f.owner.snapshot().get("ownerPollMaxParkNs"));
++        }
++    }
++}
+--- base/docs/OWNER_POLL_IDLE_V3.md
++++ candidate-r2/docs/OWNER_POLL_IDLE_V3.md
+@@ -0,0 +1,17 @@
++# Retention V3 owner polling park experiment
++
++This optional candidate changes the maximum requested park of the single `RetentionBatchOwnerV3` polling loop. It does not establish a throughput, latency, stability or endurance improvement. Both future arms must use the same candidate artifact and all other workload/configuration inputs.
++
++`-Dvectormatch.retention.ownerPollMaxParkNs=1000000` selects the legacy1ms cap explicitly; `=100000` selects100us. Absence retains the legacy1ms path. Only those canonical decimal values are admitted. Hidden selection through `JAVA_TOOL_OPTIONS`, `JDK_JAVA_OPTIONS` or `_JAVA_OPTIONS` is rejected. This property is separate from `vectormatch.retention.idleMaxParkNs`, which configures the existing node/Aeron-driver policy; it is not propagated to child nodes.
++
++The owner keeps its existing Config, batching flush deadline (50us by default, with the unchanged independent1ms validation ceiling), producer/retention credit, correlation, offer permits, retries, raw-wire identity, maintenance/read-bank windows and ACK exclusion rules. The only wait calculation change is the initial cap in the existing deadline-aware `parkDuration`. Earlier ready/permit/retry deadlines can still shorten that request. LockSupport or OS scheduling may wake late;100us/1ms is not an observed sleep duration or real-time guarantee.
++
++Both previous constructors remain and use the legacy1ms cap. An explicit public constructor accepts the validated cap, and a package constructor also accepts the existing fake clock. Validation happens before factory invocation or owner-thread construction. The polling property is selected by the capacity harness rather than implicitly changing every legacy owner instance.
++
++Owner snapshots always record `ownerPollMaxParkNs`, `ownerPollRequestedSleepOnly=true`, `ownerPollOsLatenessBounded=false` and the corresponding truthful waitPolicy. When the property is explicit, configuration.json and load-result/failure.json additionally contain `ownerPollSelection` (intent) and `ownerPollActual` (values read from the constructed owner's snapshot). Intent/actual cap mismatch is rejected; a missing owner is explicitly unavailable. Pilot registration records selection intent before owner construction and must be reconciled with those actual load/snapshot records. Legacy absence adds no new selection fields to configuration/summary/registration.
++
++The pilot validates selection at all public entry points before creating a directory or checking/choosing ports. Experiment construction validates before its first filesystem write or factory work. Invalid values do not create a partial trial.
++
++Source-only preparation includes eight new deterministic test methods covering canonical/hidden/namespace policy, constructor pre-factory failure, early pilot/experiment rejection, both old constructor defaults, unchanged flush ceiling, actual-versus-intent metadata, same original identity/wire and UNKNOWN credit through late completion, and read-bank retained credits/fences with reverse and duplicate replies. They reuse the existing FakeIO/service fixtures through two additional test-only constructor overloads. No test asserts exact wall-clock sleep or throughput. Root must review and execute tests and native validation; they have not been run by this implementation task.
++
++A prospective comparison keeps source/artifacts/profile, selected readWindow8,6144-byte archive chunks, fetch16, businesscap4, W128/Q64, setup, rate/duration, sync2/force, appointed leader, MTU, node/driver policy and all resource/retry limits fixed. Only explicit owner poll cap1ms/100us differs; the new artifact's common plans and actual owner metadata must be verified in both arms. A1/B1/A2/B2 preserves every outcome, CPU cost and scheduler quality. The historical6033 CPU point is separate;100M journal retention remains unresolved by this change.
