@@ -1,8 +1,12 @@
 # 原应用迁移至 CPU：进展与恢复计划（业务恢复尚未验收）
 
-准备进展：原e1db源的85路径应用包已同源重建；固定Linux PostgreSQL18.6制品已在CPU上通过file/readelf/ldd及`postgres --version`。收据在[恢复准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/root-scope.json)和[实际加载探针](../evidence/2026-10-24/runpod-cpu/restoration-preparation/loader-probe-r1/receipt.json)。此减缩PG制品没有`pg_controldata`/`pg_config`，已另行原生构建两工具。数据库、原集群、gateway与projector均未启动，不能将二进制加载成功视为业务恢复完成。
+准备进展：原e1db源的85路径应用包已同源重建；固定Linux PostgreSQL18.6制品已在CPU上通过file/readelf/ldd及`postgres --version`。收据在[恢复准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/root-scope.json)和[实际加载探针](../evidence/2026-10-24/runpod-cpu/restoration-preparation/loader-probe-r1/receipt.json)。此减缩PG制品没有`pg_controldata`/`pg_config`，已另行原生构建两工具。数据库已完成一次实际启动及正常关闭，但只读审计停在首个设置断言；原集群、gateway与projector仍未启动，业务恢复尚未完成。
 
-隔离原生副本已实际恢复到`/opt/vectormatch-cpu/restorations/original-native-r1`：三份固定SHA备份的1041文件、3,701,302,583逻辑字节全部通过源内容及完整恢复文件SHA校验；稀疏分配93,749,248字节。原备份保留，未迁移owner。只读`pg_controldata18.6`无警告，控制版本1800，原数据库systemId7699920832388303129，状态`shut down`；检查前后PG_VERSION和pg_control SHA不变。[完整副本和控制检查证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-native-clone-r1/README.md)。locale、数据库内容/cursor与source lineage、三节点恢复、HTTP及WS仍未验收。
+隔离原生副本已实际恢复到`/opt/vectormatch-cpu/restorations/original-native-r1`：三份固定SHA备份的1041文件、3,701,302,583逻辑字节全部通过源内容及完整恢复文件SHA校验；初始稀疏分配93,749,248字节。原备份保留。随后只将已完整验证的PGDATA迁移到专用963:963，并对五个固定父目录授予该UID执行权限；[访问准备证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg-access-r1/README.md)记录全部前后置检查及一次局部失败。只读`pg_controldata18.6`验证控制版本1800、原数据库systemId7699920832388303129和`shut down`，检查前后关键SHA不变。[完整副本和控制检查证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-native-clone-r1/README.md)。
+
+第一次PG-only实际探针已启动原物理库，随后定向SIGINT正常关闭。JDBC事务实际只读，但readOnlyMode=always在切换autocommit时将会话默认只读设置改为off，触发首个检查断言；本次未验证ledger或cursor。原始失败、完整停止态副本及物理差异在[首次探针证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg-readonly-r1/README.md)。PG启动产生预期内部写入，当前989文件的派生基线另存，不能再要求它逐字节等于启动前备份。
+
+另已完整离线解码三份原备份的最新service checkpoint，canonical及outbox字节全相等：command4539/event6106/market6086/exported6106/pending0。[离线证明及在线恢复计划](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-cluster-probe-preparation-r1/RESTORATION_PROBE_PLAN.md)区分了checkpoint、尾部重放和leader回复；它不证明CPU上三节点已恢复。locale、数据库内容/cursor与source lineage、三节点恢复、HTTP及WS仍未验收。
 
 新增准备：固定官方18.6源码的两个工具已在CPU原生构建成功，20项离线守卫及每个原生命令/输出版本/格式宏检查通过；[r3证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg18-native-tools-r3/README.md)保留源码/二进制SHA、全部日志和前两次失败的原因。`pg_config`描述此次工具构建，不描述原Zonky服务器。依赖安装没有升级/移除既有包，未启动数据库。源码来源在[工具准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg18-tools-source/README.md)。无损稀疏解包器此前已在空闲CPU通过10项微型合成文件测试，含实际Linux稀疏分配与完整字节读回；[Linux守卫](../evidence/2026-10-24/runpod-cpu/restoration-preparation/sparse-native-guards-r1/receipt.json)和本次完整副本检查分开保留。它们不是运行中数据库或业务恢复证明。
 
