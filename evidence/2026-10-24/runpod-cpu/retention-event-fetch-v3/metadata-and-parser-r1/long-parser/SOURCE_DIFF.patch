@@ -1,0 +1,553 @@
+--- old-frozen1fdec/source/audit_raw.py
++++ new-explicit-page/source/audit_raw.py
+@@ -12,6 +12,7 @@
+ import traceback
+ from common import WINDOWS,audit_arguments,egress,egress_progress
+ from read_phase_audit import audit_rpc_phases,correlation_map
++from event_fetch_contract import selected_page,validate_fetch_pair,validate_selected_configuration,validate_cycle_selection,validate_cycle_page_request
+ from workload_contract import LONG,contract,validate_plan,scheduler_gate,validate_cycle_frontiers,validate_final,validate_terminal_row,validate_business_answer
+ 
+ HERE = pathlib.Path(__file__).resolve().parent
+@@ -88,6 +89,7 @@
+         out['maintenanceIdentity'] = [r.text(48), r.q()]; out['throughEvent'] = r.q()
+     elif tag == 5:
+         out['fromEvent'], out['count'] = r.q(), r.i()
++        require(out['fromEvent']>=1 and 1<=out['count']<=32,'Invalid V3 event request1..32/range')
+     elif tag == 6:
+         out['throughCommand'] = r.q()
+     elif tag == 7:
+@@ -113,10 +115,13 @@
+             if r.flag(): out['maintenance']['compaction'] = [r.q(), r.q(), r.i(), r.i(), r.flag()]
+     elif tag == 2:
+         out['exported'], out['lastEvent'], count = r.q(), r.q(), r.i()
+-        require(0 <= count <= 16, 'Bad event reply count')
++        require(0 <= count <= 32 and 0<=out['exported']<=out['lastEvent'], 'Bad event reply count/range')
+         out['events'] = []
+         for _ in range(count):
+             event = [r.q(), r.q(), r.b()] + [r.q() for _ in range(4)] + [r.b(), r.q(), r.q(), r.text(128)]
++            require(event[2] in range(5) and event[7] in (0,1,255) and event[3]>0 and event[9]>0
++                and 0<=event[1]<=event[0] and out['exported']<event[0]<=out['lastEvent']
++                and (not out['events'] or event[0]==out['events'][-1][0]+1),'Invalid V3 event continuity/fields')
+             out['events'].append(event)
+     elif tag == 3:
+         out['ack'] = ack(r); out['total'] = r.i()
+@@ -169,17 +174,20 @@
+     require(suspect==allowed,'Other WARN/error/exception lines remain unclassified')
+     return {'warningCount':len(warnings),'warnings':warnings,'exactLogOrderObserved':True,'warningAfterSigtermTimestampIndependentlyProven':False,'causalScope':'Consistent with registered leader-first orderly stop; no warning/SIGTERM cross-process timestamps were recorded.'}
+ 
+-def audit_arm(selected_window, arm_override=None, *, workload=LONG, local_functional_only=False):
++def audit_arm(selected_window, arm_override=None, *, event_fetch_count, workload=LONG, local_functional_only=False):
++    selected_page(event_fetch_count)
++    require(type(selected_window)is int and selected_window==8,'New event-page LONG audit requires fixed read window8')
+     workload=contract(workload);planned=workload.arrivals;window_seconds=planned/workload.rate
+     cap=6144
+     arm = pathlib.Path(arm_override) if arm_override is not None else JOB / 'read-window-pair' / ('window-%d' % selected_window); load = arm/'load'; maint = load/'maintenance'
+     cfg = js(load/'configuration.json'); summary = js(load/'load-result.json')
+-    require(cfg['arrivals'] == planned and cfg['ratePerSecond'] == workload.rate and cfg['windowSeconds'] == window_seconds and cfg['batchCap'] == 4 and cfg['archiveChunkBytes']==cap and cfg['eventFetchCount']==16 and cfg['commonChunkEnvelope'] is False and cfg['commonReadWindowEnvelope'] is True and cfg['readWindow']==selected_window, 'Fixed explicit long source configuration')
++    require(cfg['arrivals'] == planned and cfg['ratePerSecond'] == workload.rate and cfg['windowSeconds'] == window_seconds and cfg['batchCap'] == 4 and cfg['archiveChunkBytes']==cap and cfg['eventFetchCount']==event_fetch_count and cfg.get('commonEventFetchEnvelope') is True and cfg['commonChunkEnvelope'] is False and cfg['commonReadWindowEnvelope'] is True and cfg['readWindow']==selected_window, 'Fixed explicit long source configuration')
+     require(cfg['logicalWorkers'] == 128 and cfg['taskQueueCapacityPerWorker'] == 64 and cfg['physicalSessions'] == 1
+             and cfg['sharedMediaDrivers'] == 1 and cfg['batchFlushNs'] == 50000 and cfg['arrivalClockPausesForMaintenance'] is False, 'Fixed owner configuration')
++    plan=js(load/'admission-plan.json')
++    validate_selected_configuration(cfg,summary,plan,event_fetch_count=event_fetch_count)
+     arrivals = rows(load/'arrivals.csv'); require(len(arrivals) == planned, 'Explicit long arrival row closure')
+     origin = cfg['scheduledOriginMonotonicNs']; window = planned*1_000_000_000//workload.rate
+-    plan=js(load/'admission-plan.json')
+     expected_phases=validate_plan(plan,workload)
+     require(plan['requestedReadWindow']==selected_window and plan['maxReadOnlyInFlight']==8 and plan['commonReadWindowEnvelope'] is True,'Actual read-window plan differs')
+     reqs = frames(load/'physical-requests.bin', True, request); reps = frames(load/'physical-replies.bin', True, reply)
+@@ -237,7 +245,7 @@
+     logical_replies=frames(maint/'logical-rpc-replies.bin',False,reply)
+     require(len(rpc_rows) == len(logical_requests) == len(logical_replies) and len(rpc_rows)>0, 'Logical RPC count closure')
+     phase_report=audit_rpc_phases(rpc_rows,logical_requests,logical_replies,reqs,reps,offers,origin,selected_window,
+-        maximum_read_phases=expected_phases,expected_phase_count=expected_phases)
++        event_fetch_count=event_fetch_count,maximum_read_phases=expected_phases,expected_phase_count=expected_phases)
+     logical_request_by_correlation=correlation_map(logical_requests)
+     logical_reply_by_correlation=correlation_map(logical_replies)
+     rpc_kinds=collections.defaultdict(list)
+@@ -259,7 +267,7 @@
+                        'arrivalsReleasedDuringCycle':released,'throughCommandSeq':int(row['throughCommandSeq'])})
+     require(previous_high==len(rpc_rows),'Trailing logical RPCs outside all cycle receipts')
+     validate_cycle_frontiers(cycles,phase_report,workload)
+-    prefix_checks=audit_prefixes(arm,cap,cycles,rpc_rows,logical_requests,logical_replies,offers,request_by_correlation,origin,phase_report,workload=workload)
++    prefix_checks=audit_prefixes(arm,cap,cycles,rpc_rows,logical_requests,logical_replies,offers,request_by_correlation,origin,phase_report,event_fetch_count=event_fetch_count,workload=workload)
+     homogeneous=[]
+     for cycle,prefix in zip(cycles,prefix_checks):
+         if 2<=cycle['cycle']<=11:
+@@ -322,7 +330,7 @@
+         node_logs.append({'member':member,'bytes':len(log),'lines':len(text.splitlines()),'pid':identity['pid'],
+             'startTicks':identity.get('linuxStartTicks'),'commandSha256':identity.get('linuxCommandSha256'),'processHandleInfo':{k:identity[k] for k in ('started','command','arguments')},'postSnapshotWarningClassification':node_warning_report,
+             'finalCheckpointSha256':final['combinedSha256']})
+-    return {'archiveChunkBytes':cap,'readWindow':selected_window,'readPhaseBindings':phase_report,'batchCap':4,'config':cfg,'prefixReadback':prefix_checks,'egressAssociationAttestation':egress_report,'rawMetrics':raw_metrics,'arrivalLatencyP50Ns':nearest(latencies,.5),
++    return {'archiveChunkBytes':cap,'eventFetchCount':event_fetch_count,'commonEventFetchEnvelope':True,'readWindow':selected_window,'readPhaseBindings':phase_report,'batchCap':4,'config':cfg,'prefixReadback':prefix_checks,'egressAssociationAttestation':egress_report,'rawMetrics':raw_metrics,'arrivalLatencyP50Ns':nearest(latencies,.5),
+         'replyDrainNsIndependentlyRecomputed':raw_metrics['lastKnownReplyDrainNs'],
+         'totalSourceDrainNsReportedNotDirectlyRawTimestamped':summary['totalSourceDrainNs'],
+         'finalMaintenanceEndDrainNsFromRawCycleReceipt':max(0,cycles[-1]['endOffsetNs']-window),
+@@ -376,7 +384,7 @@
+             'kernelIODeltas':{k:b['io'][k]-a['io'][k] for k in a['io']},'identity':{'pid':a['pid'],'startTicks':a['startTicks'],'commandSha256':a['commandSha256']}}
+         record['observedSpanAverageCores']=record['cpuSecondsDelta']/duration if duration else None
+         if role.startswith('window-'):
+-            cap=int(role.split('-')[1]); arm=next(a for a in arms if a['readWindow']==cap); start=utc(arm['config']['scheduledOriginUTC']); finish=start+datetime.timedelta(seconds=12.8)
++            cap=int(role.split('-')[1]); arm=next(a for a in arms if a['readWindow']==cap); start=utc(arm['config']['scheduledOriginUTC']); finish=start+datetime.timedelta(seconds=LONG.arrivals/LONG.rate)
+             record['coarseUTCExposureAvailableSamples']=sum(start<=utc(s['atUtc'])<finish for s,v in observed)
+             record['coarseUTCPostWindowAvailableSamples']=sum(utc(s['atUtc'])>=finish for s,v in observed)
+             record['coarseUTCExposureIncompleteSampleFailures']=sum(not r['available'] and r['role']==role for s in samples if start<=utc(s['atUtc'])<finish for r in s['owned'])
+@@ -421,7 +429,9 @@
+     all_accepted=len(accepted)==planned and len(order_ids)==planned and duplicates==0 and not any(counts[k]for k in ('initialUNKNOWN','finalUNKNOWN','notSent','businessRejected','replyReplayed','initialAdmissionRejected'))
+     return {'rows':len(table),'allIdentitiesAndSchedulesVerified':True,'counts':dict(counts),'acceptedUniqueOrders':len(order_ids),'duplicateOrOutOfRangeAcceptedOrderIds':duplicates,'acceptedRepliesInsideWindow':within,'arrivalWindowGoodputPerSecond':within/(planned/workload.rate),'allArrivalAcceptedP99Ns':nearest(accepted) if all_accepted else None,'acceptedConditionalP99Ns':nearest(accepted),'completedReplyConditionalP99Ns':nearest(reply_times),'policy':'All-arrival accepted p99 is null unless every planned arrival has one distinct accepted result; unknown/notSent/rejected/replayed rows remain counted.'}
+ 
+-def audit_prefixes(arm,chunk,cycles,rpc_rows,requests,replies,offers,physical_q,origin,phase_report,*,workload=LONG):
++def audit_prefixes(arm,chunk,cycles,rpc_rows,requests,replies,offers,physical_q,origin,phase_report,*,event_fetch_count,workload=LONG):
++    selected_page(event_fetch_count)
++    require(phase_report['selectedEventFetchCount']==event_fetch_count,'Cycle/phase selected event page differs')
+     workload=contract(workload)
+     from bisect import bisect_left
+     maint=arm/'load/maintenance';reply_blob=raw(maint/'logical-rpc-replies.bin')
+@@ -430,7 +440,7 @@
+     previous_chain=None;previous_command=0;previous_event=0;reports=[];all_phases=set()
+     for cycle in cycles:
+         row=properties(maint/('cycle-%d.verified.txt'%cycle['cycle']));low,high=int(row['logicalRpcCountAtStart']),int(row['logicalRpcCountAtEnd'])
+-        require(row['archiveChunkBytes']==str(chunk) and row['eventFetchCount']=='16' and row['readWindow']==str(phase_report['selectedReadWindow']),'Cycle selected policy differs')
++        validate_cycle_selection(row,phase_report,chunk,event_fetch_count=event_fetch_count)
+         selected_rows=rpc_rows[low:high]
+         require(selected_rows and selected_rows[0]['kind']=='PrepareArchive','Cycle starts with prepare barrier')
+         require(selected_rows[-2]['kind']=='ArchiveCommit' and selected_rows[-1]['kind']=='EventAck','Cycle ends with exact serialized archive/event ACK barriers')
+@@ -458,7 +468,8 @@
+             require(q['count']==min(chunk,total-len(payload)) and len(v['chunk'])==q['count'],'Actual selected chunk length');payload.extend(v['chunk'])
+         for req,rep in event_pairs:
+             q,v=req['decoded'],rep['decoded']
+-            require(q['fromEvent']==previous_event+len(event_values)+1 and 1<=q['count']<=16 and len(v['events'])==q['count'],'Exact unique complete event page binding')
++            validate_fetch_pair(q,v,event_fetch_count=event_fetch_count)
++            validate_cycle_page_request(q,previous_event=previous_event,consumed=len(event_values),through_event=int(row['throughEventSeq']),event_fetch_count=event_fetch_count)
+             for event in v['events']:require(event[0]==previous_event+len(event_values)+1,'Exact event prefix continuity');event_values.append(event)
+             event_frames.append(reply_blob[rep['offset']:rep['offset']+4+rep['bytes']])
+         commit=qmap[int(selected_rows[-2]['correlation_id'])]['decoded'];event_ack=qmap[int(selected_rows[-1]['correlation_id'])]['decoded']
+@@ -510,4 +521,5 @@
+     except BaseException as error:
+         (HERE/'failure.json').write_text(json.dumps({'passed':False,'error':repr(error),'traceback':traceback.format_exc(),'inputs':INPUTS,'rawInputsUnchanged':True,'partialReportsRetained':True},indent=2)+'\n');raise
+ 
+-if __name__=='__main__':raise SystemExit('Use the explicit closed-native long runner or import audit_arm with a strict scheduler gate; this is not the legacy6400 collector CLI.')
++if __name__=='__main__':
++    raise SystemExit('Source-only library: caller must bind newactual metadata/release and explicitly supply event_fetch_count=16 or32; legacy collector CLI is not reused')
+--- /dev/null
++++ new-explicit-page/source/event_fetch_contract.py
+@@ -0,0 +1,55 @@
++"""Explicit selected-page contracts; pure schema/wire checks, never runtime evidence."""
++
++def require(value,message):
++    if not value:raise AssertionError(message)
++
++def selected_page(value):
++    require(type(value)is int and value in(16,32),'Explicit selected event page16 or32 required')
++    return value
++
++def validate_fetch_pair(request,reply,*,event_fetch_count):
++    selected_page(event_fetch_count)
++    require(request['kind']=='FetchEvents' and type(request['fromEvent'])is int and request['fromEvent']>=1
++        and type(request['count'])is int and 1<=request['count']<=event_fetch_count,'Fetch request exceeds selected page or range')
++    require(reply['tag']==2 and reply.get('error','')=='' and len(reply['events'])==request['count'],
++        'Exact complete requested event reply count required')
++    start=request['fromEvent'];events=reply['events']
++    require(type(reply['exported'])is int and type(reply['lastEvent'])is int
++        and 0<=reply['exported']<start and start+request['count']-1<=reply['lastEvent'],
++        'Event response exported/last range does not contain requested prefix')
++    require([event[0]for event in events]==list(range(start,start+request['count'])),
++        'Exact complete contiguous requested event prefix required')
++    return True
++
++def validate_selected_configuration(configuration,summary,plan,*,event_fetch_count):
++    selected_page(event_fetch_count)
++    for label,value in [('configuration',configuration),('summary',summary),('plan',plan)]:
++        require(value.get('eventFetchCount')==event_fetch_count and value.get('commonEventFetchEnvelope')is True,
++            label+' selected event page/common envelope differs')
++        require(value.get('readWindow',value.get('requestedReadWindow'))==8
++            and value.get('batchCap')==4 and value.get('archiveChunkBytes')==6144,
++            label+' fixed read8/cap4/chunk6144 differs')
++    require(summary['maintenanceRpcMetrics']['eventFetchCount']==event_fetch_count,'Actual coordinator selected event page differs')
++    require(plan['maxReadOnlyInFlight']==8 and plan['maximumPhysicalOffersPerRpc']==4
++        and 0<plan['maximumRawTraceBytes']<=2*1024**3 and 0<plan['maximumAllocatedGrowthBytes']<=5*1024**3//2
++        and plan['minimumFreeRuntimeBytes']==1024**3,'Unchanged read/offer/raw/growth/floor bounds required')
++    require(6763<=plan['largestReplyBytes']<=6919 and 6763+32<=6951,'Page32 must fit unchanged supported complete reply envelope')
++    require(0<plan['selectedMaximumEventFetchRpcs']<=plan['maximumEventFetchRpcs']
++        and plan['selectedMaximumLogicalMaintenanceRpcs']<=plan['maximumLogicalMaintenanceRpcs'],
++        'Selected RPC counts must remain upper bounds within common operational envelope')
++    return True
++
++def validate_cycle_selection(row,phase_report,chunk,*,event_fetch_count):
++    selected_page(event_fetch_count)
++    require(phase_report['selectedEventFetchCount']==event_fetch_count and phase_report['selectedReadWindow']==8,
++        'Cycle/phase selected event page or read8 differs')
++    require(row['archiveChunkBytes']==str(chunk) and row['eventFetchCount']==str(event_fetch_count)
++        and row['readWindow']=='8','Cycle selected policy differs')
++    return True
++
++def validate_cycle_page_request(request,*,previous_event,consumed,through_event,event_fetch_count):
++    selected_page(event_fetch_count)
++    remaining=through_event-previous_event-consumed
++    require(remaining>0 and request['fromEvent']==previous_event+consumed+1
++        and request['count']==min(event_fetch_count,remaining),'Exact selected page or final partial cycle prefix differs')
++    return True
+--- old-frozen1fdec/source/read_phase_audit.py
++++ new-explicit-page/source/read_phase_audit.py
+@@ -7,6 +7,7 @@
+ """
+ from collections import defaultdict
+ from bisect import bisect_left
++from event_fetch_contract import selected_page,validate_fetch_pair
+ 
+ READ_KINDS = {'ArchiveChunk', 'FetchEvents'}
+ CONTROL_KINDS = {'PrepareArchive', 'ArchiveCommit', 'EventAck'}
+@@ -48,7 +49,8 @@
+ 
+ 
+ def audit_rpc_phases(rows, logical_requests, logical_replies, physical_requests,
+-                     physical_replies, offers, origin, selected_window, *, maximum_read_phases=8, expected_phase_count=None):
++                     physical_replies, offers, origin, selected_window, *, event_fetch_count, maximum_read_phases=8, expected_phase_count=None):
++    selected_page(event_fetch_count)
+     require(type(selected_window) is int and selected_window in (1,8), 'Selected read window must be1 or8')
+     require(type(maximum_read_phases)is int and 1<=maximum_read_phases<=24,'Prospectively bounded phase cap required')
+     require(rows and len(rows) == len(logical_requests) == len(logical_replies), 'Logical RPC count closure')
+@@ -89,7 +91,10 @@
+             require(1<=q['decoded']['count']<=6144,'Archive6144 cap exceeded')
+         elif kind=='FetchEvents':
+             require(row['event_fetch_requested_count']==str(q['decoded']['count']) and row['archive_chunk_requested_bytes']=='','Event count CSV differs')
+-            require(1<=q['decoded']['count']<=16,'Fetch16 cap exceeded')
++            validate_fetch_pair(q['decoded'],v['decoded'],event_fetch_count=event_fetch_count)
++            for callback in callbacks:
++                if callback['decoded']['tag']==2 and callback['decoded'].get('error','')=='':
++                    validate_fetch_pair(q['decoded'],callback['decoded'],event_fetch_count=event_fetch_count)
+         else:
+             require(row['archive_chunk_requested_bytes']==row['event_fetch_requested_count']=='','Spurious read count on serialized control')
+         if kind in READ_KINDS:
+@@ -126,4 +131,4 @@
+         phase_reports.append({'generation':generation,'kind':items[0]['kind'],'logicalReads':len(items),'reservationStartNs':begin,'observedLowerBoundNotExactBankLifetime':True,'coordinatorLastEndNs':end,'wallSpanNs':end-begin,'wireObservedOfferedAwaitingFirstCallbackHighWater':high})
+     # Controls themselves remain serial; overlapping read rows are deliberately legal.
+     for a,b in zip(sorted(serial),sorted(serial)[1:]):require(a[1]<=b[0],'Serialized controls overlap')
+-    return {'passed':True,'logicalRpcs':len(rows),'readPhases':phase_reports,'extraPhysicalCallbacksRetained':extra_callbacks,'actualOfferedHighWater':max(p['wireObservedOfferedAwaitingFirstCallbackHighWater'] for p in phase_reports),'selectedReadWindow':selected_window,'pipelineActuallyOverlapped':any(p['wireObservedOfferedAwaitingFirstCallbackHighWater']>1 for p in phase_reports),'coordinatorElapsedSumIsWallTime':False,'retainedSlotOccupancyIndependentlyReconstructed':False,'timingScope':'Phase min reservation start through max coordinator end is an observed lower bound, not exact bank lifetime. Per RPC coordinator end is after logical reply flush, before timing flush/consume. Elapsed includes ordered head wait and overlapping read intervals; retained capacity is source-enforced/runtime-attested, without independent consume timestamps.','rpcBindings':report_rows}
++    return {'passed':True,'logicalRpcs':len(rows),'readPhases':phase_reports,'extraPhysicalCallbacksRetained':extra_callbacks,'actualOfferedHighWater':max(p['wireObservedOfferedAwaitingFirstCallbackHighWater'] for p in phase_reports),'selectedReadWindow':selected_window,'selectedEventFetchCount':event_fetch_count,'pipelineActuallyOverlapped':any(p['wireObservedOfferedAwaitingFirstCallbackHighWater']>1 for p in phase_reports),'coordinatorElapsedSumIsWallTime':False,'retainedSlotOccupancyIndependentlyReconstructed':False,'timingScope':'Phase min reservation start through max coordinator end is an observed lower bound, not exact bank lifetime. Per RPC coordinator end is after logical reply flush, before timing flush/consume. Elapsed includes ordered head wait and overlapping read intervals; retained capacity is source-enforced/runtime-attested, without independent consume timestamps.','rpcBindings':report_rows}
+--- old-frozen1fdec/source/workload_contract.py
++++ new-explicit-page/source/workload_contract.py
+@@ -1,5 +1,6 @@
+ """Exact admitted long preset, distinct from the unchanged6400 default/CPU gates."""
+ from typing import NamedTuple
++from event_fetch_contract import selected_page
+ 
+ 
+ class Workload(NamedTuple):
+@@ -26,9 +27,18 @@
+     return w.phases
+ 
+ 
+-def validate_actual_plan_observation(observation,registered_plan,actual_code):
+-    require(observation['actualCodeFingerprint']==actual_code and observation['workloads']['LONG_CUTS']['plan']==registered_plan,
+-        'Captured actual-JAR LONG_CUTS plan/fingerprint differs from registered runtime plan')
++def validate_actual_plan_observation(observation,registered_plan,actual_code,*,event_fetch_count):
++    selected_page(event_fetch_count)
++    require(observation['actualCodeFingerprint']==actual_code and set(observation['plans'])=={'16','32'},'Captured actual-JAR selected page/code differs')
++    allowed={'eventFetchCount','selectedMaximumLogicalMaintenanceRpcs','selectedMaximumEventFetchRpcs'}
++    values=[]
++    for page in(16,32):
++        row=observation['plans'][str(page)];plan=row['plan']
++        require(row['configuration']['eventFetchCount']==page and row['configuration']['commonEventFetchEnvelope']is True
++            and plan['eventFetchCount']==page and plan['commonEventFetchEnvelope']is True,'Captured actual-JAR page/common envelope differs')
++        values.append({k:v for k,v in plan.items()if k not in allowed})
++    require(values[0]==values[1] and observation['plans'][str(event_fetch_count)]['plan']==registered_plan,
++        'Captured actual-JAR selected full plan/common operational envelope differs')
+ 
+ 
+ def scheduler_gate(late_count,reported_valid,*,local_functional_only=False):
+--- /dev/null
++++ new-explicit-page/tests/binary_codec_fixture.py
+@@ -0,0 +1,17 @@
++"""Synthetic protocol bytes, not Java-captured wires or benchmark/log evidence."""
++import struct
++MAX=2**63-1
++
++def text(value):
++    raw=value.encode('utf8');return struct.pack('>i',len(raw))+raw
++
++def request(count=32,first=1,correlation=MAX):
++    return struct.pack('>iH',0x564d5733,3)+text('a'*64)+text('l'*64)+struct.pack('>qBqi',correlation,5,first,count)
++
++def event(seq,detail):
++    return struct.pack('>qqBqqqqBqq',seq,seq,2,MAX,MAX,MAX,MAX,0,MAX,MAX)+text(detail)
++
++def reply(count=32,first=1,detail='界'*42+'é',error='E'*128):
++    header=struct.pack('>iH',0x564d5233,3)+text('a'*64)+text('l'*64)+struct.pack('>q',MAX)
++    header+=struct.pack('>7q',MAX,MAX,32,32,0,MAX,0)+text('b'*64)+text(error)+struct.pack('>Bqqi',2,0,max(32,first+count-1),count)
++    return header+b''.join(event(seq,detail)for seq in range(first,first+count))
+--- /dev/null
++++ new-explicit-page/tests/test_event_fetch.py
+@@ -0,0 +1,112 @@
++"""Explicit-page pure binary/phase contracts. No actual raw or runtime success fixture."""
++import copy,hashlib,inspect,json,struct,unittest
++from pathlib import Path
++from unittest.mock import patch
++import audit_raw as raw
++import read_phase_audit as phase
++from event_fetch_contract import selected_page,validate_fetch_pair,validate_selected_configuration,validate_cycle_selection,validate_cycle_page_request
++from workload_contract import validate_actual_plan_observation
++from test_phase_baseline import fixture
++import binary_codec_fixture as binary
++
++class EventPageGuards(unittest.TestCase):
++    def test_no_implicit_page_at_new_audit_or_phase_entry(self):
++        self.assertIs(inspect.signature(raw.audit_arm).parameters['event_fetch_count'].default,inspect.Parameter.empty)
++        self.assertIs(inspect.signature(phase.audit_rpc_phases).parameters['event_fetch_count'].default,inspect.Parameter.empty)
++        with self.assertRaises(TypeError):raw.audit_arm(8)
++        with self.assertRaises(TypeError):phase.audit_rpc_phases(*fixture())
++        with patch.object(raw,'js',side_effect=AssertionError('No IO for invalid selection')):
++            for page in(None,True,0,1,17,33):
++                with self.subTest(page=page),self.assertRaisesRegex(AssertionError,'selected event page'):raw.audit_arm(8,event_fetch_count=page)
++    def test_complete_max32_binary_utf8_roundtrip_fields_and_unchanged_envelope(self):
++        for detail in('界'*42+'é','🚀'*32):
++            value=binary.reply(detail=detail);self.assertEqual(6763,len(value));self.assertEqual(128,len(detail.encode('utf8')))
++            decoded=raw.reply(value);self.assertEqual(32,len(decoded['events']));self.assertEqual(detail,decoded['events'][-1][-1]);self.assertEqual(list(range(1,33)),[e[0]for e in decoded['events']])
++            self.assertLessEqual(len(value),6919);self.assertLessEqual(len(value)+32,6951);self.assertLessEqual(len(value),8192)
++    def test_binary33_partial_trailing_truncated_and_bad_utf8_refused(self):
++        for value in(binary.reply(count=33),binary.reply()[:-1],binary.reply()+b'x',binary.reply()[:200]):
++            with self.subTest(length=len(value)),self.assertRaises(AssertionError):raw.reply(value)
++        value=bytearray(binary.reply(count=1,detail='x'));value[-1]=255
++        with self.assertRaises(UnicodeDecodeError):raw.reply(bytes(value))
++        for count in(0,33):
++            with self.subTest(count=count),self.assertRaises(AssertionError):raw.request(binary.request(count))
++        with self.assertRaises(AssertionError):raw.request(binary.request(first=0))
++    def test_decoded_real_binary_exact_request16_or32_and_selected16_refuses32(self):
++        for page in(16,32):
++            request=raw.request(binary.request(page));reply=raw.reply(binary.reply(count=page,error=''))
++            self.assertTrue(validate_fetch_pair(request,reply,event_fetch_count=page))
++        q=raw.request(binary.request());v=raw.reply(binary.reply(error=''))
++        with self.assertRaisesRegex(AssertionError,'selected page'):validate_fetch_pair(q,v,event_fetch_count=16)
++    def test_partial_or_wrongrange_complete_reply_never_satisfies_request(self):
++        q=raw.request(binary.request())
++        for v in(raw.reply(binary.reply(count=31,error='')),raw.reply(binary.reply(first=2,error=''))):
++            with self.assertRaises(AssertionError):validate_fetch_pair(q,v,event_fetch_count=32)
++        v=raw.reply(binary.reply(error=''));v['events'][5][0]+=1
++        with self.assertRaisesRegex(AssertionError,'contiguous'):validate_fetch_pair(q,v,event_fetch_count=32)
++    def page_phase(self,page):
++        v=fixture()
++        for frames in(v[1],v[3]):
++            for frame in frames:
++                q=frame['decoded']
++                if q['kind']=='FetchEvents':q.update(count=page,fromEvent=(q['correlation']-7)*page+1)
++        for frames in(v[2],v[4]):
++            for frame in frames:
++                if frame['decoded']['tag']==2:
++                    start=(frame['decoded']['correlation']-7)*page+1
++                    frame['decoded'].update(exported=0,lastEvent=4*page,events=[[n]for n in range(start,start+page)])
++        for row in v[0]:
++            if row['kind']=='FetchEvents':row['event_fetch_requested_count']=str(page)
++        return v
++    def test_page32_phase_and_earliest_callback_correlation_remain_strict(self):
++        v=self.page_phase(32);r=phase.audit_rpc_phases(*v,event_fetch_count=32);self.assertEqual(32,r['selectedEventFetchCount']);self.assertLessEqual(r['actualOfferedHighWater'],8)
++        with self.assertRaises(AssertionError):phase.audit_rpc_phases(*v,event_fetch_count=16)
++        v=self.page_phase(32);v[4][-2]['decoded']['events']=v[4][-2]['decoded']['events'][:-1]
++        with self.assertRaisesRegex(AssertionError,'requested event reply count'):phase.audit_rpc_phases(*v,event_fetch_count=32)
++    def test_cycle_selection_and_exact_final_partial_never_silently_split_page(self):
++        phase_report={'selectedEventFetchCount':32,'selectedReadWindow':8}
++        row={'archiveChunkBytes':'6144','eventFetchCount':'32','readWindow':'8'}
++        self.assertTrue(validate_cycle_selection(row,phase_report,6144,event_fetch_count=32))
++        with self.assertRaises(AssertionError):validate_cycle_selection(dict(row,eventFetchCount='16'),phase_report,6144,event_fetch_count=32)
++        for remaining,count in((64,32),(3,3),(6,6)):
++            self.assertTrue(validate_cycle_page_request({'fromEvent':1,'count':count},previous_event=0,consumed=0,through_event=remaining,event_fetch_count=32))
++        for q in({'fromEvent':1,'count':16},{'fromEvent':2,'count':32},{'fromEvent':1,'count':33}):
++            with self.assertRaises(AssertionError):validate_cycle_page_request(q,previous_event=0,consumed=0,through_event=64,event_fetch_count=32)
++    def test_legacy_telemetry_helper_uses_long_exposure_not_12point8_seconds(self):
++        # Only synthetic coarse process metrics; no arrivals/business/benchmark records.
++        roles=['pilot-parent']+['window-%d-node-%d'%(window,node)for window in raw.WINDOWS for node in range(3)]
++        identities={role:{'pid':100+n,'startTicks':1000+n,'commandSha256':'a'*64}for n,role in enumerate(roles)}
++        samples=[]
++        for number,second in enumerate((1,30)):
++            owned=[]
++            for role in roles:
++                owned.append({'role':role,'available':True,**identities[role],'rssBytesFromStat':4096,'rssPages':1,
++                    'status':{'VmRSSBytes':4096},'userTicks':number*100,'systemTicks':number*10,
++                    'io':{key:number for key in('read_bytes','write_bytes','syscr','syscw')}})
++            samples.append({'sample':number,'monotonicNs':second*1000000000,'elapsedSeconds':second,
++                'clockTicksPerSecond':100,'pageSizeBytes':4096,'atUtc':'2026-01-01T00:00:%02dZ'%second,
++                'phase':'synthetic-only','owned':owned})
++        payload=b''.join((json.dumps(value)+'\n').encode()for value in samples)
++        receipt={'samples':2,'bytes':len(payload),'sha256':hashlib.sha256(payload).hexdigest(),
++            'fsyncDuringLoad':False,'afterClosureFsyncOnly':True,'metricUnavailableOrExitedSamples':0}
++        arms=[{'readWindow':window,'config':{'scheduledOriginUTC':'2026-01-01T00:00:00Z'},
++            'nodeLogs':[{'member':node,**identities['window-%d-node-%d'%(window,node)]}for node in range(3)]}for window in raw.WINDOWS]
++        with patch.object(raw,'JOB',Path('/synthetic-only')),patch.object(raw,'raw',return_value=payload),patch.object(raw,'js',return_value=receipt):
++            report=raw.audit_telemetry(arms)
++        for role,values in report['processes'].items():
++            if role.startswith('window-'):
++                self.assertEqual(2,values['coarseUTCExposureAvailableSamples']);self.assertEqual(0,values['coarseUTCPostWindowAvailableSamples'])
++    def test_actual_metadata_selected_plans_and_common_envelope_not_intent_only(self):
++        d=json.loads((Path(__file__).parent.parent/'fixtures/actual-local-distribution-observation.json').read_text())
++        for page in(16,32):
++            p=d['plans'][str(page)]['plan'];cfg=d['plans'][str(page)]['configuration'];summary={**cfg,'maintenanceRpcMetrics':{'eventFetchCount':page}}
++            validate_actual_plan_observation(d,p,d['actualCodeFingerprint'],event_fetch_count=page)
++            self.assertTrue(validate_selected_configuration(cfg,summary,p,event_fetch_count=page))
++            for key,value in [('eventFetchCount',32 if page==16 else 16),('commonEventFetchEnvelope',False),('readWindow',1)]:
++                bad=dict(cfg,**{key:value})
++                with self.subTest(page=page,key=key),self.assertRaises(AssertionError):validate_selected_configuration(bad,summary,p,event_fetch_count=page)
++            bad=copy.deepcopy(summary);bad['maintenanceRpcMetrics']['eventFetchCount']=48
++            with self.assertRaises(AssertionError):validate_selected_configuration(cfg,bad,p,event_fetch_count=page)
++        changed=copy.deepcopy(d);changed['plans']['32']['plan']['maximumRawTraceBytes']+=1
++        with self.assertRaises(AssertionError):validate_actual_plan_observation(changed,changed['plans']['16']['plan'],d['actualCodeFingerprint'],event_fetch_count=16)
++
++if __name__=='__main__':unittest.main()
+--- old-frozen1fdec/tests/test_long_contract.py
++++ new-explicit-page/tests/test_long_contract.py
+@@ -101,18 +101,21 @@
+ 
+     def test_actual_jar_plan_document_must_match_full_plan_and_code(self):
+         plan={'arrivals':33792,'maximumMaintenanceCycles':12,'admitted':True,'maximumRawTraceBytes':185514924}
+-        document={'actualCodeFingerprint':'code','workloads':{'LONG_CUTS':{'plan':copy.deepcopy(plan)}}}
+-        validate_actual_plan_observation(document,plan,'code')
+-        with self.assertRaisesRegex(AssertionError,'actual-JAR'):validate_actual_plan_observation(document,plan,'wrong')
+-        document['workloads']['LONG_CUTS']['plan']['maximumRawTraceBytes']+=1
+-        with self.assertRaisesRegex(AssertionError,'actual-JAR'):validate_actual_plan_observation(document,plan,'code')
++        plan.update(eventFetchCount=16,commonEventFetchEnvelope=True)
++        other=dict(plan,eventFetchCount=32)
++        document={'actualCodeFingerprint':'code','plans':{str(page):{'configuration':{'eventFetchCount':page,'commonEventFetchEnvelope':True},'plan':value}for page,value in [(16,copy.deepcopy(plan)),(32,other)]}}
++        validate_actual_plan_observation(document,plan,'code',event_fetch_count=16)
++        with self.assertRaisesRegex(AssertionError,'actual-JAR'):validate_actual_plan_observation(document,plan,'wrong',event_fetch_count=16)
++        document['plans']['16']['plan']['maximumRawTraceBytes']+=1
++        with self.assertRaisesRegex(AssertionError,'actual-JAR'):validate_actual_plan_observation(document,plan,'code',event_fetch_count=16)
++
+ 
+     def test_24_phase_positive_wire_fixture_and_old_default_cap_stays8(self):
+         values=long_phases()
+-        with self.assertRaisesRegex(AssertionError,'Bounded read phase'):phase.audit_rpc_phases(*values)
+-        report=phase.audit_rpc_phases(*values,maximum_read_phases=24,expected_phase_count=24)
++        with self.assertRaisesRegex(AssertionError,'Bounded read phase'):phase.audit_rpc_phases(event_fetch_count=16,*values)
++        report=phase.audit_rpc_phases(event_fetch_count=16,*values,maximum_read_phases=24,expected_phase_count=24)
+         self.assertEqual(len(report['readPhases']),24);self.assertEqual(report['actualOfferedHighWater'],4)
+-        with self.assertRaisesRegex(AssertionError,'Exact workload read phase'):phase.audit_rpc_phases(*fixture(),maximum_read_phases=24,expected_phase_count=24)
++        with self.assertRaisesRegex(AssertionError,'Exact workload read phase'):phase.audit_rpc_phases(event_fetch_count=16,*fixture(),maximum_read_phases=24,expected_phase_count=24)
+ 
+ 
+ class ArchiveGuards(unittest.TestCase):
+--- old-frozen1fdec/tests/test_phase_baseline.py
++++ new-explicit-page/tests/test_phase_baseline.py
+@@ -9,7 +9,9 @@
+     def rpc(corr,kind,start,end,generation=0,armed=None,owner=None):
+         q={'correlation':corr,'kind':kind,'profile':'p','lineage':'l'}
+         if kind in audit.READ_KINDS:q['count']=6144 if kind=='ArchiveChunk' else 16
++        if kind=='FetchEvents':q['fromEvent']=(corr-7)*16+1
+         rep={'correlation':corr,'profile':'p','lineage':'l','tag':{'PrepareArchive':3,'ArchiveChunk':4,'FetchEvents':2,'ArchiveCommit':1,'EventAck':1}[kind]}
++        if kind=='FetchEvents':rep.update(exported=0,lastEvent=64,events=[[i]for i in range(q['fromEvent'],q['fromEvent']+16)])
+         qframe={'decoded':q,'sha':'q'+str(corr),'at':start-origin,'offset':corr,'bytes':1}
+         first=armed if armed is not None else start+1
+         done=owner if owner is not None else end-1
+@@ -32,95 +34,95 @@
+ 
+ class PhaseGuards(unittest.TestCase):
+     def test_actual_parallel_interval_and_overlapping_coordinator_timings_legal(self):
+-        result=audit.audit_rpc_phases(*fixture())
++        result=audit.audit_rpc_phases(event_fetch_count=16,*fixture())
+         self.assertEqual(result['actualOfferedHighWater'],4)
+         self.assertTrue(result['pipelineActuallyOverlapped'])
+         self.assertFalse(result['coordinatorElapsedSumIsWallTime'])
+         self.assertFalse(result['retainedSlotOccupancyIndependentlyReconstructed'])
+ 
+     def test_serial_one_has_same_api_without_parallel_inflight(self):
+-        result=audit.audit_rpc_phases(*fixture(1));self.assertEqual(result['actualOfferedHighWater'],1)
++        result=audit.audit_rpc_phases(event_fetch_count=16,*fixture(1));self.assertEqual(result['actualOfferedHighWater'],1)
+ 
+     def test_logical_wire_order_can_differ_from_csv_and_callbacks(self):
+         v=fixture();v[1].reverse();v[2]=v[2][3:]+v[2][:3];v[4].reverse()
+-        self.assertTrue(audit.audit_rpc_phases(*v)['passed'])
++        self.assertTrue(audit.audit_rpc_phases(event_fetch_count=16,*v)['passed'])
+ 
+     def test_all_physical_duplicates_and_late_callbacks_retained(self):
+         v=fixture();dup=copy.deepcopy(v[4][1]);dup['at']=200;v[4].append(dup)
+-        r=audit.audit_rpc_phases(*v);self.assertEqual(r['extraPhysicalCallbacksRetained'],1)
++        r=audit.audit_rpc_phases(event_fetch_count=16,*v);self.assertEqual(r['extraPhysicalCallbacksRetained'],1)
+ 
+     def test_retired_stale_error_tag_is_retained_not_used_as_logical_success(self):
+         v=fixture();dup=copy.deepcopy(v[4][1]);dup['at']=300;dup['sha']='stale-error';dup['decoded'].update(tag=1,error='ARCHIVE_STALE');v[4].append(dup)
+-        result=audit.audit_rpc_phases(*v);self.assertEqual(result['extraPhysicalCallbacksRetained'],1)
++        result=audit.audit_rpc_phases(event_fetch_count=16,*v);self.assertEqual(result['extraPhysicalCallbacksRetained'],1)
+         self.assertEqual(sum(r['physicalErrorCallbacksRetained'] for r in result['rpcBindings']),1)
+ 
+     def test_matching_wire_only_after_owner_completion_refused(self):
+         v=fixture();v[4][1]['at']=40;v[0][1].update(end_monotonic_ns='1100',elapsed_ns='80')
+-        with self.assertRaisesRegex(AssertionError,'only appears after owner completion'):audit.audit_rpc_phases(*v)
++        with self.assertRaisesRegex(AssertionError,'only appears after owner completion'):audit.audit_rpc_phases(event_fetch_count=16,*v)
+ 
+     def test_first_callback_wrong_wire_explicitly_refused(self):
+         v=fixture();wrong=copy.deepcopy(v[4][1]);wrong['at']-=1;wrong['sha']='wrong';v[4].append(wrong)
+-        with self.assertRaisesRegex(AssertionError,'First read callback'):audit.audit_rpc_phases(*v)
++        with self.assertRaisesRegex(AssertionError,'First read callback'):audit.audit_rpc_phases(event_fetch_count=16,*v)
+ 
+     def test_business_offer_before_armed_but_after_reservation_refused(self):
+         v=fixture();v[3].append({'decoded':{'kind':'BusinessBatch','correlation':100},'sha':'b'});v[4].append({'decoded':{'correlation':100},'sha':'br','at':50});v[5].append({'correlation_id':'100','return_code':'-1','offset_ns':'20'})
+-        with self.assertRaisesRegex(AssertionError,'Business offer during'):audit.audit_rpc_phases(*v)
++        with self.assertRaisesRegex(AssertionError,'Business offer during'):audit.audit_rpc_phases(event_fetch_count=16,*v)
+ 
+     def test_missing_physical_callback_refused(self):
+         v=fixture();v[4].pop()
+-        with self.assertRaisesRegex(AssertionError,'callback correlation closure'):audit.audit_rpc_phases(*v)
++        with self.assertRaisesRegex(AssertionError,'callback correlation closure'):audit.audit_rpc_phases(event_fetch_count=16,*v)
+ 
+     def test_duplicate_logical_or_request_correlation_refused(self):
+         for which in (1,2,3):
+             v=fixture();v[which][1]['decoded']['correlation']=v[which][0]['decoded']['correlation']
+-            with self.subTest(which=which),self.assertRaisesRegex(AssertionError,'Duplicate'):audit.audit_rpc_phases(*v)
++            with self.subTest(which=which),self.assertRaisesRegex(AssertionError,'Duplicate'):audit.audit_rpc_phases(event_fetch_count=16,*v)
+ 
+     def test_csv_correlation_scope_tag_wires_refused(self):
+         for which,key,value in [(1,'profile','other'),(2,'lineage','other'),(4,'lineage','other')]:
+             v=fixture();v[which][1]['decoded'][key]=value
+-            with self.subTest(which=which,key=key),self.assertRaises(AssertionError):audit.audit_rpc_phases(*v)
++            with self.subTest(which=which,key=key),self.assertRaises(AssertionError):audit.audit_rpc_phases(event_fetch_count=16,*v)
+         v=fixture();v[2][1]['sha']='wrong'
+-        with self.assertRaisesRegex(AssertionError,'Logical reply not present'):audit.audit_rpc_phases(*v)
++        with self.assertRaisesRegex(AssertionError,'Logical reply not present'):audit.audit_rpc_phases(event_fetch_count=16,*v)
+ 
+     def test_csv_schema_missing_new_fields_refused(self):
+         v=fixture();v[0][1].pop('owner_reply_completed_ns')
+-        with self.assertRaisesRegex(AssertionError,'Exactly13'):audit.audit_rpc_phases(*v)
++        with self.assertRaisesRegex(AssertionError,'Exactly13'):audit.audit_rpc_phases(event_fetch_count=16,*v)
+ 
+     def test_selected_read_window_and_generation_refused(self):
+         for field,value in [('read_window','1'),('read_phase_generation','0'),('owner_reply_completed_ns','1020')]:
+             v=fixture();v[0][1][field]=value
+-            with self.subTest(field=field),self.assertRaises(AssertionError):audit.audit_rpc_phases(*v)
++            with self.subTest(field=field),self.assertRaises(AssertionError):audit.audit_rpc_phases(event_fetch_count=16,*v)
+ 
+     def test_extra_possible_admission_beyond_four_refused(self):
+         v=fixture();v[5]+=[copy.deepcopy(v[5][1]) for _ in range(4)]
+-        with self.assertRaisesRegex(AssertionError,'bounded possible admission'):audit.audit_rpc_phases(*v)
++        with self.assertRaisesRegex(AssertionError,'bounded possible admission'):audit.audit_rpc_phases(event_fetch_count=16,*v)
+ 
+     def test_selected_one_cannot_offer_multiple_concurrently(self):
+         v=fixture();v[-1]=1
+         for row in v[0]:
+             if row['read_window']=='8':row['read_window']='1'
+-        with self.assertRaisesRegex(AssertionError,'exceeds selected window'):audit.audit_rpc_phases(*v)
++        with self.assertRaisesRegex(AssertionError,'exceeds selected window'):audit.audit_rpc_phases(event_fetch_count=16,*v)
+ 
+     def test_prepare_or_ack_cannot_overlap_read_bank(self):
+         v=fixture();v[0][5].update(start_monotonic_ns='1030',end_monotonic_ns='1130',elapsed_ns='100')
+-        with self.assertRaisesRegex(AssertionError,'prepare/ACK overlaps'):audit.audit_rpc_phases(*v)
++        with self.assertRaisesRegex(AssertionError,'prepare/ACK overlaps'):audit.audit_rpc_phases(event_fetch_count=16,*v)
+ 
+     def test_control_cannot_claim_read_phase(self):
+         v=fixture();v[0][0]['read_phase_generation']='1'
+-        with self.assertRaisesRegex(AssertionError,'Serialized control has'):audit.audit_rpc_phases(*v)
++        with self.assertRaisesRegex(AssertionError,'Serialized control has'):audit.audit_rpc_phases(event_fetch_count=16,*v)
+ 
+     def test_business_offer_during_bank_refused(self):
+         v=fixture();v[3].append({'decoded':{'kind':'BusinessBatch','correlation':100},'sha':'b'});v[4].append({'decoded':{'correlation':100},'sha':'br','at':50});v[5].append({'correlation_id':'100','return_code':'-1','offset_ns':'25'})
+-        with self.assertRaisesRegex(AssertionError,'Business offer during'):audit.audit_rpc_phases(*v)
++        with self.assertRaisesRegex(AssertionError,'Business offer during'):audit.audit_rpc_phases(event_fetch_count=16,*v)
+ 
+     def test_kind_mixing_or_duplicate_phase_generations_refused(self):
+         v=fixture();v[0][6]['read_phase_generation']='1'
+-        with self.assertRaisesRegex(AssertionError,'generation/kind'):audit.audit_rpc_phases(*v)
++        with self.assertRaisesRegex(AssertionError,'generation/kind'):audit.audit_rpc_phases(event_fetch_count=16,*v)
+ 
+     def test_read_fields_cannot_exceed_wire_caps(self):
+         for field,value in [('archive_chunk_requested_bytes','6145'),('event_fetch_requested_count','17')]:
+             v=fixture();v[0][1 if field.startswith('archive') else 6][field]=value
+-            with self.subTest(field=field),self.assertRaises(AssertionError):audit.audit_rpc_phases(*v)
++            with self.subTest(field=field),self.assertRaises(AssertionError):audit.audit_rpc_phases(event_fetch_count=16,*v)
+ 
+     def test_interval_ties_are_half_open(self):
+         self.assertEqual(audit.maximum_overlap([(1,2),(2,3),(3,3)]),1)
