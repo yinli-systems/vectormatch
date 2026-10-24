@@ -248,7 +248,9 @@ public final class RetentionServiceV3 {
     public long applicationMutation() { return applicationMutation; }
     public long businessSeq() { return core.lastCommandSeq(); }
     public long eventSeq() { return core.lastEventSeq(); }
+    public long marketSeq() { return core.lastMarketSeq(); }
     public long coreMaintenanceSeq() { return core.maintenanceSeq(); }
+    public long archivedThroughCommandSeq() { return core.archivedThroughCommandSeq(); }
     public long acceptedPlaceCount() { return core.acceptedPlaceCount(); }
     public long exportedEventSeq() { return outbox.exportedSeq(); }
     public int outboxSize() { return outbox.size(); }

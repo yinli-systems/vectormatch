@@ -20,7 +20,9 @@ public final class RetentionWireV3 {
     private static final int MAGIC = 0x564d5733;
     private static final int VERSION = 3;
     public static final int MAX_REQUEST_BYTES = 4096;
-    private static final int BUSINESS = 1, ARCHIVE_COMMIT = 2, EVENT_ACK = 3, POSITION = 4;
+    private static final int BUSINESS = 1, ARCHIVE_COMMIT = 2, EVENT_ACK = 3, POSITION = 4,
+            FETCH_EVENTS = 5, PREPARE_ARCHIVE = 6, ARCHIVE_CHUNK = 7;
+    public static final int MAX_ARCHIVE_CHUNK = 3072;
     private static final Pattern HASH = Pattern.compile("[0-9a-f]{64}");
     private static final Pattern LINEAGE = Pattern.compile("[A-Za-z0-9_.-]{1,64}");
     private static final Pattern PRODUCER = Pattern.compile("[A-Za-z0-9_.-]{1,48}");
@@ -42,7 +44,7 @@ public final class RetentionWireV3 {
         }
     }
 
-    public sealed interface Operation permits Business, ArchiveCommit, EventAck, Position {}
+    public sealed interface Operation permits Business, ArchiveCommit, EventAck, Position, FetchEvents, PrepareArchive, ArchiveChunk {}
 
     public record Business(Command command) implements Operation {
         public Business { requireNonNull(command, "business command"); }
@@ -63,6 +65,20 @@ public final class RetentionWireV3 {
     }
 
     public record Position() implements Operation {}
+    public record FetchEvents(long fromEventSeq, int count) implements Operation {
+        public FetchEvents { if (fromEventSeq < 1 || count < 1 || count > 16) throw new IllegalArgumentException("invalid event fetch bounds"); }
+    }
+    public record PrepareArchive(long throughCommandSeq) implements Operation {
+        public PrepareArchive { if (throughCommandSeq < 1) throw new IllegalArgumentException("invalid archive prefix cut"); }
+    }
+    public record ArchiveChunk(ArchiveAck acknowledgement, int totalBytes, int offset, int count) implements Operation {
+        public ArchiveChunk {
+            requireNonNull(acknowledgement, "archive descriptor");
+            if (totalBytes < 1 || totalBytes > io.vectormatch.core.RetentionEngineV3.MAX_SNAPSHOT_BYTES
+                    || offset < 0 || offset >= totalBytes || count < 1 || count > MAX_ARCHIVE_CHUNK)
+                throw new IllegalArgumentException("invalid archive chunk bounds");
+        }
+    }
 
     public record Request(Scope scope, long correlationId, Operation operation) {
         public Request {
@@ -130,6 +146,13 @@ public final class RetentionWireV3 {
             writeString(out, ack.payloadSha256(), 64);
         } else if (operation instanceof EventAck ack) {
             out.writeByte(EVENT_ACK); writeIdentity(out, ack.identity()); out.writeLong(ack.throughEventSeq());
+        } else if (operation instanceof FetchEvents fetch) {
+            out.writeByte(FETCH_EVENTS); out.writeLong(fetch.fromEventSeq()); out.writeInt(fetch.count());
+        } else if (operation instanceof PrepareArchive prepare) {
+            out.writeByte(PREPARE_ARCHIVE); out.writeLong(prepare.throughCommandSeq());
+        } else if (operation instanceof ArchiveChunk chunk) {
+            out.writeByte(ARCHIVE_CHUNK); writeAck(out, chunk.acknowledgement());
+            out.writeInt(chunk.totalBytes()); out.writeInt(chunk.offset()); out.writeInt(chunk.count());
         } else if (operation instanceof Position) {
             out.writeByte(POSITION);
         } else throw new IOException("unknown V3 operation");
@@ -160,8 +183,21 @@ public final class RetentionWireV3 {
             }
             case EVENT_ACK -> new EventAck(readIdentity(in), in.readLong());
             case POSITION -> new Position();
+            case FETCH_EVENTS -> new FetchEvents(in.readLong(), in.readInt());
+            case PREPARE_ARCHIVE -> new PrepareArchive(in.readLong());
+            case ARCHIVE_CHUNK -> new ArchiveChunk(readAck(in), in.readInt(), in.readInt(), in.readInt());
             default -> throw new IOException("unknown V3 operation tag");
         };
+    }
+
+    static void writeAck(DataOutputStream out, ArchiveAck ack) throws IOException {
+        writeString(out, ack.profileHash(), 64); writeString(out, ack.lineageId(), 64);
+        out.writeLong(ack.firstCommandSeq()); out.writeLong(ack.throughCommandSeq());
+        writeString(out, ack.previousChainHash(), 64); writeString(out, ack.chainHash(), 64); writeString(out, ack.payloadSha256(), 64);
+    }
+    static ArchiveAck readAck(DataInputStream in) throws IOException {
+        return new ArchiveAck(readString(in, 64), readString(in, 64), in.readLong(), in.readLong(),
+                readString(in, 64), readString(in, 64), readString(in, 64));
     }
 
     private static void writeIdentity(DataOutputStream out, MaintenanceIdentity identity) throws IOException {
