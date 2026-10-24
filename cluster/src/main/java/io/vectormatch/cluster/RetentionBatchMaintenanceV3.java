@@ -58,7 +58,7 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
     private boolean latestRawFlushed;
     private boolean readFailureOriginalsWritten;
     private RetentionBatchOwnerV3.ReadBank activeReadBank;
-    private final List<ReadRpc> retainedReads=new ArrayList<>(8);
+    private final List<ReadRpc> retainedReads=new ArrayList<>(RetentionCapacityPlanV3.MAX_EXPERIMENTAL_READ_WINDOW);
     private static final class ReadRpc {
         final long number,start,correlation;
         final Operation operation;
