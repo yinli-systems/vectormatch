@@ -1,0 +1,198 @@
+Compiled from "ContainerClientSession.java"
+final class io.aeron.cluster.service.ContainerClientSession implements io.aeron.cluster.service.ClientSession {
+  private final long id;
+
+  private final int responseStreamId;
+
+  private final java.lang.String responseChannel;
+
+  private final byte[] encodedPrincipal;
+
+  private final io.aeron.cluster.service.ClusteredServiceAgent clusteredServiceAgent;
+
+  private io.aeron.Publication responsePublication;
+
+  private boolean isClosing;
+
+  io.aeron.cluster.service.ContainerClientSession(long, int, java.lang.String, byte[], io.aeron.cluster.service.ClusteredServiceAgent);
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: lload_1
+       6: putfield      #7                  // Field id:J
+       9: aload_0
+      10: iload_3
+      11: putfield      #13                 // Field responseStreamId:I
+      14: aload_0
+      15: aload         4
+      17: putfield      #17                 // Field responseChannel:Ljava/lang/String;
+      20: aload_0
+      21: aload         5
+      23: putfield      #21                 // Field encodedPrincipal:[B
+      26: aload_0
+      27: aload         6
+      29: putfield      #25                 // Field clusteredServiceAgent:Lio/aeron/cluster/service/ClusteredServiceAgent;
+      32: return
+
+  public long id();
+    Code:
+       0: aload_0
+       1: getfield      #7                  // Field id:J
+       4: lreturn
+
+  public int responseStreamId();
+    Code:
+       0: aload_0
+       1: getfield      #13                 // Field responseStreamId:I
+       4: ireturn
+
+  public java.lang.String responseChannel();
+    Code:
+       0: aload_0
+       1: getfield      #17                 // Field responseChannel:Ljava/lang/String;
+       4: areturn
+
+  public byte[] encodedPrincipal();
+    Code:
+       0: aload_0
+       1: getfield      #21                 // Field encodedPrincipal:[B
+       4: areturn
+
+  public void close();
+    Code:
+       0: aconst_null
+       1: aload_0
+       2: getfield      #25                 // Field clusteredServiceAgent:Lio/aeron/cluster/service/ClusteredServiceAgent;
+       5: aload_0
+       6: getfield      #7                  // Field id:J
+       9: invokevirtual #29                 // Method io/aeron/cluster/service/ClusteredServiceAgent.getClientSession:(J)Lio/aeron/cluster/service/ClientSession;
+      12: if_acmpeq     27
+      15: aload_0
+      16: getfield      #25                 // Field clusteredServiceAgent:Lio/aeron/cluster/service/ClusteredServiceAgent;
+      19: aload_0
+      20: getfield      #7                  // Field id:J
+      23: invokevirtual #35                 // Method io/aeron/cluster/service/ClusteredServiceAgent.closeClientSession:(J)Z
+      26: pop
+      27: return
+
+  public boolean isClosing();
+    Code:
+       0: aload_0
+       1: getfield      #39                 // Field isClosing:Z
+       4: ireturn
+
+  public long offer(org.agrona.DirectBuffer, int, int);
+    Code:
+       0: aload_0
+       1: getfield      #25                 // Field clusteredServiceAgent:Lio/aeron/cluster/service/ClusteredServiceAgent;
+       4: aload_0
+       5: getfield      #7                  // Field id:J
+       8: aload_0
+       9: getfield      #43                 // Field responsePublication:Lio/aeron/Publication;
+      12: aload_1
+      13: iload_2
+      14: iload_3
+      15: invokevirtual #47                 // Method io/aeron/cluster/service/ClusteredServiceAgent.offer:(JLio/aeron/Publication;Lorg/agrona/DirectBuffer;II)J
+      18: lreturn
+
+  public long offer(io.aeron.DirectBufferVector[]);
+    Code:
+       0: aload_0
+       1: getfield      #25                 // Field clusteredServiceAgent:Lio/aeron/cluster/service/ClusteredServiceAgent;
+       4: aload_0
+       5: getfield      #7                  // Field id:J
+       8: aload_0
+       9: getfield      #43                 // Field responsePublication:Lio/aeron/Publication;
+      12: aload_1
+      13: invokevirtual #51                 // Method io/aeron/cluster/service/ClusteredServiceAgent.offer:(JLio/aeron/Publication;[Lio/aeron/DirectBufferVector;)J
+      16: lreturn
+
+  public long tryClaim(int, io.aeron.logbuffer.BufferClaim);
+    Code:
+       0: aload_0
+       1: getfield      #25                 // Field clusteredServiceAgent:Lio/aeron/cluster/service/ClusteredServiceAgent;
+       4: aload_0
+       5: getfield      #7                  // Field id:J
+       8: aload_0
+       9: getfield      #43                 // Field responsePublication:Lio/aeron/Publication;
+      12: iload_1
+      13: aload_2
+      14: invokevirtual #54                 // Method io/aeron/cluster/service/ClusteredServiceAgent.tryClaim:(JLio/aeron/Publication;ILio/aeron/logbuffer/BufferClaim;)J
+      17: lreturn
+
+  void connect(io.aeron.Aeron);
+    Code:
+       0: aconst_null
+       1: aload_0
+       2: getfield      #43                 // Field responsePublication:Lio/aeron/Publication;
+       5: if_acmpne     24
+       8: aload_0
+       9: aload_1
+      10: aload_0
+      11: getfield      #17                 // Field responseChannel:Ljava/lang/String;
+      14: aload_0
+      15: getfield      #13                 // Field responseStreamId:I
+      18: invokevirtual #58                 // Method io/aeron/Aeron.addPublication:(Ljava/lang/String;I)Lio/aeron/ConcurrentPublication;
+      21: putfield      #43                 // Field responsePublication:Lio/aeron/Publication;
+      24: goto          54
+      27: astore_2
+      28: aload_0
+      29: getfield      #25                 // Field clusteredServiceAgent:Lio/aeron/cluster/service/ClusteredServiceAgent;
+      32: new           #66                 // class io/aeron/cluster/client/ClusterException
+      35: dup
+      36: aload_2
+      37: invokevirtual #68                 // Method io/aeron/exceptions/RegistrationException.getMessage:()Ljava/lang/String;
+      40: invokedynamic #72,  0             // InvokeDynamic #0:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      45: getstatic     #76                 // Field io/aeron/exceptions/AeronException$Category.WARN:Lio/aeron/exceptions/AeronException$Category;
+      48: invokespecial #82                 // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;Lio/aeron/exceptions/AeronException$Category;)V
+      51: invokevirtual #85                 // Method io/aeron/cluster/service/ClusteredServiceAgent.handleError:(Ljava/lang/Throwable;)V
+      54: return
+    Exception table:
+       from    to  target type
+           0    24    27   Class io/aeron/exceptions/RegistrationException
+
+  void markClosing();
+    Code:
+       0: aload_0
+       1: iconst_1
+       2: putfield      #39                 // Field isClosing:Z
+       5: return
+
+  void resetClosing();
+    Code:
+       0: aload_0
+       1: iconst_0
+       2: putfield      #39                 // Field isClosing:Z
+       5: return
+
+  void disconnect(org.agrona.ErrorHandler);
+    Code:
+       0: aload_1
+       1: aload_0
+       2: getfield      #43                 // Field responsePublication:Lio/aeron/Publication;
+       5: invokestatic  #89                 // Method org/agrona/CloseHelper.close:(Lorg/agrona/ErrorHandler;Ljava/lang/AutoCloseable;)V
+       8: aload_0
+       9: aconst_null
+      10: putfield      #43                 // Field responsePublication:Lio/aeron/Publication;
+      13: return
+
+  public java.lang.String toString();
+    Code:
+       0: aload_0
+       1: getfield      #7                  // Field id:J
+       4: aload_0
+       5: getfield      #13                 // Field responseStreamId:I
+       8: aload_0
+       9: getfield      #17                 // Field responseChannel:Ljava/lang/String;
+      12: aload_0
+      13: getfield      #21                 // Field encodedPrincipal:[B
+      16: invokestatic  #95                 // Method java/util/Arrays.toString:([B)Ljava/lang/String;
+      19: aload_0
+      20: getfield      #43                 // Field responsePublication:Lio/aeron/Publication;
+      23: invokestatic  #101                // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+      26: aload_0
+      27: getfield      #39                 // Field isClosing:Z
+      30: invokedynamic #107,  0            // InvokeDynamic #1:makeConcatWithConstants:(JILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Ljava/lang/String;
+      35: areturn
+}

@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 1,
+  "reviewedAtUtc": "2026-10-24T05:02:59.957765+00:00",
+  "scope": "Read-only LOCAL static review for one existing-CPU, bounded physical-clone PG-only recovery/SQL probe. No SSH/cloud/start/SQL/action performed by reviewer.",
+  "decision": "No blocking defect found for the single bounded probe with exact actual main-postmaster identity enforcement and externally owned 75-second JVM timeout; no controller/inspector edits authorized or made.",
+  "frozenInputs": {
+    "manifestSha256": "659e7f06a8487c9a3331b2e62d31fa43ed7e0c09555fdc64494d1edf9982f2c5",
+    "controllerSha256": "0a12ad7dd7aed6866c58e6c0fd46e068b82721144872584880965d7cfb13d9f8",
+    "inspectorSourceSha256": "73b7c1cb9725265681f7041d9a27e68a6adb61168a0ea4ce2f3af84c3d88b82f",
+    "guardMethodsPreviouslyPassed": 33,
+    "originalApplicationSource": "e1db2e755a834234efb60b7a1ed291b31ce33c16",
+    "originalSources": {
+      "projector/src/main/java/io/vectormatch/projector/PostgresEventStore.java": {
+        "sha256": "51e0b37b55665184f22aaa2900cb8a0e8a04dd5f61a53302da9f6cd8978ef076",
+        "currentWorkingFileMatches": true
+      },
+      "projector/src/main/resources/db/schema.sql": {
+        "sha256": "b4c3bd2cfe81f2943ed6671ca58b357156b713824798964bf8a9e9d93cc0ae9e",
+        "currentWorkingFileMatches": true
+      }
+    }
+  },
+  "primarySource": {
+    "version": "18.6",
+    "officialArchiveUrl": "https://ftp.postgresql.org/pub/source/v18.6/postgresql-18.6.tar.bz2",
+    "officialChecksumUrl": "https://ftp.postgresql.org/pub/source/v18.6/postgresql-18.6.tar.bz2.sha256",
+    "archiveSha256": "555610c24d53e4316da5b7d3fc25c279d96856d5e0e23ee308c328c5fa881d9f",
+    "archiveBytes": 22632314,
+    "downloadProvenance": "runtime/cloud/cpu-20261024/app-restore-build/pg18-tools-source/download-result.json",
+    "sourceEntries": [
+      {
+        "tarEntry": "postgresql-18.6/src/backend/main/main.c",
+        "sha256": "fb2cab36f9fc3186ad86fe87233570b0d62bdda2a66d26d91f904789e914f36d",
+        "bytes": 17710,
+        "lineRanges": [
+          [
+            93,
+            104
+          ]
+        ],
+        "fact": "Startup saves/copies argv for later process-display use; this call does not itself require original Linux argv bytes to be overwritten."
+      },
+      {
+        "tarEntry": "postgresql-18.6/src/backend/utils/misc/ps_status.c",
+        "sha256": "0b34b9528e85b696eb312f6d7a27501fed56db09b7cca6f892062907d5b56064",
+        "bytes": 14143,
+        "lineRanges": [
+          [
+            34,
+            60
+          ],
+          [
+            105,
+            120
+          ],
+          [
+            260,
+            296
+          ],
+          [
+            328,
+            335
+          ],
+          [
+            344,
+            361
+          ],
+          [
+            496,
+            502
+          ]
+        ],
+        "fact": "Linux selects CLOBBER_ARGV, but init_ps_display returns when !IsUnderPostmaster. Child initialization forces its first title update, even if update_process_title was off; that is not a main-postmaster title update."
+      },
+      {
+        "tarEntry": "postgresql-18.6/src/backend/utils/init/globals.c",
+        "sha256": "30f29db3cfd5c473b32611383de22e402564836e3462afb7bab93f8e0ed679a5",
+        "bytes": 5313,
+        "lineRanges": [
+          [
+            116,
+            121
+          ]
+        ],
+        "fact": "IsUnderPostmaster starts false."
+      },
+      {
+        "tarEntry": "postgresql-18.6/src/backend/utils/init/miscinit.c",
+        "sha256": "54bdb859c143a6c70d86067ccf2e124f59aa0852e5705bb653652e41a60af39a",
+        "bytes": 55988,
+        "lineRanges": [
+          [
+            85,
+            105
+          ]
+        ],
+        "fact": "InitPostmasterChild changes IsUnderPostmaster to true for subprocesses."
+      },
+      {
+        "tarEntry": "postgresql-18.6/src/backend/postmaster/postmaster.c",
+        "sha256": "467a6d6deb8f31d1fa599b854511207923a252f02b7d5cbcc878caece577eefb",
+        "bytes": 133372,
+        "lineRanges": [
+          [
+            1,
+            4607
+          ]
+        ],
+        "fact": "No init_ps_display call found in this entire fixed postmaster.c; all backend C callers are enumerated separately."
+      },
+      {
+        "tarEntry": "postgresql-18.6/src/backend/utils/adt/pg_locale_libc.c",
+        "sha256": "2dc844844769d65776d20c3b49ed762d3ec760e7ecb646422237b9e243622d06",
+        "bytes": 25534,
+        "lineRanges": [
+          [
+            658,
+            720
+          ]
+        ],
+        "fact": "Libc actual version is intentionally NULL for C, C.* and POSIX locales; otherwise glibc version is used on Linux."
+      },
+      {
+        "tarEntry": "postgresql-18.6/src/backend/commands/dbcommands.c",
+        "sha256": "64b77d2197dce16eb1ad19d8168382459d621a03df0b00be157f7db39ca22acf",
+        "bytes": 108534,
+        "lineRanges": [
+          [
+            2776,
+            2807
+          ]
+        ],
+        "fact": "pg_database_collation_actual_version selects provider locale and can return NULL; NULL does not itself prove all locale/library compatibility."
+      },
+      {
+        "tarEntry": "postgresql-18.6/src/include/catalog/pg_proc.dat",
+        "sha256": "1f934ce80d460159dda137714374a35f9896315ea2476709cbb4da13b38ef95a",
+        "bytes": 654436,
+        "lineRanges": [
+          [
+            6756,
+            6759
+          ],
+          [
+            12279,
+            12286
+          ]
+        ],
+        "fact": "pg_is_in_recovery is an available boolean function; pg_control_system exposes control/catalog/system identifier. The frozen inspector currently checks control identity but does not query pg_is_in_recovery."
+      }
+    ],
+    "backendCFilesScanned": 876,
+    "allInitPsDisplayOccurrences": [
+      {
+        "tarEntry": "postgresql-18.6/src/backend/postmaster/autovacuum.c",
+        "line": 382,
+        "classification": "child caller"
+      },
+      {
+        "tarEntry": "postgresql-18.6/src/backend/postmaster/autovacuum.c",
+        "line": 1391,
+        "classification": "child caller"
+      },
+      {
+        "tarEntry": "postgresql-18.6/src/backend/postmaster/auxprocess.c",
+        "line": 50,
+        "classification": "child caller"
+      },
+      {
+        "tarEntry": "postgresql-18.6/src/backend/postmaster/bgworker.c",
+        "line": 742,
+        "classification": "child caller"
+      },
+      {
+        "tarEntry": "postgresql-18.6/src/backend/postmaster/syslogger.c",
+        "line": 210,
+        "classification": "child caller"
+      },
+      {
+        "tarEntry": "postgresql-18.6/src/backend/replication/logical/slotsync.c",
+        "line": 1469,
+        "classification": "child caller"
+      },
+      {
+        "tarEntry": "postgresql-18.6/src/backend/tcop/backend_startup.c",
+        "line": 388,
+        "classification": "child caller"
+      },
+      {
+        "tarEntry": "postgresql-18.6/src/backend/utils/misc/ps_status.c",
+        "line": 269,
+        "classification": "definition"
+      }
+    ],
+    "binaryInferenceLimit": "This is exact official 18.6 primary source, not proof that the separate Zonky binary is byte-identical to an unpatched official build. Actual original binary SHA/version and live main PID argv must remain independently observed."
+  },
+  "checks": {
+    "mainPostmasterExpectedArgvStable": "Supported by false default IsUnderPostmaster + child-only transition/init callers. Never follow child process titles or identify owned main PG from a postgres: prefix.",
+    "lifecycle": "Fixed original PGDATA/binary/port; fresh no-PID/no-reissue guard; numeric UID963/GID963/no extra groups; actual argv/startTicks/SHA checked; pidfd directed SIGINT; mismatches explicitly fail without pretending stopped.",
+    "sqlReadOnly": "Fixed localhost DB/role, pgjdbc readOnly always + server default/read-only repeatable-read verified, only SELECT plus JDBC session transaction configuration and rollback, no PostgresEventStore schema initialization or projector.",
+    "ledger": "Same-source typed Event + alphabetically sorted Jackson reencoding checks stored payload SHA, JSONB semantic equality, indexed columns, event sequence from1, positive market sequence from1, counts/trades/cursor maxima. JSONB text SHA is not substituted for original payload SHA.",
+    "sourceReconciliation": "PG ledger internal consistency only. Source canonical/outbox/exportedSeq comparison remains mandatory later.",
+    "wal": "Start pins fsync/synchronous_commit/full_page_writes on; inspector reads back fsync/synchronous_commit and physical control system identity. It does not run WAL replay verification, page-checksum scan, pg_is_in_recovery or full_page_writes SQL readback; do not claim those were tested.",
+    "locale": "Captures database provider/collation/ctype/locale stored+actual version, conservatively fails on any stored installed collation mismatch. Stored NULL version currently passes version guard; record NULL distinctly and do not call that full locale compatibility proof."
+  },
+  "requiredOperationalLimits": [
+    "Root external owned JVM timeout75 seconds; no Java hard60-second total-lifetime claim. Frozen Java60-second check occurs only while iterating events; metadata/empty-ledger paths do not enforce it.",
+    "PG observation deadline180 seconds from launch plus up to30 seconds clean-stop wait; no hard lifetime promise against controller SIGKILL/OOM/kernel-stuck shutdown.",
+    "Root must keep exact actual main-postmaster PID/startTicks/argv-SHA observation. If it differs, preserve cleanup-unconfirmed as failure; do not relax into numeric PID signalling or claim stop success. A future revision may retain the already-open stable main pidfd for exceptional cleanup.",
+    "Installed but unused collation mismatch is a conservative stop, not automatic proof a trading index is corrupt; never refresh version solely to remove warnings.",
+    "Post-start clone can have legitimate internal PG WAL/control/stat/hint-bit/postmaster.opts writes. Do not rerun full original-backup byte-equality preflight after startup. Capture new inventory/diff and independently read clean pg_controldata + same systemID, hashing critical files before/after that read-only tool.",
+    "One attempt only; preserve partial logs/raw proof, exact source and frozen pre-start inventory, original backups. No autoinit/retry/reset/cursor change."
+  ],
+  "minimalFutureRevisionIdeasNotImplemented": [
+    "Add actual pg_is_in_recovery=false and full_page_writes readback if those claims are desired.",
+    "Add final elapsed<60 seconds success gate if a60-second acceptance deadline is desired; keep separate external process timeout.",
+    "Use already-held main pidfd for explicitly scoped exceptional cleanup while preserving changed actual argv as failed attestation."
+  ],
+  "frozenManifestUnchanged": true,
+  "frozenListedFilesBeforeSha256": {
+    "pg_recovery.py": "0a12ad7dd7aed6866c58e6c0fd46e068b82721144872584880965d7cfb13d9f8",
+    "test_pg_recovery.py": "2ce2f4ebba2e6dcf17ccc53d4faba6a9a8cacd4fd6a6e679f363a334b3aeb285",
+    "expected-baseline.json": "7a517d88b2759c1379f61b2f210176d96d67d4375848561fe948a09c90b5bff5",
+    "PgReadonlyInspect.java": "73b7c1cb9725265681f7041d9a27e68a6adb61168a0ea4ce2f3af84c3d88b82f",
+    "README.md": "8a25672685a8f7b5b211951164a1120168756cb9b8841271ed3f8676b03f44cd",
+    "offline-guards.log": "9943f9fb508d956c1ddd314168458289af37bc0c7319e8f24739813d9724ad5a",
+    "offline-guards.json": "ed692904ca8a77a2e1ef09273f6b85b466a85e7b27779f918060c15926db8eb2",
+    "javac.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "java-self-test.log": "7dc8b4d325cfd5c81e382540221fd5a5f96f36a152e6226f8eda622746e4acc5",
+    "java-validation.json": "6cd68785141a270f4eb276418ea536cbdcbc024ef00eb17eedea8ebe0072734e"
+  }
+}

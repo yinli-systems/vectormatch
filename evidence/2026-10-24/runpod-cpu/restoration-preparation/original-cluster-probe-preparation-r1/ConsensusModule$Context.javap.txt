@@ -1,0 +1,3155 @@
+Compiled from "ConsensusModule.java"
+public final class io.aeron.cluster.ConsensusModule$Context implements java.lang.Cloneable {
+  private static final java.lang.invoke.VarHandle IS_CONCLUDED_VH;
+
+  private volatile boolean isConcluded;
+
+  private boolean ownsAeronClient;
+
+  private java.lang.String aeronDirectoryName;
+
+  private io.aeron.Aeron aeron;
+
+  private boolean deleteDirOnStart;
+
+  private java.lang.String clusterDirectoryName;
+
+  private java.lang.String clusterServicesDirectoryName;
+
+  private java.io.File clusterDir;
+
+  private java.io.File markFileDir;
+
+  private io.aeron.cluster.RecordingLog recordingLog;
+
+  private io.aeron.cluster.service.ClusterMarkFile markFile;
+
+  private io.aeron.cluster.NodeStateFile nodeStateFile;
+
+  private int fileSyncLevel;
+
+  private int appVersion;
+
+  private int clusterId;
+
+  private int clusterMemberId;
+
+  private int appointedLeaderId;
+
+  private java.lang.String clusterMembers;
+
+  private java.lang.String ingressChannel;
+
+  private int ingressStreamId;
+
+  private boolean isIpcIngressAllowed;
+
+  private int ingressFragmentLimit;
+
+  private java.lang.String egressChannel;
+
+  private java.lang.String logChannel;
+
+  private int logStreamId;
+
+  private java.lang.String memberEndpoints;
+
+  private java.lang.String replayChannel;
+
+  private int replayStreamId;
+
+  private java.lang.String controlChannel;
+
+  private int consensusModuleStreamId;
+
+  private int serviceStreamId;
+
+  private java.lang.String snapshotChannel;
+
+  private int snapshotStreamId;
+
+  private java.lang.String consensusChannel;
+
+  private int consensusStreamId;
+
+  private java.lang.String replicationChannel;
+
+  private java.lang.String followerCatchupChannel;
+
+  private java.lang.String leaderArchiveControlChannel;
+
+  private int logFragmentLimit;
+
+  private int serviceCount;
+
+  private int errorBufferLength;
+
+  private int maxConcurrentSessions;
+
+  private int ticksPerWheel;
+
+  private long wheelTickResolutionNs;
+
+  private long sessionTimeoutNs;
+
+  private long leaderHeartbeatTimeoutNs;
+
+  private long leaderHeartbeatIntervalNs;
+
+  private long startupCanvassTimeoutNs;
+
+  private long electionTimeoutNs;
+
+  private long electionStatusIntervalNs;
+
+  private long terminationTimeoutNs;
+
+  private long cycleThresholdNs;
+
+  private long totalSnapshotDurationThresholdNs;
+
+  private long standbySnapshotNotificationProcessingDelayNs;
+
+  private java.lang.String agentRoleName;
+
+  private java.util.concurrent.ThreadFactory threadFactory;
+
+  private java.util.function.Supplier<org.agrona.concurrent.IdleStrategy> idleStrategySupplier;
+
+  private io.aeron.cluster.service.ClusterClock clusterClock;
+
+  private org.agrona.concurrent.EpochClock epochClock;
+
+  private java.util.Random random;
+
+  private io.aeron.cluster.TimerServiceSupplier timerServiceSupplier;
+
+  private java.util.function.Function<io.aeron.cluster.ConsensusModule$Context, java.util.function.LongConsumer> clusterTimeConsumerSupplier;
+
+  private io.aeron.cluster.ConsensusModuleExtension consensusModuleExtension;
+
+  private org.agrona.concurrent.errors.DistinctErrorLog errorLog;
+
+  private org.agrona.ErrorHandler errorHandler;
+
+  private org.agrona.concurrent.status.AtomicCounter errorCounter;
+
+  private org.agrona.concurrent.CountedErrorHandler countedErrorHandler;
+
+  private io.aeron.Counter moduleStateCounter;
+
+  private io.aeron.Counter electionStateCounter;
+
+  private io.aeron.Counter clusterNodeRoleCounter;
+
+  private io.aeron.Counter commitPosition;
+
+  private io.aeron.Counter clusterControlToggle;
+
+  private io.aeron.Counter nodeControlToggle;
+
+  private io.aeron.Counter snapshotCounter;
+
+  private io.aeron.Counter timedOutClientCounter;
+
+  private io.aeron.Counter standbySnapshotCounter;
+
+  private io.aeron.Counter electionCounter;
+
+  private io.aeron.Counter leadershipTermId;
+
+  private java.lang.Runnable terminationHook;
+
+  private io.aeron.cluster.ExtendedTerminationHook extendedTerminationHook;
+
+  private io.aeron.archive.client.AeronArchive$Context archiveContext;
+
+  private io.aeron.security.AuthenticatorSupplier authenticatorSupplier;
+
+  private io.aeron.security.AuthorisationServiceSupplier authorisationServiceSupplier;
+
+  private io.aeron.cluster.LogPublisher logPublisher;
+
+  private io.aeron.cluster.EgressPublisher egressPublisher;
+
+  private io.aeron.driver.DutyCycleTracker dutyCycleTracker;
+
+  private io.aeron.cluster.service.SnapshotDurationTracker totalSnapshotDurationTracker;
+
+  private io.aeron.cluster.VersionValidator appVersionValidator;
+
+  private boolean isLogMdc;
+
+  private boolean useAgentInvoker;
+
+  private io.aeron.cluster.ConsensusModuleStateExport bootstrapState;
+
+  private boolean acceptStandbySnapshots;
+
+  private boolean enableControlOnConsensusChannel;
+
+  private boolean enableControlOnLogChannel;
+
+  public io.aeron.cluster.ConsensusModule$Context();
+    Code:
+       0: aload_0
+       1: invokespecial #11                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: iconst_0
+       6: putfield      #17                 // Field ownsAeronClient:Z
+       9: aload_0
+      10: invokestatic  #23                 // Method io/aeron/CommonContext.getAeronDirectoryName:()Ljava/lang/String;
+      13: putfield      #27                 // Field aeronDirectoryName:Ljava/lang/String;
+      16: aload_0
+      17: iconst_0
+      18: putfield      #31                 // Field deleteDirOnStart:Z
+      21: aload_0
+      22: invokestatic  #34                 // Method io/aeron/cluster/service/ClusteredServiceContainer$Configuration.clusterDirName:()Ljava/lang/String;
+      25: putfield      #37                 // Field clusterDirectoryName:Ljava/lang/String;
+      28: aload_0
+      29: invokestatic  #40                 // Method io/aeron/cluster/service/ClusteredServiceContainer$Configuration.clusterServicesDirName:()Ljava/lang/String;
+      32: putfield      #43                 // Field clusterServicesDirectoryName:Ljava/lang/String;
+      35: aload_0
+      36: invokestatic  #46                 // Method io/aeron/archive/Archive$Configuration.fileSyncLevel:()I
+      39: putfield      #52                 // Field fileSyncLevel:I
+      42: aload_0
+      43: iconst_0
+      44: iconst_0
+      45: iconst_1
+      46: invokestatic  #55                 // Method org/agrona/SemanticVersion.compose:(III)I
+      49: putfield      #61                 // Field appVersion:I
+      52: aload_0
+      53: invokestatic  #64                 // Method io/aeron/cluster/service/ClusteredServiceContainer$Configuration.clusterId:()I
+      56: putfield      #67                 // Field clusterId:I
+      59: aload_0
+      60: invokestatic  #69                 // Method io/aeron/cluster/ConsensusModule$Configuration.clusterMemberId:()I
+      63: putfield      #72                 // Field clusterMemberId:I
+      66: aload_0
+      67: invokestatic  #74                 // Method io/aeron/cluster/ConsensusModule$Configuration.appointedLeaderId:()I
+      70: putfield      #77                 // Field appointedLeaderId:I
+      73: aload_0
+      74: invokestatic  #79                 // Method io/aeron/cluster/ConsensusModule$Configuration.clusterMembers:()Ljava/lang/String;
+      77: putfield      #82                 // Field clusterMembers:Ljava/lang/String;
+      80: aload_0
+      81: invokestatic  #84                 // Method io/aeron/cluster/client/AeronCluster$Configuration.ingressChannel:()Ljava/lang/String;
+      84: putfield      #89                 // Field ingressChannel:Ljava/lang/String;
+      87: aload_0
+      88: invokestatic  #91                 // Method io/aeron/cluster/client/AeronCluster$Configuration.ingressStreamId:()I
+      91: putfield      #94                 // Field ingressStreamId:I
+      94: aload_0
+      95: invokestatic  #96                 // Method io/aeron/cluster/ConsensusModule$Configuration.isIpcIngressAllowed:()Z
+      98: putfield      #100                // Field isIpcIngressAllowed:Z
+     101: aload_0
+     102: invokestatic  #102                // Method io/aeron/cluster/ConsensusModule$Configuration.ingressFragmentLimit:()I
+     105: putfield      #105                // Field ingressFragmentLimit:I
+     108: aload_0
+     109: invokestatic  #107                // Method io/aeron/cluster/client/AeronCluster$Configuration.egressChannel:()Ljava/lang/String;
+     112: putfield      #110                // Field egressChannel:Ljava/lang/String;
+     115: aload_0
+     116: invokestatic  #112                // Method io/aeron/cluster/ConsensusModule$Configuration.logChannel:()Ljava/lang/String;
+     119: putfield      #115                // Field logChannel:Ljava/lang/String;
+     122: aload_0
+     123: invokestatic  #117                // Method io/aeron/cluster/ConsensusModule$Configuration.logStreamId:()I
+     126: putfield      #120                // Field logStreamId:I
+     129: aload_0
+     130: invokestatic  #122                // Method io/aeron/cluster/ConsensusModule$Configuration.memberEndpoints:()Ljava/lang/String;
+     133: putfield      #125                // Field memberEndpoints:Ljava/lang/String;
+     136: aload_0
+     137: invokestatic  #127                // Method io/aeron/cluster/service/ClusteredServiceContainer$Configuration.replayChannel:()Ljava/lang/String;
+     140: putfield      #130                // Field replayChannel:Ljava/lang/String;
+     143: aload_0
+     144: invokestatic  #132                // Method io/aeron/cluster/service/ClusteredServiceContainer$Configuration.replayStreamId:()I
+     147: putfield      #135                // Field replayStreamId:I
+     150: aload_0
+     151: invokestatic  #137                // Method io/aeron/cluster/service/ClusteredServiceContainer$Configuration.controlChannel:()Ljava/lang/String;
+     154: putfield      #140                // Field controlChannel:Ljava/lang/String;
+     157: aload_0
+     158: invokestatic  #142                // Method io/aeron/cluster/service/ClusteredServiceContainer$Configuration.consensusModuleStreamId:()I
+     161: putfield      #145                // Field consensusModuleStreamId:I
+     164: aload_0
+     165: invokestatic  #147                // Method io/aeron/cluster/service/ClusteredServiceContainer$Configuration.serviceStreamId:()I
+     168: putfield      #150                // Field serviceStreamId:I
+     171: aload_0
+     172: invokestatic  #152                // Method io/aeron/cluster/ConsensusModule$Configuration.snapshotChannel:()Ljava/lang/String;
+     175: putfield      #155                // Field snapshotChannel:Ljava/lang/String;
+     178: aload_0
+     179: invokestatic  #157                // Method io/aeron/cluster/ConsensusModule$Configuration.snapshotStreamId:()I
+     182: putfield      #160                // Field snapshotStreamId:I
+     185: aload_0
+     186: invokestatic  #162                // Method io/aeron/cluster/ConsensusModule$Configuration.consensusChannel:()Ljava/lang/String;
+     189: putfield      #165                // Field consensusChannel:Ljava/lang/String;
+     192: aload_0
+     193: invokestatic  #167                // Method io/aeron/cluster/ConsensusModule$Configuration.consensusStreamId:()I
+     196: putfield      #170                // Field consensusStreamId:I
+     199: aload_0
+     200: invokestatic  #172                // Method io/aeron/cluster/ConsensusModule$Configuration.replicationChannel:()Ljava/lang/String;
+     203: putfield      #175                // Field replicationChannel:Ljava/lang/String;
+     206: aload_0
+     207: invokestatic  #177                // Method io/aeron/cluster/ConsensusModule$Configuration.followerCatchupChannel:()Ljava/lang/String;
+     210: putfield      #180                // Field followerCatchupChannel:Ljava/lang/String;
+     213: aload_0
+     214: invokestatic  #182                // Method io/aeron/cluster/ConsensusModule$Configuration.leaderArchiveControlChannel:()Ljava/lang/String;
+     217: putfield      #185                // Field leaderArchiveControlChannel:Ljava/lang/String;
+     220: aload_0
+     221: invokestatic  #187                // Method io/aeron/cluster/service/ClusteredServiceContainer$Configuration.logFragmentLimit:()I
+     224: putfield      #190                // Field logFragmentLimit:I
+     227: aload_0
+     228: invokestatic  #192                // Method io/aeron/cluster/ConsensusModule$Configuration.serviceCount:()I
+     231: putfield      #195                // Field serviceCount:I
+     234: aload_0
+     235: invokestatic  #197                // Method io/aeron/cluster/ConsensusModule$Configuration.errorBufferLength:()I
+     238: putfield      #200                // Field errorBufferLength:I
+     241: aload_0
+     242: invokestatic  #202                // Method io/aeron/cluster/ConsensusModule$Configuration.maxConcurrentSessions:()I
+     245: putfield      #205                // Field maxConcurrentSessions:I
+     248: aload_0
+     249: invokestatic  #207                // Method io/aeron/cluster/ConsensusModule$Configuration.ticksPerWheel:()I
+     252: putfield      #210                // Field ticksPerWheel:I
+     255: aload_0
+     256: invokestatic  #212                // Method io/aeron/cluster/ConsensusModule$Configuration.wheelTickResolutionNs:()J
+     259: putfield      #216                // Field wheelTickResolutionNs:J
+     262: aload_0
+     263: invokestatic  #219                // Method io/aeron/cluster/ConsensusModule$Configuration.sessionTimeoutNs:()J
+     266: putfield      #222                // Field sessionTimeoutNs:J
+     269: aload_0
+     270: invokestatic  #224                // Method io/aeron/cluster/ConsensusModule$Configuration.leaderHeartbeatTimeoutNs:()J
+     273: putfield      #227                // Field leaderHeartbeatTimeoutNs:J
+     276: aload_0
+     277: invokestatic  #229                // Method io/aeron/cluster/ConsensusModule$Configuration.leaderHeartbeatIntervalNs:()J
+     280: putfield      #232                // Field leaderHeartbeatIntervalNs:J
+     283: aload_0
+     284: invokestatic  #234                // Method io/aeron/cluster/ConsensusModule$Configuration.startupCanvassTimeoutNs:()J
+     287: putfield      #237                // Field startupCanvassTimeoutNs:J
+     290: aload_0
+     291: invokestatic  #239                // Method io/aeron/cluster/ConsensusModule$Configuration.electionTimeoutNs:()J
+     294: putfield      #242                // Field electionTimeoutNs:J
+     297: aload_0
+     298: invokestatic  #244                // Method io/aeron/cluster/ConsensusModule$Configuration.electionStatusIntervalNs:()J
+     301: putfield      #247                // Field electionStatusIntervalNs:J
+     304: aload_0
+     305: invokestatic  #249                // Method io/aeron/cluster/ConsensusModule$Configuration.terminationTimeoutNs:()J
+     308: putfield      #252                // Field terminationTimeoutNs:J
+     311: aload_0
+     312: invokestatic  #254                // Method io/aeron/cluster/ConsensusModule$Configuration.cycleThresholdNs:()J
+     315: putfield      #257                // Field cycleThresholdNs:J
+     318: aload_0
+     319: invokestatic  #259                // Method io/aeron/cluster/ConsensusModule$Configuration.totalSnapshotDurationThresholdNs:()J
+     322: putfield      #262                // Field totalSnapshotDurationThresholdNs:J
+     325: aload_0
+     326: invokestatic  #264                // Method io/aeron/cluster/ConsensusModule$Configuration.standbySnapshotNotificationProcessingDelayNs:()J
+     329: putfield      #267                // Field standbySnapshotNotificationProcessingDelayNs:J
+     332: aload_0
+     333: invokestatic  #269                // Method io/aeron/cluster/ConsensusModule$Configuration.agentRoleName:()Ljava/lang/String;
+     336: putfield      #272                // Field agentRoleName:Ljava/lang/String;
+     339: aload_0
+     340: iconst_0
+     341: putfield      #274                // Field useAgentInvoker:Z
+     344: aload_0
+     345: aconst_null
+     346: putfield      #277                // Field bootstrapState:Lio/aeron/cluster/ConsensusModuleStateExport;
+     349: aload_0
+     350: invokestatic  #281                // Method io/aeron/cluster/ConsensusModule$Configuration.acceptStandbySnapshots:()Z
+     353: putfield      #284                // Field acceptStandbySnapshots:Z
+     356: aload_0
+     357: invokestatic  #286                // Method io/aeron/cluster/ConsensusModule$Configuration.enableControlOnConsensusChannel:()Z
+     360: putfield      #289                // Field enableControlOnConsensusChannel:Z
+     363: aload_0
+     364: invokestatic  #291                // Method io/aeron/cluster/ConsensusModule$Configuration.enableControlOnLogChannel:()Z
+     367: putfield      #294                // Field enableControlOnLogChannel:Z
+     370: return
+
+  public io.aeron.cluster.ConsensusModule$Context clone();
+    Code:
+       0: aload_0
+       1: invokespecial #296                // Method java/lang/Object.clone:()Ljava/lang/Object;
+       4: checkcast     #18                 // class io/aeron/cluster/ConsensusModule$Context
+       7: areturn
+       8: astore_1
+       9: new           #302                // class java/lang/RuntimeException
+      12: dup
+      13: aload_1
+      14: invokespecial #304                // Method java/lang/RuntimeException."<init>":(Ljava/lang/Throwable;)V
+      17: athrow
+    Exception table:
+       from    to  target type
+           0     7     8   Class java/lang/CloneNotSupportedException
+
+  public void conclude();
+    Code:
+       0: getstatic     #307                // Field IS_CONCLUDED_VH:Ljava/lang/invoke/VarHandle;
+       3: aload_0
+       4: iconst_1
+       5: invokevirtual #311                // Method java/lang/invoke/VarHandle.getAndSet:(Lio/aeron/cluster/ConsensusModule$Context;Z)Z
+       8: ifeq          19
+      11: new           #317                // class io/aeron/exceptions/ConcurrentConcludeException
+      14: dup
+      15: invokespecial #319                // Method io/aeron/exceptions/ConcurrentConcludeException."<init>":()V
+      18: athrow
+      19: aload_0
+      20: invokevirtual #320                // Method validateLogChannel:()V
+      23: aload_0
+      24: getfield      #195                // Field serviceCount:I
+      27: iflt          39
+      30: aload_0
+      31: getfield      #195                // Field serviceCount:I
+      34: bipush        10
+      36: if_icmple     56
+      39: new           #323                // class io/aeron/cluster/client/ClusterException
+      42: dup
+      43: aload_0
+      44: getfield      #195                // Field serviceCount:I
+      47: invokedynamic #325,  0            // InvokeDynamic #0:makeConcatWithConstants:(I)Ljava/lang/String;
+      52: invokespecial #329                // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+      55: athrow
+      56: aconst_null
+      57: aload_0
+      58: getfield      #332                // Field clusterDir:Ljava/io/File;
+      61: if_acmpne     79
+      64: aload_0
+      65: new           #336                // class java/io/File
+      68: dup
+      69: aload_0
+      70: getfield      #37                 // Field clusterDirectoryName:Ljava/lang/String;
+      73: invokespecial #338                // Method java/io/File."<init>":(Ljava/lang/String;)V
+      76: putfield      #332                // Field clusterDir:Ljava/io/File;
+      79: aconst_null
+      80: aload_0
+      81: getfield      #339                // Field markFileDir:Ljava/io/File;
+      84: if_acmpne     117
+      87: invokestatic  #342                // Method io/aeron/cluster/service/ClusteredServiceContainer$Configuration.markFileDir:()Ljava/lang/String;
+      90: astore_1
+      91: aload_0
+      92: aload_1
+      93: invokestatic  #344                // Method org/agrona/Strings.isEmpty:(Ljava/lang/String;)Z
+      96: ifeq          106
+      99: aload_0
+     100: getfield      #332                // Field clusterDir:Ljava/io/File;
+     103: goto          114
+     106: new           #336                // class java/io/File
+     109: dup
+     110: aload_1
+     111: invokespecial #338                // Method java/io/File."<init>":(Ljava/lang/String;)V
+     114: putfield      #339                // Field markFileDir:Ljava/io/File;
+     117: aload_0
+     118: aload_0
+     119: getfield      #332                // Field clusterDir:Ljava/io/File;
+     122: invokevirtual #350                // Method java/io/File.getCanonicalFile:()Ljava/io/File;
+     125: putfield      #332                // Field clusterDir:Ljava/io/File;
+     128: aload_0
+     129: aload_0
+     130: getfield      #332                // Field clusterDir:Ljava/io/File;
+     133: invokevirtual #354                // Method java/io/File.getAbsolutePath:()Ljava/lang/String;
+     136: putfield      #37                 // Field clusterDirectoryName:Ljava/lang/String;
+     139: aload_0
+     140: aload_0
+     141: getfield      #339                // Field markFileDir:Ljava/io/File;
+     144: invokevirtual #350                // Method java/io/File.getCanonicalFile:()Ljava/io/File;
+     147: putfield      #339                // Field markFileDir:Ljava/io/File;
+     150: aload_0
+     151: getfield      #43                 // Field clusterServicesDirectoryName:Ljava/lang/String;
+     154: invokestatic  #344                // Method org/agrona/Strings.isEmpty:(Ljava/lang/String;)Z
+     157: ifeq          171
+     160: aload_0
+     161: aload_0
+     162: getfield      #37                 // Field clusterDirectoryName:Ljava/lang/String;
+     165: putfield      #43                 // Field clusterServicesDirectoryName:Ljava/lang/String;
+     168: goto          189
+     171: aload_0
+     172: new           #336                // class java/io/File
+     175: dup
+     176: aload_0
+     177: getfield      #43                 // Field clusterServicesDirectoryName:Ljava/lang/String;
+     180: invokespecial #338                // Method java/io/File."<init>":(Ljava/lang/String;)V
+     183: invokevirtual #357                // Method java/io/File.getCanonicalPath:()Ljava/lang/String;
+     186: putfield      #43                 // Field clusterServicesDirectoryName:Ljava/lang/String;
+     189: goto          202
+     192: astore_1
+     193: new           #362                // class java/io/UncheckedIOException
+     196: dup
+     197: aload_1
+     198: invokespecial #364                // Method java/io/UncheckedIOException."<init>":(Ljava/io/IOException;)V
+     201: athrow
+     202: aconst_null
+     203: aload_0
+     204: getfield      #82                 // Field clusterMembers:Ljava/lang/String;
+     207: if_acmpne     221
+     210: new           #323                // class io/aeron/cluster/client/ClusterException
+     213: dup
+     214: ldc_w         #367                // String ConsensusModule.Context.clusterMembers must be set
+     217: invokespecial #329                // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+     220: athrow
+     221: aload_0
+     222: getfield      #31                 // Field deleteDirOnStart:Z
+     225: ifeq          236
+     228: aload_0
+     229: getfield      #332                // Field clusterDir:Ljava/io/File;
+     232: iconst_0
+     233: invokestatic  #369                // Method org/agrona/IoUtil.delete:(Ljava/io/File;Z)V
+     236: aload_0
+     237: getfield      #332                // Field clusterDir:Ljava/io/File;
+     240: ldc_w         #375                // String cluster
+     243: invokestatic  #377                // Method org/agrona/IoUtil.ensureDirectoryExists:(Ljava/io/File;Ljava/lang/String;)V
+     246: aload_0
+     247: getfield      #339                // Field markFileDir:Ljava/io/File;
+     250: ldc_w         #381                // String mark file
+     253: invokestatic  #377                // Method org/agrona/IoUtil.ensureDirectoryExists:(Ljava/io/File;Ljava/lang/String;)V
+     256: aload_0
+     257: getfield      #237                // Field startupCanvassTimeoutNs:J
+     260: aload_0
+     261: getfield      #227                // Field leaderHeartbeatTimeoutNs:J
+     264: ldiv
+     265: ldc2_w        #383                // long 2l
+     268: lcmp
+     269: ifge          293
+     272: new           #323                // class io/aeron/cluster/client/ClusterException
+     275: dup
+     276: aload_0
+     277: getfield      #237                // Field startupCanvassTimeoutNs:J
+     280: aload_0
+     281: getfield      #227                // Field leaderHeartbeatTimeoutNs:J
+     284: invokedynamic #385,  0            // InvokeDynamic #1:makeConcatWithConstants:(JJ)Ljava/lang/String;
+     289: invokespecial #329                // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+     292: athrow
+     293: aconst_null
+     294: aload_0
+     295: getfield      #388                // Field clusterClock:Lio/aeron/cluster/service/ClusterClock;
+     298: if_acmpne     358
+     301: ldc_w         #392                // String aeron.cluster.clock
+     304: ldc_w         #394                // class io/aeron/cluster/MillisecondClusterClock
+     307: invokevirtual #396                // Method java/lang/Class.getName:()Ljava/lang/String;
+     310: invokestatic  #401                // Method java/lang/System.getProperty:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+     313: astore_1
+     314: aload_0
+     315: aload_1
+     316: invokestatic  #407                // Method java/lang/Class.forName:(Ljava/lang/String;)Ljava/lang/Class;
+     319: iconst_0
+     320: anewarray     #397                // class java/lang/Class
+     323: invokevirtual #411                // Method java/lang/Class.getConstructor:([Ljava/lang/Class;)Ljava/lang/reflect/Constructor;
+     326: iconst_0
+     327: anewarray     #12                 // class java/lang/Object
+     330: invokevirtual #415                // Method java/lang/reflect/Constructor.newInstance:([Ljava/lang/Object;)Ljava/lang/Object;
+     333: checkcast     #421                // class io/aeron/cluster/service/ClusterClock
+     336: putfield      #388                // Field clusterClock:Lio/aeron/cluster/service/ClusterClock;
+     339: goto          358
+     342: astore_2
+     343: new           #323                // class io/aeron/cluster/client/ClusterException
+     346: dup
+     347: aload_1
+     348: invokedynamic #425,  0            // InvokeDynamic #2:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+     353: aload_2
+     354: invokespecial #428                // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;Ljava/lang/Throwable;)V
+     357: athrow
+     358: aconst_null
+     359: aload_0
+     360: getfield      #431                // Field epochClock:Lorg/agrona/concurrent/EpochClock;
+     363: if_acmpne     373
+     366: aload_0
+     367: getstatic     #435                // Field org/agrona/concurrent/SystemEpochClock.INSTANCE:Lorg/agrona/concurrent/SystemEpochClock;
+     370: putfield      #431                // Field epochClock:Lorg/agrona/concurrent/EpochClock;
+     373: aconst_null
+     374: aload_0
+     375: getfield      #441                // Field appVersionValidator:Lio/aeron/cluster/VersionValidator;
+     378: if_acmpne     388
+     381: aload_0
+     382: getstatic     #445                // Field io/aeron/cluster/AppVersionValidator.SEMANTIC_VERSIONING_VALIDATOR:Lio/aeron/cluster/AppVersionValidator;
+     385: putfield      #441                // Field appVersionValidator:Lio/aeron/cluster/VersionValidator;
+     388: aconst_null
+     389: aload_0
+     390: getfield      #451                // Field clusterTimeConsumerSupplier:Ljava/util/function/Function;
+     393: if_acmpne     405
+     396: aload_0
+     397: invokedynamic #455,  0            // InvokeDynamic #3:apply:()Ljava/util/function/Function;
+     402: putfield      #451                // Field clusterTimeConsumerSupplier:Ljava/util/function/Function;
+     405: aconst_null
+     406: aload_0
+     407: getfield      #459                // Field markFile:Lio/aeron/cluster/service/ClusterMarkFile;
+     410: if_acmpne     503
+     413: aconst_null
+     414: aload_0
+     415: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+     418: if_acmpeq     434
+     421: aload_0
+     422: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+     425: invokevirtual #467                // Method io/aeron/Aeron.context:()Lio/aeron/Aeron$Context;
+     428: invokevirtual #473                // Method io/aeron/Aeron$Context.filePageSize:()I
+     431: goto          462
+     434: new           #336                // class java/io/File
+     437: dup
+     438: aload_0
+     439: getfield      #27                 // Field aeronDirectoryName:Ljava/lang/String;
+     442: invokespecial #338                // Method java/io/File."<init>":(Ljava/lang/String;)V
+     445: aload_0
+     446: getfield      #431                // Field epochClock:Lorg/agrona/concurrent/EpochClock;
+     449: new           #1                  // class io/aeron/CommonContext
+     452: dup
+     453: invokespecial #478                // Method io/aeron/CommonContext."<init>":()V
+     456: invokevirtual #479                // Method io/aeron/CommonContext.driverTimeoutMs:()J
+     459: invokestatic  #482                // Method io/aeron/CommonContext.driverFilePageSize:(Ljava/io/File;Lorg/agrona/concurrent/EpochClock;J)I
+     462: istore_1
+     463: aload_0
+     464: new           #486                // class io/aeron/cluster/service/ClusterMarkFile
+     467: dup
+     468: new           #336                // class java/io/File
+     471: dup
+     472: aload_0
+     473: getfield      #339                // Field markFileDir:Ljava/io/File;
+     476: ldc_w         #488                // String cluster-mark.dat
+     479: invokespecial #490                // Method java/io/File."<init>":(Ljava/io/File;Ljava/lang/String;)V
+     482: getstatic     #492                // Field io/aeron/cluster/codecs/mark/ClusterComponentType.CONSENSUS_MODULE:Lio/aeron/cluster/codecs/mark/ClusterComponentType;
+     485: aload_0
+     486: getfield      #200                // Field errorBufferLength:I
+     489: aload_0
+     490: getfield      #431                // Field epochClock:Lorg/agrona/concurrent/EpochClock;
+     493: getstatic     #498                // Field io/aeron/cluster/service/ClusteredServiceContainer$Configuration.LIVENESS_TIMEOUT_MS:J
+     496: iload_1
+     497: invokespecial #501                // Method io/aeron/cluster/service/ClusterMarkFile."<init>":(Ljava/io/File;Lio/aeron/cluster/codecs/mark/ClusterComponentType;ILorg/agrona/concurrent/EpochClock;JI)V
+     500: putfield      #459                // Field markFile:Lio/aeron/cluster/service/ClusterMarkFile;
+     503: aload_0
+     504: getfield      #332                // Field clusterDir:Ljava/io/File;
+     507: new           #336                // class java/io/File
+     510: dup
+     511: aload_0
+     512: getfield      #459                // Field markFile:Lio/aeron/cluster/service/ClusterMarkFile;
+     515: invokevirtual #504                // Method io/aeron/cluster/service/ClusterMarkFile.parentDirectory:()Ljava/io/File;
+     518: ldc_w         #488                // String cluster-mark.dat
+     521: invokespecial #490                // Method java/io/File."<init>":(Ljava/io/File;Ljava/lang/String;)V
+     524: ldc_w         #507                // String cluster-mark.lnk
+     527: invokestatic  #509                // Method org/agrona/MarkFile.ensureMarkFileLink:(Ljava/io/File;Ljava/io/File;Ljava/lang/String;)V
+     530: aconst_null
+     531: aload_0
+     532: getfield      #515                // Field nodeStateFile:Lio/aeron/cluster/NodeStateFile;
+     535: if_acmpne     574
+     538: aload_0
+     539: new           #519                // class io/aeron/cluster/NodeStateFile
+     542: dup
+     543: aload_0
+     544: getfield      #332                // Field clusterDir:Ljava/io/File;
+     547: iconst_1
+     548: aload_0
+     549: invokevirtual #521                // Method fileSyncLevel:()I
+     552: invokespecial #522                // Method io/aeron/cluster/NodeStateFile."<init>":(Ljava/io/File;ZI)V
+     555: putfield      #515                // Field nodeStateFile:Lio/aeron/cluster/NodeStateFile;
+     558: goto          574
+     561: astore_1
+     562: new           #323                // class io/aeron/cluster/client/ClusterException
+     565: dup
+     566: ldc_w         #525                // String unable to create node-state file
+     569: aload_1
+     570: invokespecial #428                // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;Ljava/lang/Throwable;)V
+     573: athrow
+     574: ldc2_w        #527                // long -1l
+     577: aload_0
+     578: getfield      #515                // Field nodeStateFile:Lio/aeron/cluster/NodeStateFile;
+     581: invokevirtual #529                // Method io/aeron/cluster/NodeStateFile.candidateTerm:()Lio/aeron/cluster/NodeStateFile$CandidateTerm;
+     584: invokevirtual #533                // Method io/aeron/cluster/NodeStateFile$CandidateTerm.candidateTermId:()J
+     587: lcmp
+     588: ifne          631
+     591: ldc2_w        #527                // long -1l
+     594: aload_0
+     595: getfield      #459                // Field markFile:Lio/aeron/cluster/service/ClusterMarkFile;
+     598: invokevirtual #538                // Method io/aeron/cluster/service/ClusterMarkFile.candidateTermId:()J
+     601: lcmp
+     602: ifeq          631
+     605: aload_0
+     606: getfield      #515                // Field nodeStateFile:Lio/aeron/cluster/NodeStateFile;
+     609: aload_0
+     610: getfield      #459                // Field markFile:Lio/aeron/cluster/service/ClusterMarkFile;
+     613: invokevirtual #538                // Method io/aeron/cluster/service/ClusterMarkFile.candidateTermId:()J
+     616: ldc2_w        #527                // long -1l
+     619: aload_0
+     620: getfield      #431                // Field epochClock:Lorg/agrona/concurrent/EpochClock;
+     623: invokeinterface #539,  1          // InterfaceMethod org/agrona/concurrent/EpochClock.time:()J
+     628: invokevirtual #544                // Method io/aeron/cluster/NodeStateFile.updateCandidateTermId:(JJJ)V
+     631: aconst_null
+     632: aload_0
+     633: getfield      #548                // Field errorLog:Lorg/agrona/concurrent/errors/DistinctErrorLog;
+     636: if_acmpne     664
+     639: aload_0
+     640: new           #552                // class org/agrona/concurrent/errors/DistinctErrorLog
+     643: dup
+     644: aload_0
+     645: getfield      #459                // Field markFile:Lio/aeron/cluster/service/ClusterMarkFile;
+     648: invokevirtual #554                // Method io/aeron/cluster/service/ClusterMarkFile.errorBuffer:()Lorg/agrona/concurrent/AtomicBuffer;
+     651: aload_0
+     652: getfield      #431                // Field epochClock:Lorg/agrona/concurrent/EpochClock;
+     655: getstatic     #558                // Field java/nio/charset/StandardCharsets.US_ASCII:Ljava/nio/charset/Charset;
+     658: invokespecial #564                // Method org/agrona/concurrent/errors/DistinctErrorLog."<init>":(Lorg/agrona/concurrent/AtomicBuffer;Lorg/agrona/concurrent/EpochClock;Ljava/nio/charset/Charset;)V
+     661: putfield      #548                // Field errorLog:Lorg/agrona/concurrent/errors/DistinctErrorLog;
+     664: aload_0
+     665: aload_0
+     666: getfield      #567                // Field errorHandler:Lorg/agrona/ErrorHandler;
+     669: aload_0
+     670: getfield      #548                // Field errorLog:Lorg/agrona/concurrent/errors/DistinctErrorLog;
+     673: invokestatic  #571                // Method io/aeron/CommonContext.setupErrorHandler:(Lorg/agrona/ErrorHandler;Lorg/agrona/concurrent/errors/DistinctErrorLog;)Lorg/agrona/ErrorHandler;
+     676: putfield      #567                // Field errorHandler:Lorg/agrona/ErrorHandler;
+     679: aconst_null
+     680: aload_0
+     681: getfield      #575                // Field recordingLog:Lio/aeron/cluster/RecordingLog;
+     684: if_acmpne     703
+     687: aload_0
+     688: new           #579                // class io/aeron/cluster/RecordingLog
+     691: dup
+     692: aload_0
+     693: getfield      #332                // Field clusterDir:Ljava/io/File;
+     696: iconst_1
+     697: invokespecial #581                // Method io/aeron/cluster/RecordingLog."<init>":(Ljava/io/File;Z)V
+     700: putfield      #575                // Field recordingLog:Lio/aeron/cluster/RecordingLog;
+     703: aload_0
+     704: getfield      #272                // Field agentRoleName:Ljava/lang/String;
+     707: invokestatic  #344                // Method org/agrona/Strings.isEmpty:(Ljava/lang/String;)Z
+     710: ifeq          736
+     713: aload_0
+     714: ldc_w         #583                // String aeron-cl-cm
+     717: aload_0
+     718: getfield      #67                 // Field clusterId:I
+     721: aload_0
+     722: getfield      #72                 // Field clusterMemberId:I
+     725: invokedynamic #585,  0            // InvokeDynamic #4:makeConcatWithConstants:(II)Ljava/lang/String;
+     730: invokestatic  #588                // Method io/aeron/CommonContext.threadName:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+     733: putfield      #272                // Field agentRoleName:Ljava/lang/String;
+     736: new           #591                // class org/agrona/ExpandableArrayBuffer
+     739: dup
+     740: invokespecial #593                // Method org/agrona/ExpandableArrayBuffer."<init>":()V
+     743: astore_1
+     744: aconst_null
+     745: aload_0
+     746: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+     749: if_acmpne     857
+     752: aload_0
+     753: iconst_1
+     754: putfield      #17                 // Field ownsAeronClient:Z
+     757: aload_0
+     758: new           #474                // class io/aeron/Aeron$Context
+     761: dup
+     762: invokespecial #594                // Method io/aeron/Aeron$Context."<init>":()V
+     765: aload_0
+     766: getfield      #27                 // Field aeronDirectoryName:Ljava/lang/String;
+     769: invokevirtual #595                // Method io/aeron/Aeron$Context.aeronDirectoryName:(Ljava/lang/String;)Lio/aeron/Aeron$Context;
+     772: aload_0
+     773: getfield      #567                // Field errorHandler:Lorg/agrona/ErrorHandler;
+     776: invokevirtual #598                // Method io/aeron/Aeron$Context.errorHandler:(Lorg/agrona/ErrorHandler;)Lio/aeron/Aeron$Context;
+     779: getstatic     #601                // Field io/aeron/RethrowingErrorHandler.INSTANCE:Lio/aeron/RethrowingErrorHandler;
+     782: invokevirtual #606                // Method io/aeron/Aeron$Context.subscriberErrorHandler:(Lorg/agrona/ErrorHandler;)Lio/aeron/Aeron$Context;
+     785: aload_0
+     786: getfield      #431                // Field epochClock:Lorg/agrona/concurrent/EpochClock;
+     789: invokevirtual #609                // Method io/aeron/Aeron$Context.epochClock:(Lorg/agrona/concurrent/EpochClock;)Lio/aeron/Aeron$Context;
+     792: iconst_1
+     793: invokevirtual #612                // Method io/aeron/Aeron$Context.useConductorAgentInvoker:(Z)Lio/aeron/Aeron$Context;
+     796: getstatic     #616                // Field org/agrona/concurrent/YieldingIdleStrategy.INSTANCE:Lorg/agrona/concurrent/YieldingIdleStrategy;
+     799: invokevirtual #621                // Method io/aeron/Aeron$Context.awaitingIdleStrategy:(Lorg/agrona/concurrent/IdleStrategy;)Lio/aeron/Aeron$Context;
+     802: getstatic     #625                // Field org/agrona/concurrent/NoOpLock.INSTANCE:Lorg/agrona/concurrent/NoOpLock;
+     805: invokevirtual #630                // Method io/aeron/Aeron$Context.clientLock:(Ljava/util/concurrent/locks/Lock;)Lio/aeron/Aeron$Context;
+     808: aload_0
+     809: getfield      #272                // Field agentRoleName:Ljava/lang/String;
+     812: invokevirtual #634                // Method io/aeron/Aeron$Context.clientName:(Ljava/lang/String;)Lio/aeron/Aeron$Context;
+     815: invokestatic  #637                // Method io/aeron/Aeron.connect:(Lio/aeron/Aeron$Context;)Lio/aeron/Aeron;
+     818: putfield      #463                // Field aeron:Lio/aeron/Aeron;
+     821: aconst_null
+     822: aload_0
+     823: getfield      #641                // Field errorCounter:Lorg/agrona/concurrent/status/AtomicCounter;
+     826: if_acmpne     857
+     829: aload_0
+     830: aload_0
+     831: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+     834: aload_1
+     835: ldc_w         #645                // String Cluster Errors
+     838: sipush        212
+     841: aload_0
+     842: getfield      #67                 // Field clusterId:I
+     845: ldc_w         #649                // String 1.53.3
+     848: ldc_w         #651                // String 377943bcb8
+     851: invokestatic  #653                // Method io/aeron/cluster/service/ClusterCounters.allocateVersioned:(Lio/aeron/Aeron;Lorg/agrona/MutableDirectBuffer;Ljava/lang/String;IILjava/lang/String;Ljava/lang/String;)Lio/aeron/Counter;
+     854: putfield      #641                // Field errorCounter:Lorg/agrona/concurrent/status/AtomicCounter;
+     857: aconst_null
+     858: aload_0
+     859: getfield      #89                 // Field ingressChannel:Ljava/lang/String;
+     862: if_acmpne     876
+     865: new           #323                // class io/aeron/cluster/client/ClusterException
+     868: dup
+     869: ldc_w         #659                // String ingressChannel must be specified
+     872: invokespecial #329                // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+     875: athrow
+     876: aload_0
+     877: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+     880: invokevirtual #467                // Method io/aeron/Aeron.context:()Lio/aeron/Aeron$Context;
+     883: invokevirtual #661                // Method io/aeron/Aeron$Context.subscriberErrorHandler:()Lorg/agrona/ErrorHandler;
+     886: instanceof    #602                // class io/aeron/RethrowingErrorHandler
+     889: ifne          903
+     892: new           #323                // class io/aeron/cluster/client/ClusterException
+     895: dup
+     896: ldc_w         #664                // String Aeron client must use a RethrowingErrorHandler
+     899: invokespecial #329                // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+     902: athrow
+     903: aload_0
+     904: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+     907: invokevirtual #467                // Method io/aeron/Aeron.context:()Lio/aeron/Aeron$Context;
+     910: invokevirtual #666                // Method io/aeron/Aeron$Context.useConductorAgentInvoker:()Z
+     913: ifne          927
+     916: new           #323                // class io/aeron/cluster/client/ClusterException
+     919: dup
+     920: ldc_w         #668                // String Aeron client must use conductor agent invoker
+     923: invokespecial #329                // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+     926: athrow
+     927: aconst_null
+     928: aload_0
+     929: getfield      #641                // Field errorCounter:Lorg/agrona/concurrent/status/AtomicCounter;
+     932: if_acmpne     946
+     935: new           #323                // class io/aeron/cluster/client/ClusterException
+     938: dup
+     939: ldc_w         #670                // String error counter must be supplied if aeron client is
+     942: invokespecial #329                // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+     945: athrow
+     946: aconst_null
+     947: aload_0
+     948: getfield      #672                // Field countedErrorHandler:Lorg/agrona/concurrent/CountedErrorHandler;
+     951: if_acmpne     995
+     954: aload_0
+     955: new           #676                // class org/agrona/concurrent/CountedErrorHandler
+     958: dup
+     959: aload_0
+     960: getfield      #567                // Field errorHandler:Lorg/agrona/ErrorHandler;
+     963: aload_0
+     964: getfield      #641                // Field errorCounter:Lorg/agrona/concurrent/status/AtomicCounter;
+     967: invokespecial #678                // Method org/agrona/concurrent/CountedErrorHandler."<init>":(Lorg/agrona/ErrorHandler;Lorg/agrona/concurrent/status/AtomicCounter;)V
+     970: putfield      #672                // Field countedErrorHandler:Lorg/agrona/concurrent/CountedErrorHandler;
+     973: aload_0
+     974: getfield      #17                 // Field ownsAeronClient:Z
+     977: ifeq          995
+     980: aload_0
+     981: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+     984: invokevirtual #467                // Method io/aeron/Aeron.context:()Lio/aeron/Aeron$Context;
+     987: aload_0
+     988: getfield      #672                // Field countedErrorHandler:Lorg/agrona/concurrent/CountedErrorHandler;
+     991: invokevirtual #598                // Method io/aeron/Aeron$Context.errorHandler:(Lorg/agrona/ErrorHandler;)Lio/aeron/Aeron$Context;
+     994: pop
+     995: aconst_null
+     996: aload_0
+     997: getfield      #681                // Field moduleStateCounter:Lio/aeron/Counter;
+    1000: if_acmpne     1065
+    1003: aload_0
+    1004: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1007: invokevirtual #685                // Method io/aeron/Aeron.countersReader:()Lorg/agrona/concurrent/status/CountersReader;
+    1010: astore_2
+    1011: iconst_m1
+    1012: aload_2
+    1013: sipush        200
+    1016: aload_0
+    1017: getfield      #67                 // Field clusterId:I
+    1020: invokestatic  #689                // Method io/aeron/cluster/service/ClusterCounters.find:(Lorg/agrona/concurrent/status/CountersReader;II)I
+    1023: if_icmpeq     1043
+    1026: new           #323                // class io/aeron/cluster/client/ClusterException
+    1029: dup
+    1030: aload_0
+    1031: getfield      #67                 // Field clusterId:I
+    1034: invokedynamic #693,  0            // InvokeDynamic #5:makeConcatWithConstants:(I)Ljava/lang/String;
+    1039: invokespecial #329                // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+    1042: athrow
+    1043: aload_0
+    1044: aload_0
+    1045: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1048: aload_1
+    1049: ldc_w         #694                // String Consensus Module state
+    1052: sipush        200
+    1055: aload_0
+    1056: getfield      #67                 // Field clusterId:I
+    1059: invokestatic  #696                // Method io/aeron/cluster/service/ClusterCounters.allocate:(Lio/aeron/Aeron;Lorg/agrona/MutableDirectBuffer;Ljava/lang/String;II)Lio/aeron/Counter;
+    1062: putfield      #681                // Field moduleStateCounter:Lio/aeron/Counter;
+    1065: aload_0
+    1066: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1069: aload_0
+    1070: getfield      #681                // Field moduleStateCounter:Lio/aeron/Counter;
+    1073: sipush        200
+    1076: invokestatic  #700                // Method io/aeron/AeronCounters.validateCounterTypeId:(Lio/aeron/Aeron;Lio/aeron/Counter;I)V
+    1079: aconst_null
+    1080: aload_0
+    1081: getfield      #704                // Field electionStateCounter:Lio/aeron/Counter;
+    1084: if_acmpne     1109
+    1087: aload_0
+    1088: aload_0
+    1089: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1092: aload_1
+    1093: ldc_w         #707                // String Cluster election state
+    1096: sipush        207
+    1099: aload_0
+    1100: getfield      #67                 // Field clusterId:I
+    1103: invokestatic  #696                // Method io/aeron/cluster/service/ClusterCounters.allocate:(Lio/aeron/Aeron;Lorg/agrona/MutableDirectBuffer;Ljava/lang/String;II)Lio/aeron/Counter;
+    1106: putfield      #704                // Field electionStateCounter:Lio/aeron/Counter;
+    1109: aload_0
+    1110: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1113: aload_0
+    1114: getfield      #704                // Field electionStateCounter:Lio/aeron/Counter;
+    1117: sipush        207
+    1120: invokestatic  #700                // Method io/aeron/AeronCounters.validateCounterTypeId:(Lio/aeron/Aeron;Lio/aeron/Counter;I)V
+    1123: aconst_null
+    1124: aload_0
+    1125: getfield      #709                // Field electionCounter:Lio/aeron/Counter;
+    1128: if_acmpne     1153
+    1131: aload_0
+    1132: aload_0
+    1133: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1136: aload_1
+    1137: ldc_w         #712                // String Cluster election count
+    1140: sipush        238
+    1143: aload_0
+    1144: getfield      #67                 // Field clusterId:I
+    1147: invokestatic  #696                // Method io/aeron/cluster/service/ClusterCounters.allocate:(Lio/aeron/Aeron;Lorg/agrona/MutableDirectBuffer;Ljava/lang/String;II)Lio/aeron/Counter;
+    1150: putfield      #709                // Field electionCounter:Lio/aeron/Counter;
+    1153: aload_0
+    1154: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1157: aload_0
+    1158: getfield      #709                // Field electionCounter:Lio/aeron/Counter;
+    1161: sipush        238
+    1164: invokestatic  #700                // Method io/aeron/AeronCounters.validateCounterTypeId:(Lio/aeron/Aeron;Lio/aeron/Counter;I)V
+    1167: aconst_null
+    1168: aload_0
+    1169: getfield      #714                // Field leadershipTermId:Lio/aeron/Counter;
+    1172: if_acmpne     1197
+    1175: aload_0
+    1176: aload_0
+    1177: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1180: aload_1
+    1181: ldc_w         #717                // String Cluster leadership term id
+    1184: sipush        239
+    1187: aload_0
+    1188: getfield      #67                 // Field clusterId:I
+    1191: invokestatic  #696                // Method io/aeron/cluster/service/ClusterCounters.allocate:(Lio/aeron/Aeron;Lorg/agrona/MutableDirectBuffer;Ljava/lang/String;II)Lio/aeron/Counter;
+    1194: putfield      #714                // Field leadershipTermId:Lio/aeron/Counter;
+    1197: aload_0
+    1198: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1201: aload_0
+    1202: getfield      #714                // Field leadershipTermId:Lio/aeron/Counter;
+    1205: sipush        239
+    1208: invokestatic  #700                // Method io/aeron/AeronCounters.validateCounterTypeId:(Lio/aeron/Aeron;Lio/aeron/Counter;I)V
+    1211: aconst_null
+    1212: aload_0
+    1213: getfield      #719                // Field clusterNodeRoleCounter:Lio/aeron/Counter;
+    1216: if_acmpne     1241
+    1219: aload_0
+    1220: aload_0
+    1221: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1224: aload_1
+    1225: ldc_w         #722                // String Cluster node role
+    1228: sipush        201
+    1231: aload_0
+    1232: getfield      #67                 // Field clusterId:I
+    1235: invokestatic  #696                // Method io/aeron/cluster/service/ClusterCounters.allocate:(Lio/aeron/Aeron;Lorg/agrona/MutableDirectBuffer;Ljava/lang/String;II)Lio/aeron/Counter;
+    1238: putfield      #719                // Field clusterNodeRoleCounter:Lio/aeron/Counter;
+    1241: aload_0
+    1242: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1245: aload_0
+    1246: getfield      #719                // Field clusterNodeRoleCounter:Lio/aeron/Counter;
+    1249: sipush        201
+    1252: invokestatic  #700                // Method io/aeron/AeronCounters.validateCounterTypeId:(Lio/aeron/Aeron;Lio/aeron/Counter;I)V
+    1255: aconst_null
+    1256: aload_0
+    1257: getfield      #724                // Field commitPosition:Lio/aeron/Counter;
+    1260: if_acmpne     1285
+    1263: aload_0
+    1264: aload_0
+    1265: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1268: aload_1
+    1269: ldc_w         #727                // String Cluster commit-pos:
+    1272: sipush        203
+    1275: aload_0
+    1276: getfield      #67                 // Field clusterId:I
+    1279: invokestatic  #696                // Method io/aeron/cluster/service/ClusterCounters.allocate:(Lio/aeron/Aeron;Lorg/agrona/MutableDirectBuffer;Ljava/lang/String;II)Lio/aeron/Counter;
+    1282: putfield      #724                // Field commitPosition:Lio/aeron/Counter;
+    1285: aload_0
+    1286: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1289: aload_0
+    1290: getfield      #724                // Field commitPosition:Lio/aeron/Counter;
+    1293: sipush        203
+    1296: invokestatic  #700                // Method io/aeron/AeronCounters.validateCounterTypeId:(Lio/aeron/Aeron;Lio/aeron/Counter;I)V
+    1299: aconst_null
+    1300: aload_0
+    1301: getfield      #729                // Field clusterControlToggle:Lio/aeron/Counter;
+    1304: if_acmpne     1329
+    1307: aload_0
+    1308: aload_0
+    1309: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1312: aload_1
+    1313: ldc_w         #732                // String Cluster control toggle
+    1316: sipush        202
+    1319: aload_0
+    1320: getfield      #67                 // Field clusterId:I
+    1323: invokestatic  #696                // Method io/aeron/cluster/service/ClusterCounters.allocate:(Lio/aeron/Aeron;Lorg/agrona/MutableDirectBuffer;Ljava/lang/String;II)Lio/aeron/Counter;
+    1326: putfield      #729                // Field clusterControlToggle:Lio/aeron/Counter;
+    1329: aload_0
+    1330: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1333: aload_0
+    1334: getfield      #729                // Field clusterControlToggle:Lio/aeron/Counter;
+    1337: sipush        202
+    1340: invokestatic  #700                // Method io/aeron/AeronCounters.validateCounterTypeId:(Lio/aeron/Aeron;Lio/aeron/Counter;I)V
+    1343: aconst_null
+    1344: aload_0
+    1345: getfield      #734                // Field nodeControlToggle:Lio/aeron/Counter;
+    1348: if_acmpne     1373
+    1351: aload_0
+    1352: aload_0
+    1353: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1356: aload_1
+    1357: ldc_w         #737                // String Node control toggle
+    1360: sipush        233
+    1363: aload_0
+    1364: getfield      #67                 // Field clusterId:I
+    1367: invokestatic  #696                // Method io/aeron/cluster/service/ClusterCounters.allocate:(Lio/aeron/Aeron;Lorg/agrona/MutableDirectBuffer;Ljava/lang/String;II)Lio/aeron/Counter;
+    1370: putfield      #734                // Field nodeControlToggle:Lio/aeron/Counter;
+    1373: aload_0
+    1374: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1377: aload_0
+    1378: getfield      #734                // Field nodeControlToggle:Lio/aeron/Counter;
+    1381: sipush        233
+    1384: invokestatic  #700                // Method io/aeron/AeronCounters.validateCounterTypeId:(Lio/aeron/Aeron;Lio/aeron/Counter;I)V
+    1387: aconst_null
+    1388: aload_0
+    1389: getfield      #739                // Field snapshotCounter:Lio/aeron/Counter;
+    1392: if_acmpne     1417
+    1395: aload_0
+    1396: aload_0
+    1397: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1400: aload_1
+    1401: ldc_w         #742                // String Cluster snapshot count
+    1404: sipush        205
+    1407: aload_0
+    1408: getfield      #67                 // Field clusterId:I
+    1411: invokestatic  #696                // Method io/aeron/cluster/service/ClusterCounters.allocate:(Lio/aeron/Aeron;Lorg/agrona/MutableDirectBuffer;Ljava/lang/String;II)Lio/aeron/Counter;
+    1414: putfield      #739                // Field snapshotCounter:Lio/aeron/Counter;
+    1417: aload_0
+    1418: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1421: aload_0
+    1422: getfield      #739                // Field snapshotCounter:Lio/aeron/Counter;
+    1425: sipush        205
+    1428: invokestatic  #700                // Method io/aeron/AeronCounters.validateCounterTypeId:(Lio/aeron/Aeron;Lio/aeron/Counter;I)V
+    1431: aconst_null
+    1432: aload_0
+    1433: getfield      #744                // Field timedOutClientCounter:Lio/aeron/Counter;
+    1436: if_acmpne     1461
+    1439: aload_0
+    1440: aload_0
+    1441: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1444: aload_1
+    1445: ldc_w         #747                // String Cluster timed out client count
+    1448: sipush        213
+    1451: aload_0
+    1452: getfield      #67                 // Field clusterId:I
+    1455: invokestatic  #696                // Method io/aeron/cluster/service/ClusterCounters.allocate:(Lio/aeron/Aeron;Lorg/agrona/MutableDirectBuffer;Ljava/lang/String;II)Lio/aeron/Counter;
+    1458: putfield      #744                // Field timedOutClientCounter:Lio/aeron/Counter;
+    1461: aload_0
+    1462: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1465: aload_0
+    1466: getfield      #744                // Field timedOutClientCounter:Lio/aeron/Counter;
+    1469: sipush        213
+    1472: invokestatic  #700                // Method io/aeron/AeronCounters.validateCounterTypeId:(Lio/aeron/Aeron;Lio/aeron/Counter;I)V
+    1475: aload_0
+    1476: getfield      #284                // Field acceptStandbySnapshots:Z
+    1479: ifeq          1526
+    1482: aconst_null
+    1483: aload_0
+    1484: getfield      #749                // Field standbySnapshotCounter:Lio/aeron/Counter;
+    1487: if_acmpne     1512
+    1490: aload_0
+    1491: aload_0
+    1492: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1495: aload_1
+    1496: ldc_w         #752                // String Cluster standby snapshots received
+    1499: sipush        232
+    1502: aload_0
+    1503: getfield      #67                 // Field clusterId:I
+    1506: invokestatic  #696                // Method io/aeron/cluster/service/ClusterCounters.allocate:(Lio/aeron/Aeron;Lorg/agrona/MutableDirectBuffer;Ljava/lang/String;II)Lio/aeron/Counter;
+    1509: putfield      #749                // Field standbySnapshotCounter:Lio/aeron/Counter;
+    1512: aload_0
+    1513: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1516: aload_0
+    1517: getfield      #749                // Field standbySnapshotCounter:Lio/aeron/Counter;
+    1520: sipush        232
+    1523: invokestatic  #700                // Method io/aeron/AeronCounters.validateCounterTypeId:(Lio/aeron/Aeron;Lio/aeron/Counter;I)V
+    1526: aconst_null
+    1527: aload_0
+    1528: getfield      #754                // Field dutyCycleTracker:Lio/aeron/driver/DutyCycleTracker;
+    1531: if_acmpne     1594
+    1534: aload_0
+    1535: new           #758                // class io/aeron/driver/status/DutyCycleStallTracker
+    1538: dup
+    1539: aload_0
+    1540: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1543: aload_1
+    1544: ldc_w         #760                // String Cluster max cycle time in ns
+    1547: sipush        216
+    1550: aload_0
+    1551: getfield      #67                 // Field clusterId:I
+    1554: invokestatic  #696                // Method io/aeron/cluster/service/ClusterCounters.allocate:(Lio/aeron/Aeron;Lorg/agrona/MutableDirectBuffer;Ljava/lang/String;II)Lio/aeron/Counter;
+    1557: aload_0
+    1558: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1561: aload_1
+    1562: aload_0
+    1563: getfield      #257                // Field cycleThresholdNs:J
+    1566: invokestatic  #762                // Method org/agrona/SystemUtil.formatDuration:(J)Ljava/lang/String;
+    1569: invokedynamic #768,  0            // InvokeDynamic #6:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+    1574: sipush        217
+    1577: aload_0
+    1578: getfield      #67                 // Field clusterId:I
+    1581: invokestatic  #696                // Method io/aeron/cluster/service/ClusterCounters.allocate:(Lio/aeron/Aeron;Lorg/agrona/MutableDirectBuffer;Ljava/lang/String;II)Lio/aeron/Counter;
+    1584: aload_0
+    1585: getfield      #257                // Field cycleThresholdNs:J
+    1588: invokespecial #769                // Method io/aeron/driver/status/DutyCycleStallTracker."<init>":(Lorg/agrona/concurrent/status/AtomicCounter;Lorg/agrona/concurrent/status/AtomicCounter;J)V
+    1591: putfield      #754                // Field dutyCycleTracker:Lio/aeron/driver/DutyCycleTracker;
+    1594: aconst_null
+    1595: aload_0
+    1596: getfield      #772                // Field totalSnapshotDurationTracker:Lio/aeron/cluster/service/SnapshotDurationTracker;
+    1599: if_acmpne     1662
+    1602: aload_0
+    1603: new           #776                // class io/aeron/cluster/service/SnapshotDurationTracker
+    1606: dup
+    1607: aload_0
+    1608: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1611: aload_1
+    1612: ldc_w         #778                // String Total max snapshot duration in ns
+    1615: sipush        234
+    1618: aload_0
+    1619: getfield      #67                 // Field clusterId:I
+    1622: invokestatic  #696                // Method io/aeron/cluster/service/ClusterCounters.allocate:(Lio/aeron/Aeron;Lorg/agrona/MutableDirectBuffer;Ljava/lang/String;II)Lio/aeron/Counter;
+    1625: aload_0
+    1626: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1629: aload_1
+    1630: aload_0
+    1631: getfield      #262                // Field totalSnapshotDurationThresholdNs:J
+    1634: invokestatic  #762                // Method org/agrona/SystemUtil.formatDuration:(J)Ljava/lang/String;
+    1637: invokedynamic #780,  0            // InvokeDynamic #7:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+    1642: sipush        235
+    1645: aload_0
+    1646: getfield      #67                 // Field clusterId:I
+    1649: invokestatic  #696                // Method io/aeron/cluster/service/ClusterCounters.allocate:(Lio/aeron/Aeron;Lorg/agrona/MutableDirectBuffer;Ljava/lang/String;II)Lio/aeron/Counter;
+    1652: aload_0
+    1653: getfield      #262                // Field totalSnapshotDurationThresholdNs:J
+    1656: invokespecial #781                // Method io/aeron/cluster/service/SnapshotDurationTracker."<init>":(Lorg/agrona/concurrent/status/AtomicCounter;Lorg/agrona/concurrent/status/AtomicCounter;J)V
+    1659: putfield      #772                // Field totalSnapshotDurationTracker:Lio/aeron/cluster/service/SnapshotDurationTracker;
+    1662: aconst_null
+    1663: aload_0
+    1664: getfield      #782                // Field threadFactory:Ljava/util/concurrent/ThreadFactory;
+    1667: if_acmpne     1679
+    1670: aload_0
+    1671: invokedynamic #786,  0            // InvokeDynamic #8:newThread:()Ljava/util/concurrent/ThreadFactory;
+    1676: putfield      #782                // Field threadFactory:Ljava/util/concurrent/ThreadFactory;
+    1679: aconst_null
+    1680: aload_0
+    1681: getfield      #790                // Field idleStrategySupplier:Ljava/util/function/Supplier;
+    1684: if_acmpne     1695
+    1687: aload_0
+    1688: aconst_null
+    1689: invokestatic  #794                // Method io/aeron/cluster/service/ClusteredServiceContainer$Configuration.idleStrategySupplier:(Lorg/agrona/concurrent/status/StatusIndicator;)Ljava/util/function/Supplier;
+    1692: putfield      #790                // Field idleStrategySupplier:Ljava/util/function/Supplier;
+    1695: aconst_null
+    1696: aload_0
+    1697: getfield      #797                // Field timerServiceSupplier:Lio/aeron/cluster/TimerServiceSupplier;
+    1700: if_acmpne     1711
+    1703: aload_0
+    1704: aload_0
+    1705: invokevirtual #801                // Method getTimerServiceSupplierFromSystemProperty:()Lio/aeron/cluster/TimerServiceSupplier;
+    1708: putfield      #797                // Field timerServiceSupplier:Lio/aeron/cluster/TimerServiceSupplier;
+    1711: aconst_null
+    1712: aload_0
+    1713: getfield      #805                // Field archiveContext:Lio/aeron/archive/client/AeronArchive$Context;
+    1716: if_acmpne     1765
+    1719: aload_0
+    1720: new           #809                // class io/aeron/archive/client/AeronArchive$Context
+    1723: dup
+    1724: invokespecial #811                // Method io/aeron/archive/client/AeronArchive$Context."<init>":()V
+    1727: invokestatic  #812                // Method io/aeron/archive/client/AeronArchive$Configuration.localControlChannel:()Ljava/lang/String;
+    1730: invokevirtual #817                // Method io/aeron/archive/client/AeronArchive$Context.controlRequestChannel:(Ljava/lang/String;)Lio/aeron/archive/client/AeronArchive$Context;
+    1733: invokestatic  #812                // Method io/aeron/archive/client/AeronArchive$Configuration.localControlChannel:()Ljava/lang/String;
+    1736: invokevirtual #821                // Method io/aeron/archive/client/AeronArchive$Context.controlResponseChannel:(Ljava/lang/String;)Lio/aeron/archive/client/AeronArchive$Context;
+    1739: invokestatic  #824                // Method io/aeron/archive/client/AeronArchive$Configuration.localControlStreamId:()I
+    1742: invokevirtual #827                // Method io/aeron/archive/client/AeronArchive$Context.controlRequestStreamId:(I)Lio/aeron/archive/client/AeronArchive$Context;
+    1745: aload_0
+    1746: getfield      #67                 // Field clusterId:I
+    1749: bipush        100
+    1751: imul
+    1752: bipush        100
+    1754: iadd
+    1755: invokestatic  #831                // Method io/aeron/archive/client/AeronArchive$Configuration.controlResponseStreamId:()I
+    1758: iadd
+    1759: invokevirtual #834                // Method io/aeron/archive/client/AeronArchive$Context.controlResponseStreamId:(I)Lio/aeron/archive/client/AeronArchive$Context;
+    1762: putfield      #805                // Field archiveContext:Lio/aeron/archive/client/AeronArchive$Context;
+    1765: aload_0
+    1766: getfield      #805                // Field archiveContext:Lio/aeron/archive/client/AeronArchive$Context;
+    1769: invokevirtual #836                // Method io/aeron/archive/client/AeronArchive$Context.controlRequestChannel:()Ljava/lang/String;
+    1772: ldc_w         #838                // String aeron:ipc
+    1775: invokevirtual #840                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+    1778: ifne          1792
+    1781: new           #323                // class io/aeron/cluster/client/ClusterException
+    1784: dup
+    1785: ldc_w         #845                // String local archive control must be IPC
+    1788: invokespecial #329                // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+    1791: athrow
+    1792: aload_0
+    1793: getfield      #805                // Field archiveContext:Lio/aeron/archive/client/AeronArchive$Context;
+    1796: invokevirtual #847                // Method io/aeron/archive/client/AeronArchive$Context.controlResponseChannel:()Ljava/lang/String;
+    1799: ldc_w         #838                // String aeron:ipc
+    1802: invokevirtual #840                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+    1805: ifne          1819
+    1808: new           #323                // class io/aeron/cluster/client/ClusterException
+    1811: dup
+    1812: ldc_w         #845                // String local archive control must be IPC
+    1815: invokespecial #329                // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+    1818: athrow
+    1819: aconst_null
+    1820: aload_0
+    1821: getfield      #175                // Field replicationChannel:Ljava/lang/String;
+    1824: if_acmpne     1838
+    1827: new           #323                // class io/aeron/cluster/client/ClusterException
+    1830: dup
+    1831: ldc_w         #849                // String replicationChannel must be set
+    1834: invokespecial #329                // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+    1837: athrow
+    1838: aload_0
+    1839: getfield      #805                // Field archiveContext:Lio/aeron/archive/client/AeronArchive$Context;
+    1842: aload_0
+    1843: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+    1846: invokevirtual #851                // Method io/aeron/archive/client/AeronArchive$Context.aeron:(Lio/aeron/Aeron;)Lio/aeron/archive/client/AeronArchive$Context;
+    1849: aconst_null
+    1850: invokevirtual #854                // Method io/aeron/archive/client/AeronArchive$Context.errorHandler:(Lorg/agrona/ErrorHandler;)Lio/aeron/archive/client/AeronArchive$Context;
+    1853: iconst_0
+    1854: invokevirtual #857                // Method io/aeron/archive/client/AeronArchive$Context.ownsAeronClient:(Z)Lio/aeron/archive/client/AeronArchive$Context;
+    1857: getstatic     #625                // Field org/agrona/concurrent/NoOpLock.INSTANCE:Lorg/agrona/concurrent/NoOpLock;
+    1860: invokevirtual #860                // Method io/aeron/archive/client/AeronArchive$Context.lock:(Ljava/util/concurrent/locks/Lock;)Lio/aeron/archive/client/AeronArchive$Context;
+    1863: aload_0
+    1864: getfield      #805                // Field archiveContext:Lio/aeron/archive/client/AeronArchive$Context;
+    1867: invokevirtual #836                // Method io/aeron/archive/client/AeronArchive$Context.controlRequestChannel:()Ljava/lang/String;
+    1870: aload_0
+    1871: getfield      #67                 // Field clusterId:I
+    1874: aload_0
+    1875: getfield      #72                 // Field clusterMemberId:I
+    1878: invokedynamic #864,  0            // InvokeDynamic #9:makeConcatWithConstants:(II)Ljava/lang/String;
+    1883: invokestatic  #865                // Method io/aeron/ChannelUri.addAliasIfAbsent:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+    1886: invokevirtual #817                // Method io/aeron/archive/client/AeronArchive$Context.controlRequestChannel:(Ljava/lang/String;)Lio/aeron/archive/client/AeronArchive$Context;
+    1889: aload_0
+    1890: getfield      #805                // Field archiveContext:Lio/aeron/archive/client/AeronArchive$Context;
+    1893: invokevirtual #847                // Method io/aeron/archive/client/AeronArchive$Context.controlResponseChannel:()Ljava/lang/String;
+    1896: aload_0
+    1897: getfield      #67                 // Field clusterId:I
+    1900: aload_0
+    1901: getfield      #72                 // Field clusterMemberId:I
+    1904: invokedynamic #870,  0            // InvokeDynamic #10:makeConcatWithConstants:(II)Ljava/lang/String;
+    1909: invokestatic  #865                // Method io/aeron/ChannelUri.addAliasIfAbsent:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+    1912: invokevirtual #821                // Method io/aeron/archive/client/AeronArchive$Context.controlResponseChannel:(Ljava/lang/String;)Lio/aeron/archive/client/AeronArchive$Context;
+    1915: aload_0
+    1916: getfield      #272                // Field agentRoleName:Ljava/lang/String;
+    1919: invokevirtual #871                // Method io/aeron/archive/client/AeronArchive$Context.clientName:(Ljava/lang/String;)Lio/aeron/archive/client/AeronArchive$Context;
+    1922: pop
+    1923: aconst_null
+    1924: aload_0
+    1925: getfield      #873                // Field terminationHook:Ljava/lang/Runnable;
+    1928: if_acmpne     1940
+    1931: aload_0
+    1932: invokedynamic #877,  0            // InvokeDynamic #11:run:()Ljava/lang/Runnable;
+    1937: putfield      #873                // Field terminationHook:Ljava/lang/Runnable;
+    1940: aconst_null
+    1941: aload_0
+    1942: getfield      #881                // Field extendedTerminationHook:Lio/aeron/cluster/ExtendedTerminationHook;
+    1945: if_acmpne     1957
+    1948: aload_0
+    1949: invokedynamic #885,  0            // InvokeDynamic #12:run:()Lio/aeron/cluster/ExtendedTerminationHook;
+    1954: putfield      #881                // Field extendedTerminationHook:Lio/aeron/cluster/ExtendedTerminationHook;
+    1957: aconst_null
+    1958: aload_0
+    1959: getfield      #888                // Field authenticatorSupplier:Lio/aeron/security/AuthenticatorSupplier;
+    1962: if_acmpne     1972
+    1965: aload_0
+    1966: invokestatic  #892                // Method io/aeron/cluster/ConsensusModule$Configuration.authenticatorSupplier:()Lio/aeron/security/AuthenticatorSupplier;
+    1969: putfield      #888                // Field authenticatorSupplier:Lio/aeron/security/AuthenticatorSupplier;
+    1972: aconst_null
+    1973: aload_0
+    1974: getfield      #895                // Field authorisationServiceSupplier:Lio/aeron/security/AuthorisationServiceSupplier;
+    1977: if_acmpne     1987
+    1980: aload_0
+    1981: invokestatic  #899                // Method io/aeron/cluster/ConsensusModule$Configuration.authorisationServiceSupplier:()Lio/aeron/security/AuthorisationServiceSupplier;
+    1984: putfield      #895                // Field authorisationServiceSupplier:Lio/aeron/security/AuthorisationServiceSupplier;
+    1987: aconst_null
+    1988: aload_0
+    1989: getfield      #902                // Field random:Ljava/util/Random;
+    1992: if_acmpne     2006
+    1995: aload_0
+    1996: new           #906                // class java/util/Random
+    1999: dup
+    2000: invokespecial #908                // Method java/util/Random."<init>":()V
+    2003: putfield      #902                // Field random:Ljava/util/Random;
+    2006: aconst_null
+    2007: aload_0
+    2008: getfield      #909                // Field logPublisher:Lio/aeron/cluster/LogPublisher;
+    2011: if_acmpne     2029
+    2014: aload_0
+    2015: new           #913                // class io/aeron/cluster/LogPublisher
+    2018: dup
+    2019: aload_0
+    2020: invokevirtual #915                // Method logChannel:()Ljava/lang/String;
+    2023: invokespecial #916                // Method io/aeron/cluster/LogPublisher."<init>":(Ljava/lang/String;)V
+    2026: putfield      #909                // Field logPublisher:Lio/aeron/cluster/LogPublisher;
+    2029: aconst_null
+    2030: aload_0
+    2031: getfield      #917                // Field egressPublisher:Lio/aeron/cluster/EgressPublisher;
+    2034: if_acmpne     2052
+    2037: aload_0
+    2038: new           #921                // class io/aeron/cluster/EgressPublisher
+    2041: dup
+    2042: aload_0
+    2043: getfield      #227                // Field leaderHeartbeatTimeoutNs:J
+    2046: invokespecial #923                // Method io/aeron/cluster/EgressPublisher."<init>":(J)V
+    2049: putfield      #917                // Field egressPublisher:Lio/aeron/cluster/EgressPublisher;
+    2052: aload_0
+    2053: invokevirtual #915                // Method logChannel:()Ljava/lang/String;
+    2056: invokestatic  #926                // Method io/aeron/ChannelUri.parse:(Ljava/lang/CharSequence;)Lio/aeron/ChannelUri;
+    2059: astore_2
+    2060: aload_0
+    2061: aload_2
+    2062: invokevirtual #930                // Method io/aeron/ChannelUri.isUdp:()Z
+    2065: ifeq          2083
+    2068: aconst_null
+    2069: aload_2
+    2070: ldc_w         #933                // String endpoint
+    2073: invokevirtual #935                // Method io/aeron/ChannelUri.get:(Ljava/lang/String;)Ljava/lang/String;
+    2076: if_acmpne     2083
+    2079: iconst_1
+    2080: goto          2084
+    2083: iconst_0
+    2084: putfield      #938                // Field isLogMdc:Z
+    2087: aconst_null
+    2088: aload_0
+    2089: getfield      #941                // Field consensusModuleExtension:Lio/aeron/cluster/ConsensusModuleExtension;
+    2092: if_acmpne     2102
+    2095: aload_0
+    2096: invokestatic  #945                // Method io/aeron/cluster/ConsensusModule$Configuration.newConsensusModuleExtension:()Lio/aeron/cluster/ConsensusModuleExtension;
+    2099: putfield      #941                // Field consensusModuleExtension:Lio/aeron/cluster/ConsensusModuleExtension;
+    2102: aconst_null
+    2103: aload_0
+    2104: getfield      #941                // Field consensusModuleExtension:Lio/aeron/cluster/ConsensusModuleExtension;
+    2107: if_acmpeq     2129
+    2110: iconst_0
+    2111: aload_0
+    2112: getfield      #195                // Field serviceCount:I
+    2115: if_icmpeq     2129
+    2118: new           #323                // class io/aeron/cluster/client/ClusterException
+    2121: dup
+    2122: ldc_w         #949                // String service count must be zero when ConsensusModuleExtension is enabled
+    2125: invokespecial #329                // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+    2128: athrow
+    2129: aconst_null
+    2130: aload_0
+    2131: getfield      #941                // Field consensusModuleExtension:Lio/aeron/cluster/ConsensusModuleExtension;
+    2134: if_acmpne     2156
+    2137: iconst_0
+    2138: aload_0
+    2139: getfield      #195                // Field serviceCount:I
+    2142: if_icmpne     2156
+    2145: new           #323                // class io/aeron/cluster/client/ClusterException
+    2148: dup
+    2149: ldc_w         #951                // String zero services are only supported when ConsensusModuleExtension is enabled
+    2152: invokespecial #329                // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+    2155: athrow
+    2156: aload_0
+    2157: invokevirtual #953                // Method concludeMarkFile:()V
+    2160: invokestatic  #956                // Method io/aeron/CommonContext.shouldPrintConfigurationOnStart:()Z
+    2163: ifeq          2173
+    2166: getstatic     #959                // Field java/lang/System.out:Ljava/io/PrintStream;
+    2169: aload_0
+    2170: invokevirtual #963                // Method java/io/PrintStream.println:(Ljava/lang/Object;)V
+    2173: return
+    Exception table:
+       from    to  target type
+         117   189   192   Class java/io/IOException
+         314   339   342   Class java/lang/Exception
+         538   558   561   Class java/io/IOException
+
+  public boolean isConcluded();
+    Code:
+       0: aload_0
+       1: getfield      #969                // Field isConcluded:Z
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context deleteDirOnStart(boolean);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #31                 // Field deleteDirOnStart:Z
+       5: aload_0
+       6: areturn
+
+  public boolean deleteDirOnStart();
+    Code:
+       0: aload_0
+       1: getfield      #31                 // Field deleteDirOnStart:Z
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context clusterDirectoryName(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #37                 // Field clusterDirectoryName:Ljava/lang/String;
+       5: aload_0
+       6: areturn
+
+  public java.lang.String clusterDirectoryName();
+    Code:
+       0: aload_0
+       1: getfield      #37                 // Field clusterDirectoryName:Ljava/lang/String;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context clusterServicesDirectoryName(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #43                 // Field clusterServicesDirectoryName:Ljava/lang/String;
+       5: aload_0
+       6: areturn
+
+  public java.lang.String clusterServicesDirectoryName();
+    Code:
+       0: aload_0
+       1: getfield      #43                 // Field clusterServicesDirectoryName:Ljava/lang/String;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context clusterDir(java.io.File);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #332                // Field clusterDir:Ljava/io/File;
+       5: aload_0
+       6: areturn
+
+  public java.io.File clusterDir();
+    Code:
+       0: aload_0
+       1: getfield      #332                // Field clusterDir:Ljava/io/File;
+       4: areturn
+
+  public java.io.File markFileDir();
+    Code:
+       0: aload_0
+       1: getfield      #339                // Field markFileDir:Ljava/io/File;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context markFileDir(java.io.File);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #339                // Field markFileDir:Ljava/io/File;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context recordingLog(io.aeron.cluster.RecordingLog);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #575                // Field recordingLog:Lio/aeron/cluster/RecordingLog;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.cluster.RecordingLog recordingLog();
+    Code:
+       0: aload_0
+       1: getfield      #575                // Field recordingLog:Lio/aeron/cluster/RecordingLog;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context appVersion(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #61                 // Field appVersion:I
+       5: aload_0
+       6: areturn
+
+  public int appVersion();
+    Code:
+       0: aload_0
+       1: getfield      #61                 // Field appVersion:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context appVersionValidator(io.aeron.cluster.VersionValidator);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #441                // Field appVersionValidator:Lio/aeron/cluster/VersionValidator;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.cluster.VersionValidator appVersionValidator();
+    Code:
+       0: aload_0
+       1: getfield      #441                // Field appVersionValidator:Lio/aeron/cluster/VersionValidator;
+       4: areturn
+
+  public int fileSyncLevel();
+    Code:
+       0: aload_0
+       1: getfield      #52                 // Field fileSyncLevel:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context fileSyncLevel(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #52                 // Field fileSyncLevel:I
+       5: aload_0
+       6: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context clusterId(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #67                 // Field clusterId:I
+       5: aload_0
+       6: areturn
+
+  public int clusterId();
+    Code:
+       0: aload_0
+       1: getfield      #67                 // Field clusterId:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context clusterMemberId(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #72                 // Field clusterMemberId:I
+       5: aload_0
+       6: areturn
+
+  public int clusterMemberId();
+    Code:
+       0: aload_0
+       1: getfield      #72                 // Field clusterMemberId:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context appointedLeaderId(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #77                 // Field appointedLeaderId:I
+       5: aload_0
+       6: areturn
+
+  public int appointedLeaderId();
+    Code:
+       0: aload_0
+       1: getfield      #77                 // Field appointedLeaderId:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context clusterMembers(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #82                 // Field clusterMembers:Ljava/lang/String;
+       5: aload_0
+       6: areturn
+
+  public java.lang.String clusterMembers();
+    Code:
+       0: aload_0
+       1: getfield      #82                 // Field clusterMembers:Ljava/lang/String;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context ingressChannel(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #89                 // Field ingressChannel:Ljava/lang/String;
+       5: aload_0
+       6: areturn
+
+  public java.lang.String ingressChannel();
+    Code:
+       0: aload_0
+       1: getfield      #89                 // Field ingressChannel:Ljava/lang/String;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context ingressStreamId(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #94                 // Field ingressStreamId:I
+       5: aload_0
+       6: areturn
+
+  public int ingressStreamId();
+    Code:
+       0: aload_0
+       1: getfield      #94                 // Field ingressStreamId:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context ingressFragmentLimit(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #105                // Field ingressFragmentLimit:I
+       5: aload_0
+       6: areturn
+
+  public int ingressFragmentLimit();
+    Code:
+       0: aload_0
+       1: getfield      #105                // Field ingressFragmentLimit:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context egressChannel(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #110                // Field egressChannel:Ljava/lang/String;
+       5: aload_0
+       6: areturn
+
+  public java.lang.String egressChannel();
+    Code:
+       0: aload_0
+       1: getfield      #110                // Field egressChannel:Ljava/lang/String;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context isIpcIngressAllowed(boolean);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #100                // Field isIpcIngressAllowed:Z
+       5: aload_0
+       6: areturn
+
+  public boolean isIpcIngressAllowed();
+    Code:
+       0: aload_0
+       1: getfield      #100                // Field isIpcIngressAllowed:Z
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context logChannel(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #115                // Field logChannel:Ljava/lang/String;
+       5: aload_0
+       6: areturn
+
+  public java.lang.String logChannel();
+    Code:
+       0: aload_0
+       1: getfield      #115                // Field logChannel:Ljava/lang/String;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context logStreamId(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #120                // Field logStreamId:I
+       5: aload_0
+       6: areturn
+
+  public int logStreamId();
+    Code:
+       0: aload_0
+       1: getfield      #120                // Field logStreamId:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context memberEndpoints(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #125                // Field memberEndpoints:Ljava/lang/String;
+       5: aload_0
+       6: areturn
+
+  public java.lang.String memberEndpoints();
+    Code:
+       0: aload_0
+       1: getfield      #125                // Field memberEndpoints:Ljava/lang/String;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context replayChannel(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #130                // Field replayChannel:Ljava/lang/String;
+       5: aload_0
+       6: areturn
+
+  public java.lang.String replayChannel();
+    Code:
+       0: aload_0
+       1: getfield      #130                // Field replayChannel:Ljava/lang/String;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context replayStreamId(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #135                // Field replayStreamId:I
+       5: aload_0
+       6: areturn
+
+  public int replayStreamId();
+    Code:
+       0: aload_0
+       1: getfield      #135                // Field replayStreamId:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context controlChannel(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #140                // Field controlChannel:Ljava/lang/String;
+       5: aload_0
+       6: areturn
+
+  public java.lang.String controlChannel();
+    Code:
+       0: aload_0
+       1: getfield      #140                // Field controlChannel:Ljava/lang/String;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context serviceStreamId(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #150                // Field serviceStreamId:I
+       5: aload_0
+       6: areturn
+
+  public int serviceStreamId();
+    Code:
+       0: aload_0
+       1: getfield      #150                // Field serviceStreamId:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context consensusModuleStreamId(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #145                // Field consensusModuleStreamId:I
+       5: aload_0
+       6: areturn
+
+  public int consensusModuleStreamId();
+    Code:
+       0: aload_0
+       1: getfield      #145                // Field consensusModuleStreamId:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context snapshotChannel(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #155                // Field snapshotChannel:Ljava/lang/String;
+       5: aload_0
+       6: areturn
+
+  public java.lang.String snapshotChannel();
+    Code:
+       0: aload_0
+       1: getfield      #155                // Field snapshotChannel:Ljava/lang/String;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context snapshotStreamId(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #160                // Field snapshotStreamId:I
+       5: aload_0
+       6: areturn
+
+  public int snapshotStreamId();
+    Code:
+       0: aload_0
+       1: getfield      #160                // Field snapshotStreamId:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context consensusChannel(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #165                // Field consensusChannel:Ljava/lang/String;
+       5: aload_0
+       6: areturn
+
+  public java.lang.String consensusChannel();
+    Code:
+       0: aload_0
+       1: getfield      #165                // Field consensusChannel:Ljava/lang/String;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context consensusStreamId(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #170                // Field consensusStreamId:I
+       5: aload_0
+       6: areturn
+
+  public int consensusStreamId();
+    Code:
+       0: aload_0
+       1: getfield      #170                // Field consensusStreamId:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context replicationChannel(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #175                // Field replicationChannel:Ljava/lang/String;
+       5: aload_0
+       6: areturn
+
+  public java.lang.String replicationChannel();
+    Code:
+       0: aload_0
+       1: getfield      #175                // Field replicationChannel:Ljava/lang/String;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context followerCatchupChannel(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #180                // Field followerCatchupChannel:Ljava/lang/String;
+       5: aload_0
+       6: areturn
+
+  public java.lang.String followerCatchupChannel();
+    Code:
+       0: aload_0
+       1: getfield      #180                // Field followerCatchupChannel:Ljava/lang/String;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context leaderArchiveControlChannel(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #185                // Field leaderArchiveControlChannel:Ljava/lang/String;
+       5: aload_0
+       6: areturn
+
+  public java.lang.String leaderArchiveControlChannel();
+    Code:
+       0: aload_0
+       1: getfield      #185                // Field leaderArchiveControlChannel:Ljava/lang/String;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context logFragmentLimit(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #190                // Field logFragmentLimit:I
+       5: aload_0
+       6: areturn
+
+  public int logFragmentLimit();
+    Code:
+       0: aload_0
+       1: getfield      #190                // Field logFragmentLimit:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context wheelTickResolutionNs(long);
+    Code:
+       0: aload_0
+       1: lload_1
+       2: putfield      #216                // Field wheelTickResolutionNs:J
+       5: aload_0
+       6: areturn
+
+  public long wheelTickResolutionNs();
+    Code:
+       0: aload_0
+       1: getfield      #216                // Field wheelTickResolutionNs:J
+       4: lreturn
+
+  public io.aeron.cluster.ConsensusModule$Context ticksPerWheel(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #210                // Field ticksPerWheel:I
+       5: aload_0
+       6: areturn
+
+  public int ticksPerWheel();
+    Code:
+       0: aload_0
+       1: getfield      #210                // Field ticksPerWheel:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context serviceCount(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #195                // Field serviceCount:I
+       5: aload_0
+       6: areturn
+
+  public int serviceCount();
+    Code:
+       0: aload_0
+       1: getfield      #195                // Field serviceCount:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context standbySnapshotNotificationProcessingDelayNs(long);
+    Code:
+       0: aload_0
+       1: lload_1
+       2: putfield      #267                // Field standbySnapshotNotificationProcessingDelayNs:J
+       5: aload_0
+       6: areturn
+
+  public long standbySnapshotNotificationProcessingDelayNs();
+    Code:
+       0: aload_0
+       1: getfield      #267                // Field standbySnapshotNotificationProcessingDelayNs:J
+       4: lreturn
+
+  public io.aeron.cluster.ConsensusModule$Context maxConcurrentSessions(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #205                // Field maxConcurrentSessions:I
+       5: aload_0
+       6: areturn
+
+  public int maxConcurrentSessions();
+    Code:
+       0: aload_0
+       1: getfield      #205                // Field maxConcurrentSessions:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context sessionTimeoutNs(long);
+    Code:
+       0: aload_0
+       1: lload_1
+       2: putfield      #222                // Field sessionTimeoutNs:J
+       5: aload_0
+       6: areturn
+
+  public long sessionTimeoutNs();
+    Code:
+       0: aload_0
+       1: getfield      #222                // Field sessionTimeoutNs:J
+       4: getstatic     #972                // Field java/util/concurrent/TimeUnit.NANOSECONDS:Ljava/util/concurrent/TimeUnit;
+       7: invokestatic  #978                // Method io/aeron/CommonContext.checkDebugTimeout:(JLjava/util/concurrent/TimeUnit;)J
+      10: lreturn
+
+  public io.aeron.cluster.ConsensusModule$Context leaderHeartbeatTimeoutNs(long);
+    Code:
+       0: aload_0
+       1: lload_1
+       2: putfield      #227                // Field leaderHeartbeatTimeoutNs:J
+       5: aload_0
+       6: areturn
+
+  public long leaderHeartbeatTimeoutNs();
+    Code:
+       0: aload_0
+       1: getfield      #227                // Field leaderHeartbeatTimeoutNs:J
+       4: lreturn
+
+  public io.aeron.cluster.ConsensusModule$Context leaderHeartbeatIntervalNs(long);
+    Code:
+       0: aload_0
+       1: lload_1
+       2: putfield      #232                // Field leaderHeartbeatIntervalNs:J
+       5: aload_0
+       6: areturn
+
+  public long leaderHeartbeatIntervalNs();
+    Code:
+       0: aload_0
+       1: getfield      #232                // Field leaderHeartbeatIntervalNs:J
+       4: lreturn
+
+  public io.aeron.cluster.ConsensusModule$Context startupCanvassTimeoutNs(long);
+    Code:
+       0: aload_0
+       1: lload_1
+       2: putfield      #237                // Field startupCanvassTimeoutNs:J
+       5: aload_0
+       6: areturn
+
+  public long startupCanvassTimeoutNs();
+    Code:
+       0: aload_0
+       1: getfield      #237                // Field startupCanvassTimeoutNs:J
+       4: lreturn
+
+  public io.aeron.cluster.ConsensusModule$Context electionTimeoutNs(long);
+    Code:
+       0: aload_0
+       1: lload_1
+       2: putfield      #242                // Field electionTimeoutNs:J
+       5: aload_0
+       6: areturn
+
+  public long electionTimeoutNs();
+    Code:
+       0: aload_0
+       1: getfield      #242                // Field electionTimeoutNs:J
+       4: lreturn
+
+  public io.aeron.cluster.ConsensusModule$Context electionStatusIntervalNs(long);
+    Code:
+       0: aload_0
+       1: lload_1
+       2: putfield      #247                // Field electionStatusIntervalNs:J
+       5: aload_0
+       6: areturn
+
+  public long electionStatusIntervalNs();
+    Code:
+       0: aload_0
+       1: getfield      #247                // Field electionStatusIntervalNs:J
+       4: lreturn
+
+  public io.aeron.cluster.ConsensusModule$Context terminationTimeoutNs(long);
+    Code:
+       0: aload_0
+       1: lload_1
+       2: putfield      #252                // Field terminationTimeoutNs:J
+       5: aload_0
+       6: areturn
+
+  public long terminationTimeoutNs();
+    Code:
+       0: aload_0
+       1: getfield      #252                // Field terminationTimeoutNs:J
+       4: lreturn
+
+  public io.aeron.cluster.ConsensusModule$Context cycleThresholdNs(long);
+    Code:
+       0: aload_0
+       1: lload_1
+       2: putfield      #257                // Field cycleThresholdNs:J
+       5: aload_0
+       6: areturn
+
+  public long cycleThresholdNs();
+    Code:
+       0: aload_0
+       1: getfield      #257                // Field cycleThresholdNs:J
+       4: lreturn
+
+  public io.aeron.cluster.ConsensusModule$Context dutyCycleTracker(io.aeron.driver.DutyCycleTracker);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #754                // Field dutyCycleTracker:Lio/aeron/driver/DutyCycleTracker;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.driver.DutyCycleTracker dutyCycleTracker();
+    Code:
+       0: aload_0
+       1: getfield      #754                // Field dutyCycleTracker:Lio/aeron/driver/DutyCycleTracker;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context totalSnapshotDurationThresholdNs(long);
+    Code:
+       0: aload_0
+       1: lload_1
+       2: putfield      #262                // Field totalSnapshotDurationThresholdNs:J
+       5: aload_0
+       6: areturn
+
+  public long totalSnapshotDurationThresholdNs();
+    Code:
+       0: aload_0
+       1: getfield      #262                // Field totalSnapshotDurationThresholdNs:J
+       4: lreturn
+
+  public io.aeron.cluster.ConsensusModule$Context totalSnapshotDurationTracker(io.aeron.cluster.service.SnapshotDurationTracker);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #772                // Field totalSnapshotDurationTracker:Lio/aeron/cluster/service/SnapshotDurationTracker;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.cluster.service.SnapshotDurationTracker totalSnapshotDurationTracker();
+    Code:
+       0: aload_0
+       1: getfield      #772                // Field totalSnapshotDurationTracker:Lio/aeron/cluster/service/SnapshotDurationTracker;
+       4: areturn
+
+  public java.lang.String agentRoleName();
+    Code:
+       0: aload_0
+       1: getfield      #272                // Field agentRoleName:Ljava/lang/String;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context agentRoleName(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #272                // Field agentRoleName:Ljava/lang/String;
+       5: aload_0
+       6: areturn
+
+  public java.util.concurrent.ThreadFactory threadFactory();
+    Code:
+       0: aload_0
+       1: getfield      #782                // Field threadFactory:Ljava/util/concurrent/ThreadFactory;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context threadFactory(java.util.concurrent.ThreadFactory);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #782                // Field threadFactory:Ljava/util/concurrent/ThreadFactory;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context idleStrategySupplier(java.util.function.Supplier<org.agrona.concurrent.IdleStrategy>);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #790                // Field idleStrategySupplier:Ljava/util/function/Supplier;
+       5: aload_0
+       6: areturn
+
+  public org.agrona.concurrent.IdleStrategy idleStrategy();
+    Code:
+       0: aload_0
+       1: getfield      #790                // Field idleStrategySupplier:Ljava/util/function/Supplier;
+       4: invokeinterface #982,  1          // InterfaceMethod java/util/function/Supplier.get:()Ljava/lang/Object;
+       9: checkcast     #986                // class org/agrona/concurrent/IdleStrategy
+      12: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context clusterClock(io.aeron.cluster.service.ClusterClock);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #388                // Field clusterClock:Lio/aeron/cluster/service/ClusterClock;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.cluster.service.ClusterClock clusterClock();
+    Code:
+       0: aload_0
+       1: getfield      #388                // Field clusterClock:Lio/aeron/cluster/service/ClusterClock;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context epochClock(org.agrona.concurrent.EpochClock);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #431                // Field epochClock:Lorg/agrona/concurrent/EpochClock;
+       5: aload_0
+       6: areturn
+
+  public org.agrona.concurrent.EpochClock epochClock();
+    Code:
+       0: aload_0
+       1: getfield      #431                // Field epochClock:Lorg/agrona/concurrent/EpochClock;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context clusterTimeConsumerSupplier(java.util.function.Function<io.aeron.cluster.ConsensusModule$Context, java.util.function.LongConsumer>);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #451                // Field clusterTimeConsumerSupplier:Ljava/util/function/Function;
+       5: aload_0
+       6: areturn
+
+  public java.util.function.Function<io.aeron.cluster.ConsensusModule$Context, java.util.function.LongConsumer> clusterTimeConsumerSupplier();
+    Code:
+       0: aload_0
+       1: getfield      #451                // Field clusterTimeConsumerSupplier:Ljava/util/function/Function;
+       4: areturn
+
+  public org.agrona.ErrorHandler errorHandler();
+    Code:
+       0: aload_0
+       1: getfield      #567                // Field errorHandler:Lorg/agrona/ErrorHandler;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context errorHandler(org.agrona.ErrorHandler);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #567                // Field errorHandler:Lorg/agrona/ErrorHandler;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context countedErrorHandler(org.agrona.concurrent.CountedErrorHandler);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #672                // Field countedErrorHandler:Lorg/agrona/concurrent/CountedErrorHandler;
+       5: aload_0
+       6: areturn
+
+  public org.agrona.concurrent.CountedErrorHandler countedErrorHandler();
+    Code:
+       0: aload_0
+       1: getfield      #672                // Field countedErrorHandler:Lorg/agrona/concurrent/CountedErrorHandler;
+       4: areturn
+
+  public org.agrona.concurrent.status.AtomicCounter errorCounter();
+    Code:
+       0: aload_0
+       1: getfield      #641                // Field errorCounter:Lorg/agrona/concurrent/status/AtomicCounter;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context errorCounter(org.agrona.concurrent.status.AtomicCounter);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #641                // Field errorCounter:Lorg/agrona/concurrent/status/AtomicCounter;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.Counter moduleStateCounter();
+    Code:
+       0: aload_0
+       1: getfield      #681                // Field moduleStateCounter:Lio/aeron/Counter;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context moduleStateCounter(io.aeron.Counter);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #681                // Field moduleStateCounter:Lio/aeron/Counter;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.Counter electionStateCounter();
+    Code:
+       0: aload_0
+       1: getfield      #704                // Field electionStateCounter:Lio/aeron/Counter;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context electionStateCounter(io.aeron.Counter);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #704                // Field electionStateCounter:Lio/aeron/Counter;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.Counter commitPositionCounter();
+    Code:
+       0: aload_0
+       1: getfield      #724                // Field commitPosition:Lio/aeron/Counter;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context commitPositionCounter(io.aeron.Counter);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #724                // Field commitPosition:Lio/aeron/Counter;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.Counter clusterNodeRoleCounter();
+    Code:
+       0: aload_0
+       1: getfield      #719                // Field clusterNodeRoleCounter:Lio/aeron/Counter;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context clusterNodeRoleCounter(io.aeron.Counter);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #719                // Field clusterNodeRoleCounter:Lio/aeron/Counter;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.Counter controlToggleCounter();
+    Code:
+       0: aload_0
+       1: getfield      #729                // Field clusterControlToggle:Lio/aeron/Counter;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context controlToggleCounter(io.aeron.Counter);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #729                // Field clusterControlToggle:Lio/aeron/Counter;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.Counter nodeControlToggleCounter();
+    Code:
+       0: aload_0
+       1: getfield      #734                // Field nodeControlToggle:Lio/aeron/Counter;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context nodeControlToggleCounter(io.aeron.Counter);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #734                // Field nodeControlToggle:Lio/aeron/Counter;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.Counter snapshotCounter();
+    Code:
+       0: aload_0
+       1: getfield      #739                // Field snapshotCounter:Lio/aeron/Counter;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context snapshotCounter(io.aeron.Counter);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #739                // Field snapshotCounter:Lio/aeron/Counter;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.Counter timedOutClientCounter();
+    Code:
+       0: aload_0
+       1: getfield      #744                // Field timedOutClientCounter:Lio/aeron/Counter;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context timedOutClientCounter(io.aeron.Counter);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #744                // Field timedOutClientCounter:Lio/aeron/Counter;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context aeron(io.aeron.Aeron);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #463                // Field aeron:Lio/aeron/Aeron;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.Aeron aeron();
+    Code:
+       0: aload_0
+       1: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context aeronDirectoryName(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #27                 // Field aeronDirectoryName:Ljava/lang/String;
+       5: aload_0
+       6: areturn
+
+  public java.lang.String aeronDirectoryName();
+    Code:
+       0: aload_0
+       1: getfield      #27                 // Field aeronDirectoryName:Ljava/lang/String;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context ownsAeronClient(boolean);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #17                 // Field ownsAeronClient:Z
+       5: aload_0
+       6: areturn
+
+  public boolean ownsAeronClient();
+    Code:
+       0: aload_0
+       1: getfield      #17                 // Field ownsAeronClient:Z
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context archiveContext(io.aeron.archive.client.AeronArchive$Context);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #805                // Field archiveContext:Lio/aeron/archive/client/AeronArchive$Context;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.archive.client.AeronArchive$Context archiveContext();
+    Code:
+       0: aload_0
+       1: getfield      #805                // Field archiveContext:Lio/aeron/archive/client/AeronArchive$Context;
+       4: areturn
+
+  public io.aeron.security.AuthenticatorSupplier authenticatorSupplier();
+    Code:
+       0: aload_0
+       1: getfield      #888                // Field authenticatorSupplier:Lio/aeron/security/AuthenticatorSupplier;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context authenticatorSupplier(io.aeron.security.AuthenticatorSupplier);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #888                // Field authenticatorSupplier:Lio/aeron/security/AuthenticatorSupplier;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.security.AuthorisationServiceSupplier authorisationServiceSupplier();
+    Code:
+       0: aload_0
+       1: getfield      #895                // Field authorisationServiceSupplier:Lio/aeron/security/AuthorisationServiceSupplier;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context authorisationServiceSupplier(io.aeron.security.AuthorisationServiceSupplier);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #895                // Field authorisationServiceSupplier:Lio/aeron/security/AuthorisationServiceSupplier;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context useAgentInvoker(boolean);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #274                // Field useAgentInvoker:Z
+       5: aload_0
+       6: areturn
+
+  public boolean useAgentInvoker();
+    Code:
+       0: aload_0
+       1: getfield      #274                // Field useAgentInvoker:Z
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context terminationHook(java.lang.Runnable);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #873                // Field terminationHook:Ljava/lang/Runnable;
+       5: aload_0
+       6: areturn
+
+  public java.lang.Runnable terminationHook();
+    Code:
+       0: aload_0
+       1: getfield      #873                // Field terminationHook:Ljava/lang/Runnable;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context extendedTerminationHook(io.aeron.cluster.ExtendedTerminationHook);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #881                // Field extendedTerminationHook:Lio/aeron/cluster/ExtendedTerminationHook;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.cluster.ExtendedTerminationHook extendedTerminationHook();
+    Code:
+       0: aload_0
+       1: getfield      #881                // Field extendedTerminationHook:Lio/aeron/cluster/ExtendedTerminationHook;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context clusterMarkFile(io.aeron.cluster.service.ClusterMarkFile);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #459                // Field markFile:Lio/aeron/cluster/service/ClusterMarkFile;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.cluster.service.ClusterMarkFile clusterMarkFile();
+    Code:
+       0: aload_0
+       1: getfield      #459                // Field markFile:Lio/aeron/cluster/service/ClusterMarkFile;
+       4: areturn
+
+  io.aeron.cluster.ConsensusModule$Context nodeStateFile(io.aeron.cluster.NodeStateFile);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #515                // Field nodeStateFile:Lio/aeron/cluster/NodeStateFile;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.cluster.NodeStateFile nodeStateFile();
+    Code:
+       0: aload_0
+       1: getfield      #515                // Field nodeStateFile:Lio/aeron/cluster/NodeStateFile;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context errorBufferLength(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #200                // Field errorBufferLength:I
+       5: aload_0
+       6: areturn
+
+  public int errorBufferLength();
+    Code:
+       0: aload_0
+       1: getfield      #200                // Field errorBufferLength:I
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context errorLog(org.agrona.concurrent.errors.DistinctErrorLog);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #548                // Field errorLog:Lorg/agrona/concurrent/errors/DistinctErrorLog;
+       5: aload_0
+       6: areturn
+
+  public org.agrona.concurrent.errors.DistinctErrorLog errorLog();
+    Code:
+       0: aload_0
+       1: getfield      #548                // Field errorLog:Lorg/agrona/concurrent/errors/DistinctErrorLog;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context random(java.util.Random);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #902                // Field random:Ljava/util/Random;
+       5: aload_0
+       6: areturn
+
+  public java.util.Random random();
+    Code:
+       0: aload_0
+       1: getfield      #902                // Field random:Ljava/util/Random;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context timerServiceSupplier(io.aeron.cluster.TimerServiceSupplier);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #797                // Field timerServiceSupplier:Lio/aeron/cluster/TimerServiceSupplier;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.cluster.TimerServiceSupplier timerServiceSupplier();
+    Code:
+       0: aload_0
+       1: getfield      #797                // Field timerServiceSupplier:Lio/aeron/cluster/TimerServiceSupplier;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context consensusModuleExtension(io.aeron.cluster.ConsensusModuleExtension);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #941                // Field consensusModuleExtension:Lio/aeron/cluster/ConsensusModuleExtension;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.cluster.ConsensusModuleExtension consensusModuleExtension();
+    Code:
+       0: aload_0
+       1: getfield      #941                // Field consensusModuleExtension:Lio/aeron/cluster/ConsensusModuleExtension;
+       4: areturn
+
+  public io.aeron.driver.NameResolver nameResolver();
+    Code:
+       0: aconst_null
+       1: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context nameResolver(io.aeron.driver.NameResolver);
+    Code:
+       0: aload_0
+       1: areturn
+
+  public boolean acceptStandbySnapshots();
+    Code:
+       0: aload_0
+       1: getfield      #284                // Field acceptStandbySnapshots:Z
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context acceptStandbySnapshots(boolean);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #284                // Field acceptStandbySnapshots:Z
+       5: aload_0
+       6: areturn
+
+  public io.aeron.Counter standbySnapshotCounter();
+    Code:
+       0: aload_0
+       1: getfield      #749                // Field standbySnapshotCounter:Lio/aeron/Counter;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context standbySnapshotCounter(io.aeron.Counter);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #749                // Field standbySnapshotCounter:Lio/aeron/Counter;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.Counter electionCounter();
+    Code:
+       0: aload_0
+       1: getfield      #709                // Field electionCounter:Lio/aeron/Counter;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context electionCounter(io.aeron.Counter);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #709                // Field electionCounter:Lio/aeron/Counter;
+       5: aload_0
+       6: areturn
+
+  public io.aeron.Counter leadershipTermIdCounter();
+    Code:
+       0: aload_0
+       1: getfield      #714                // Field leadershipTermId:Lio/aeron/Counter;
+       4: areturn
+
+  public io.aeron.cluster.ConsensusModule$Context leadershipTermIdCounter(io.aeron.Counter);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #714                // Field leadershipTermId:Lio/aeron/Counter;
+       5: aload_0
+       6: areturn
+
+  public boolean enableControlOnConsensusChannel();
+    Code:
+       0: aload_0
+       1: getfield      #289                // Field enableControlOnConsensusChannel:Z
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context enableControlOnConsensusChannel(boolean);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #289                // Field enableControlOnConsensusChannel:Z
+       5: aload_0
+       6: areturn
+
+  public boolean enableControlOnLogControl();
+    Code:
+       0: aload_0
+       1: getfield      #294                // Field enableControlOnLogChannel:Z
+       4: ireturn
+
+  public io.aeron.cluster.ConsensusModule$Context enableControlOnLogControl(boolean);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #294                // Field enableControlOnLogChannel:Z
+       5: aload_0
+       6: areturn
+
+  public void deleteDirectory();
+    Code:
+       0: aconst_null
+       1: aload_0
+       2: getfield      #332                // Field clusterDir:Ljava/io/File;
+       5: if_acmpeq     16
+       8: aload_0
+       9: getfield      #332                // Field clusterDir:Ljava/io/File;
+      12: iconst_0
+      13: invokestatic  #369                // Method org/agrona/IoUtil.delete:(Ljava/io/File;Z)V
+      16: return
+
+  public void close();
+    Code:
+       0: aload_0
+       1: getfield      #672                // Field countedErrorHandler:Lorg/agrona/concurrent/CountedErrorHandler;
+       4: aload_0
+       5: getfield      #575                // Field recordingLog:Lio/aeron/cluster/RecordingLog;
+       8: invokestatic  #988                // Method org/agrona/CloseHelper.close:(Lorg/agrona/ErrorHandler;Ljava/lang/AutoCloseable;)V
+      11: aload_0
+      12: getfield      #672                // Field countedErrorHandler:Lorg/agrona/concurrent/CountedErrorHandler;
+      15: aload_0
+      16: getfield      #515                // Field nodeStateFile:Lio/aeron/cluster/NodeStateFile;
+      19: invokestatic  #988                // Method org/agrona/CloseHelper.close:(Lorg/agrona/ErrorHandler;Ljava/lang/AutoCloseable;)V
+      22: aload_0
+      23: getfield      #672                // Field countedErrorHandler:Lorg/agrona/concurrent/CountedErrorHandler;
+      26: aload_0
+      27: getfield      #459                // Field markFile:Lio/aeron/cluster/service/ClusterMarkFile;
+      30: invokestatic  #988                // Method org/agrona/CloseHelper.close:(Lorg/agrona/ErrorHandler;Ljava/lang/AutoCloseable;)V
+      33: aload_0
+      34: getfield      #567                // Field errorHandler:Lorg/agrona/ErrorHandler;
+      37: astore_2
+      38: aload_2
+      39: instanceof    #994                // class java/lang/AutoCloseable
+      42: ifeq          54
+      45: aload_2
+      46: checkcast     #994                // class java/lang/AutoCloseable
+      49: astore_1
+      50: aload_1
+      51: invokestatic  #996                // Method org/agrona/CloseHelper.quietClose:(Ljava/lang/AutoCloseable;)V
+      54: aload_0
+      55: getfield      #17                 // Field ownsAeronClient:Z
+      58: ifeq          71
+      61: aload_0
+      62: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+      65: invokestatic  #1000               // Method org/agrona/CloseHelper.close:(Ljava/lang/AutoCloseable;)V
+      68: goto          139
+      71: aload_0
+      72: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+      75: invokevirtual #1002               // Method io/aeron/Aeron.isClosed:()Z
+      78: ifne          139
+      81: bipush        7
+      83: anewarray     #994                // class java/lang/AutoCloseable
+      86: dup
+      87: iconst_0
+      88: aload_0
+      89: getfield      #744                // Field timedOutClientCounter:Lio/aeron/Counter;
+      92: aastore
+      93: dup
+      94: iconst_1
+      95: aload_0
+      96: getfield      #729                // Field clusterControlToggle:Lio/aeron/Counter;
+      99: aastore
+     100: dup
+     101: iconst_2
+     102: aload_0
+     103: getfield      #739                // Field snapshotCounter:Lio/aeron/Counter;
+     106: aastore
+     107: dup
+     108: iconst_3
+     109: aload_0
+     110: getfield      #681                // Field moduleStateCounter:Lio/aeron/Counter;
+     113: aastore
+     114: dup
+     115: iconst_4
+     116: aload_0
+     117: getfield      #704                // Field electionStateCounter:Lio/aeron/Counter;
+     120: aastore
+     121: dup
+     122: iconst_5
+     123: aload_0
+     124: getfield      #719                // Field clusterNodeRoleCounter:Lio/aeron/Counter;
+     127: aastore
+     128: dup
+     129: bipush        6
+     131: aload_0
+     132: getfield      #724                // Field commitPosition:Lio/aeron/Counter;
+     135: aastore
+     136: invokestatic  #1005               // Method org/agrona/CloseHelper.closeAll:([Ljava/lang/AutoCloseable;)V
+     139: return
+
+  io.aeron.cluster.ConsensusModule$Context logPublisher(io.aeron.cluster.LogPublisher);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #909                // Field logPublisher:Lio/aeron/cluster/LogPublisher;
+       5: aload_0
+       6: areturn
+
+  io.aeron.cluster.LogPublisher logPublisher();
+    Code:
+       0: aload_0
+       1: getfield      #909                // Field logPublisher:Lio/aeron/cluster/LogPublisher;
+       4: areturn
+
+  io.aeron.cluster.ConsensusModule$Context egressPublisher(io.aeron.cluster.EgressPublisher);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #917                // Field egressPublisher:Lio/aeron/cluster/EgressPublisher;
+       5: aload_0
+       6: areturn
+
+  io.aeron.cluster.EgressPublisher egressPublisher();
+    Code:
+       0: aload_0
+       1: getfield      #917                // Field egressPublisher:Lio/aeron/cluster/EgressPublisher;
+       4: areturn
+
+  boolean isLogMdc();
+    Code:
+       0: aload_0
+       1: getfield      #938                // Field isLogMdc:Z
+       4: ireturn
+
+  io.aeron.cluster.ConsensusModule$Context bootstrapState(io.aeron.cluster.ConsensusModuleStateExport);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #277                // Field bootstrapState:Lio/aeron/cluster/ConsensusModuleStateExport;
+       5: aload_0
+       6: areturn
+
+  io.aeron.cluster.ConsensusModuleStateExport bootstrapState();
+    Code:
+       0: aload_0
+       1: getfield      #277                // Field bootstrapState:Lio/aeron/cluster/ConsensusModuleStateExport;
+       4: areturn
+
+  private void concludeMarkFile();
+    Code:
+       0: aload_0
+       1: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+       4: invokevirtual #467                // Method io/aeron/Aeron.context:()Lio/aeron/Aeron$Context;
+       7: invokevirtual #1009               // Method io/aeron/Aeron$Context.aeronDirectoryName:()Ljava/lang/String;
+      10: astore_1
+      11: aload_0
+      12: getfield      #888                // Field authenticatorSupplier:Lio/aeron/security/AuthenticatorSupplier;
+      15: invokevirtual #1011               // Method java/lang/Object.getClass:()Ljava/lang/Class;
+      18: invokevirtual #396                // Method java/lang/Class.getName:()Ljava/lang/String;
+      21: astore_2
+      22: aload_1
+      23: aload_0
+      24: invokevirtual #1015               // Method controlChannel:()Ljava/lang/String;
+      27: aload_0
+      28: getfield      #89                 // Field ingressChannel:Ljava/lang/String;
+      31: aconst_null
+      32: aload_2
+      33: invokestatic  #1016               // Method io/aeron/cluster/service/ClusterMarkFile.checkHeaderLength:(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
+      36: aload_0
+      37: getfield      #459                // Field markFile:Lio/aeron/cluster/service/ClusterMarkFile;
+      40: invokevirtual #1020               // Method io/aeron/cluster/service/ClusterMarkFile.encoder:()Lio/aeron/cluster/codecs/mark/MarkFileHeaderEncoder;
+      43: aload_0
+      44: getfield      #805                // Field archiveContext:Lio/aeron/archive/client/AeronArchive$Context;
+      47: invokevirtual #1024               // Method io/aeron/archive/client/AeronArchive$Context.controlRequestStreamId:()I
+      50: invokevirtual #1026               // Method io/aeron/cluster/codecs/mark/MarkFileHeaderEncoder.archiveStreamId:(I)Lio/aeron/cluster/codecs/mark/MarkFileHeaderEncoder;
+      53: aload_0
+      54: getfield      #150                // Field serviceStreamId:I
+      57: invokevirtual #1032               // Method io/aeron/cluster/codecs/mark/MarkFileHeaderEncoder.serviceStreamId:(I)Lio/aeron/cluster/codecs/mark/MarkFileHeaderEncoder;
+      60: aload_0
+      61: getfield      #145                // Field consensusModuleStreamId:I
+      64: invokevirtual #1034               // Method io/aeron/cluster/codecs/mark/MarkFileHeaderEncoder.consensusModuleStreamId:(I)Lio/aeron/cluster/codecs/mark/MarkFileHeaderEncoder;
+      67: aload_0
+      68: getfield      #94                 // Field ingressStreamId:I
+      71: invokevirtual #1036               // Method io/aeron/cluster/codecs/mark/MarkFileHeaderEncoder.ingressStreamId:(I)Lio/aeron/cluster/codecs/mark/MarkFileHeaderEncoder;
+      74: aload_0
+      75: getfield      #72                 // Field clusterMemberId:I
+      78: invokevirtual #1038               // Method io/aeron/cluster/codecs/mark/MarkFileHeaderEncoder.memberId:(I)Lio/aeron/cluster/codecs/mark/MarkFileHeaderEncoder;
+      81: iconst_m1
+      82: invokevirtual #1041               // Method io/aeron/cluster/codecs/mark/MarkFileHeaderEncoder.serviceId:(I)Lio/aeron/cluster/codecs/mark/MarkFileHeaderEncoder;
+      85: aload_0
+      86: getfield      #67                 // Field clusterId:I
+      89: invokevirtual #1044               // Method io/aeron/cluster/codecs/mark/MarkFileHeaderEncoder.clusterId:(I)Lio/aeron/cluster/codecs/mark/MarkFileHeaderEncoder;
+      92: aload_1
+      93: invokevirtual #1046               // Method io/aeron/cluster/codecs/mark/MarkFileHeaderEncoder.aeronDirectory:(Ljava/lang/String;)Lio/aeron/cluster/codecs/mark/MarkFileHeaderEncoder;
+      96: aload_0
+      97: getfield      #140                // Field controlChannel:Ljava/lang/String;
+     100: invokevirtual #1050               // Method io/aeron/cluster/codecs/mark/MarkFileHeaderEncoder.controlChannel:(Ljava/lang/String;)Lio/aeron/cluster/codecs/mark/MarkFileHeaderEncoder;
+     103: aload_0
+     104: getfield      #89                 // Field ingressChannel:Ljava/lang/String;
+     107: invokevirtual #1052               // Method io/aeron/cluster/codecs/mark/MarkFileHeaderEncoder.ingressChannel:(Ljava/lang/String;)Lio/aeron/cluster/codecs/mark/MarkFileHeaderEncoder;
+     110: aconst_null
+     111: invokevirtual #1054               // Method io/aeron/cluster/codecs/mark/MarkFileHeaderEncoder.serviceName:(Ljava/lang/String;)Lio/aeron/cluster/codecs/mark/MarkFileHeaderEncoder;
+     114: aload_2
+     115: invokevirtual #1057               // Method io/aeron/cluster/codecs/mark/MarkFileHeaderEncoder.authenticator:(Ljava/lang/String;)Lio/aeron/cluster/codecs/mark/MarkFileHeaderEncoder;
+     118: aload_0
+     119: getfield      #43                 // Field clusterServicesDirectoryName:Ljava/lang/String;
+     122: invokevirtual #1060               // Method io/aeron/cluster/codecs/mark/MarkFileHeaderEncoder.servicesClusterDir:(Ljava/lang/String;)Lio/aeron/cluster/codecs/mark/MarkFileHeaderEncoder;
+     125: pop
+     126: aload_0
+     127: getfield      #459                // Field markFile:Lio/aeron/cluster/service/ClusterMarkFile;
+     130: aload_0
+     131: getfield      #431                // Field epochClock:Lorg/agrona/concurrent/EpochClock;
+     134: invokeinterface #539,  1          // InterfaceMethod org/agrona/concurrent/EpochClock.time:()J
+     139: invokevirtual #1063               // Method io/aeron/cluster/service/ClusterMarkFile.signalReady:(J)V
+     142: return
+
+  private io.aeron.cluster.TimerServiceSupplier getTimerServiceSupplierFromSystemProperty();
+    Code:
+       0: invokestatic  #1066               // Method io/aeron/cluster/ConsensusModule$Configuration.timerServiceSupplier:()Ljava/lang/String;
+       3: astore_1
+       4: ldc_w         #1068               // class io/aeron/cluster/WheelTimerServiceSupplier
+       7: invokevirtual #396                // Method java/lang/Class.getName:()Ljava/lang/String;
+      10: aload_1
+      11: invokevirtual #1070               // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+      14: ifeq          61
+      17: new           #1068               // class io/aeron/cluster/WheelTimerServiceSupplier
+      20: dup
+      21: aload_0
+      22: getfield      #388                // Field clusterClock:Lio/aeron/cluster/service/ClusterClock;
+      25: invokeinterface #1074,  1         // InterfaceMethod io/aeron/cluster/service/ClusterClock.timeUnit:()Ljava/util/concurrent/TimeUnit;
+      30: lconst_0
+      31: aload_0
+      32: getfield      #388                // Field clusterClock:Lio/aeron/cluster/service/ClusterClock;
+      35: invokeinterface #1074,  1         // InterfaceMethod io/aeron/cluster/service/ClusterClock.timeUnit:()Ljava/util/concurrent/TimeUnit;
+      40: aload_0
+      41: getfield      #216                // Field wheelTickResolutionNs:J
+      44: getstatic     #972                // Field java/util/concurrent/TimeUnit.NANOSECONDS:Ljava/util/concurrent/TimeUnit;
+      47: invokevirtual #1078               // Method java/util/concurrent/TimeUnit.convert:(JLjava/util/concurrent/TimeUnit;)J
+      50: invokestatic  #1081               // Method org/agrona/BitUtil.findNextPositivePowerOfTwo:(J)J
+      53: aload_0
+      54: getfield      #210                // Field ticksPerWheel:I
+      57: invokespecial #1087               // Method io/aeron/cluster/WheelTimerServiceSupplier."<init>":(Ljava/util/concurrent/TimeUnit;JJI)V
+      60: areturn
+      61: ldc_w         #1090               // class io/aeron/cluster/PriorityHeapTimerServiceSupplier
+      64: invokevirtual #396                // Method java/lang/Class.getName:()Ljava/lang/String;
+      67: aload_1
+      68: invokevirtual #1070               // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+      71: ifeq          82
+      74: new           #1090               // class io/aeron/cluster/PriorityHeapTimerServiceSupplier
+      77: dup
+      78: invokespecial #1092               // Method io/aeron/cluster/PriorityHeapTimerServiceSupplier."<init>":()V
+      81: areturn
+      82: new           #323                // class io/aeron/cluster/client/ClusterException
+      85: dup
+      86: aload_1
+      87: invokedynamic #1093,  0           // InvokeDynamic #13:makeConcatWithConstants:(Ljava/lang/String;)Ljava/lang/String;
+      92: invokespecial #329                // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+      95: athrow
+
+  private void validateLogChannel();
+    Code:
+       0: aload_0
+       1: getfield      #115                // Field logChannel:Ljava/lang/String;
+       4: invokestatic  #926                // Method io/aeron/ChannelUri.parse:(Ljava/lang/CharSequence;)Lio/aeron/ChannelUri;
+       7: astore_1
+       8: aload_1
+       9: ldc_w         #1094               // String init-term-id
+      12: invokevirtual #1096               // Method io/aeron/ChannelUri.containsKey:(Ljava/lang/String;)Z
+      15: ifeq          29
+      18: new           #1099               // class io/aeron/exceptions/ConfigurationException
+      21: dup
+      22: ldc_w         #1101               // String logChannel must not contain: init-term-id
+      25: invokespecial #1103               // Method io/aeron/exceptions/ConfigurationException."<init>":(Ljava/lang/String;)V
+      28: athrow
+      29: aload_1
+      30: ldc_w         #1104               // String term-id
+      33: invokevirtual #1096               // Method io/aeron/ChannelUri.containsKey:(Ljava/lang/String;)Z
+      36: ifeq          50
+      39: new           #1099               // class io/aeron/exceptions/ConfigurationException
+      42: dup
+      43: ldc_w         #1106               // String logChannel must not contain: term-id
+      46: invokespecial #1103               // Method io/aeron/exceptions/ConfigurationException."<init>":(Ljava/lang/String;)V
+      49: athrow
+      50: aload_1
+      51: ldc_w         #1108               // String term-offset
+      54: invokevirtual #1096               // Method io/aeron/ChannelUri.containsKey:(Ljava/lang/String;)Z
+      57: ifeq          71
+      60: new           #1099               // class io/aeron/exceptions/ConfigurationException
+      63: dup
+      64: ldc_w         #1110               // String logChannel must not contain: term-offset
+      67: invokespecial #1103               // Method io/aeron/exceptions/ConfigurationException."<init>":(Ljava/lang/String;)V
+      70: athrow
+      71: return
+
+  public java.lang.String toString();
+    Code:
+       0: aload_0
+       1: invokevirtual #1112               // Method isConcluded:()Z
+       4: aload_0
+       5: getfield      #17                 // Field ownsAeronClient:Z
+       8: aload_0
+       9: getfield      #27                 // Field aeronDirectoryName:Ljava/lang/String;
+      12: aload_0
+      13: getfield      #463                // Field aeron:Lio/aeron/Aeron;
+      16: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+      19: aload_0
+      20: getfield      #31                 // Field deleteDirOnStart:Z
+      23: aload_0
+      24: getfield      #37                 // Field clusterDirectoryName:Ljava/lang/String;
+      27: aload_0
+      28: getfield      #332                // Field clusterDir:Ljava/io/File;
+      31: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+      34: aload_0
+      35: getfield      #575                // Field recordingLog:Lio/aeron/cluster/RecordingLog;
+      38: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+      41: aload_0
+      42: getfield      #459                // Field markFile:Lio/aeron/cluster/service/ClusterMarkFile;
+      45: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+      48: aload_0
+      49: getfield      #52                 // Field fileSyncLevel:I
+      52: aload_0
+      53: getfield      #61                 // Field appVersion:I
+      56: aload_0
+      57: getfield      #67                 // Field clusterId:I
+      60: aload_0
+      61: getfield      #72                 // Field clusterMemberId:I
+      64: aload_0
+      65: getfield      #77                 // Field appointedLeaderId:I
+      68: aload_0
+      69: getfield      #82                 // Field clusterMembers:Ljava/lang/String;
+      72: aload_0
+      73: getfield      #89                 // Field ingressChannel:Ljava/lang/String;
+      76: aload_0
+      77: getfield      #94                 // Field ingressStreamId:I
+      80: aload_0
+      81: getfield      #105                // Field ingressFragmentLimit:I
+      84: aload_0
+      85: getfield      #115                // Field logChannel:Ljava/lang/String;
+      88: aload_0
+      89: getfield      #120                // Field logStreamId:I
+      92: aload_0
+      93: getfield      #125                // Field memberEndpoints:Ljava/lang/String;
+      96: aload_0
+      97: getfield      #130                // Field replayChannel:Ljava/lang/String;
+     100: aload_0
+     101: getfield      #135                // Field replayStreamId:I
+     104: aload_0
+     105: getfield      #140                // Field controlChannel:Ljava/lang/String;
+     108: aload_0
+     109: getfield      #145                // Field consensusModuleStreamId:I
+     112: aload_0
+     113: getfield      #150                // Field serviceStreamId:I
+     116: aload_0
+     117: getfield      #155                // Field snapshotChannel:Ljava/lang/String;
+     120: aload_0
+     121: getfield      #160                // Field snapshotStreamId:I
+     124: aload_0
+     125: getfield      #165                // Field consensusChannel:Ljava/lang/String;
+     128: aload_0
+     129: getfield      #170                // Field consensusStreamId:I
+     132: aload_0
+     133: getfield      #175                // Field replicationChannel:Ljava/lang/String;
+     136: aload_0
+     137: getfield      #190                // Field logFragmentLimit:I
+     140: aload_0
+     141: getfield      #195                // Field serviceCount:I
+     144: aload_0
+     145: getfield      #200                // Field errorBufferLength:I
+     148: aload_0
+     149: getfield      #205                // Field maxConcurrentSessions:I
+     152: aload_0
+     153: getfield      #210                // Field ticksPerWheel:I
+     156: aload_0
+     157: getfield      #216                // Field wheelTickResolutionNs:J
+     160: aload_0
+     161: getfield      #797                // Field timerServiceSupplier:Lio/aeron/cluster/TimerServiceSupplier;
+     164: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     167: aload_0
+     168: getfield      #222                // Field sessionTimeoutNs:J
+     171: aload_0
+     172: getfield      #227                // Field leaderHeartbeatTimeoutNs:J
+     175: aload_0
+     176: getfield      #232                // Field leaderHeartbeatIntervalNs:J
+     179: aload_0
+     180: getfield      #237                // Field startupCanvassTimeoutNs:J
+     183: aload_0
+     184: getfield      #242                // Field electionTimeoutNs:J
+     187: aload_0
+     188: getfield      #247                // Field electionStatusIntervalNs:J
+     191: aload_0
+     192: getfield      #252                // Field terminationTimeoutNs:J
+     195: aload_0
+     196: getfield      #782                // Field threadFactory:Ljava/util/concurrent/ThreadFactory;
+     199: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     202: aload_0
+     203: getfield      #790                // Field idleStrategySupplier:Ljava/util/function/Supplier;
+     206: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     209: aload_0
+     210: getfield      #388                // Field clusterClock:Lio/aeron/cluster/service/ClusterClock;
+     213: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     216: aload_0
+     217: getfield      #431                // Field epochClock:Lorg/agrona/concurrent/EpochClock;
+     220: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     223: aload_0
+     224: getfield      #902                // Field random:Ljava/util/Random;
+     227: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     230: aload_0
+     231: getfield      #548                // Field errorLog:Lorg/agrona/concurrent/errors/DistinctErrorLog;
+     234: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     237: aload_0
+     238: getfield      #567                // Field errorHandler:Lorg/agrona/ErrorHandler;
+     241: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     244: aload_0
+     245: getfield      #641                // Field errorCounter:Lorg/agrona/concurrent/status/AtomicCounter;
+     248: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     251: aload_0
+     252: getfield      #672                // Field countedErrorHandler:Lorg/agrona/concurrent/CountedErrorHandler;
+     255: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     258: aload_0
+     259: getfield      #681                // Field moduleStateCounter:Lio/aeron/Counter;
+     262: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     265: aload_0
+     266: getfield      #704                // Field electionStateCounter:Lio/aeron/Counter;
+     269: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     272: aload_0
+     273: getfield      #719                // Field clusterNodeRoleCounter:Lio/aeron/Counter;
+     276: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     279: aload_0
+     280: getfield      #724                // Field commitPosition:Lio/aeron/Counter;
+     283: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     286: aload_0
+     287: getfield      #729                // Field clusterControlToggle:Lio/aeron/Counter;
+     290: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     293: aload_0
+     294: getfield      #734                // Field nodeControlToggle:Lio/aeron/Counter;
+     297: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     300: aload_0
+     301: getfield      #739                // Field snapshotCounter:Lio/aeron/Counter;
+     304: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     307: aload_0
+     308: getfield      #744                // Field timedOutClientCounter:Lio/aeron/Counter;
+     311: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     314: aload_0
+     315: getfield      #749                // Field standbySnapshotCounter:Lio/aeron/Counter;
+     318: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     321: aload_0
+     322: getfield      #709                // Field electionCounter:Lio/aeron/Counter;
+     325: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     328: aload_0
+     329: getfield      #714                // Field leadershipTermId:Lio/aeron/Counter;
+     332: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     335: aload_0
+     336: getfield      #873                // Field terminationHook:Ljava/lang/Runnable;
+     339: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     342: aload_0
+     343: getfield      #881                // Field extendedTerminationHook:Lio/aeron/cluster/ExtendedTerminationHook;
+     346: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     349: aload_0
+     350: getfield      #805                // Field archiveContext:Lio/aeron/archive/client/AeronArchive$Context;
+     353: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     356: aload_0
+     357: getfield      #888                // Field authenticatorSupplier:Lio/aeron/security/AuthenticatorSupplier;
+     360: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     363: aload_0
+     364: getfield      #895                // Field authorisationServiceSupplier:Lio/aeron/security/AuthorisationServiceSupplier;
+     367: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     370: aload_0
+     371: getfield      #909                // Field logPublisher:Lio/aeron/cluster/LogPublisher;
+     374: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     377: aload_0
+     378: getfield      #917                // Field egressPublisher:Lio/aeron/cluster/EgressPublisher;
+     381: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     384: aload_0
+     385: getfield      #938                // Field isLogMdc:Z
+     388: aload_0
+     389: getfield      #274                // Field useAgentInvoker:Z
+     392: aload_0
+     393: getfield      #257                // Field cycleThresholdNs:J
+     396: aload_0
+     397: getfield      #754                // Field dutyCycleTracker:Lio/aeron/driver/DutyCycleTracker;
+     400: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     403: aload_0
+     404: getfield      #262                // Field totalSnapshotDurationThresholdNs:J
+     407: aload_0
+     408: getfield      #772                // Field totalSnapshotDurationTracker:Lio/aeron/cluster/service/SnapshotDurationTracker;
+     411: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     414: aload_0
+     415: getfield      #284                // Field acceptStandbySnapshots:Z
+     418: aload_0
+     419: getfield      #277                // Field bootstrapState:Lio/aeron/cluster/ConsensusModuleStateExport;
+     422: invokestatic  #1114               // Method java/lang/String.valueOf:(Ljava/lang/Object;)Ljava/lang/String;
+     425: invokedynamic #1118,  0           // InvokeDynamic #14:makeConcatWithConstants:(ZZLjava/lang/String;Ljava/lang/String;ZLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IIIIILjava/lang/String;Ljava/lang/String;IILjava/lang/String;ILjava/lang/String;Ljava/lang/String;ILjava/lang/String;IILjava/lang/String;ILjava/lang/String;ILjava/lang/String;IIIIIJLjava/lang/String;JJJJJJJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZJLjava/lang/String;JLjava/lang/String;ZLjava/lang/String;)Ljava/lang/String;
+     430: areturn
+
+  public java.lang.Object clone() throws java.lang.CloneNotSupportedException;
+    Code:
+       0: aload_0
+       1: invokevirtual #1121               // Method clone:()Lio/aeron/cluster/ConsensusModule$Context;
+       4: areturn
+
+  private static void lambda$conclude$3(org.agrona.concurrent.AgentTerminationException);
+    Code:
+       0: return
+
+  private static void lambda$conclude$2();
+    Code:
+       0: return
+
+  private static java.util.function.LongConsumer lambda$conclude$1(io.aeron.cluster.ConsensusModule$Context);
+    Code:
+       0: invokedynamic #1124,  0           // InvokeDynamic #15:accept:()Ljava/util/function/LongConsumer;
+       5: areturn
+
+  private static void lambda$conclude$0(long);
+    Code:
+       0: return
+
+  static {};
+    Code:
+       0: invokestatic  #1128               // Method java/lang/invoke/MethodHandles.lookup:()Ljava/lang/invoke/MethodHandles$Lookup;
+       3: ldc           #18                 // class io/aeron/cluster/ConsensusModule$Context
+       5: ldc_w         #1134               // String isConcluded
+       8: getstatic     #1135               // Field java/lang/Boolean.TYPE:Ljava/lang/Class;
+      11: invokevirtual #1141               // Method java/lang/invoke/MethodHandles$Lookup.findVarHandle:(Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;)Ljava/lang/invoke/VarHandle;
+      14: putstatic     #307                // Field IS_CONCLUDED_VH:Ljava/lang/invoke/VarHandle;
+      17: goto          30
+      20: astore_0
+      21: new           #1149               // class java/lang/ExceptionInInitializerError
+      24: dup
+      25: aload_0
+      26: invokespecial #1151               // Method java/lang/ExceptionInInitializerError."<init>":(Ljava/lang/Throwable;)V
+      29: athrow
+      30: return
+    Exception table:
+       from    to  target type
+           0    17    20   Class java/lang/ReflectiveOperationException
+}

@@ -1,0 +1,16 @@
+Compiled from "ConsensusModuleSnapshotListener.java"
+interface io.aeron.cluster.ConsensusModuleSnapshotListener {
+  public abstract void onLoadBeginSnapshot(int, java.util.concurrent.TimeUnit, org.agrona.DirectBuffer, int, int);
+
+  public abstract void onLoadConsensusModuleState(long, long, long, int, org.agrona.DirectBuffer, int, int);
+
+  public abstract void onLoadPendingMessage(long, org.agrona.DirectBuffer, int, int);
+
+  public abstract void onLoadClusterSession(long, long, long, long, io.aeron.cluster.codecs.CloseReason, int, java.lang.String, org.agrona.DirectBuffer, int, int);
+
+  public abstract void onLoadTimer(long, long, org.agrona.DirectBuffer, int, int);
+
+  public abstract void onLoadPendingMessageTracker(long, long, int, int, org.agrona.DirectBuffer, int, int);
+
+  public abstract void onLoadEndSnapshot(org.agrona.DirectBuffer, int, int);
+}

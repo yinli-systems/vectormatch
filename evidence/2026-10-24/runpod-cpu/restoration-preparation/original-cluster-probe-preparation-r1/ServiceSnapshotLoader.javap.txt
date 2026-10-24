@@ -1,0 +1,244 @@
+Compiled from "ServiceSnapshotLoader.java"
+final class io.aeron.cluster.service.ServiceSnapshotLoader implements io.aeron.logbuffer.ControlledFragmentHandler {
+  private static final int FRAGMENT_LIMIT;
+
+  private boolean inSnapshot;
+
+  private boolean isDone;
+
+  private int appVersion;
+
+  private java.util.concurrent.TimeUnit timeUnit;
+
+  private final io.aeron.cluster.codecs.MessageHeaderDecoder messageHeaderDecoder;
+
+  private final io.aeron.cluster.codecs.SnapshotMarkerDecoder snapshotMarkerDecoder;
+
+  private final io.aeron.cluster.codecs.ClientSessionDecoder clientSessionDecoder;
+
+  private final io.aeron.ImageControlledFragmentAssembler fragmentAssembler;
+
+  private final io.aeron.Image image;
+
+  private final io.aeron.cluster.service.ClusteredServiceAgent agent;
+
+  io.aeron.cluster.service.ServiceSnapshotLoader(io.aeron.Image, io.aeron.cluster.service.ClusteredServiceAgent);
+    Code:
+       0: aload_0
+       1: invokespecial #3                  // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: iconst_0
+       6: putfield      #9                  // Field inSnapshot:Z
+       9: aload_0
+      10: iconst_0
+      11: putfield      #15                 // Field isDone:Z
+      14: aload_0
+      15: new           #18                 // class io/aeron/cluster/codecs/MessageHeaderDecoder
+      18: dup
+      19: invokespecial #20                 // Method io/aeron/cluster/codecs/MessageHeaderDecoder."<init>":()V
+      22: putfield      #21                 // Field messageHeaderDecoder:Lio/aeron/cluster/codecs/MessageHeaderDecoder;
+      25: aload_0
+      26: new           #25                 // class io/aeron/cluster/codecs/SnapshotMarkerDecoder
+      29: dup
+      30: invokespecial #27                 // Method io/aeron/cluster/codecs/SnapshotMarkerDecoder."<init>":()V
+      33: putfield      #28                 // Field snapshotMarkerDecoder:Lio/aeron/cluster/codecs/SnapshotMarkerDecoder;
+      36: aload_0
+      37: new           #32                 // class io/aeron/cluster/codecs/ClientSessionDecoder
+      40: dup
+      41: invokespecial #34                 // Method io/aeron/cluster/codecs/ClientSessionDecoder."<init>":()V
+      44: putfield      #35                 // Field clientSessionDecoder:Lio/aeron/cluster/codecs/ClientSessionDecoder;
+      47: aload_0
+      48: new           #39                 // class io/aeron/ImageControlledFragmentAssembler
+      51: dup
+      52: aload_0
+      53: invokespecial #41                 // Method io/aeron/ImageControlledFragmentAssembler."<init>":(Lio/aeron/logbuffer/ControlledFragmentHandler;)V
+      56: putfield      #44                 // Field fragmentAssembler:Lio/aeron/ImageControlledFragmentAssembler;
+      59: aload_0
+      60: aload_1
+      61: putfield      #48                 // Field image:Lio/aeron/Image;
+      64: aload_0
+      65: aload_2
+      66: putfield      #52                 // Field agent:Lio/aeron/cluster/service/ClusteredServiceAgent;
+      69: return
+
+  boolean isDone();
+    Code:
+       0: aload_0
+       1: getfield      #15                 // Field isDone:Z
+       4: ireturn
+
+  int appVersion();
+    Code:
+       0: aload_0
+       1: getfield      #56                 // Field appVersion:I
+       4: ireturn
+
+  java.util.concurrent.TimeUnit timeUnit();
+    Code:
+       0: aload_0
+       1: getfield      #60                 // Field timeUnit:Ljava/util/concurrent/TimeUnit;
+       4: areturn
+
+  int poll();
+    Code:
+       0: aload_0
+       1: getfield      #48                 // Field image:Lio/aeron/Image;
+       4: aload_0
+       5: getfield      #44                 // Field fragmentAssembler:Lio/aeron/ImageControlledFragmentAssembler;
+       8: bipush        10
+      10: invokevirtual #64                 // Method io/aeron/Image.controlledPoll:(Lio/aeron/logbuffer/ControlledFragmentHandler;I)I
+      13: ireturn
+
+  public io.aeron.logbuffer.ControlledFragmentHandler$Action onFragment(org.agrona.DirectBuffer, int, int, io.aeron.logbuffer.Header);
+    Code:
+       0: aload_0
+       1: getfield      #21                 // Field messageHeaderDecoder:Lio/aeron/cluster/codecs/MessageHeaderDecoder;
+       4: aload_1
+       5: iload_2
+       6: invokevirtual #70                 // Method io/aeron/cluster/codecs/MessageHeaderDecoder.wrap:(Lorg/agrona/DirectBuffer;I)Lio/aeron/cluster/codecs/MessageHeaderDecoder;
+       9: pop
+      10: aload_0
+      11: getfield      #21                 // Field messageHeaderDecoder:Lio/aeron/cluster/codecs/MessageHeaderDecoder;
+      14: invokevirtual #74                 // Method io/aeron/cluster/codecs/MessageHeaderDecoder.schemaId:()I
+      17: istore        5
+      19: bipush        111
+      21: iload         5
+      23: if_icmpeq     41
+      26: new           #78                 // class io/aeron/cluster/client/ClusterException
+      29: dup
+      30: iload         5
+      32: invokedynamic #80,  0             // InvokeDynamic #0:makeConcatWithConstants:(I)Ljava/lang/String;
+      37: invokespecial #84                 // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+      40: athrow
+      41: aload_0
+      42: getfield      #21                 // Field messageHeaderDecoder:Lio/aeron/cluster/codecs/MessageHeaderDecoder;
+      45: invokevirtual #87                 // Method io/aeron/cluster/codecs/MessageHeaderDecoder.templateId:()I
+      48: lookupswitch  { // 2
+                   100: 76
+                   102: 260
+               default: 346
+          }
+      76: aload_0
+      77: getfield      #28                 // Field snapshotMarkerDecoder:Lio/aeron/cluster/codecs/SnapshotMarkerDecoder;
+      80: aload_1
+      81: iload_2
+      82: bipush        8
+      84: iadd
+      85: aload_0
+      86: getfield      #21                 // Field messageHeaderDecoder:Lio/aeron/cluster/codecs/MessageHeaderDecoder;
+      89: invokevirtual #90                 // Method io/aeron/cluster/codecs/MessageHeaderDecoder.blockLength:()I
+      92: aload_0
+      93: getfield      #21                 // Field messageHeaderDecoder:Lio/aeron/cluster/codecs/MessageHeaderDecoder;
+      96: invokevirtual #93                 // Method io/aeron/cluster/codecs/MessageHeaderDecoder.version:()I
+      99: invokevirtual #96                 // Method io/aeron/cluster/codecs/SnapshotMarkerDecoder.wrap:(Lorg/agrona/DirectBuffer;III)Lio/aeron/cluster/codecs/SnapshotMarkerDecoder;
+     102: pop
+     103: aload_0
+     104: getfield      #28                 // Field snapshotMarkerDecoder:Lio/aeron/cluster/codecs/SnapshotMarkerDecoder;
+     107: invokevirtual #99                 // Method io/aeron/cluster/codecs/SnapshotMarkerDecoder.typeId:()J
+     110: lstore        6
+     112: ldc2_w        #103                // long 2l
+     115: lload         6
+     117: lcmp
+     118: ifeq          136
+     121: new           #78                 // class io/aeron/cluster/client/ClusterException
+     124: dup
+     125: lload         6
+     127: invokedynamic #105,  0            // InvokeDynamic #1:makeConcatWithConstants:(J)Ljava/lang/String;
+     132: invokespecial #84                 // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+     135: athrow
+     136: getstatic     #108                // Field io/aeron/cluster/service/ServiceSnapshotLoader$1.$SwitchMap$io$aeron$cluster$codecs$SnapshotMark:[I
+     139: aload_0
+     140: getfield      #28                 // Field snapshotMarkerDecoder:Lio/aeron/cluster/codecs/SnapshotMarkerDecoder;
+     143: invokevirtual #114                // Method io/aeron/cluster/codecs/SnapshotMarkerDecoder.mark:()Lio/aeron/cluster/codecs/SnapshotMark;
+     146: invokevirtual #118                // Method io/aeron/cluster/codecs/SnapshotMark.ordinal:()I
+     149: iaload
+     150: tableswitch   { // 1 to 4
+                     1: 180
+                     2: 231
+                     3: 257
+                     4: 257
+               default: 257
+          }
+     180: aload_0
+     181: getfield      #9                  // Field inSnapshot:Z
+     184: ifeq          197
+     187: new           #78                 // class io/aeron/cluster/client/ClusterException
+     190: dup
+     191: ldc           #123                // String already in snapshot
+     193: invokespecial #84                 // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+     196: athrow
+     197: aload_0
+     198: iconst_1
+     199: putfield      #9                  // Field inSnapshot:Z
+     202: aload_0
+     203: aload_0
+     204: getfield      #28                 // Field snapshotMarkerDecoder:Lio/aeron/cluster/codecs/SnapshotMarkerDecoder;
+     207: invokevirtual #125                // Method io/aeron/cluster/codecs/SnapshotMarkerDecoder.appVersion:()I
+     210: putfield      #56                 // Field appVersion:I
+     213: aload_0
+     214: aload_0
+     215: getfield      #28                 // Field snapshotMarkerDecoder:Lio/aeron/cluster/codecs/SnapshotMarkerDecoder;
+     218: invokevirtual #127                // Method io/aeron/cluster/codecs/SnapshotMarkerDecoder.timeUnit:()Lio/aeron/cluster/codecs/ClusterTimeUnit;
+     221: invokestatic  #130                // InterfaceMethod io/aeron/cluster/service/ClusterClock.map:(Lio/aeron/cluster/codecs/ClusterTimeUnit;)Ljava/util/concurrent/TimeUnit;
+     224: putfield      #60                 // Field timeUnit:Ljava/util/concurrent/TimeUnit;
+     227: getstatic     #136                // Field io/aeron/logbuffer/ControlledFragmentHandler$Action.CONTINUE:Lio/aeron/logbuffer/ControlledFragmentHandler$Action;
+     230: areturn
+     231: aload_0
+     232: getfield      #9                  // Field inSnapshot:Z
+     235: ifne          248
+     238: new           #78                 // class io/aeron/cluster/client/ClusterException
+     241: dup
+     242: ldc           #142                // String missing begin snapshot
+     244: invokespecial #84                 // Method io/aeron/cluster/client/ClusterException."<init>":(Ljava/lang/String;)V
+     247: athrow
+     248: aload_0
+     249: iconst_1
+     250: putfield      #15                 // Field isDone:Z
+     253: getstatic     #144                // Field io/aeron/logbuffer/ControlledFragmentHandler$Action.BREAK:Lio/aeron/logbuffer/ControlledFragmentHandler$Action;
+     256: areturn
+     257: goto          346
+     260: aload_0
+     261: getfield      #35                 // Field clientSessionDecoder:Lio/aeron/cluster/codecs/ClientSessionDecoder;
+     264: aload_1
+     265: iload_2
+     266: bipush        8
+     268: iadd
+     269: aload_0
+     270: getfield      #21                 // Field messageHeaderDecoder:Lio/aeron/cluster/codecs/MessageHeaderDecoder;
+     273: invokevirtual #90                 // Method io/aeron/cluster/codecs/MessageHeaderDecoder.blockLength:()I
+     276: aload_0
+     277: getfield      #21                 // Field messageHeaderDecoder:Lio/aeron/cluster/codecs/MessageHeaderDecoder;
+     280: invokevirtual #93                 // Method io/aeron/cluster/codecs/MessageHeaderDecoder.version:()I
+     283: invokevirtual #147                // Method io/aeron/cluster/codecs/ClientSessionDecoder.wrap:(Lorg/agrona/DirectBuffer;III)Lio/aeron/cluster/codecs/ClientSessionDecoder;
+     286: pop
+     287: aload_0
+     288: getfield      #35                 // Field clientSessionDecoder:Lio/aeron/cluster/codecs/ClientSessionDecoder;
+     291: invokevirtual #150                // Method io/aeron/cluster/codecs/ClientSessionDecoder.responseChannel:()Ljava/lang/String;
+     294: astore        8
+     296: aload_0
+     297: getfield      #35                 // Field clientSessionDecoder:Lio/aeron/cluster/codecs/ClientSessionDecoder;
+     300: invokevirtual #154                // Method io/aeron/cluster/codecs/ClientSessionDecoder.encodedPrincipalLength:()I
+     303: newarray       byte
+     305: astore        9
+     307: aload_0
+     308: getfield      #35                 // Field clientSessionDecoder:Lio/aeron/cluster/codecs/ClientSessionDecoder;
+     311: aload         9
+     313: iconst_0
+     314: aload         9
+     316: arraylength
+     317: invokevirtual #157                // Method io/aeron/cluster/codecs/ClientSessionDecoder.getEncodedPrincipal:([BII)I
+     320: pop
+     321: aload_0
+     322: getfield      #52                 // Field agent:Lio/aeron/cluster/service/ClusteredServiceAgent;
+     325: aload_0
+     326: getfield      #35                 // Field clientSessionDecoder:Lio/aeron/cluster/codecs/ClientSessionDecoder;
+     329: invokevirtual #161                // Method io/aeron/cluster/codecs/ClientSessionDecoder.clusterSessionId:()J
+     332: aload_0
+     333: getfield      #35                 // Field clientSessionDecoder:Lio/aeron/cluster/codecs/ClientSessionDecoder;
+     336: invokevirtual #164                // Method io/aeron/cluster/codecs/ClientSessionDecoder.responseStreamId:()I
+     339: aload         8
+     341: aload         9
+     343: invokevirtual #167                // Method io/aeron/cluster/service/ClusteredServiceAgent.addSession:(JILjava/lang/String;[B)V
+     346: getstatic     #136                // Field io/aeron/logbuffer/ControlledFragmentHandler$Action.CONTINUE:Lio/aeron/logbuffer/ControlledFragmentHandler$Action;
+     349: areturn
+}

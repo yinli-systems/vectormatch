@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "scope": "Local offline guards only; no SSH, account, ACL, chown, database or SQL connection",
+  "timeUtc": "2026-10-24T04:54:35.301769+00:00",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "arguments": [
+    "python3",
+    "-B",
+    "runtime/cloud/cpu-20261024/pg-recovery-preparation/test_pg_recovery.py"
+  ],
+  "exitCode": 0,
+  "guardMethods": 33,
+  "logSha256": "9943f9fb508d956c1ddd314168458289af37bc0c7319e8f24739813d9724ad5a",
+  "notes": [
+    "Early local fixture run used unresolved macOS /var tempfile alias and was correctly rejected; final fixtures use canonical /private path; production symlink guard unchanged.",
+    "Added negative path-boundary guard found lexical ../ acceptance in ownership target helper; explicit absolute/.. rejection added before frozen source. Production source inventory also comes from bounded os.walk."
+  ]
+}
