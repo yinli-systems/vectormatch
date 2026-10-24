@@ -1,0 +1,96 @@
+{
+  "passed": true,
+  "round": 2,
+  "frozenReleaseSha256": "2a31b6f0d6b08c6863aef422a2bafa12d67a6ad11b651cbd2377b7b863943bed",
+  "steps": [
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/frozen/collect_closed_round.py",
+        "--config",
+        "runtime/cloud/cpu-20261024/window-cloud-collection-round-2-config-r1/collector-config.json",
+        "--dest",
+        "runtime/cloud/cpu-20261024/window-cloud-collection-round-2-r1/collection",
+        "--remote-helper",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/remote.py",
+        "--collect-readonly"
+      ],
+      "exitCode": 0,
+      "stdoutSha256": "4371390fecb40e75935d4bf67ba98240f1e87850dfd9ce8f618cae5812fa299f",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/verify_closed_archives.py",
+        "--collection",
+        "runtime/cloud/cpu-20261024/window-cloud-collection-round-2-r1/collection",
+        "--output",
+        "runtime/cloud/cpu-20261024/window-cloud-collection-round-2-r1/all-outcome-native-byte-audit"
+      ],
+      "exitCode": 0,
+      "stdoutSha256": "abd9f79bd7546a7b73b3e1966a402c1f1ac8daafbdaab414e01db1a0204fecfc",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/frozen/audit_native_artifacts.py",
+        "--config",
+        "runtime/cloud/cpu-20261024/window-cloud-collection-round-2-config-r1/collector-config.json",
+        "--collection",
+        "runtime/cloud/cpu-20261024/window-cloud-collection-round-2-r1/collection",
+        "--out",
+        "runtime/cloud/cpu-20261024/window-cloud-collection-round-2-r1/strict-native-audit"
+      ],
+      "exitCode": 0,
+      "stdoutSha256": "fbd999fdf49543f32a6d3c827763e770dbf48a8458b599a4945562eec872487f",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/frozen/audit_raw.py",
+        "--config",
+        "runtime/cloud/cpu-20261024/window-cloud-collection-round-2-config-r1/collector-config.json",
+        "--collection",
+        "runtime/cloud/cpu-20261024/window-cloud-collection-round-2-r1/collection",
+        "--out",
+        "runtime/cloud/cpu-20261024/window-cloud-collection-round-2-r1/strict-raw-audit"
+      ],
+      "exitCode": 0,
+      "stdoutSha256": "5f44d79934aac61d8b96855cb1b1cf0489595f6073837c3019c8fcbe56eb11b4",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "command": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/window-cloud-collection-preparation-r1/frozen/finalize_local_collection.py",
+        "--config",
+        "runtime/cloud/cpu-20261024/window-cloud-collection-round-2-config-r1/collector-config.json",
+        "--collection",
+        "runtime/cloud/cpu-20261024/window-cloud-collection-round-2-r1/collection",
+        "--native-audit",
+        "runtime/cloud/cpu-20261024/window-cloud-collection-round-2-r1/strict-native-audit",
+        "--raw-audit",
+        "runtime/cloud/cpu-20261024/window-cloud-collection-round-2-r1/strict-raw-audit",
+        "--out",
+        "runtime/cloud/cpu-20261024/window-cloud-collection-round-2-r1/finalized"
+      ],
+      "exitCode": 0,
+      "stdoutSha256": "cac2c7a806202600e71c47d3cc8f0817d86290573c9ef75fbcbc066ad4973009",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "allFailuresAndPartialRawRetained": true,
+  "noAutomaticRetry": true,
+  "nextRoundAuthorized": false,
+  "rootAttestationCreated": false,
+  "cpuStableOrSustainedCapacityClaimed": false,
+  "scope": "Finite12.8-second same-host functional workload. Strict closure failure remains visible; complete byte archive can pass independently of business validity."
+}
