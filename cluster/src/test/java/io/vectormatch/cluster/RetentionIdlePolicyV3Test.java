@@ -79,18 +79,36 @@ class RetentionIdlePolicyV3Test {
 
     @Test void nodeRolesRetainTheirDistinctPinnedDefaultsAndOnlyMaximumChanges() {
         for (String maximum : List.of("100000", "1000000")) {
-            var policy = RetentionIdlePolicyV3.node(selection(maximum),0);
-            var media = new MediaDriver.Context().threadingMode(ThreadingMode.SHARED).sharedIdleStrategy(policy.driver());
-            var archive = new Archive.Context().threadingMode(io.aeron.archive.ArchiveThreadingMode.SHARED); var consensus = new ConsensusModule.Context(); var service = new ClusteredServiceContainer.Context();
+            var policy=RetentionIdlePolicyV3.node(selection(maximum),0);
+            var media=new MediaDriver.Context().threadingMode(ThreadingMode.SHARED).sharedIdleStrategy(policy.driver());
+            var archive=new Archive.Context().threadingMode(io.aeron.archive.ArchiveThreadingMode.SHARED);
+            var consensus=new ConsensusModule.Context();var service=new ClusteredServiceContainer.Context();
             RetentionIdlePolicyV3.applyAgents(policy,archive,consensus,service);
-            List<IdleStrategy> instances = List.of(media.sharedIdleStrategy(),archive.idleStrategy(),consensus.idleStrategy(),service.idleStrategy());
+            // Deliberately interleave roles; only each role's consumption order is meaningful.
+            List<IdleStrategy> instances=List.of(media.sharedIdleStrategy(),archive.idleStrategy(),consensus.idleStrategy(),
+                    service.idleStrategy(),consensus.idleStrategy(),archive.idleStrategy(),service.idleStrategy());
             assertEquals(text(5,maximum),instances.getFirst().toString());
-            instances.subList(1,4).forEach(idle -> assertEquals(text(20,maximum),idle.toString()));
-            var identities = Collections.newSetFromMap(new IdentityHashMap<IdleStrategy,Boolean>());
+            instances.subList(1,7).forEach(idle -> assertEquals(text(20,maximum),idle.toString()));
+            var identities=Collections.newSetFromMap(new IdentityHashMap<IdleStrategy,Boolean>());
             instances.forEach(idle -> assertTrue(identities.add(idle)));
-            var actual = policy.nodeAttestation(media,archive,consensus,service);
-            assertEquals(true,actual.get("instancesDistinct")); assertEquals(4,((List<?>)actual.get("roles")).size());
-            assertThrows(IllegalStateException.class,archive::idleStrategy,"A repeated factory call is not silently labelled one consumed role");
+            var actual=policy.nodeAttestation(media,archive,consensus,service);
+            assertEquals("retention-idle-actual-v2",actual.get("schema"));assertEquals(true,actual.get("instancesDistinct"));
+            assertEquals(7,((List<?>)actual.get("instances")).size());
+            assertEquals(Map.of("driver-shared",1,"archive-shared",2,"consensus",2,"service",2),actual.get("observedConsumptionCounts"));
+            assertEquals(actual.get("expectedConsumptionCounts"),actual.get("observedConsumptionCounts"));
+            assertEquals(false,actual.get("runningAgentThreadCountIndependentlyObserved"));
+            for(Object entry:(List<?>)actual.get("instances")) {
+                var row=(Map<?,?>)entry;var trace=(List<?>)row.get("factoryCallerStack");assertFalse(trace.isEmpty());assertTrue(trace.size()<=5);
+                assertNotNull(row.get("sourceDerivedIntendedUse"));
+                for(Object value:trace){var frame=(Map<?,?>)value;assertTrue(frame.get("class").toString().getBytes(java.nio.charset.StandardCharsets.UTF_8).length<=256);}
+            }
+            assertThrows(IllegalStateException.class,archive::idleStrategy,"Third Archive consumption must not allocate");
+            assertThrows(IllegalStateException.class,consensus::idleStrategy,"Third consensus consumption must not allocate");
+            assertThrows(IllegalStateException.class,service::idleStrategy,"Third service consumption must not allocate");
+            assertThrows(IllegalStateException.class,policy::driver,"Second explicit driver must not allocate");
+            assertThrows(IllegalArgumentException.class,() -> policy.agent("unregistered"));
+            assertThrows(IllegalArgumentException.class,() -> policy.agent("driver-shared"));
+            assertEquals(actual,policy.nodeAttestation(media,archive,consensus,service),"Readback and refused calls create no new evidence");
         }
         assertEquals(text(5,"1000000"),new BackoffIdleStrategy().toString());
         assertEquals(text(20,"1000000"),io.aeron.driver.Configuration.agentIdleStrategy("backoff",null).toString());
@@ -102,6 +120,8 @@ class RetentionIdlePolicyV3Test {
         var archive = new Archive.Context().threadingMode(io.aeron.archive.ArchiveThreadingMode.SHARED); var consensus = new ConsensusModule.Context(); var service = new ClusteredServiceContainer.Context();
         RetentionIdlePolicyV3.applyAgents(policy,archive,consensus,service);
         assertThrows(IllegalStateException.class,() -> policy.nodeAttestation(media,archive,consensus,service));
+        archive.idleStrategy(); consensus.idleStrategy(); service.idleStrategy();
+        assertThrows(IllegalStateException.class,() -> policy.nodeAttestation(media,archive,consensus,service),"One consumption each is still incomplete");
         archive.idleStrategy(); consensus.idleStrategy(); service.idleStrategy();
         assertDoesNotThrow(() -> policy.nodeAttestation(media,archive,consensus,service));
         var original = media.sharedIdleStrategy();
@@ -125,7 +145,7 @@ class RetentionIdlePolicyV3Test {
         var archive = new Archive.Context().threadingMode(io.aeron.archive.ArchiveThreadingMode.SHARED); var consensus = new ConsensusModule.Context(); var service = new ClusteredServiceContainer.Context();
         RetentionIdlePolicyV3.applyAgents(policy,archive,consensus,service);
         archive.idleStrategySupplier(BackoffIdleStrategy::new);
-        archive.idleStrategy(); consensus.idleStrategy(); service.idleStrategy();
+        archive.idleStrategy(); archive.idleStrategy(); consensus.idleStrategy(); consensus.idleStrategy(); service.idleStrategy(); service.idleStrategy();
         assertThrows(IllegalStateException.class,() -> policy.nodeAttestation(media,archive,consensus,service));
     }
 
@@ -138,10 +158,31 @@ class RetentionIdlePolicyV3Test {
             assertEquals(1248,media.mtuLength()); assertEquals(131072,media.socketSndbufLength()); assertEquals(131072,media.socketRcvbufLength());
             assertTrue(media.termBufferSparseFile()); assertFalse(media.dirDeleteOnStart()); assertTrue(media.dirDeleteOnShutdown());
             assertEquals(text(5,maximum),media.sharedIdleStrategy().toString());
-            assertEquals(1,((List<?>)policy.ownerAttestation(media).get("roles")).size());
+            assertEquals(1,((List<?>)policy.ownerAttestation(media).get("instances")).size());
             media.sharedIdleStrategy(new BackoffIdleStrategy());
             assertThrows(IllegalStateException.class,() -> policy.ownerAttestation(media));
         }
+    }
+
+    @Test void unsupportedAgentScopeIsRejectedBeforeFactoriesAreInstalled() {
+        for(int variant=0;variant<3;variant++) {
+            var policy=RetentionIdlePolicyV3.node(selection("100000"),0);
+            var archive=new Archive.Context().threadingMode(io.aeron.archive.ArchiveThreadingMode.SHARED);
+            var consensus=new ConsensusModule.Context();var service=new ClusteredServiceContainer.Context();
+            if(variant==0)archive.controlChannelEnabled(false);
+            if(variant==1)archive.threadingMode(io.aeron.archive.ArchiveThreadingMode.DEDICATED);
+            if(variant==2)consensus.useAgentInvoker(true);
+            assertThrows(IllegalStateException.class,() -> RetentionIdlePolicyV3.applyAgents(policy,archive,consensus,service));
+        }
+    }
+
+    @Test void callerTraceTextHasABoundedUtf8PrefixWithoutSplittingCodePoints() {
+        assertEquals("short",RetentionIdlePolicyV3.boundedTraceText("short"));
+        assertEquals("x".repeat(256),RetentionIdlePolicyV3.boundedTraceText("x".repeat(1000)));
+        String unicode="\uD83D\uDE00".repeat(100);
+        String bounded=RetentionIdlePolicyV3.boundedTraceText(unicode);
+        assertEquals(256,bounded.getBytes(java.nio.charset.StandardCharsets.UTF_8).length);
+        assertEquals(64,bounded.codePointCount(0,bounded.length()));assertTrue(unicode.startsWith(bounded));
     }
 
     @Test void fixedIdleArmConfigPreservesTheExistingWorkloadAndOperationalCaps() {
