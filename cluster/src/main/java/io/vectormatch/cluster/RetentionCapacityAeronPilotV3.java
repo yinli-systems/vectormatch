@@ -21,11 +21,25 @@ import static io.vectormatch.cluster.RetentionReplyV3.*;
 /** Fresh three-JVM functional validation of the continuously scheduled source. No capacity promotion. */
 public final class RetentionCapacityAeronPilotV3 {
     private static final Duration TIMEOUT=Duration.ofSeconds(25);
-    private static final int ARRIVALS=6400,RATE=500;
+    /** Only these two fixed workloads are admitted by the native pilot; no arbitrary duration/rate CLI. */
+    enum Workload {
+        SHORT(6400), LONG_CUTS(33_792);
+        final int arrivals;
+        final int rate=500;
+        Workload(int arrivals){this.arrivals=arrivals;}
+        int fullCommandCuts(){return (arrivals+3)/RetentionBatchMaintenanceV3.COMMAND_CUT;}
+        int trailingCommands(){return (arrivals+3)%RetentionBatchMaintenanceV3.COMMAND_CUT;}
+        int cycles(){return fullCommandCuts()+(trailingCommands()==0?0:1);}
+        List<Command> setupCommands(){return List.of(new Deposit(1,"fund",1,Asset.BASE,arrivals),
+                new Deposit(2,"fund",1,Asset.QUOTE,arrivals*10L),
+                RetentionEngineV3.place(1,"seed",1,Side.SELL,10,arrivals,TimeInForce.GTC));}
+        RetentionCapacityExperimentV3.Config idleConfig(){return new RetentionCapacityExperimentV3.Config(arrivals,rate,4,MAX_SUPPORTED_ARCHIVE_CHUNK,8);}
+    }
     private record Owned(Process process,Instant started,String command,List<String> arguments,int member,Path log){}
     private final Path root;
     private final int cap,ports,archiveChunkBytes,readWindow;
     private final boolean readWindowExperiment;
+    private final Workload workload;
     private final String lineage="capacity-pilot-"+UUID.randomUUID();
     private final RetentionServiceV3.Profile profile=RetentionBatchProfilesV3.finiteLoadProfile();
     private final String code=RetentionNodeMainV3.codeFingerprint();
@@ -43,18 +57,23 @@ public final class RetentionCapacityAeronPilotV3 {
         this(freshRoot,cap,ports,archiveChunkBytes,commonEnvelope,1,false);
     }
     private RetentionCapacityAeronPilotV3(Path freshRoot,int cap,int ports,int archiveChunkBytes,boolean commonEnvelope,int readWindow,boolean readWindowExperiment)throws Exception{
+        this(freshRoot,cap,ports,archiveChunkBytes,commonEnvelope,readWindow,readWindowExperiment,Workload.SHORT);
+    }
+    private RetentionCapacityAeronPilotV3(Path freshRoot,int cap,int ports,int archiveChunkBytes,boolean commonEnvelope,int readWindow,boolean readWindowExperiment,Workload workload)throws Exception{
+        this.workload=Objects.requireNonNull(workload);
         this.readWindow=RetentionCapacityPlanV3.requireReadWindow(readWindow);this.readWindowExperiment=readWindowExperiment;
         this.archiveChunkBytes=requireArchiveChunkBytes(archiveChunkBytes);this.cap=cap;this.ports=ports;root=freshRoot.toAbsolutePath().normalize();Files.createDirectory(root);
-        var base=RetentionCapacityPlanV3.plan(ARRIVALS,cap,profile);
-        plan=readWindowExperiment?RetentionCapacityExperimentV3.boundedPlan(experimentConfig(),profile):commonEnvelope?RetentionCapacityExperimentV3.boundedPlan(new RetentionCapacityExperimentV3.Config(ARRIVALS,RATE,cap,archiveChunkBytes),profile):
-                RetentionCapacityPlanV3.planWithOfferBudget(ARRIVALS,cap,profile,ARRIVALS/4L,ARRIVALS+base.maximumLogicalMaintenanceRpcs());plan.requireAdmitted();
+        var base=RetentionCapacityPlanV3.plan(workload.arrivals,cap,profile);
+        plan=readWindowExperiment?RetentionCapacityExperimentV3.boundedPlan(experimentConfig(),profile):commonEnvelope?RetentionCapacityExperimentV3.boundedPlan(new RetentionCapacityExperimentV3.Config(workload.arrivals,workload.rate,cap,archiveChunkBytes),profile):
+                RetentionCapacityPlanV3.planWithOfferBudget(workload.arrivals,cap,profile,workload.arrivals/4L,workload.arrivals+base.maximumLogicalMaintenanceRpcs());plan.requireAdmitted();
         // Must precede the very first registration, node log, artifact receipt or load file.
         disk=RetentionCapacityDiskGuardV3.openFresh(root,plan);
         reference=new RetentionClusteredServiceV3(profile,lineage,true);reference.onStart(null,null);
         var registration=new LinkedHashMap<String,Object>(Map.of("scope","LOCAL_THREE_JVM_CONTINUOUS_ARRIVAL_FUNCTIONAL_PILOT",
-                "arrivals",ARRIVALS,"rate",RATE,"batchCap",cap,"appointedLeader",0,"sync",2,
+                "arrivals",workload.arrivals,"rate",workload.rate,"batchCap",cap,"appointedLeader",0,"sync",2,
                 "profileSha256",profile.fingerprint(),"codeSha256",code,"lineage",lineage,"ports",ports));
         registration.put("archiveChunkBytes",archiveChunkBytes);registration.put("eventFetchCount",16);registration.put("commonChunkEnvelope",commonEnvelope);registration.put("readWindow",readWindow);registration.put("commonReadWindowEnvelope",readWindowExperiment);
+        if(workload==Workload.LONG_CUTS){registration.put("workloadPreset","long-cuts-33792-v1");registration.put("expectedFullCommandCuts",workload.fullCommandCuts());registration.put("expectedTrailingCommands",workload.trailingCommands());registration.put("equivalentFullLoadCutNumbers",List.of(2,3,4,5,6,7,8,9,10,11));}
         if(idleSelection.explicit())registration.put("retentionIdleSelection",idleSelection.observation());
         write("registration.json",registration);writeArtifactInventory();
     }
@@ -106,13 +125,20 @@ public final class RetentionCapacityAeronPilotV3 {
         RetentionCapacityJsonV3.writeNew(pair.resolve("pair-completion.json"),Map.of("passed",true,"readWindows",List.of(1,8),"archiveChunkBytes",MAX_SUPPORTED_ARCHIVE_CHUNK,"fixedBusinessBatchCap",4,"scope","Local functional exclusive read-window comparison; no capacity or speedup claim"));return pair;
     }
     private RetentionCapacityExperimentV3.Config experimentConfig(){return readWindowExperiment?
-            new RetentionCapacityExperimentV3.Config(ARRIVALS,RATE,cap,archiveChunkBytes,readWindow):new RetentionCapacityExperimentV3.Config(ARRIVALS,RATE,cap,archiveChunkBytes);}
+            new RetentionCapacityExperimentV3.Config(workload.arrivals,workload.rate,cap,archiveChunkBytes,readWindow):new RetentionCapacityExperimentV3.Config(workload.arrivals,workload.rate,cap,archiveChunkBytes);}
     /** One explicit idle arm; a future controller compares both parks using this SAME artifact. */
     public static Path runIdleWindow8(Path newArmRoot,int ports)throws Exception{
+        return runIdleWindow8(newArmRoot,ports,Workload.SHORT);
+    }
+    /** One continuous lineage with ten setup-free full load cuts; all existing finite caps remain active. */
+    public static Path runIdleWindow8LongCuts(Path newArmRoot,int ports)throws Exception{
+        return runIdleWindow8(newArmRoot,ports,Workload.LONG_CUTS);
+    }
+    private static Path runIdleWindow8(Path newArmRoot,int ports,Workload workload)throws Exception{
         requireIdleSelection(RetentionIdlePolicyV3.systemSelection());
         verifyChunkPorts(ports); // Selection validation precedes ports and the first filesystem mutation.
-        var config=idleWindow8Config();
-        var pilot=new RetentionCapacityAeronPilotV3(newArmRoot,config.batchCap(),ports,config.archiveChunkBytes(),false,config.readWindow(),true);
+        var config=workload.idleConfig();
+        var pilot=new RetentionCapacityAeronPilotV3(newArmRoot,config.batchCap(),ports,config.archiveChunkBytes(),false,config.readWindow(),true,workload);
         Throwable failure=null;boolean passed=false;
         try{pilot.exercise();passed=true;}catch(Throwable error){failure=error;pilot.failure(error);throw error;}
         finally{try{pilot.stopOwned();}catch(Throwable cleanup){if(failure!=null)failure.addSuppressed(cleanup);else throw cleanup;}
@@ -122,17 +148,17 @@ public final class RetentionCapacityAeronPilotV3 {
         return pilot.root;
     }
     static RetentionCapacityExperimentV3.Config idleWindow8Config(){
-        return new RetentionCapacityExperimentV3.Config(ARRIVALS,RATE,4,MAX_SUPPORTED_ARCHIVE_CHUNK,8);
+        return Workload.SHORT.idleConfig();
     }
     static void requireIdleSelection(RetentionIdlePolicyV3.Selection selection){
         if(!selection.explicit())throw new IllegalArgumentException("idle-window8 requires explicit JVM property "+RetentionIdlePolicyV3.PROPERTY+"=100000|1000000 before launch");
     }
     public static void main(String[] args)throws Exception{
-        if(args.length!=1&&!((args.length==2||args.length==3)&&(args[1].equals("archive-chunks")||args[1].equals("read-windows")||args[1].equals("idle-window8"))))throw new IllegalArgumentException("RetentionCapacityAeronPilotV3 <new-directory> [archive-chunks|read-windows|idle-window8 [fixed-port-base]]");
+        if(args.length!=1&&!((args.length==2||args.length==3)&&(args[1].equals("archive-chunks")||args[1].equals("read-windows")||args[1].equals("idle-window8")||args[1].equals("idle-window8-long-cuts"))))throw new IllegalArgumentException("RetentionCapacityAeronPilotV3 <new-directory> [archive-chunks|read-windows|idle-window8|idle-window8-long-cuts [fixed-port-base]]");
         if(args.length==3&&!args[2].matches("[1-9][0-9]{3,4}"))throw new IllegalArgumentException("canonical fixed UDP port base required");
-        if(args.length>=2&&args[1].equals("idle-window8")){
+        if(args.length>=2&&(args[1].equals("idle-window8")||args[1].equals("idle-window8-long-cuts"))){
             requireIdleSelection(RetentionIdlePolicyV3.systemSelection());
-            Path result=runIdleWindow8(Path.of(args[0]),args.length==3?Integer.parseInt(args[2]):ports());
+            Path result=runIdleWindow8(Path.of(args[0]),args.length==3?Integer.parseInt(args[2]):ports(),args[1].equals("idle-window8")?Workload.SHORT:Workload.LONG_CUTS);
             System.out.println("VECTOR_V3_CAPACITY_SOURCE_PILOT_PASS evidence="+result);return;
         }
         Path result=args.length==1?run(Path.of(args[0])):args[1].equals("read-windows")?(args.length==2?runReadWindows(Path.of(args[0])):runReadWindows(Path.of(args[0]),Integer.parseInt(args[2]))):(args.length==2?runArchiveChunks(Path.of(args[0])):runArchiveChunks(Path.of(args[0]),Integer.parseInt(args[2])));
@@ -147,8 +173,7 @@ public final class RetentionCapacityAeronPilotV3 {
         startOwned();
         try(var client=client("setup");var requests=new DataOutputStream(Files.newOutputStream(root.resolve("setup-requests.bin"),StandardOpenOption.CREATE_NEW));
             var replies=new DataOutputStream(Files.newOutputStream(root.resolve("setup-replies.bin"),StandardOpenOption.CREATE_NEW))){
-            for(Command command:List.of(new Deposit(1,"fund",1,Asset.BASE,ARRIVALS),new Deposit(2,"fund",1,Asset.QUOTE,ARRIVALS*10L),
-                    RetentionEngineV3.place(1,"seed",1,Side.SELL,10,ARRIVALS,TimeInForce.GTC))){
+            for(Command command:workload.setupCommands()){
                 Reply actual=client.exchange(new Business(command),TIMEOUT);require(actual.error().isEmpty(),"setup reply error");
                 Request request=new Request(scope(),actual.correlationId(),new Business(command));byte[] wire=RetentionWireV3.encode(request);
                 byte[] received=RetentionReplyV3.encode(actual);record(requests,wire);record(replies,received);
@@ -159,9 +184,10 @@ public final class RetentionCapacityAeronPilotV3 {
         disk.check();
         var result=RetentionCapacityExperimentV3.run(root.resolve("load"),root,experimentConfig(),
                 profile,lineage,()->new RetentionBatchAeronTransportV3(root.resolve("owner-driver"),ports,profile,lineage,true,archiveChunkBytes),plan,disk);
-        require(((Number)result.summary().get("confirmedAcceptedUniqueOrders")).longValue()==ARRIVALS && ((Number)result.summary().get("notSent")).longValue()==0,"functional pilot must preserve all original planned orders");
+        require(((Number)result.summary().get("confirmedAcceptedUniqueOrders")).longValue()==workload.arrivals && ((Number)result.summary().get("notSent")).longValue()==0,"functional pilot must preserve all original planned orders");
         require(((Number)result.summary().get("unknownFinal")).longValue()==0,"functional pilot has final UNKNOWN; retained raw evidence");
         require(((Number)result.summary().get("maintenanceCycles")).longValue()>=(readWindowExperiment?3:2),"must cross declared maintenance cycles");
+        if(workload==Workload.LONG_CUTS)require(((Number)result.summary().get("maintenanceCycles")).longValue()==workload.cycles(),"long preset must close eleven full command cuts and the final three-command partial");
         Map<String,Object> actualEgress=verifiedEgress(result.summary());
         reconcilePhysicalTape(root.resolve("load"));
         try(var client=client("final")){
