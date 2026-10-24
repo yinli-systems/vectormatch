@@ -1,0 +1,15 @@
+{
+  "source": "import os,threading,subprocess,pathlib,json,time\nchildbox={};ready=threading.Event();release=threading.Event()\ndef spawn():\n c=subprocess.Popen(['/bin/sleep','3']);childbox.update(pid=c.pid,creatorTid=threading.get_native_id());ready.set()\n try:release.wait(2)\n finally:c.wait(timeout=5)\nt=threading.Thread(target=spawn);t.start();assert ready.wait(2)\nroot=pathlib.Path('/proc')/str(os.getpid())/'task'\nresults={p.name:(p/'children').read_text().strip() for p in root.iterdir()}\nanswer={'mainPid':os.getpid(),'child':childbox,'taskChildren':results,'source':'Actual Linux CPU host probe: one owned /bin/sleep spawned by a non-main Python thread. No Java/workload/OS tuning.'}\nrelease.set();t.join(timeout=6);assert not t.is_alive();print(json.dumps(answer))\n",
+  "result": {
+    "mainPid": 17186,
+    "child": {
+      "pid": 17188,
+      "creatorTid": 17187
+    },
+    "taskChildren": {
+      "17186": "",
+      "17187": "17188"
+    },
+    "source": "Actual Linux CPU host probe: one owned /bin/sleep spawned by a non-main Python thread. No Java/workload/OS tuning."
+  }
+}
