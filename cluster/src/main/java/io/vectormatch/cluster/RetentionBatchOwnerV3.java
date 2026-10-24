@@ -418,9 +418,14 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
     private long nextCorrelation, lastOrdinal, acceptedLogical, acceptedPhysical, resends, unaccepted,
             applied, notSent, creditBlocked, lateReplies, admissionReplies, retiredFrames;
     private int pendingHighWater, frameHighWater;
+    private final long ownerPollMaxParkNs;
 
-    public RetentionBatchOwnerV3(Config config, IOFactory factory) { this(config, factory, System::nanoTime); }
-    RetentionBatchOwnerV3(Config config, IOFactory factory, LongSupplier clock) {
+    public RetentionBatchOwnerV3(Config config, IOFactory factory) { this(config, factory, System::nanoTime, MAX_PARK_NS); }
+    /** Explicit load-owner polling cap; Config.flushDelayNs retains its independent legacy1ms bound. */
+    public RetentionBatchOwnerV3(Config config, IOFactory factory, long ownerPollMaxParkNs) { this(config, factory, System::nanoTime, ownerPollMaxParkNs); }
+    RetentionBatchOwnerV3(Config config, IOFactory factory, LongSupplier clock) { this(config, factory, clock, MAX_PARK_NS); }
+    RetentionBatchOwnerV3(Config config, IOFactory factory, LongSupplier clock, long ownerPollMaxParkNs) {
+        this.ownerPollMaxParkNs = RetentionOwnerPollPolicyV3.requireMaximum(ownerPollMaxParkNs);
         this.config = Objects.requireNonNull(config); this.scope = new Scope(config.profile().fingerprint(), config.lineage());
         this.clock = Objects.requireNonNull(clock); Objects.requireNonNull(factory);
         slots = new Slot[config.logicalWorkers()]; workerProducers = new Producer[slots.length];
@@ -593,8 +598,8 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
         }
         return work;
     }
-    private long parkDuration(long now) {
-        long delay = MAX_PARK_NS;
+    long parkDuration(long now) {
+        long delay = ownerPollMaxParkNs;
         if (!admissionStopped && !maintenanceStopped && !ready.isEmpty()) delay = Math.min(delay, Math.max(0, config.flushDelayNs() - (now - ready.peekFirst().readyNs)));
         for (Slot slot : ready) delay = Math.min(delay, Math.max(0, slot.permitDeadline - now));
         for (Frame frame : frames.values()) {
@@ -656,7 +661,10 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
             out.put("externalTaskQueuePositions", (long) slots.length * config.taskQueueCapacityPerWorker());
             out.put("taskQueueOwnership", "external scheduler; this owner allocates no task FIFO");
             out.put("internalPendingCapacity", slots.length); out.put("maximumFrames", slots.length); out.put("batchCap", config.batchCap());
-            out.put("flushDeadlineNs", config.flushDelayNs()); out.put("waitPolicy", "deadline-aware park up to 1ms; OS lateness is not bounded");
+            out.put("flushDeadlineNs", config.flushDelayNs());
+            out.put("ownerPollMaxParkNs", ownerPollMaxParkNs);
+            out.put("ownerPollRequestedSleepOnly", true);out.put("ownerPollOsLatenessBounded", false);
+            out.put("waitPolicy", ownerPollMaxParkNs==MAX_PARK_NS ? "deadline-aware park up to 1ms; OS lateness is not bounded" : "deadline-aware park up to 100us; OS lateness is not bounded");
             out.put("globalCreditCapacity", config.globalCreditCapacity()); out.put("perProducerCreditCapacity", config.perProducerCreditCapacity());
             out.put("pendingLogicalCommands", pendingCount()); out.put("readyLogicalCommands", ready.stream().filter(s -> s.terminal == null).count());
             out.put("activeFrames", frames.values().stream().filter(f -> f.slots.stream().anyMatch(s -> s.terminal == null)).count());

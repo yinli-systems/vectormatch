@@ -88,6 +88,10 @@ class RetentionReadBankV3Test {
             owner=new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(io.profile,LINEAGE,4),()->io,()->{clockHook.run();return clock.get();});
             assertTrue(io.ready.await(2,TimeUnit.SECONDS),"owner initializes the real service");
         }
+        Fixture(long maximumParkNs)throws Exception{
+            owner=new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(io.profile,LINEAGE,4),()->io,()->{clockHook.run();return clock.get();},maximumParkNs);
+            assertTrue(io.ready.await(2,TimeUnit.SECONDS),"owner initializes the real service");
+        }
         long deadline(){return clock.get()+TimeUnit.SECONDS.toNanos(1);}
         Operation read(int index,boolean chunks){return chunks?
                 new ArchiveChunk(io.acknowledgement,io.archive.length,index*512,512):new FetchEvents(index+1,1);}

@@ -49,6 +49,7 @@ class RetentionBatchOwnerV3Test {
         final RetentionBatchOwnerV3 owner;
         boolean expectFailure;
         Fixture(int cap) { owner = new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(profile,"owner-tests",cap), () -> io, clock::get); }
+        Fixture(int cap,long maximumParkNs) { owner = new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(profile,"owner-tests",cap), () -> io, clock::get,maximumParkNs); }
         Command command(int worker, long seq) { return new Deposit(1,"worker-"+worker,seq,Asset.BASE,1); }
         RetentionBatchOwnerV3.Ticket submit(int worker, long seq) { return owner.submit(worker,command(worker,seq),clock.get()+TimeUnit.SECONDS.toNanos(1)); }
         void advance(long ns) { clock.addAndGet(ns); owner.wake(); }
