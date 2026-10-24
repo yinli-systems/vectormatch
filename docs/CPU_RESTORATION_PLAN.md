@@ -1,14 +1,16 @@
 # 原应用迁移至 CPU：进展与恢复计划（业务恢复尚未验收）
 
-准备进展：原e1db源的85路径应用包已同源重建；固定Linux PostgreSQL18.6制品已在CPU上通过file/readelf/ldd及`postgres --version`。收据在[恢复准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/root-scope.json)和[实际加载探针](../evidence/2026-10-24/runpod-cpu/restoration-preparation/loader-probe-r1/receipt.json)。此减缩PG制品没有`pg_controldata`/`pg_config`，已另行原生构建两工具。数据库已完成两次实际启动及正常关闭，第二次通过6214条事件的内部ledger审计；原集群、gateway与projector仍未启动，业务恢复尚未完成。
+准备进展：原e1db源的85路径应用包已同源重建；固定Linux PostgreSQL18.6制品已在CPU上通过file/readelf/ldd及`postgres --version`。收据在[恢复准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/root-scope.json)和[实际加载探针](../evidence/2026-10-24/runpod-cpu/restoration-preparation/loader-probe-r1/receipt.json)。此减缩PG制品没有`pg_controldata`/`pg_config`，已另行原生构建两工具。数据库已完成两次实际启动及正常关闭，第二次通过6214条事件的内部ledger审计。原三节点已实际启动、重放尾部并完成leader只读探针，随后全部清停；gateway与projector仍未启动，业务恢复尚未完成。
+
+最新实际恢复：[原三节点CPU启动及完整停止态证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-cluster-recovery-r1/README.md)。leader2实际command4609/event6214/market6194/exported6214/pending0，canonical SHA `ea7b98a23a30b5ddde84db4520e3e915fd07a73900e2c3aa41ee28c8614b5b65`。两次完整canonical字节相同，PG停止态基线未变，57个原生/探针文件的3,643,108,467逻辑字节逐一读回验证。此证明尚未覆盖三份当前replica canonical，也没有提交业务或ACK，不能据此宣称HTTP/WS恢复或性能改善。
 
 隔离原生副本已实际恢复到`/opt/vectormatch-cpu/restorations/original-native-r1`：三份固定SHA备份的1041文件、3,701,302,583逻辑字节全部通过源内容及完整恢复文件SHA校验；初始稀疏分配93,749,248字节。原备份保留。随后只将已完整验证的PGDATA迁移到专用963:963，并对五个固定父目录授予该UID执行权限；[访问准备证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg-access-r1/README.md)记录全部前后置检查及一次局部失败。只读`pg_controldata18.6`验证控制版本1800、原数据库systemId7699920832388303129和`shut down`，检查前后关键SHA不变。[完整副本和控制检查证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-native-clone-r1/README.md)。
 
 第一次PG-only实际探针已启动原物理库，随后定向SIGINT正常关闭。JDBC事务实际只读，但readOnlyMode=always在切换autocommit时将会话默认只读设置改为off，触发首个检查断言；本次未验证ledger或cursor。原始失败、完整停止态副本及物理差异在[首次探针证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg-readonly-r1/README.md)。PG启动产生预期内部写入，当前989文件的派生基线另存，不能再要求它逐字节等于启动前备份。
 
-第二次独立PG-only探针已通过：6214 events、6194 market events、1551 trades，cursor、逐条payload SHA、序号、公开view及记录的collation版本检查均通过；root独立解析所有原始事件并复现ledger摘要。实际会话/事务只读及fsync、synchronous_commit、full_page_writes均验证为on；正常关闭和完整停止态归档完成。[第二次探针及独立读回](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg-readonly-r2/README.md)。这仅证明PG内部一致性。**PG实际比旧checkpoint多108事件**，此前r1在线probe的固定6106/hash断言已不适用于最终tip，尚未执行；必须另准备尾部重放后验证，不能强置cursor或把旧checkpoint当最终恢复结果。
+第二次独立PG-only探针已通过：6214 events、6194 market events、1551 trades，cursor、逐条payload SHA、序号、公开view及记录的collation版本检查均通过；root独立解析所有原始事件并复现ledger摘要。实际会话/事务只读及fsync、synchronous_commit、full_page_writes均验证为on；正常关闭和完整停止态归档完成。[第二次探针及独立读回](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg-readonly-r2/README.md)。这仅证明PG内部一致性。**PG实际比旧checkpoint多108事件**，此前r1在线probe的固定6106/hash断言已不适用于最终tip，从未执行；实际执行的是另行冻结的尾部感知R2探针，已验证leader到6214，没有强置cursor或把旧checkpoint当最终恢复结果。
 
-另已完整离线解码三份原备份的最新service checkpoint，canonical及outbox字节全相等：command4539/event6106/market6086/exported6106/pending0。[离线证明及原在线恢复计划](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-cluster-probe-preparation-r1/RESTORATION_PROBE_PLAN.md)区分了checkpoint、尾部重放和leader回复；其固定tip预期须按第二次PG探针的新证据修订，它不证明CPU上三节点已恢复。source lineage对账、三节点尾部重放、HTTP及WS仍未验收。
+另已完整离线解码三份原备份的最新service checkpoint，canonical及outbox字节全相等：command4539/event6106/market6086/exported6106/pending0。[离线证明及原在线恢复计划](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-cluster-probe-preparation-r1/RESTORATION_PROBE_PLAN.md)区分了checkpoint、尾部重放和leader回复；该原准备的固定tip预期已过时，不能用于新的最终状态。三节点当前canonical、完整source历史与PG逐条对应、HTTP及WS仍未验收。
 
 新增准备：固定官方18.6源码的两个工具已在CPU原生构建成功，20项离线守卫及每个原生命令/输出版本/格式宏检查通过；[r3证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg18-native-tools-r3/README.md)保留源码/二进制SHA、全部日志和前两次失败的原因。`pg_config`描述此次工具构建，不描述原Zonky服务器。依赖安装没有升级/移除既有包，未启动数据库。源码来源在[工具准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg18-tools-source/README.md)。无损稀疏解包器此前已在空闲CPU通过10项微型合成文件测试，含实际Linux稀疏分配与完整字节读回；[Linux守卫](../evidence/2026-10-24/runpod-cpu/restoration-preparation/sparse-native-guards-r1/receipt.json)和本次完整副本检查分开保留。它们不是运行中数据库或业务恢复证明。
 
@@ -68,7 +70,7 @@ GPU 主机虽是 Ubuntu 24，**实际 PG 并不是 Ubuntu 24 编译件**。`runp
 
 原 gateway 绑定 **127.0.0.1:8000**；8011 是本地 tunnel/代理入口。原静态资源配置 `VECTOR_WEB_DIR=/opt/vectormatch/web/dist`，新恢复必须指向该 e1db release 对应 web/dist。gateway/projector 均配置同一固定 clusterId、base19000、loopback egress；先禁人工操作与自动流量。
 
-**原 Workbench 的 flowEnabled 默认 true，停前的 false 不持久化。**构造后每100ms tick，初始化还会按稳定 identity 重放 bootstrap命令。因此原样启动不能保证 tip 零新增。先保存恢复基线，gateway 可访问后立即显式 POST `/api/control/flow` 为 false，并记录启动期间可能产生的合成 flow 命令；若要求严格零新增，须另做并审计默认禁 flow 的启动选项，登记其独立源版本，不把它说成原二进制。
+**原 Workbench 的 flowEnabled 默认 true，停前的 false 不持久化。**构造后每100ms tick，初始化还会按稳定 identity 重放38条bootstrap命令。启动后POST关闭flow存在窗口，也不能阻止构造时seed。严格零新增恢复正在独立e1db分支准备启动前禁bootstrap和flow的显式选项；须审计、验证并登记新制品，不能靠未被原代码读取的`-D`选项，也不能把新制品说成原二进制。
 
 验收保存 `/api/state`、`/api/health`、`/api/metrics`、`/api/control/replay` 一致性结果；验证 HTTP place、相同 identity 重试、冲突 payload、cancel、余额恢复及 PG cursor 追平。可使用 `scripts/verify-replicated-workbench.py http://127.0.0.1:8000 <独立新输出目录>`，**不传旧三独立 IP deployment manifest**；默认验证器会诚实声明同一主机和功能 smoke，不冒称容量测量。WebSocket `/ws` 检查初始快照、更新序号、断线重连和镜像/投影 freshness。原产品是 **5Hz 全量 state snapshot**，不是逐事件行情分发；恢复功能 smoke 不证明行情带宽、持续吞吐或端到端延迟。
 
