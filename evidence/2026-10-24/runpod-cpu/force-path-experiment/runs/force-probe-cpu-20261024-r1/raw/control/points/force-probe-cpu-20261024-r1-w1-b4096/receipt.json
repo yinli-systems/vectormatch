@@ -1,0 +1,26 @@
+{
+  "passed": false,
+  "point": {
+    "id": "force-probe-cpu-20261024-r1-w1-b4096",
+    "writers": 1,
+    "blockBytes": 4096,
+    "fileBytesPerWriter": 65536,
+    "warmup": 10,
+    "measurements": 200,
+    "plannedDataWriteBytes": 925696,
+    "plannedForceCalls": 211,
+    "maximumOutputBytes": 1245184
+  },
+  "startedAtUtc": "2026-10-24T04:26:43.090001+00:00",
+  "cleanup": {
+    "stopped": true,
+    "pid": 58329,
+    "startTicks": 2451787,
+    "signals": []
+  },
+  "exitCode": 0,
+  "errorType": "ValueError",
+  "error": "Invalid isoformat string: '2026-10-24T04:26:43.287007133+00:00'",
+  "traceback": "Traceback (most recent call last):\n  File \"/workspace/vectormatch-cpu-control/force-probe-cpu-20261024-r1/controller.py\", line 379, in point_run\n    receipt['outputValidation']=validate_output(p,t,output)\n  File \"/workspace/vectormatch-cpu-control/force-probe-cpu-20261024-r1/controller.py\", line 316, in validate_output\n    stamp=dt.datetime.fromisoformat(row['wall_utc'].replace('Z','+00:00'));require(stamp.tzinfo is not None,'UTC timestamp missing')\nValueError: Invalid isoformat string: '2026-10-24T04:26:43.287007133+00:00'\n",
+  "completedAtUtc": "2026-10-24T04:26:43.776936+00:00"
+}

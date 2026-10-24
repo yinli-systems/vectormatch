@@ -28,6 +28,8 @@ A separately registered [node max-park comparison](evidence/2026-10-24/runpod-cp
 
 The independent [client-driver A/B/A/B](evidence/2026-10-24/runpod-cpu/client-driver-experiment/comparison/INTERPRETATION.md) does not support promoting100us over the original1ms client default:the two pairs move in opposite directions for both goodput and accepted-only p99. All four finite overload points and CPU/raw evidence remain visible in separate configuration cohorts. A tracked Archive write-path timing lead motivates isolated storage testing;it is not a purefsync or unique bottleneck claim.
 
+The separate [eight-point synthetic force(true) diagnostic](evidence/2026-10-24/runpod-cpu/force-path-experiment/comparison-r2/README.md) retains all3376operations and3200measurement rows on the existing CPU overlay. Single-writer force medians are1.35–1.40ms;three writer threads in oneJVM show2.51–2.77ms medians and4.65–4.99ms rowp99. This supports investigating durable batching;it is not transaction latency,a stable-throughput improvement or a unique disk ceiling. The prior parser-failed attempt is retained separately.
+
 ## Toolchain
 
 Java 21, Gradle, Aeron, Netty, React and TypeScript. The bootstrap pins Temurin 21.0.13+9, Node 24.22.1 and Gradle 8.14.3 and verifies vendor SHA-256 files. Portable development tools live under `.tools/` and are never committed.

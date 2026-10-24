@@ -1,0 +1,9 @@
+# Storage waiting is a stronger lead;no new trading promotion
+
+All8prospectively registered points completed on the same existing CPU,oneJVM perpoint,with1or3writer threads. Single-writer force(true) median1.35–1.40ms andthree-thread median2.51–2.77ms exceed their data-write bracket medians by roughly two orders of magnitude. Three-thread force rowp99 is4.65–4.99ms across the fourblock sizes. These short200rows/thread observations and fixed ordering do not establish a storage SLA or causal concurrency penalty. Fullperwriter distributions are retained.
+
+The completed fourclientABAB trials independently show tracked Archive write-path time around95–99% of selected walltime. Together these observations justify prioritizing a bounded durable batching candidate. They do not uniquely prove physicaldisk saturation:the microprobe uses circular preallocated syntheticfiles,a singleJVM and instrumentedCSVcadence;Aeron uses its own recording blocks,threads,checksums,replication andshared scheduling. Neither p99 may be added to or subtracted from tradingp99. No synclevel/force durability setting was lowered.
+
+Current repeatedly stable trading point remains18k/s with priorfiniteallarrivalp9980.19/78.93ms. The subsequent22k+curve is overload andthe clientdriver100us candidate was not promoted. This diagnostic itself improves no tradingthroughput. Nextcandidate should batch boundedlogicalcommands perreplicatedingress record while preserving eachcommand identity/result/UNKNOWN andsync2;it requires independentfunctionalguards and allregisteredA/B/A/Barms before promotion.
+
+The priorforce-probe-cpu-20261024-r1 attempt isfailed andexcluded. ItsfirstJVM exited0,but Python3.8 rejected Java9fractiondigitUTC timestamps;sevenpointsneverlaunched. A strict compatiblevalidator,21offlineguards andactualPython3.8readback preceded the newr2identity. OriginalJava/classes,force(true),bytes anditerationparameters didnotchange.

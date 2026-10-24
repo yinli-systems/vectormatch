@@ -1,0 +1,203 @@
+{
+  "schemaVersion": 1,
+  "role": "synthetic-filechannel-force-diagnostic-single-jvm-threads",
+  "id": "force-probe-cpu-20261024-r2",
+  "registeredAtUtc": "2026-10-24T04:28:25.859990+00:00",
+  "hostname": "ed6c0673f5cb",
+  "podId": "4il7v4518ccogj",
+  "controllerSha256": "780f283a76a876ea7b162cf7fbca4b6f5b3fd6d7021afefef7e460c04cc6c5c9",
+  "javaSourceSha256": "3331268b1852d53c9f20b767f632c84280518239a4d3a508253919abeac10e74",
+  "preparationManifestSource": "{\n  \"schemaVersion\": 1,\n  \"preparedAtUtc\": \"2026-10-24T04:12:35.415413+00:00\",\n  \"sources\": {\n    \"ForcePathProbe.java\": {\n      \"sha256\": \"3331268b1852d53c9f20b767f632c84280518239a4d3a508253919abeac10e74\",\n      \"bytes\": 20394\n    },\n    \"ForcePathProbeClockGuard.java\": {\n      \"sha256\": \"df03941c75e8b92d81e0727570a7e774f59ce53bdc8373bd54bca8e2963a2668\",\n      \"bytes\": 1318\n    },\n    \"test_force_path_probe.py\": {\n      \"sha256\": \"246665fcd7f16f22b5fd8100f0d30da7a3626a006923489c8843f0bab54b32d3\",\n      \"bytes\": 7903\n    },\n    \"README.md\": {\n      \"sha256\": \"d85ca62f06bef7c180c6480095ca6fb70f669df6859e4eda93f9aa4d6b562b99\",\n      \"bytes\": 6029\n    }\n  },\n  \"runtimeClasses\": {\n    \"ForcePathProbe$Budget.class\": {\n      \"sha256\": \"625558f8cd1065016834e65310bfd37764b30e6973a5ea375069636f133c0fe3\",\n      \"bytes\": 1386\n    },\n    \"ForcePathProbe$Options.class\": {\n      \"sha256\": \"650a90551b07d57b181bd53bed09427fe984df04ecaa064195e558b0b6d5ecdf\",\n      \"bytes\": 5974\n    },\n    \"ForcePathProbe$WriterResult.class\": {\n      \"sha256\": \"02c978e7863b3cdca6327c1070ad10f5e3a8a39a9fe690ae1693bb26b51d23bd\",\n      \"bytes\": 991\n    },\n    \"ForcePathProbe.class\": {\n      \"sha256\": \"de5dccc1c484319da855053bae6309a8500e57d82812d322e38ce85107e8a8c8\",\n      \"bytes\": 20975\n    }\n  },\n  \"validation\": [\n    {\n      \"name\": \"compile\",\n      \"arguments\": [\n        \"/Users/kevin/Documents/ChatGPT/App 2/.tools/jdk/bin/javac\",\n        \"--release\",\n        \"21\",\n        \"-d\",\n        \"/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/build\",\n        \"/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/ForcePathProbe.java\"\n      ],\n      \"workingDirectory\": \"/Users/kevin/Documents/ChatGPT/App 2\",\n      \"startedAtUtc\": \"2026-10-24T04:12:33.201521+00:00\",\n      \"exitCode\": 0,\n      \"elapsedSeconds\": 0.40680662500000003,\n      \"stdout\": \"\",\n      \"stderr\": \"\",\n      \"log\": \"/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/compile.log\",\n      \"logSha256\": \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"\n    },\n    {\n      \"name\": \"guard-tests\",\n      \"arguments\": [\n        \"/Applications/Xcode.app/Contents/Developer/usr/bin/python3\",\n        \"-B\",\n        \"-m\",\n        \"unittest\",\n        \"discover\",\n        \"-s\",\n        \"/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation\",\n        \"-p\",\n        \"test_force_path_probe.py\",\n        \"-v\"\n      ],\n      \"workingDirectory\": \"/Users/kevin/Documents/ChatGPT/App 2\",\n      \"startedAtUtc\": \"2026-10-24T04:12:33.608633+00:00\",\n      \"exitCode\": 0,\n      \"elapsedSeconds\": 1.692896,\n      \"stdout\": \"\",\n      \"stderr\": \"test_each_supported_block_size_has_only_tiny_bounded_writes (test_force_path_probe.ForceProbeGuards) ... ok\\ntest_explicit_total_write_budget_includes_preallocation_warmup_measurement (test_force_path_probe.ForceProbeGuards) ... ok\\ntest_injected_monotonic_deadline_retains_failure_never_success (test_force_path_probe.ForceProbeGuards) ... ok\\ntest_invalid_size_writers_count_time_bounds_do_not_create_output (test_force_path_probe.ForceProbeGuards) ... ok\\ntest_no_overwrite_or_failure_receipt_in_existing_directory (test_force_path_probe.ForceProbeGuards) ... ok\\ntest_noncanonical_overflow_negative_or_unknown_options_refused (test_force_path_probe.ForceProbeGuards) ... ok\\ntest_real_three_threads_independent_files_and_rows_not_three_JVM_claim (test_force_path_probe.ForceProbeGuards) ... ok\\ntest_real_tiny_one_writer_all_phases_rows_force_true_counts_and_file_hash (test_force_path_probe.ForceProbeGuards) ... ok\\ntest_space_floor_before_creation (test_force_path_probe.ForceProbeGuards) ... ok\\ntest_symlink_parent_and_production_path_refused (test_force_path_probe.ForceProbeGuards) ... ok\\n\\n----------------------------------------------------------------------\\nRan 10 tests in 1.643s\\n\\nOK\\n\",\n      \"log\": \"/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/guard-tests.log\",\n      \"logSha256\": \"55548cf57c394d3fe7137d24e82f1b9d671db02a3ab7a12b0d290d2c9e2008ce\"\n    },\n    {\n      \"name\": \"java-version\",\n      \"arguments\": [\n        \"/Users/kevin/Documents/ChatGPT/App 2/.tools/jdk/bin/java\",\n        \"-version\"\n      ],\n      \"workingDirectory\": \"/Users/kevin/Documents/ChatGPT/App 2\",\n      \"startedAtUtc\": \"2026-10-24T04:12:35.301628+00:00\",\n      \"exitCode\": 0,\n      \"elapsedSeconds\": 0.032028584000000304,\n      \"stdout\": \"\",\n      \"stderr\": \"openjdk version \\\"21.0.13\\\" 2026-10-20 LTS\\nOpenJDK Runtime Environment Temurin-21.0.13+9 (build 21.0.13+9-LTS)\\nOpenJDK 64-Bit Server VM Temurin-21.0.13+9 (build 21.0.13+9-LTS, mixed mode, sharing)\\n\",\n      \"log\": \"/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/java-version.log\",\n      \"logSha256\": \"477d64a6b08c9a9dd143deae108edf7929a93b40434d87285d41addc8fba509f\"\n    },\n    {\n      \"name\": \"local-schema-smoke\",\n      \"arguments\": [\n        \"/Users/kevin/Documents/ChatGPT/App 2/.tools/jdk/bin/java\",\n        \"-Xms32m\",\n        \"-Xmx64m\",\n        \"-cp\",\n        \"/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/build\",\n        \"ForcePathProbe\",\n        \"--output-dir\",\n        \"/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/force-path-probes/force-probe-local-schema-01\",\n        \"--block-bytes\",\n        \"4096\",\n        \"--writers\",\n        \"1\",\n        \"--file-bytes-per-writer\",\n        \"8192\",\n        \"--warmup-iterations\",\n        \"1\",\n        \"--measurement-iterations\",\n        \"3\",\n        \"--max-total-write-bytes\",\n        \"24576\",\n        \"--max-duration-ms\",\n        \"5000\",\n        \"--min-free-bytes\",\n        \"1048576\",\n        \"--scope-label\",\n        \"schema-smoke\"\n      ],\n      \"workingDirectory\": \"/Users/kevin/Documents/ChatGPT/App 2\",\n      \"startedAtUtc\": \"2026-10-24T04:12:35.333812+00:00\",\n      \"exitCode\": 0,\n      \"elapsedSeconds\": 0.08103529100000006,\n      \"stdout\": \"\",\n      \"stderr\": \"\",\n      \"log\": \"/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/local-schema-smoke.log\",\n      \"logSha256\": \"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"\n    }\n  ],\n  \"guardTests\": {\n    \"count\": 10,\n    \"failures\": 0,\n    \"skipped\": 0,\n    \"scope\": \"Local small tests, including actual tiny1/3threads and all4block sizes; notLinux or transaction performance\"\n  },\n  \"smoke\": {\n    \"directory\": \"/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/force-path-probes/force-probe-local-schema-01\",\n    \"platform\": \"macOS-26.6.2-arm64-arm-64bit\",\n    \"rows\": 5,\n    \"measurementRows\": 3,\n    \"forceTrueCalls\": 5,\n    \"totalDataWrittenBytes\": 24576,\n    \"files\": {\n      \"configuration.json\": {\n        \"sha256\": \"ab9b02ded05bbfb8c6e048098aa1cf2b7a860bd5e8ec82da88b3955f2c6835a7\",\n        \"bytes\": 1723\n      },\n      \"success.json\": {\n        \"sha256\": \"0f32de11ddd54ada8f8774d9fd8049e944b8da0a730501554c2ff084eda8e1d6\",\n        \"bytes\": 566\n      },\n      \"synthetic-force-writer-0.data\": {\n        \"sha256\": \"ca52b15859957843972be8fea6cf7bc969f4ef91c4f330bfd21701b8c0f0a41f\",\n        \"bytes\": 8192\n      },\n      \"writer-0.csv\": {\n        \"sha256\": \"96a7015b9b6922dccd2cdb934b597cd2ff1e8c92b9d4d1cc98112880f9b2b8cf\",\n        \"bytes\": 860\n      }\n    },\n    \"configuration\": {\n      \"schemaVersion\": 1,\n      \"label\": \"schema-smoke\",\n      \"startedAtUtc\": \"2026-10-24T04:12:35.367576Z\",\n      \"scope\": \"SYNTHETIC_FILECHANNEL_FORCE_TRUE_SINGLE_JVM_THREADS_NOT_TRADING\",\n      \"writerModel\": \"one JVM, one thread and independent data+CSV per writer\",\n      \"writers\": 1,\n      \"blockBytes\": 4096,\n      \"fileBytesPerWriter\": 8192,\n      \"warmupIterationsPerWriter\": 1,\n      \"measurementIterationsPerWriter\": 3,\n      \"maxTotalWriteBytes\": 24576,\n      \"plannedTotalWriteBytes\": 24576,\n      \"plannedForceCalls\": 5,\n      \"byteBudgetScope\": \"Data-file write bytes only, including preallocation/warmup/measurement; CSV/configuration are additional bounded instrumentation\",\n      \"maximumCsvRows\": 5,\n      \"maxDurationMs\": 5000,\n      \"cleanupGraceMs\": 1000,\n      \"minFreeBytes\": 1048576,\n      \"forceMetadata\": true,\n      \"preallocation\": \"full logical zero writes then force(true); not guaranteed physical extent reservation\",\n      \"measurementPattern\": \"deterministic xorshift block per writer, reused direct ByteBuffer; buffer creation outside timed operation\",\n      \"filesystem\": {\n        \"name\": \"/dev/disk3s5\",\n        \"type\": \"apfs\"\n      },\n      \"os\": {\n        \"name\": \"Mac OS X\",\n        \"version\": \"26.6.2\",\n        \"arch\": \"aarch64\"\n      },\n      \"java\": {\n        \"version\": \"21.0.13\",\n        \"vendor\": \"Eclipse Adoptium\",\n        \"maxHeapBytes\": 67108864,\n        \"committedHeapBytes\": 35651584\n      },\n      \"threadCpuSupported\": true,\n      \"threadCpuEnabled\": true,\n      \"threadCpuScope\": \"current JVM worker thread CPU over timed operation bracket, including clock probes; null when unavailable; not physical disk CPU\",\n      \"timingScope\": \"write includes position/write loop and budget checks; force includes force(true) and adjacent clock/budget overhead. CSV/flush outside brackets can affect subsequent iteration cadence. Preallocation/warmup excluded from measurement phase. Deadline stops new I/O; an in-kernel operation can overrun and is reported failed, not a portable hard realtime guarantee.\"\n    },\n    \"receipt\": {\n      \"passed\": true,\n      \"completedAtUtc\": \"2026-10-24T04:12:35.410804Z\",\n      \"totalWrittenBytes\": 24576,\n      \"forceTrueCalls\": 5,\n      \"allWorkerThreadsTerminated\": true,\n      \"writers\": [\n        {\n          \"writerId\": 0,\n          \"writtenBytes\": 24576,\n          \"forceCalls\": 5,\n          \"preallocationRows\": 1,\n          \"warmupRows\": 1,\n          \"measurementRows\": 3\n        }\n      ],\n      \"dataFiles\": [\n        {\n          \"name\": \"synthetic-force-writer-0.data\",\n          \"bytes\": 8192,\n          \"sha256\": \"ca52b15859957843972be8fea6cf7bc969f4ef91c4f330bfd21701b8c0f0a41f\"\n        }\n      ],\n      \"scope\": \"Synthetic file I/O observations only. No transaction p99, Linux disk saturation, Aeron replication, durable trading or unique bottleneck attribution.\"\n    },\n    \"allRawRows\": [\n      {\n        \"schema_version\": \"1\",\n        \"phase\": \"preallocation\",\n        \"writer_id\": \"0\",\n        \"iteration\": \"-1\",\n        \"wall_utc\": \"2026-10-24T04:12:35.380159Z\",\n        \"monotonic_start_ns\": \"1100177235504375\",\n        \"offset_bytes\": \"0\",\n        \"requested_bytes\": \"8192\",\n        \"written_bytes\": \"8192\",\n        \"write_calls\": \"2\",\n        \"force_calls\": \"1\",\n        \"write_elapsed_ns\": \"208291\",\n        \"force_elapsed_ns\": \"3873959\",\n        \"total_elapsed_ns\": \"4082250\",\n        \"thread_cpu_ns\": \"320000\",\n        \"deadline_exceeded\": \"false\",\n        \"status\": \"complete\",\n        \"error\": \"\"\n      },\n      {\n        \"schema_version\": \"1\",\n        \"phase\": \"warmup\",\n        \"writer_id\": \"0\",\n        \"iteration\": \"0\",\n        \"wall_utc\": \"2026-10-24T04:12:35.384986Z\",\n        \"monotonic_start_ns\": \"1100177240167541\",\n        \"offset_bytes\": \"0\",\n        \"requested_bytes\": \"4096\",\n        \"written_bytes\": \"4096\",\n        \"write_calls\": \"1\",\n        \"force_calls\": \"1\",\n        \"write_elapsed_ns\": \"13334\",\n        \"force_elapsed_ns\": \"3578250\",\n        \"total_elapsed_ns\": \"3591584\",\n        \"thread_cpu_ns\": \"43000\",\n        \"deadline_exceeded\": \"false\",\n        \"status\": \"complete\",\n        \"error\": \"\"\n      },\n      {\n        \"schema_version\": \"1\",\n        \"phase\": \"measurement\",\n        \"writer_id\": \"0\",\n        \"iteration\": \"0\",\n        \"wall_utc\": \"2026-10-24T04:12:35.388834Z\",\n        \"monotonic_start_ns\": \"1100177244008791\",\n        \"offset_bytes\": \"0\",\n        \"requested_bytes\": \"4096\",\n        \"written_bytes\": \"4096\",\n        \"write_calls\": \"1\",\n        \"force_calls\": \"1\",\n        \"write_elapsed_ns\": \"12792\",\n        \"force_elapsed_ns\": \"3656417\",\n        \"total_elapsed_ns\": \"3669209\",\n        \"thread_cpu_ns\": \"41000\",\n        \"deadline_exceeded\": \"false\",\n        \"status\": \"complete\",\n        \"error\": \"\"\n      },\n      {\n        \"schema_version\": \"1\",\n        \"phase\": \"measurement\",\n        \"writer_id\": \"0\",\n        \"iteration\": \"1\",\n        \"wall_utc\": \"2026-10-24T04:12:35.392698Z\",\n        \"monotonic_start_ns\": \"1100177247874625\",\n        \"offset_bytes\": \"4096\",\n        \"requested_bytes\": \"4096\",\n        \"written_bytes\": \"4096\",\n        \"write_calls\": \"1\",\n        \"force_calls\": \"1\",\n        \"write_elapsed_ns\": \"11208\",\n        \"force_elapsed_ns\": \"3703083\",\n        \"total_elapsed_ns\": \"3714291\",\n        \"thread_cpu_ns\": \"50000\",\n        \"deadline_exceeded\": \"false\",\n        \"status\": \"complete\",\n        \"error\": \"\"\n      },\n      {\n        \"schema_version\": \"1\",\n        \"phase\": \"measurement\",\n        \"writer_id\": \"0\",\n        \"iteration\": \"2\",\n        \"wall_utc\": \"2026-10-24T04:12:35.396600Z\",\n        \"monotonic_start_ns\": \"1100177251778833\",\n        \"offset_bytes\": \"0\",\n        \"requested_bytes\": \"4096\",\n        \"written_bytes\": \"4096\",\n        \"write_calls\": \"1\",\n        \"force_calls\": \"1\",\n        \"write_elapsed_ns\": \"11000\",\n        \"force_elapsed_ns\": \"3990000\",\n        \"total_elapsed_ns\": \"4001000\",\n        \"thread_cpu_ns\": \"35000\",\n        \"deadline_exceeded\": \"false\",\n        \"status\": \"complete\",\n        \"error\": \"\"\n      }\n    ],\n    \"scope\": \"macOS local schema/bounds smoke only. No percentile or Linux disk/trading conclusion.\"\n  },\n  \"remoteOperations\": false,\n  \"resourcesCreated\": 0,\n  \"productionSourceChanged\": false,\n  \"scope\": \"Independent standaloneJava21 synthetic FileChannel write+force(true) preparation; no remote launcher, SSH, cloud, Aeron, PGDATA or performanceclaim.\"\n}\n",
+  "preparationManifestSha256": "5d437f48e1379a83ac009d1e657124682fca4f32cc1572f7c31f77338f2f5a0d",
+  "artifact": {
+    "sha256": "ea3de8c5317f637549898dd8a0199328114b7cf09cd1a8b98c1437a66197c0ce",
+    "bytes": 71680,
+    "files": {
+      "ForcePathProbe.java": {
+        "bytes": 20394,
+        "sha256": "3331268b1852d53c9f20b767f632c84280518239a4d3a508253919abeac10e74"
+      },
+      "preparation-manifest.json": {
+        "bytes": 13824,
+        "sha256": "5d437f48e1379a83ac009d1e657124682fca4f32cc1572f7c31f77338f2f5a0d"
+      },
+      "classes/ForcePathProbe$Budget.class": {
+        "bytes": 1386,
+        "sha256": "625558f8cd1065016834e65310bfd37764b30e6973a5ea375069636f133c0fe3"
+      },
+      "classes/ForcePathProbe$Options.class": {
+        "bytes": 5974,
+        "sha256": "650a90551b07d57b181bd53bed09427fe984df04ecaa064195e558b0b6d5ecdf"
+      },
+      "classes/ForcePathProbe$WriterResult.class": {
+        "bytes": 991,
+        "sha256": "02c978e7863b3cdca6327c1070ad10f5e3a8a39a9fe690ae1693bb26b51d23bd"
+      },
+      "classes/ForcePathProbe.class": {
+        "bytes": 20975,
+        "sha256": "de5dccc1c484319da855053bae6309a8500e57d82812d322e38ce85107e8a8c8"
+      }
+    }
+  },
+  "prerequisite": {
+    "ready": true,
+    "controllerSha256": "e5fa98bf5ee4978b259120afb1b1da3cdcef87b3225b64814e405914f590fc29",
+    "matrixId": "cpu-client-driver-park-22000-w128-abab-ebede-r1",
+    "planSha256": "da41dc4cba0d7df3f626fa839b667c6e63eae733039c8fabb596ba750add457e",
+    "points": [
+      {
+        "jobId": "cpu-capacity-clientpark-a1-22000-w128-r1",
+        "completionSha256": "9ba66ce1c6d98e8d48d518f066714ccf59db5bb62d1d8d7f8eb5037c12c99d3c",
+        "archiveSha256": "35825c3fe67beb13075c3b636af8a25b542680f6c8e7c94e707300faad54f28e",
+        "archivePath": "/workspace/vectormatch-cpu-archives/cpu-capacity-clientpark-a1-22000-w128-r1.tar.gz",
+        "analysisSha256": "9deeaf07fac9764e54cffb7b58406c420160cc46348f8ebf9e2b60b9d580ea2a",
+        "pointSha256": "bd104427d0d7c7f7c15b61be8fca6a76698c0f2834a898202f50e85e60ac5f19",
+        "receiptSha256": "317d65244ef94ae4d4de1ca1f1eddc2d8ddcb2e7d608824651cb39ed6e6f8929",
+        "configurationSha256": "f4d1cecef223a402e1c13bd9d1db2547833d7470d56cdea22a8b16b7453a3fcb",
+        "ownedStopSha256": "b51c30bde6f63cbdb3f18b7be937818e6520b0e9625bc9672353ccd43361bff9"
+      },
+      {
+        "jobId": "cpu-capacity-clientpark-b1-22000-w128-r1",
+        "completionSha256": "7762759f5bca049176273dff7802336ad2e20033c5c3282718f79b36b239d314",
+        "archiveSha256": "e353873fdaa34a6c4b260314b771703bb9cfbcbffef36b68ea1e76522074a515",
+        "archivePath": "/workspace/vectormatch-cpu-archives/cpu-capacity-clientpark-b1-22000-w128-r1.tar.gz",
+        "analysisSha256": "2f24893396759336bface9dacb644c5e6383a4f519605bb3d6eb4fb24b35b8ab",
+        "pointSha256": "9d23b6a62cf31f8d4a1865d01f098d6add29b4dbd902c4aca2143ceefb7c732d",
+        "receiptSha256": "9b74f422af8d4f696cc903f095ef8dfe42d64cbf9b9f9814ebfbb5b2bc9e413e",
+        "configurationSha256": "93fc9e630370628f225fd25dc30e74178f1179288d8941983c3c528d6cd7d082",
+        "ownedStopSha256": "ac7d3d33088e876fc07cfcfe14af4353c1f432d145505e8dd0f6bcf58a40dcf4"
+      },
+      {
+        "jobId": "cpu-capacity-clientpark-a2-22000-w128-r1",
+        "completionSha256": "36d4354dec3ac572c3ddb36407e7ec6146eb10144d5b90021c2f08bb545b2791",
+        "archiveSha256": "4222c161b5a4fdde5d21b2858f512f89cab51e91cc2d3a807b4c10f3568b9691",
+        "archivePath": "/workspace/vectormatch-cpu-archives/cpu-capacity-clientpark-a2-22000-w128-r1.tar.gz",
+        "analysisSha256": "30479d983b8bacc3c78217c117e398fb09e7b51956fd26a12440c26f8a8545a1",
+        "pointSha256": "03b32d8de67a83c29bda81a8f63b868987474992af5c32a385cffb6cf2699285",
+        "receiptSha256": "4163293f5d0ee328af3094c8927e4c4186c2882cf830dbfb21afc0c6ba6734c3",
+        "configurationSha256": "c8a937e98ef27b8e3312ec0885b660e3ffe67ba6c0332e287ee77fcdc3d5cc14",
+        "ownedStopSha256": "86690da30d62ef262772810b265de87295c7780a401c422d79b2e29ed3e0d97e"
+      },
+      {
+        "jobId": "cpu-capacity-clientpark-b2-22000-w128-r1",
+        "completionSha256": "953a1a7388d58991506d9261135648ef3885c28b7d2a7ff5d94244334d8c03dd",
+        "archiveSha256": "e7ffceae6e979f5e9ac7c532d758892b59103261a5762ea2d2d16b8747374f44",
+        "archivePath": "/workspace/vectormatch-cpu-archives/cpu-capacity-clientpark-b2-22000-w128-r1.tar.gz",
+        "analysisSha256": "04de0eab2fa0ece5f1e055c99a23a9a56294be63562cd7904c4ed300e4fe6f72",
+        "pointSha256": "7bcb880c1c92068070c6a4f7e074a69ec43945fbb3688bb47f747a084a909ca6",
+        "receiptSha256": "0b3833a9debc2192cc11568f2634eb9841b0d458042043435373d680d64b8a43",
+        "configurationSha256": "0ca052391f090eeafb8cd9903c130a29c2a371b314ad8242e564e5708cbba1d4",
+        "ownedStopSha256": "60f1b1289d6f3962152939bcfcd54d09888fbba459d6774e3eede9dad69abddd"
+      }
+    ],
+    "scope": "All4 canonical/valid/zeroUNKNOWN clientABAB attempts, raw/native archives and actual mixed-source/owned-stop closure. Valid overload is retained; not performance promotion."
+  },
+  "order": [
+    {
+      "id": "force-probe-cpu-20261024-r2-w1-b4096",
+      "writers": 1,
+      "blockBytes": 4096,
+      "fileBytesPerWriter": 65536,
+      "warmup": 10,
+      "measurements": 200,
+      "plannedDataWriteBytes": 925696,
+      "plannedForceCalls": 211,
+      "maximumOutputBytes": 1245184
+    },
+    {
+      "id": "force-probe-cpu-20261024-r2-w1-b16384",
+      "writers": 1,
+      "blockBytes": 16384,
+      "fileBytesPerWriter": 262144,
+      "warmup": 10,
+      "measurements": 200,
+      "plannedDataWriteBytes": 3702784,
+      "plannedForceCalls": 211,
+      "maximumOutputBytes": 1441792
+    },
+    {
+      "id": "force-probe-cpu-20261024-r2-w1-b24576",
+      "writers": 1,
+      "blockBytes": 24576,
+      "fileBytesPerWriter": 393216,
+      "warmup": 10,
+      "measurements": 200,
+      "plannedDataWriteBytes": 5554176,
+      "plannedForceCalls": 211,
+      "maximumOutputBytes": 1572864
+    },
+    {
+      "id": "force-probe-cpu-20261024-r2-w1-b49152",
+      "writers": 1,
+      "blockBytes": 49152,
+      "fileBytesPerWriter": 786432,
+      "warmup": 10,
+      "measurements": 200,
+      "plannedDataWriteBytes": 11108352,
+      "plannedForceCalls": 211,
+      "maximumOutputBytes": 1966080
+    },
+    {
+      "id": "force-probe-cpu-20261024-r2-w3-b4096",
+      "writers": 3,
+      "blockBytes": 4096,
+      "fileBytesPerWriter": 65536,
+      "warmup": 10,
+      "measurements": 200,
+      "plannedDataWriteBytes": 2777088,
+      "plannedForceCalls": 633,
+      "maximumOutputBytes": 3473408
+    },
+    {
+      "id": "force-probe-cpu-20261024-r2-w3-b16384",
+      "writers": 3,
+      "blockBytes": 16384,
+      "fileBytesPerWriter": 262144,
+      "warmup": 10,
+      "measurements": 200,
+      "plannedDataWriteBytes": 11108352,
+      "plannedForceCalls": 633,
+      "maximumOutputBytes": 4063232
+    },
+    {
+      "id": "force-probe-cpu-20261024-r2-w3-b24576",
+      "writers": 3,
+      "blockBytes": 24576,
+      "fileBytesPerWriter": 393216,
+      "warmup": 10,
+      "measurements": 200,
+      "plannedDataWriteBytes": 16662528,
+      "plannedForceCalls": 633,
+      "maximumOutputBytes": 4456448
+    },
+    {
+      "id": "force-probe-cpu-20261024-r2-w3-b49152",
+      "writers": 3,
+      "blockBytes": 49152,
+      "fileBytesPerWriter": 786432,
+      "warmup": 10,
+      "measurements": 200,
+      "plannedDataWriteBytes": 33325056,
+      "plannedForceCalls": 633,
+      "maximumOutputBytes": 5636096
+    }
+  ],
+  "globalPlannedDataWriteBytes": 85164032,
+  "globalPlannedForceCalls": 3376,
+  "admissionMsPerPoint": 30000,
+  "supervisorSecondsPerPoint": 35,
+  "globalSeconds": 280,
+  "minimumFreeBytes": 3221225472,
+  "maximumCsvBytesPerWriter": 1048576,
+  "maximumJsonBytesPerFile": 65536,
+  "maximumChildLogBytesPerPoint": 262144,
+  "maximumGlobalOutputBytes": 25952256,
+  "java": "/opt/vectormatch-cpu/tools/jdk/bin/java",
+  "artifactRoot": "/opt/vectormatch-cpu/force-probe-artifacts/force-probe-cpu-20261024-r2",
+  "dataParent": "/opt/vectormatch-cpu/force-path-probes",
+  "control": "/workspace/vectormatch-cpu-control/force-probe-cpu-20261024-r2",
+  "localArtifact": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/artifact-ea3de8c5317f6375.tar",
+  "scope": "Exploratory synthetic FileChannel write+force(true), not trading/Aeron or pure fsync/CPU exclusivity. Threads1/3 in one JVM; fixed order can confound host/JIT drift. Preallocation/warmup/measurement retained separately; no Linux result exists until actual run.",
+  "recovery": "One immutable attempt; no auto retry/resubmit/resume/prune. Query same controller after transport ambiguity. Any partial/failure/unproven owned stop permanently blocks later points.",
+  "planSha256": "43653f80986d2a070410d8c47fe6fa1ee37fd34ffaef03c25465514643f6f1ed"
+}

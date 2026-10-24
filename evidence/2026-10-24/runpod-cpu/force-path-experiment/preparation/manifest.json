@@ -1,0 +1,344 @@
+{
+  "schemaVersion": 1,
+  "preparedAtUtc": "2026-10-24T04:12:35.415413+00:00",
+  "sources": {
+    "ForcePathProbe.java": {
+      "sha256": "3331268b1852d53c9f20b767f632c84280518239a4d3a508253919abeac10e74",
+      "bytes": 20394
+    },
+    "ForcePathProbeClockGuard.java": {
+      "sha256": "df03941c75e8b92d81e0727570a7e774f59ce53bdc8373bd54bca8e2963a2668",
+      "bytes": 1318
+    },
+    "test_force_path_probe.py": {
+      "sha256": "246665fcd7f16f22b5fd8100f0d30da7a3626a006923489c8843f0bab54b32d3",
+      "bytes": 7903
+    },
+    "README.md": {
+      "sha256": "d85ca62f06bef7c180c6480095ca6fb70f669df6859e4eda93f9aa4d6b562b99",
+      "bytes": 6029
+    }
+  },
+  "runtimeClasses": {
+    "ForcePathProbe$Budget.class": {
+      "sha256": "625558f8cd1065016834e65310bfd37764b30e6973a5ea375069636f133c0fe3",
+      "bytes": 1386
+    },
+    "ForcePathProbe$Options.class": {
+      "sha256": "650a90551b07d57b181bd53bed09427fe984df04ecaa064195e558b0b6d5ecdf",
+      "bytes": 5974
+    },
+    "ForcePathProbe$WriterResult.class": {
+      "sha256": "02c978e7863b3cdca6327c1070ad10f5e3a8a39a9fe690ae1693bb26b51d23bd",
+      "bytes": 991
+    },
+    "ForcePathProbe.class": {
+      "sha256": "de5dccc1c484319da855053bae6309a8500e57d82812d322e38ce85107e8a8c8",
+      "bytes": 20975
+    }
+  },
+  "validation": [
+    {
+      "name": "compile",
+      "arguments": [
+        "/Users/kevin/Documents/ChatGPT/App 2/.tools/jdk/bin/javac",
+        "--release",
+        "21",
+        "-d",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/build",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/ForcePathProbe.java"
+      ],
+      "workingDirectory": "/Users/kevin/Documents/ChatGPT/App 2",
+      "startedAtUtc": "2026-10-24T04:12:33.201521+00:00",
+      "exitCode": 0,
+      "elapsedSeconds": 0.40680662500000003,
+      "stdout": "",
+      "stderr": "",
+      "log": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/compile.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "guard-tests",
+      "arguments": [
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation",
+        "-p",
+        "test_force_path_probe.py",
+        "-v"
+      ],
+      "workingDirectory": "/Users/kevin/Documents/ChatGPT/App 2",
+      "startedAtUtc": "2026-10-24T04:12:33.608633+00:00",
+      "exitCode": 0,
+      "elapsedSeconds": 1.692896,
+      "stdout": "",
+      "stderr": "test_each_supported_block_size_has_only_tiny_bounded_writes (test_force_path_probe.ForceProbeGuards) ... ok\ntest_explicit_total_write_budget_includes_preallocation_warmup_measurement (test_force_path_probe.ForceProbeGuards) ... ok\ntest_injected_monotonic_deadline_retains_failure_never_success (test_force_path_probe.ForceProbeGuards) ... ok\ntest_invalid_size_writers_count_time_bounds_do_not_create_output (test_force_path_probe.ForceProbeGuards) ... ok\ntest_no_overwrite_or_failure_receipt_in_existing_directory (test_force_path_probe.ForceProbeGuards) ... ok\ntest_noncanonical_overflow_negative_or_unknown_options_refused (test_force_path_probe.ForceProbeGuards) ... ok\ntest_real_three_threads_independent_files_and_rows_not_three_JVM_claim (test_force_path_probe.ForceProbeGuards) ... ok\ntest_real_tiny_one_writer_all_phases_rows_force_true_counts_and_file_hash (test_force_path_probe.ForceProbeGuards) ... ok\ntest_space_floor_before_creation (test_force_path_probe.ForceProbeGuards) ... ok\ntest_symlink_parent_and_production_path_refused (test_force_path_probe.ForceProbeGuards) ... ok\n\n----------------------------------------------------------------------\nRan 10 tests in 1.643s\n\nOK\n",
+      "log": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/guard-tests.log",
+      "logSha256": "55548cf57c394d3fe7137d24e82f1b9d671db02a3ab7a12b0d290d2c9e2008ce"
+    },
+    {
+      "name": "java-version",
+      "arguments": [
+        "/Users/kevin/Documents/ChatGPT/App 2/.tools/jdk/bin/java",
+        "-version"
+      ],
+      "workingDirectory": "/Users/kevin/Documents/ChatGPT/App 2",
+      "startedAtUtc": "2026-10-24T04:12:35.301628+00:00",
+      "exitCode": 0,
+      "elapsedSeconds": 0.032028584000000304,
+      "stdout": "",
+      "stderr": "openjdk version \"21.0.13\" 2026-10-20 LTS\nOpenJDK Runtime Environment Temurin-21.0.13+9 (build 21.0.13+9-LTS)\nOpenJDK 64-Bit Server VM Temurin-21.0.13+9 (build 21.0.13+9-LTS, mixed mode, sharing)\n",
+      "log": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/java-version.log",
+      "logSha256": "477d64a6b08c9a9dd143deae108edf7929a93b40434d87285d41addc8fba509f"
+    },
+    {
+      "name": "local-schema-smoke",
+      "arguments": [
+        "/Users/kevin/Documents/ChatGPT/App 2/.tools/jdk/bin/java",
+        "-Xms32m",
+        "-Xmx64m",
+        "-cp",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/build",
+        "ForcePathProbe",
+        "--output-dir",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/force-path-probes/force-probe-local-schema-01",
+        "--block-bytes",
+        "4096",
+        "--writers",
+        "1",
+        "--file-bytes-per-writer",
+        "8192",
+        "--warmup-iterations",
+        "1",
+        "--measurement-iterations",
+        "3",
+        "--max-total-write-bytes",
+        "24576",
+        "--max-duration-ms",
+        "5000",
+        "--min-free-bytes",
+        "1048576",
+        "--scope-label",
+        "schema-smoke"
+      ],
+      "workingDirectory": "/Users/kevin/Documents/ChatGPT/App 2",
+      "startedAtUtc": "2026-10-24T04:12:35.333812+00:00",
+      "exitCode": 0,
+      "elapsedSeconds": 0.08103529100000006,
+      "stdout": "",
+      "stderr": "",
+      "log": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/local-schema-smoke.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "guardTests": {
+    "count": 10,
+    "failures": 0,
+    "skipped": 0,
+    "scope": "Local small tests, including actual tiny1/3threads and all4block sizes; notLinux or transaction performance"
+  },
+  "smoke": {
+    "directory": "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/force-path-preparation/force-path-probes/force-probe-local-schema-01",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "rows": 5,
+    "measurementRows": 3,
+    "forceTrueCalls": 5,
+    "totalDataWrittenBytes": 24576,
+    "files": {
+      "configuration.json": {
+        "sha256": "ab9b02ded05bbfb8c6e048098aa1cf2b7a860bd5e8ec82da88b3955f2c6835a7",
+        "bytes": 1723
+      },
+      "success.json": {
+        "sha256": "0f32de11ddd54ada8f8774d9fd8049e944b8da0a730501554c2ff084eda8e1d6",
+        "bytes": 566
+      },
+      "synthetic-force-writer-0.data": {
+        "sha256": "ca52b15859957843972be8fea6cf7bc969f4ef91c4f330bfd21701b8c0f0a41f",
+        "bytes": 8192
+      },
+      "writer-0.csv": {
+        "sha256": "96a7015b9b6922dccd2cdb934b597cd2ff1e8c92b9d4d1cc98112880f9b2b8cf",
+        "bytes": 860
+      }
+    },
+    "configuration": {
+      "schemaVersion": 1,
+      "label": "schema-smoke",
+      "startedAtUtc": "2026-10-24T04:12:35.367576Z",
+      "scope": "SYNTHETIC_FILECHANNEL_FORCE_TRUE_SINGLE_JVM_THREADS_NOT_TRADING",
+      "writerModel": "one JVM, one thread and independent data+CSV per writer",
+      "writers": 1,
+      "blockBytes": 4096,
+      "fileBytesPerWriter": 8192,
+      "warmupIterationsPerWriter": 1,
+      "measurementIterationsPerWriter": 3,
+      "maxTotalWriteBytes": 24576,
+      "plannedTotalWriteBytes": 24576,
+      "plannedForceCalls": 5,
+      "byteBudgetScope": "Data-file write bytes only, including preallocation/warmup/measurement; CSV/configuration are additional bounded instrumentation",
+      "maximumCsvRows": 5,
+      "maxDurationMs": 5000,
+      "cleanupGraceMs": 1000,
+      "minFreeBytes": 1048576,
+      "forceMetadata": true,
+      "preallocation": "full logical zero writes then force(true); not guaranteed physical extent reservation",
+      "measurementPattern": "deterministic xorshift block per writer, reused direct ByteBuffer; buffer creation outside timed operation",
+      "filesystem": {
+        "name": "/dev/disk3s5",
+        "type": "apfs"
+      },
+      "os": {
+        "name": "Mac OS X",
+        "version": "26.6.2",
+        "arch": "aarch64"
+      },
+      "java": {
+        "version": "21.0.13",
+        "vendor": "Eclipse Adoptium",
+        "maxHeapBytes": 67108864,
+        "committedHeapBytes": 35651584
+      },
+      "threadCpuSupported": true,
+      "threadCpuEnabled": true,
+      "threadCpuScope": "current JVM worker thread CPU over timed operation bracket, including clock probes; null when unavailable; not physical disk CPU",
+      "timingScope": "write includes position/write loop and budget checks; force includes force(true) and adjacent clock/budget overhead. CSV/flush outside brackets can affect subsequent iteration cadence. Preallocation/warmup excluded from measurement phase. Deadline stops new I/O; an in-kernel operation can overrun and is reported failed, not a portable hard realtime guarantee."
+    },
+    "receipt": {
+      "passed": true,
+      "completedAtUtc": "2026-10-24T04:12:35.410804Z",
+      "totalWrittenBytes": 24576,
+      "forceTrueCalls": 5,
+      "allWorkerThreadsTerminated": true,
+      "writers": [
+        {
+          "writerId": 0,
+          "writtenBytes": 24576,
+          "forceCalls": 5,
+          "preallocationRows": 1,
+          "warmupRows": 1,
+          "measurementRows": 3
+        }
+      ],
+      "dataFiles": [
+        {
+          "name": "synthetic-force-writer-0.data",
+          "bytes": 8192,
+          "sha256": "ca52b15859957843972be8fea6cf7bc969f4ef91c4f330bfd21701b8c0f0a41f"
+        }
+      ],
+      "scope": "Synthetic file I/O observations only. No transaction p99, Linux disk saturation, Aeron replication, durable trading or unique bottleneck attribution."
+    },
+    "allRawRows": [
+      {
+        "schema_version": "1",
+        "phase": "preallocation",
+        "writer_id": "0",
+        "iteration": "-1",
+        "wall_utc": "2026-10-24T04:12:35.380159Z",
+        "monotonic_start_ns": "1100177235504375",
+        "offset_bytes": "0",
+        "requested_bytes": "8192",
+        "written_bytes": "8192",
+        "write_calls": "2",
+        "force_calls": "1",
+        "write_elapsed_ns": "208291",
+        "force_elapsed_ns": "3873959",
+        "total_elapsed_ns": "4082250",
+        "thread_cpu_ns": "320000",
+        "deadline_exceeded": "false",
+        "status": "complete",
+        "error": ""
+      },
+      {
+        "schema_version": "1",
+        "phase": "warmup",
+        "writer_id": "0",
+        "iteration": "0",
+        "wall_utc": "2026-10-24T04:12:35.384986Z",
+        "monotonic_start_ns": "1100177240167541",
+        "offset_bytes": "0",
+        "requested_bytes": "4096",
+        "written_bytes": "4096",
+        "write_calls": "1",
+        "force_calls": "1",
+        "write_elapsed_ns": "13334",
+        "force_elapsed_ns": "3578250",
+        "total_elapsed_ns": "3591584",
+        "thread_cpu_ns": "43000",
+        "deadline_exceeded": "false",
+        "status": "complete",
+        "error": ""
+      },
+      {
+        "schema_version": "1",
+        "phase": "measurement",
+        "writer_id": "0",
+        "iteration": "0",
+        "wall_utc": "2026-10-24T04:12:35.388834Z",
+        "monotonic_start_ns": "1100177244008791",
+        "offset_bytes": "0",
+        "requested_bytes": "4096",
+        "written_bytes": "4096",
+        "write_calls": "1",
+        "force_calls": "1",
+        "write_elapsed_ns": "12792",
+        "force_elapsed_ns": "3656417",
+        "total_elapsed_ns": "3669209",
+        "thread_cpu_ns": "41000",
+        "deadline_exceeded": "false",
+        "status": "complete",
+        "error": ""
+      },
+      {
+        "schema_version": "1",
+        "phase": "measurement",
+        "writer_id": "0",
+        "iteration": "1",
+        "wall_utc": "2026-10-24T04:12:35.392698Z",
+        "monotonic_start_ns": "1100177247874625",
+        "offset_bytes": "4096",
+        "requested_bytes": "4096",
+        "written_bytes": "4096",
+        "write_calls": "1",
+        "force_calls": "1",
+        "write_elapsed_ns": "11208",
+        "force_elapsed_ns": "3703083",
+        "total_elapsed_ns": "3714291",
+        "thread_cpu_ns": "50000",
+        "deadline_exceeded": "false",
+        "status": "complete",
+        "error": ""
+      },
+      {
+        "schema_version": "1",
+        "phase": "measurement",
+        "writer_id": "0",
+        "iteration": "2",
+        "wall_utc": "2026-10-24T04:12:35.396600Z",
+        "monotonic_start_ns": "1100177251778833",
+        "offset_bytes": "0",
+        "requested_bytes": "4096",
+        "written_bytes": "4096",
+        "write_calls": "1",
+        "force_calls": "1",
+        "write_elapsed_ns": "11000",
+        "force_elapsed_ns": "3990000",
+        "total_elapsed_ns": "4001000",
+        "thread_cpu_ns": "35000",
+        "deadline_exceeded": "false",
+        "status": "complete",
+        "error": ""
+      }
+    ],
+    "scope": "macOS local schema/bounds smoke only. No percentile or Linux disk/trading conclusion."
+  },
+  "remoteOperations": false,
+  "resourcesCreated": 0,
+  "productionSourceChanged": false,
+  "scope": "Independent standaloneJava21 synthetic FileChannel write+force(true) preparation; no remote launcher, SSH, cloud, Aeron, PGDATA or performanceclaim."
+}
