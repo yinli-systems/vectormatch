@@ -1,8 +1,10 @@
-# 原应用迁移至 CPU 的恢复计划（尚未执行）
+# 原应用迁移至 CPU：进展与恢复计划（业务恢复尚未验收）
 
-准备进展：原e1db源的85路径应用包已同源重建；固定Linux PostgreSQL18.6制品已在CPU上通过file/readelf/ldd及`postgres --version`，未启动数据库。收据在[恢复准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/root-scope.json)和[实际加载探针](../evidence/2026-10-24/runpod-cpu/restoration-preparation/loader-probe-r1/receipt.json)。此减缩PG制品没有`pg_controldata`/`pg_config`；原PGDATA、locale、lineage及应用恢复仍待验收，不能将二进制加载成功视为恢复完成。
+准备进展：原e1db源的85路径应用包已同源重建；固定Linux PostgreSQL18.6制品已在CPU上通过file/readelf/ldd及`postgres --version`。收据在[恢复准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/root-scope.json)和[实际加载探针](../evidence/2026-10-24/runpod-cpu/restoration-preparation/loader-probe-r1/receipt.json)。此减缩PG制品没有`pg_controldata`/`pg_config`，已另行原生构建两工具。数据库、原集群、gateway与projector均未启动，不能将二进制加载成功视为业务恢复完成。
 
-新增准备：固定官方18.6源码的两个工具已在CPU原生构建成功，20项离线守卫及每个原生命令/输出版本/格式宏检查通过；[r3证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg18-native-tools-r3/README.md)保留源码/二进制SHA、全部日志和前两次失败的原因。`pg_config`描述此次工具构建，不描述原Zonky服务器。依赖安装没有升级/移除既有包；原PGDATA仍未打开或启动。源码来源在[工具准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg18-tools-source/README.md)。无损稀疏解包器已核对三份固定SHA备份的1041文件/3,701,302,583逻辑字节清单，并在空闲CPU上通过10项微型合成文件测试，含实际Linux稀疏分配与完整字节读回。收据见[Linux守卫](../evidence/2026-10-24/runpod-cpu/restoration-preparation/sparse-native-guards-r1/receipt.json)；这些不是完整原生状态恢复或数据库恢复证明。
+隔离原生副本已实际恢复到`/opt/vectormatch-cpu/restorations/original-native-r1`：三份固定SHA备份的1041文件、3,701,302,583逻辑字节全部通过源内容及完整恢复文件SHA校验；稀疏分配93,749,248字节。原备份保留，未迁移owner。只读`pg_controldata18.6`无警告，控制版本1800，原数据库systemId7699920832388303129，状态`shut down`；检查前后PG_VERSION和pg_control SHA不变。[完整副本和控制检查证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/original-native-clone-r1/README.md)。locale、数据库内容/cursor与source lineage、三节点恢复、HTTP及WS仍未验收。
+
+新增准备：固定官方18.6源码的两个工具已在CPU原生构建成功，20项离线守卫及每个原生命令/输出版本/格式宏检查通过；[r3证据](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg18-native-tools-r3/README.md)保留源码/二进制SHA、全部日志和前两次失败的原因。`pg_config`描述此次工具构建，不描述原Zonky服务器。依赖安装没有升级/移除既有包，未启动数据库。源码来源在[工具准备](../evidence/2026-10-24/runpod-cpu/restoration-preparation/pg18-tools-source/README.md)。无损稀疏解包器此前已在空闲CPU通过10项微型合成文件测试，含实际Linux稀疏分配与完整字节读回；[Linux守卫](../evidence/2026-10-24/runpod-cpu/restoration-preparation/sparse-native-guards-r1/receipt.json)和本次完整副本检查分开保留。它们不是运行中数据库或业务恢复证明。
 
 此文是已核验备份和源码后的执行计划，不是恢复成功收据。**只能在 CPU 上所有 benchmark、容量负载及其采集/归档作业结束并确认进程停止后执行**。恢复另登记唯一 job、配置、源版本和制品 SHA；不复用容量试验目录或控制器，不修改原始备份与既有证据。CPU 仍是同一台主机上的三个 JVM，不能称为三台独立机器或跨机网络恢复。
 
