@@ -1,0 +1,5 @@
+# Original stopped recording-log metadata baseline
+
+All three pinned original backup archives contain 19-entry recording logs. The actual Aeron 1.53.3 reader found matching latest valid service/consensus snapshot metadata: leadership term9, term base3774752, snapshot position4643360, timestamp1792780564835. Each node has service0 recording7 and consensus service-1 recording8. The complete original archive SHA, stopped inventory SHA, raw1216-byte recording log, all entries, actual reader argv and byte-identical before/after SHA are retained.
+
+This read used disposable local copies. Aeron RecordingLog opens read/write even with its create flag false; only reader methods were invoked and the complete copies remained byte identical. No original/cloud recording log was opened, no Archive session or node started, and no RecoveryPlan was constructed. Matching metadata does not prove archive completeness, replay, canonical business state or restored application behavior. The latest open term10 and preceding log term positions are retained in the raw records; snapshot metadata must not be treated as the final committed position.
