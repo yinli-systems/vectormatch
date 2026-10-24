@@ -221,6 +221,15 @@ public final class RetentionCapacityPlanV3 {
                                              int eventFetchCount,int readWindow,long extras,long negatives) {
         requireReadWindow32(readWindow);requireEventFetchCount(eventFetchCount);
         if(arrivals!=33792||batchCap!=4)throw new IllegalArgumentException("read-window32 requires fixed LONG33792/cap4");
+        return readWindow32Envelope(arrivals,batchCap,profile,eventFetchCount,readWindow,extras,negatives);
+    }
+    /** Separate finite capacity admission; the original fixed LONG comparison remains strict. */
+    public static Plan maintainedCapacityPlan(int rate,RetentionServiceV3.Profile profile,long extras,long negatives) {
+        int arrivals=RetentionCapacityExperimentV3.Config.maintainedCapacityArrivals(rate);
+        return readWindow32Envelope(arrivals,4,profile,32,32,extras,negatives);
+    }
+    private static Plan readWindow32Envelope(int arrivals,int batchCap,RetentionServiceV3.Profile profile,
+                                             int eventFetchCount,int readWindow,long extras,long negatives) {
         Plan base=readWindowPlan(arrivals,batchCap,profile,8,extras,negatives,eventFetchCount);
         Probe p=probe(profile,batchCap,MAX_SUPPORTED_ARCHIVE_CHUNK,true,eventFetchCount);
         long staging=4L*EXPERIMENT_READ_ONLY_IN_FLIGHT*(p.readOnlyRequest+p.readOnlyReply)+READ_ONLY_FAILURE_METADATA_BYTES;

@@ -1,0 +1,13 @@
+# Next finite maintained-load capacity cohort
+
+The current8/32/8/32 comparison is complete. This proposal changes the offered load only after separately qualifying its new application artifact; it does not change the completed experiment or reuse its lineage.
+
+Use explicit capacity presets lasting20 seconds:500/1000/2000/4000/8000/16000 offered orders/s, with10000/20000/40000/80000/160000/320000 planned arrivals. Preserve leader0, sync2, page32, read32, batch4, chunk6144, owner1ms, driver100us, W128/Q64, session1 and finite350000-order ceiling. No test overlaps another or foreign Java workload. Independent scheduler timing remains a separate admission gate. The existing three-JVM single-host loopback topology remains explicit.
+
+The existing functional pilot insists on accepting every arrival. A separate capacity mode must instead retain queue rejection and all original arrival identities, reconcile every admitted physical request/reply and final full state, and classify loss/unknown/invalid scheduler separately from correctness. Do not change the original functional pilot or call an overloaded run a functional pass. An unresolved UNKNOWN or source fault stops progression and preserves its original identity. Never compute an all-arrival accepted p99 when some arrivals are missing or rejected; retain null and conditional quantiles with denominators.
+
+After initial coarse bracketing, run repeated boundary points and longer bounded windows. A20-second probe only brackets a finite-window transition; it cannot establish sustained capacity. Keep all failures, source bytes, run registration, actual JVM arguments and identity closures, raw CSV/wires/native state, telemetry, configuration and leader proofs, exact codec-derived space/journal/writer admission, and independent raw reanalysis. The current64GB prepaid CPU is the only resource; no new rental is required.
+
+Current evidence: in the slowest338 arrivals per run, scheduled-arrival-to-dispatch accounts for98.54%,97.57%,98.51%,96.14% of summed latency. Queue intervals overlap maintenance for97.76%,96.74%,97.81%,95.17% of those same summed latencies. These same-row partitions support investigating maintenance dispatch pauses; overlap alone does not isolate a causal network/server/disk bottleneck.
+
+Any later incremental-maintenance optimisation must preserve exact immutable archive/event prefixes, bounded outbox/history headroom, exclusive control/read phases, forced and read-back payloads before destructive ACK, original retry identities and terminal failure handling. It requires a new artifact and same-configuration A/B tests; do not mix it into the load staircase.

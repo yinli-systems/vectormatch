@@ -1,0 +1,37 @@
+/Users/kevin/Documents/ChatGPT/App 2/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:101: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+    private final class Fixture implements AutoCloseable {
+                  ^
+/Users/kevin/Documents/ChatGPT/App 2/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:167: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        for(int window:new int[]{1,8})try(var f=new Fixture("success-"+window,window,false)){
+                                              ^
+/Users/kevin/Documents/ChatGPT/App 2/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:185: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture("request-failure",8,false)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:194: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture("reply-failure",8,false)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:204: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture("timing-failure",8,false)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:212: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture("event-mismatch",8,false)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:222: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture("writer-failure",8,true)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:231: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        for(int page:new int[]{16,32})try(var f=new Fixture("event-page-"+page,8,false,page)){
+                                              ^
+/Users/kevin/Documents/ChatGPT/App 2/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:246: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture("page32-bad-event",8,false,32)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:255: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        for(int page:new int[]{16,32})for(int window:new int[]{8,32})try(var f=new Fixture("common32-success-"+page+"-"+window,window,false,page,true,2048)){
+                                                                             ^
+/Users/kevin/Documents/ChatGPT/App 2/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:300: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        for(String sink:new String[]{"requests","replies","timings"})for(int selected:new int[]{0,15,31})try(var f=new Fixture("common32-"+sink+"-"+selected,32,false,32,true,2048)){
+                                                                                                                 ^
+/Users/kevin/Documents/ChatGPT/App 2/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:360: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture("common32-writer",32,true,32,true,2048)){
+                ^
+12 warnings
