@@ -1,0 +1,2 @@
+import pathlib,sys,shutil,os; p=pathlib.Path('/opt/vectormatch-cpu/preparation/original-current-checkpoint-r3-source.tar.gz'); os.umask(0o077);
+with p.open('xb') as out:shutil.copyfileobj(sys.stdin.buffer,out)
