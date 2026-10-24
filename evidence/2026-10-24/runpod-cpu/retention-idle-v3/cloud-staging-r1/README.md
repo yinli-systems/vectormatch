@@ -1,0 +1,17 @@
+Closed CPU staging and arm1 launch provenance
+
+This archive contains 58 explicitly listed files from seven closed local directories: the stage/launch helpers and their local guards, actual CPU staging, root stage execution, arm1 launch and its wrapper execution, the exact read-only close inspection, and local collection configuration. The source list was fixed before copying. `SOURCE_COPY_BINDINGS.json` verifies every source before/after and copy by SHA, bytes, mode, UID, GID and mtime, plus all ten source directories and any empty directories. The total copied source payload is 4,816,370 bytes.
+
+The original `stage-bundle.tar.gz` remains byte-for-byte intact. Its complete 53 regular-file members were independently read without extraction and checked against the actual stage receipt. It contains the explicit frozen preparation/JAR/release allowlist; no recursive CPU preparation or job tree was added to this evidence archive.
+
+The local stage/launch guards passed 26 tests. The earlier directly observed 23-test tool run is retained as an observation and is not presented as a redirected full log. Actual CPU staging separately passed 27 delta and 122 frozen Python guards, then the default arm1 read-only preflight. Staging supplied no `--start-new` flag. Actual stage receipt SHA is `709bc3305cf83670c57c2b28537a1b4e030547118a005ea038394a73bce3ccf6`.
+
+The root wrapper initially looked for a `passed` field where the guard completion schema actually supplies `exitCode`. It failed before output creation or SSH, was corrected against the actual schema, and the original note is preserved unchanged in `idle-stage-execution-r1/REGISTRATION.json` under `earlierWrapperAttempt`.
+
+Arm1 was a separate explicit launch at configured maximum park 1ms, with the fixed release and controller. Launch outcome/identity records are retained. Later arms require an independently collected complete immediate predecessor and an explicit root gate; no subsequent arm is started by this archive or its preparation scripts. No independent maintenance-agent peer PASS is claimed. Root source review and the capacity agent's separate stage-flow read were reported in the working conversation; this archive retains the concrete executed sources and evidence.
+
+The exact close inspection source and output are preserved. Root's `ROOT_CONTROLLER_CLOSED.json` SHA is `8cfbaa2df1d3dd2f221e29269d677576edcab3dc385a749e8e84a5a1ad6f51f4`. Its strict absence observations cover the controller and four owned JVMs. This is a closed-process prerequisite, not a substitute for full independent raw/native collection.
+
+The local collection configuration binds all 53 staged source rows and three opaque execution metadata files. Its config SHA is `697350848d21ed0c93861232c671e224795c35c2ee1f4fb50b2af73ea010308f`. The pending command template is retained as originally prepared before the actual root closure SHA existed; it is not rewritten to pretend that the closure was known earlier.
+
+The in-progress arm1 collection, live remote state, other arm/native trees, new close/preparation attempts, SSH private keys, API credentials and the `remote.py` body are excluded. Existing helper path/SHA references are retained. This archive was created with local file reads/copies only: no Git operation, JVM, SSH call, workload, business request or process signal. It makes no throughput, latency improvement, sustained-capacity or hard real-time claim. Full raw benchmark validation is separate.
