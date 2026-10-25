@@ -1,0 +1,5 @@
+# Capacity auditor: explicit phase admission fence
+
+The independent auditor now accepts business publications only in explicitly permitted coordinator phases:IDLE for PAUSE,and IDLE/VERIFY_WAIT/FILE_WAIT for CONTINUE. It also verifies the full phase chain and exact1536-command cuts. A forged ACK_DRAIN interval containing business is accepted by the earlier auditor and rejected by this version,isolating the missing audit guard. The actual coordinator had already enforced the correct admission policy;no service or load-generator code changed.
+
+Eight checks passed:one relocated valid original and seven semantic corruptions. Six fixtures are byte-preserved in the prior committed local-qualification package at6716f74aceb1eb8bb53c4f8ced6cb9630cd1c5da;this archive contains their new audit outputs and the full new phase fixture. The prior complete actual-Git restoration proof verifies all2544 original members and824 main-CI members. This checker revision has its own semantic qualification and does not imply a new application performance result.

@@ -34,6 +34,7 @@ while trace.offset<len(trace.body):
  elif kind==4:
   value=json.loads(body);assert value['correlationId']in requests;assert value['wireSha256']==digest(requests[value['correlationId']]['body']);observations[value['correlationId']].append((ns,value))
  else:receipts.append((ns,json.loads(body)))
+assert all(phases[n][1]['from']==phases[n-1][1]['to']for n in range(1,len(phases)))
 assert set(requests)==set(logical_replies) and phases[0][1]['from']=='INITIALIZING'and phases[-1][1]['to']=='IDLE'
 retained=set();peak=0;generations=set()
 for kind,number,ns,body in records:
@@ -74,7 +75,7 @@ for ordinal,row in enumerate(codes,1):
   for timestamp,value in phases:
    if timestamp>called:break
    phase=value['to']
-  assert phase not in forbidden,('business offer inside exclusive phase',phase,cid)
+  assert phase in ({'IDLE','VERIFY_WAIT','FILE_WAIT'} if configuration['fileWorkDispatchPolicy']=='CONTINUE' else {'IDLE'}),('business offer outside explicitly admitted phase',phase,cid)
 assert expected_positive==positives
 for cid,value in requests.items():assert originals[cid]==value['body']and 1<=positive_counts[cid]<=4
 business_commands={}
@@ -140,7 +141,7 @@ for cid,request in requests.items():
  r,s,_=header(wire);tag=r.value('B');producer=r.text(48);sequence=r.value('q')
  if tag==2:
   commits+=1;assert producer=='archive'and sequence==commits
-  ack_scope=(r.text(64),r.text(64));first=r.value('q');last=r.value('q');previous=r.text(64);chain=r.text(64);payload=r.text(64);r.end();assert ack_scope[1]==scope[1]and first==through+1
+  ack_scope=(r.text(64),r.text(64));first=r.value('q');last=r.value('q');previous=r.text(64);chain=r.text(64);payload=r.text(64);r.end();assert ack_scope[1]==scope[1]and first==through+1 and last==min(commits*1536,accepted+3)
   if previous_chain is not None:assert previous==previous_chain
   previous_chain=chain;through=last
   archives=[(time,value)for time,value,body in receipt_by_path.values()if value['kind']=='archive'and value['sha256']==payload];assert len(archives)==1 and archives[0][0]<min(calls[cid])
