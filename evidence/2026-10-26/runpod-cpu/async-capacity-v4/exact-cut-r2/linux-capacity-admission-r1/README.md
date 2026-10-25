@@ -1,0 +1,9 @@
+# Exact-cut V4: Linux admission before native capacity execution
+
+The complete original Linux correctness source, compiled bodies, JUnit and public logs are nested in this archive. All five Java test tasks must execute with a fresh Gradle home and without result cache. The required totals are442 Java and197 Python tests, including11 PostgreSQL integration tests, zero failure/error/skip, plus web checks and actual failover/snapshot/restart. Hosted-account billing remains unresolved. This is correctness evidence, not performance certification.
+
+All application JAR class bodies must equal the actual successful CI compiled bodies. The same454-file JDK image, nineteen actual loaded class origins, host ephemeral bounds and all fifteen fixed22000 endpoints are verified independently. Normal cuts require exactly1536 known/drained commands; only the final exhausted-source cut may be partial. The corrected original-admission/drain checker has14 actual Python3.8 checks across11 cases, with complete951-file evidence separately attached and fully re-downloaded from this private repository. The original1000/s1535-command-cut failure remains disqualified.
+
+This new artifact begins a fresh500/s C1/D1/C2/D2 comparison. All20 prospective points are frozen before execution; higher rates1000/2000/4000/6000 require complete prior-point raw closure and review. Same source, leader0, sync2,127 active producers,128 allocated slots, three actual JVMs,20-second independent arrival clock, bounded resources and strict original process identity/pidfd cleanup. No CI overlap, automatic rerun, kernel change or relaxed limit. No original500/s performance result transfers to this artifact.
+
+No native point has yet executed at admission.10ms p99 remains an engineering target. Three JVMs on one physical CPU do not prove host fault isolation. Continuous100M, long-run SLA, hard real-time, production10/10, HFT endorsement and funded venue trading remain unproven.
