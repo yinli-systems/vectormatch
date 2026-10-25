@@ -1,0 +1,7 @@
+# Completed fixed1000/s read32/128 ABAB reporting
+
+Both pairs reduce scheduled-arrival p99 by22.79%/26.64% and maintenance wall22.13%/24.69%. Four fresh20000-order lineages retain every original outcome; no loss/reject/unknown/scheduler>20ms lateness. Actual read registry high-waters32/128/32/128. All four original native/raw archives and full private Git-blob proofs bind this reporting. Complete four-CSV p50/p99/in-window counts, cycle walls and common-budget/distinct-lineage review passed independently. No throughput ceiling,100M or hard realtime claim.
+
+The evidence index adds four records to the existing29 without altering earlier records or capacity groups. Exact derivation, actual HTTP before/after payloads and atomic application source are retained. Passive local preview was found exited and restored using62 exactly pinned old runtime JARs, fresh empty synthetic state, disabled bootstrap/flow, no cloud or SQL configuration. HTTP validation passed. Browser visual validation was unavailable; no screenshot/layout QA is claimed.
+
+Controller label-selector revision, original first-arm freeze, full prior closure/private gates, failed premature local collection and early pre-push verification attempts remain retained. Those guards rejected before reading active native files or issuing a false proof. No business orders were rerun. The explicit128 candidate leaves all legacy defaults unchanged. Full original closures are referenced by their exact manifests; this report does not duplicate multi-GiB native contents.
