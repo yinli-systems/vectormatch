@@ -206,8 +206,9 @@ public final class RetentionWireV3 {
                 throw new IOException("nested V3 business request too large");
             out.writeInt(nested.length); out.write(nested);
         } else if (operation instanceof BusinessBatch batch) {
-            // Revalidate even when called through the cache/snapshot operation encoder.
-            batch = new BusinessBatch(batch.commands());
+            // The canonical constructor already validates and defensively copies the list.
+            // Its sealed Command records contain only immutable values. Each nested command
+            // is still canonically encoded below; rebuilding the validated batch repeats that work.
             out.writeByte(BUSINESS_BATCH); out.writeInt(batch.commands().size());
             for (Command command : batch.commands()) {
                 byte[] nested = canonicalBusinessBytes(command);
