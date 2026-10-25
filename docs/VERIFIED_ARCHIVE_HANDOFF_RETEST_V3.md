@@ -1,0 +1,24 @@
+# Registered handoff retest with one common qualified identity sampler
+
+This is a new comparison with new exclusive namespaces and business lineages. The [initial campaign](VERIFIED_ARCHIVE_HANDOFF_INITIAL_RESULTS_V3.md) remains incomplete:C1/D1 are valid,C2 is invalid,D2 never executes. Its exact exception lacks PID/read-phase detail;the independently reproduced sampler defect does not establish that historical trigger. All three original native assets must be privately restored and member-verified before this retest begins. No original outcome,invalid status or lineage is overwritten or replayed.
+
+## Frozen components
+
+- Timing control:sourceaed9430d,code `f3a5745cb67f6d46aae28ef68dede0a5b7a767a795dab3bd07c3b5d4143464ca`,actual CI5 JARs.
+- Immutable handoff candidate:source23f9c070,code `79e5a932a4c22a3abe3cf9199938975478aff6c49bccf74b8e729b29dd228e2f`,actual CI6 JARs. All227 actual CI7 application classes agree with the qualified CI6 classes;no new application artifact is substituted.
+- Common identity reader:actual CI7 source4198aadd,body SHA-256 `cf2dd046a5249b0e39d8bbacfdd760e7303af95bb6a851fb1b4d7feb3e980bc8`. All18 tests pass on the actual Python3.8.10 controller runtime;the full forced Linux Python3.12 suite passes189 tests,and394 Java tests including11 real PostgreSQL tests,failover and web checks pass with0 skips.
+- Owned wrapper SHA-256 `1201c6f3ecf6c9ded4c4ea7ba7d90432309573f24047be3a177d10d152b3f3eb`;CPU loader SHA-256 `5dcedc137957bdbfa8f502eccc68c233cf6ece09afc7e5c055a58167dac41983`. Only the owned process_identity function and the loader's bound base-source hash change. All other lifecycle/signal AST is identical. The four idle/owner/shutdown/readiness source bodies remain byte-identical. The cached reader executes the same once-read,hash-verified CI source;standalone probe/collection imports also bind that exact body.
+
+The actual CPU owned-child proof rejects a wrong identity without signaling,then stops the matching child through the original pidfd SIGTERM path and verifies strict exit. It introduces no numeric-PID fallback or forced kill. This is correctness qualification,not a latency result. The complete qualification must be committed,pushed,restored from actual Git bytes and verified before any retest orders.
+
+## Fixed four-arm protocol
+
+Execute C1/D1/C2/D2 under `/opt/vectormatch-cpu/experiments/verified-archive-handoff-retest-<case>-r1`. C uses the timing control;D uses the candidate. Each arm has80,000 fresh one-unit IOC arrivals at4,000/s for20s,against the same one-price seeded-maker workload. Fresh lineages are distinct;their totals are not continuous endurance.
+
+Keep leader0,sync2,ROTATING_CONTINUE,read128,page32,batch4,chunk6144,owner1ms,driver100us,W128/Q64,one physical session,JDK/host/boot/affinity/cgroups and all byte/file/time bounds fixed. Keep the original two2s readiness observations around setup/5s warm-up,no JFR,and the same project-only read-only cache preconditioning before each idle arm. All four arms use the same newly qualified sampler. Its observer source version differs from the initial campaign,so retest observations form separate cohorts and are not merged into the old capacity curve.
+
+The primary comparison is all-arrival scheduled-to-confirmation p99;also report in-window goodput,offer-to-reply p99,backlog,rejection,notSent,observed/final UNKNOWN,every comparable recovery interval,trade/event closure and complete maintenance phase accounting. Preserve any regressing metric. A repeated finite improvement requires the primary p99 and maintenance wall to decrease in both paired observations with all known-outcome/native/readiness gates passing;report all tradeoffs even if that criterion holds. This is a descriptive finite criterion,not statistical significance or a sustained SLA.
+
+Preserve complete original bodies as private attachments in the already-qualified draft release423510304 under the same private repo. Retest assets use unique `handoff-retest-<case>-complete-original-scopes-r1.tar.gz` names;small committed manifests bind exact asset IDs,lengths,SHA-256 and full member inventories. Authenticate and download every byte,verify all original members,and close the private proof before the next arm. Unknown,invalid scheduling,native errors,incomplete identities or incomplete evidence stop progression. Do not retry the same namespace or business identities.
+
+No higher rate is registered. This retest does not establish5ms p99,a production certification,independent physical-host fault isolation,an external venue/funded-trading capability,or any100M target. Subsequent capacity/endurance work requires its own admission and evidence contract.
