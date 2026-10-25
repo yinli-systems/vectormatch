@@ -1510,6 +1510,66 @@
         "Same registered cache preconditioning and two original-PID2s readiness gates around5s warm-up.128 logical workers are one physical session;three JVMs share one host.",
         "Finite candidate comparison. No statistical significance,sustained capacity,millisecond SLA,independent-host isolation or100M claim. Candidate-codec checks are not an independent matching oracle."
       ]
+    },
+    {
+      "id": "cpu-handoff-exitwait-capacity-6000",
+      "label": "Verified handoff capacity · 6,000/s",
+      "scope": "120,000 planned;120,000 accepted;20s",
+      "model": "One CPU host · three JVMs · loopback UDP · one physical session",
+      "commands": 120000,
+      "throughput": 5990.25,
+      "p50Millis": 28.298557,
+      "p99Millis": 208.340423,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "timestamp": "2026-10-25T18:17:28.575801888Z",
+      "durability": "sync2;canonical forced payload/receipt readback before both ACKs",
+      "artifactPath": "evidence/2026-10-25/runpod-cpu/verified-archive-handoff-v3/capacity-6000-arm-d1-native-r1/README.md",
+      "limitations": [
+        "notSent=0;rejected/observed UNKNOWN/final UNKNOWN=0/0/0. All original outcomes reconcile;120000 unique trades.",
+        "Comparable full-cut intervals clearing recorded waiting:36/36. Conditional accepted-only p99:208.340423ms. Global accepted-arrival p99 is undefined on any notSent.",
+        "Same qualified sampler/readiness/cache preconditioning;fresh lineages are not continuous endurance. One short observation per rate;no statistical,physical-host isolation or millisecond SLA claim."
+      ]
+    },
+    {
+      "id": "cpu-handoff-exitwait-capacity-7000",
+      "label": "Verified handoff capacity · 7,000/s",
+      "scope": "140,000 planned;140,000 accepted;20s",
+      "model": "One CPU host · three JVMs · loopback UDP · one physical session",
+      "commands": 140000,
+      "throughput": 6968.05,
+      "p50Millis": 90.179984,
+      "p99Millis": 317.321132,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "timestamp": "2026-10-25T18:29:17.046914142Z",
+      "durability": "sync2;canonical forced payload/receipt readback before both ACKs",
+      "artifactPath": "evidence/2026-10-25/runpod-cpu/verified-archive-handoff-v3/capacity-7000-arm-d1-native-r1/README.md",
+      "limitations": [
+        "notSent=0;rejected/observed UNKNOWN/final UNKNOWN=0/0/0. All original outcomes reconcile;140000 unique trades.",
+        "Comparable full-cut intervals clearing recorded waiting:35/43. Conditional accepted-only p99:317.321132ms. Global accepted-arrival p99 is undefined on any notSent.",
+        "Same qualified sampler/readiness/cache preconditioning;fresh lineages are not continuous endurance. One short observation per rate;no statistical,physical-host isolation or millisecond SLA claim."
+      ]
+    },
+    {
+      "id": "cpu-handoff-exitwait-capacity-7500",
+      "label": "Verified handoff capacity · 7,500/s",
+      "scope": "150,000 planned;75,469 accepted;20s",
+      "model": "One CPU host · three JVMs · loopback UDP · one physical session",
+      "commands": 150000,
+      "throughput": 3361.45,
+      "p50Millis": null,
+      "p99Millis": null,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "timestamp": "2026-10-25T18:41:13.315569110Z",
+      "durability": "sync2;canonical forced payload/receipt readback before both ACKs",
+      "artifactPath": "evidence/2026-10-25/runpod-cpu/verified-archive-handoff-v3/capacity-7500-arm-d1-native-r1/README.md",
+      "limitations": [
+        "notSent=74531;rejected/observed UNKNOWN/final UNKNOWN=0/0/0. All original outcomes reconcile;75469 unique trades.",
+        "Comparable full-cut intervals clearing recorded waiting:0/19. Conditional accepted-only p99:4557.860156ms. Global accepted-arrival p99 is undefined on any notSent.",
+        "Same qualified sampler/readiness/cache preconditioning;fresh lineages are not continuous endurance. One short observation per rate;no statistical,physical-host isolation or millisecond SLA claim."
+      ]
     }
   ],
   "capacityCohorts": [
@@ -3754,6 +3814,73 @@
           "drainSeconds": 0.182484136,
           "classification": "FINITE_20S_HANDOFF_COMPARISON",
           "peakBacklog": 1040,
+          "valid": true,
+          "stable": null,
+          "windowSeconds": 20
+        }
+      ]
+    },
+    {
+      "id": "cpu-handoff-exitwait-capacity-20s",
+      "title": "Verified handoff candidate capacity · 20s",
+      "updatedAt": "2026-10-25T18:41:13.315569110Z",
+      "reportPath": "docs/VERIFIED_HANDOFF_CAPACITY_RESULTS_V3.md",
+      "configurationFingerprint": "79e5a932a4c22a3abe3cf9199938975478aff6c49bccf74b8e729b29dd228e2f",
+      "scope": "Three fresh20s lineages at6000/7000/7500 per second. Same artifact,leader0,sync2,three JVMs on one CPU host,loopback UDP,one physical session,128 workers,Q64,batch4,read128,page32,chunk6144,owner1ms,driver100us.7500 severe valid overload;8000 not executed. These are finite observations,not a sustained ceiling,an SLA or100M.",
+      "points": [
+        {
+          "id": "cpu-handoff-exitwait-capacity-6000",
+          "rate": 6000,
+          "workers": 128,
+          "goodput": 5990.25,
+          "p99Millis": 208.340423,
+          "clientNotSent": 0,
+          "rejected": 0,
+          "serverErrors": 0,
+          "unknown": 0,
+          "unresolved": 0,
+          "allOfferedAcceptedP99Millis": 208.340423,
+          "drainSeconds": 0.190099975,
+          "classification": "FINITE_GATE_PASSED",
+          "peakBacklog": 599,
+          "valid": true,
+          "stable": null,
+          "windowSeconds": 20
+        },
+        {
+          "id": "cpu-handoff-exitwait-capacity-7000",
+          "rate": 7000,
+          "workers": 128,
+          "goodput": 6968.05,
+          "p99Millis": 317.321132,
+          "clientNotSent": 0,
+          "rejected": 0,
+          "serverErrors": 0,
+          "unknown": 0,
+          "unresolved": 0,
+          "allOfferedAcceptedP99Millis": 317.321132,
+          "drainSeconds": 0.036410372,
+          "classification": "FINITE_GATE_PASSED",
+          "peakBacklog": 1769,
+          "valid": true,
+          "stable": null,
+          "windowSeconds": 20
+        },
+        {
+          "id": "cpu-handoff-exitwait-capacity-7500",
+          "rate": 7500,
+          "workers": 128,
+          "goodput": 3361.45,
+          "p99Millis": null,
+          "clientNotSent": 74531,
+          "rejected": 0,
+          "serverErrors": 0,
+          "unknown": 0,
+          "unresolved": 0,
+          "allOfferedAcceptedP99Millis": null,
+          "drainSeconds": 2.270914586,
+          "classification": "VALID_SEVERE_OVERLOAD",
+          "peakBacklog": 8192,
           "valid": true,
           "stable": null,
           "windowSeconds": 20
