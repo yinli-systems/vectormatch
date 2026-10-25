@@ -1,0 +1,9 @@
+# Candidate capacity admission, before orders
+
+The completed4k C1/D1/C2/D2 source/raw/private proofs remain closed. Register only candidate79 source23f9 with the unchanged CI8-qualified51ad/d700/11d sampler and original lifecycle. Actual Linux metadata already records matching rotating/fixed fine-rate plans at6000/7000/7500/8000,for120k/140k/150k/160k fresh20s arrivals. This package does not claim those rates have executed or passed.
+
+All four sets of helper sources and analysis classes are retained. The per-rate controller replaces historical template authority with the exact private admission and prior candidate point;it retains the original artifact's4k code/CI qualification rather than rewriting that record. A separately closed prior point must satisfy zero missing/rejected/unknown,valid timing,>=99% in-window confirmation and global p99<=1s before escalation. Stronger complete interval clearing is reported separately. No rate above8k is admitted.
+
+The new trade counter accepts an explicit expected accepted count. Its four compiled bodies agree;the full80k positive result exactly matches the previously qualified counter on the original D2 tape,and79999/80001/0 expectations are refused. The input is byte-bound to an already fully authenticated original D2 private asset;only a redundant readback copy is retired,with its restore member and SHA retained. Business-rejection cases explicitly mark this simple trade counter inapplicable while preserving authoritative root/raw results;they cannot permit escalation. These are analysis tests,not new orders or a matching oracle.
+
+Complete raw attachments,byte/member verification,resource/retention floors,source/readiness/ownership gates and all invalid observations are retained. This is preparation until a whole-Git private restoration proof creates the exact per-rate admission receipts. No new resource,paid service,GPU,SLA,production or100M claim.
