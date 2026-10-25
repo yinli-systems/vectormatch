@@ -176,7 +176,13 @@ public final class RetentionCapacityAeronPilotV3 {
     }
     /** Same artifact, fixed20-second source and five-second pre-load warm-up in both arms. */
     public static Path runReadWindow128Capacity(Path newArmRoot,int ports,int window)throws Exception{
-        var config=RetentionCapacityExperimentV3.Config.readWindow128Capacity(window);
+        return runReadWindow128Configuration(newArmRoot,ports,RetentionCapacityExperimentV3.Config.readWindow128Capacity(window));
+    }
+    public static Path runMaintainedReadWindow128Capacity(Path newArmRoot,int ports,int rate)throws Exception{
+        return runReadWindow128Configuration(newArmRoot,ports,RetentionCapacityExperimentV3.Config.maintainedReadWindow128Capacity(rate));
+    }
+    private static Path runReadWindow128Configuration(Path newArmRoot,int ports,RetentionCapacityExperimentV3.Config config)throws Exception{
+        int window=config.readWindow();
         var idle=RetentionIdlePolicyV3.systemSelection();var owner=RetentionOwnerPollPolicyV3.systemSelection();
         if(!idle.explicit()||idle.maximumParkNs()!=100000L||owner.effectiveMaximumParkNs()!=1000000L||ports!=42000)
             throw new IllegalArgumentException("read128 requires fixed42000/server100us/owner1ms");
@@ -187,7 +193,7 @@ public final class RetentionCapacityAeronPilotV3 {
         finally{try{pilot.stopOwned();}catch(Throwable cleanup){if(failure!=null)failure.addSuppressed(cleanup);else throw cleanup;}
             finally{pilot.write("completion.json",Map.of("passed",passed&&pilot.allOwnedStopped,"allOwnedStopped",pilot.allOwnedStopped,
                     "independentHosts",false,"capacityOrEnduranceProven",false,"fixedLeader",0,"commonReadWindow128Envelope",true,
-                    "offeredRate",1000,"preloadWarmupMillis",5000,"readWindow",window,"eventFetchCount",32));}}
+                    "offeredRate",config.rate(),"preloadWarmupMillis",5000,"readWindow",window,"eventFetchCount",32));}}
         return pilot.root;
     }
     /** Separate load preset: correctness reconciles all admitted requests; queue rejection stays observable. */
@@ -252,6 +258,11 @@ public final class RetentionCapacityAeronPilotV3 {
         if(!selection.explicit())throw new IllegalArgumentException("idle-window8 requires explicit JVM property "+RetentionIdlePolicyV3.PROPERTY+"=100000|1000000 before launch");
     }
     public static void main(String[] args)throws Exception{
+        if(args.length>=2&&args[1].equals("maintained-read128-capacity")){
+            if(args.length!=4||!Set.of("500","1000","2000","4000","8000","16000").contains(args[2])||!args[3].equals("42000"))throw new IllegalArgumentException("maintained-read128-capacity requires explicit500|1000|2000|4000|8000|16000 and42000");
+            Path result=runMaintainedReadWindow128Capacity(Path.of(args[0]),42000,Integer.parseInt(args[2]));
+            System.out.println("VECTOR_V3_MAINTAINED_READ128_CAPACITY_CORRECTNESS_PASS evidence="+result);return;
+        }
         if(args.length>=2&&args[1].equals("read-window128-capacity")){
             if(args.length!=4||!Set.of("32","128").contains(args[2])||!args[3].equals("42000"))throw new IllegalArgumentException("read-window128-capacity requires32|128 and42000");
             Path result=runReadWindow128Capacity(Path.of(args[0]),42000,Integer.parseInt(args[2]));

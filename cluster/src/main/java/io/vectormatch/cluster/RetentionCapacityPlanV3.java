@@ -240,6 +240,11 @@ public final class RetentionCapacityPlanV3 {
     public static Plan commonReadWindow128Plan(int window,RetentionServiceV3.Profile profile,long extras,long negatives){
         requireReadWindow128(window);return readWindowEnvelope(20000,4,profile,32,window,extras,negatives,128);
     }
+    /** Fixed128-credit capacity staircase uses the same codec bounds and finite caps. */
+    public static Plan maintainedReadWindow128Plan(int rate,RetentionServiceV3.Profile profile,long extras,long negatives){
+        int arrivals=RetentionCapacityExperimentV3.Config.maintainedCapacityArrivals(rate);
+        return readWindowEnvelope(arrivals,4,profile,32,128,extras,negatives,128);
+    }
     private static Plan readWindowEnvelope(int arrivals,int batchCap,RetentionServiceV3.Profile profile,
                                              int eventFetchCount,int readWindow,long extras,long negatives,int hardCapacity) {
         Plan base=readWindowPlan(arrivals,batchCap,profile,8,extras,negatives,eventFetchCount);

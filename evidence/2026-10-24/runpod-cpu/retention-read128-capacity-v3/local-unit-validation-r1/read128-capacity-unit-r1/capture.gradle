@@ -1,0 +1,10 @@
+allprojects {
+ tasks.withType(Test).configureEach {
+  systemProperty 'junit.jupiter.tempdir.cleanup.mode.default', 'NEVER'
+  doFirst {
+   def output = new File(rootProject.projectDir, 'runtime/cloud/cpu-20261024/read128-capacity-unit-r1/ACTUAL_TEST_INPUTS.json')
+   if(output.exists()) throw new GradleException('Test capture exists; preserve prior attempt')
+   output.text = groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson([javaExecutable:javaLauncher.get().executablePath.asFile.absolutePath,classpath:classpath.files.collect{it.absolutePath}.sort(),jvmArgs:jvmArgs,systemProperties:systemProperties,filter:filter.includePatterns]))+'\n'
+  }
+ }
+}

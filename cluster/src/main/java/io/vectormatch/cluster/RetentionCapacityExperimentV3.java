@@ -21,6 +21,7 @@ public final class RetentionCapacityExperimentV3 {
     public record Config(int arrivals,int rate,int batchCap,int archiveChunkBytes,int readWindow,boolean commonReadWindowEnvelope,int eventFetchCount,boolean commonEventFetchEnvelope,boolean commonReadWindow32Envelope,boolean maintainedCapacityPreset,boolean commonReadWindow128Envelope){
         public Config(int arrivals,int rate,int batchCap,int archiveChunkBytes,int readWindow,boolean commonReadWindowEnvelope,int eventFetchCount,boolean commonEventFetchEnvelope,boolean commonReadWindow32Envelope,boolean maintainedCapacityPreset){this(arrivals,rate,batchCap,archiveChunkBytes,readWindow,commonReadWindowEnvelope,eventFetchCount,commonEventFetchEnvelope,commonReadWindow32Envelope,maintainedCapacityPreset,false);}
         public static Config readWindow128Capacity(int window){return new Config(20000,1000,4,MAX_SUPPORTED_ARCHIVE_CHUNK,window,true,32,false,false,false,true);}
+        public static Config maintainedReadWindow128Capacity(int rate){int arrivals=maintainedCapacityArrivals(rate);return new Config(arrivals,rate,4,MAX_SUPPORTED_ARCHIVE_CHUNK,128,true,32,false,false,true,true);}
 
         public Config(int arrivals,int rate,int batchCap,int archiveChunkBytes,int readWindow,boolean commonReadWindowEnvelope,int eventFetchCount,boolean commonEventFetchEnvelope,boolean commonReadWindow32Envelope){this(arrivals,rate,batchCap,archiveChunkBytes,readWindow,commonReadWindowEnvelope,eventFetchCount,commonEventFetchEnvelope,commonReadWindow32Envelope,false);}
         public static Config maintainedCapacity(int rate){int arrivals=maintainedCapacityArrivals(rate);return new Config(arrivals,rate,4,MAX_SUPPORTED_ARCHIVE_CHUNK,32,true,32,false,true,true);}
@@ -38,7 +39,7 @@ public final class RetentionCapacityExperimentV3 {
             requireArchiveChunkBytes(archiveChunkBytes);
             if(commonReadWindow128Envelope){
                 RetentionCapacityPlanV3.requireReadWindow128(readWindow);
-                if(commonReadWindow32Envelope||maintainedCapacityPreset||arrivals!=20000||rate!=1000||batchCap!=4||archiveChunkBytes!=MAX_SUPPORTED_ARCHIVE_CHUNK||!commonReadWindowEnvelope||commonEventFetchEnvelope||eventFetchCount!=32)throw new IllegalArgumentException("read128 requires fixed20000@1000/cap4/chunk6144/page32 and exclusive128 envelope");
+                if(commonReadWindow32Envelope||(maintainedCapacityPreset?(arrivals!=maintainedCapacityArrivals(rate)||readWindow!=128):(arrivals!=20000||rate!=1000))||batchCap!=4||archiveChunkBytes!=MAX_SUPPORTED_ARCHIVE_CHUNK||!commonReadWindowEnvelope||commonEventFetchEnvelope||eventFetchCount!=32)throw new IllegalArgumentException("read128 requires fixed20000@1000/cap4/chunk6144/page32 and exclusive128 envelope");
             }else if(commonReadWindow32Envelope){
                 RetentionCapacityPlanV3.requireReadWindow32(readWindow);
                 if((maintainedCapacityPreset?(arrivals!=maintainedCapacityArrivals(rate)||eventFetchCount!=32||readWindow!=32):(arrivals!=33792||rate!=500))||batchCap!=4||archiveChunkBytes!=MAX_SUPPORTED_ARCHIVE_CHUNK||!commonReadWindowEnvelope||commonEventFetchEnvelope)throw new IllegalArgumentException("read-window32 requires fixed LONG33792@500/cap4/chunk6144 and one explicit fixed page");
@@ -98,6 +99,7 @@ public final class RetentionCapacityExperimentV3 {
     }
     public static RetentionCapacityPlanV3.Plan boundedPlan(Config config,RetentionServiceV3.Profile profile){
         var full=RetentionCapacityPlanV3.plan(config.arrivals(),config.batchCap(),profile);
+        if(config.commonReadWindow128Envelope()&&config.maintainedCapacityPreset())return RetentionCapacityPlanV3.maintainedReadWindow128Plan(config.rate(),profile,config.arrivals()/4L,config.arrivals()+full.maximumLogicalMaintenanceRpcs());
         if(config.commonReadWindow128Envelope())return RetentionCapacityPlanV3.commonReadWindow128Plan(config.readWindow(),profile,config.arrivals()/4L,config.arrivals()+full.maximumLogicalMaintenanceRpcs());
         if(config.maintainedCapacityPreset())return RetentionCapacityPlanV3.maintainedCapacityPlan(config.rate(),profile,config.arrivals()/4L,config.arrivals()+full.maximumLogicalMaintenanceRpcs());
         if(config.commonReadWindow32Envelope())return RetentionCapacityPlanV3.commonReadWindow32Plan(config.arrivals(),config.batchCap(),profile,config.eventFetchCount(),config.readWindow(),config.arrivals()/4L,config.arrivals()+full.maximumLogicalMaintenanceRpcs());
