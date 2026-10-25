@@ -65,6 +65,13 @@ public final class RetentionDurableWriterV3 implements AutoCloseable {
     public final class Ticket {
         private final Job job;
         private Ticket(Job job){this.job=job;}
+        /** Observe a complete file receipt without parking the transport owner or cancelling pending work. */
+        public Optional<Persisted> poll() throws IOException {
+            try{return Optional.ofNullable(job.done.getNow(null));}
+            catch(CompletionException|CancellationException failure){
+                throw new IOException("writer not proven complete; preserve partial file, no ACK authorization",failure);
+            }
+        }
         public Persisted await(Duration timeout) throws IOException {
             if(timeout==null||timeout.isZero()||timeout.isNegative()||timeout.compareTo(Duration.ofMinutes(2))>0)
                 throw new IllegalArgumentException("bounded writer wait required");
