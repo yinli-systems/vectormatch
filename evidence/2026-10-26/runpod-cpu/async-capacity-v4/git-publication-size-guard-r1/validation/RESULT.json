@@ -1,0 +1,55 @@
+{
+  "passed": true,
+  "atUTC": "2026-10-25T23:10:49.166083+00:00",
+  "cases": [
+    {
+      "name": "small-published-comparison-pass",
+      "arguments": [
+        "python3",
+        "runtime/cloud/cpu-20261024/git-blob-size-guard-preparation-r1/check-new-git-blobs.py",
+        "--repo",
+        "runtime/cloud/cpu-20261024/async-maintenance-v4-worktree",
+        "--base",
+        "599e9f6f",
+        "--head",
+        "f5321f5a"
+      ],
+      "expectedExit": 0,
+      "actualExit": 0,
+      "result": {
+        "base": "599e9f6f836b9323e4539728063b927688d07d6d",
+        "changedBlobObjectsChecked": 10,
+        "head": "f5321f5a8fc1165b7096e7f71e76d9afcdb1f791",
+        "maximumNewBlobBytes": 10485760,
+        "oversized": [],
+        "passed": true,
+        "policy": "Use immutable private attachments with complete SHA/member inventories for larger evidence. Existing Git history is not rewritten."
+      }
+    },
+    {
+      "name": "missing-base-fails-closed",
+      "arguments": [
+        "python3",
+        "runtime/cloud/cpu-20261024/git-blob-size-guard-preparation-r1/check-new-git-blobs.py",
+        "--repo",
+        "runtime/cloud/cpu-20261024/async-maintenance-v4-worktree",
+        "--base",
+        "refs/heads/missing-vectormatch-footprint-validation",
+        "--head",
+        "HEAD"
+      ],
+      "expectedExit": 2,
+      "actualExit": 2,
+      "result": {
+        "passed": false,
+        "error": "CalledProcessError",
+        "message": "Cannot prove changed Git object sizes;refuse publication."
+      }
+    }
+  ],
+  "originalTwoCasesRetained": true,
+  "totalObservedGitCases": 4,
+  "sourceSha256": "9f62f70c9c91d06d0ec4769a04a24940808a1d49d92213a506277c472cceee3b",
+  "actualGitRepositoryReadOnly": true,
+  "noCpuOrBusinessAction": true
+}

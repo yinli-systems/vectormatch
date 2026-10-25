@@ -24,3 +24,15 @@ The `correctness-existing-cpu` workflow runs a fresh source checkout, pinned JDK
 The workflow is manually dispatched to a pre-registered one-job, non-root runner on the existing prepaid CPU. It automatically deregisters after its job. Repository source and JUnit/compiler/CI-log archives identify each run's exact revision and hashes. No registration token, job credentials, SSH keys, `.git` authentication state or runner worker diagnostic log is included in those collections. The GitHub-hosted workflow remains subject to the account's billing blocker; a successful self-hosted run does not imply that account issue is fixed.
 
 See [production acceptance](PRODUCTION_ACCEPTANCE.md), [the capacity repeats](CAPACITY_BOUNDARY_REPEATS_V3.md) and [maintenance timing](MAINTENANCE_WRITER_TIMING_V3.md). Software checks, finite benchmarks, sustained operation and real funded trading are separate acceptance gates.
+
+## Keep new evidence publications small
+
+Before pushing a publication commit, inspect its added and changed Git blobs:
+
+```bash
+python3 scripts/check-new-git-blobs.py --base HEAD^ --head HEAD
+```
+
+The guard refuses changed blob paths over10MiB and fails closed if the revisions or object sizes cannot be read. Larger raw archives belong in immutable attachments to this same private repository,with committed SHA-256 and complete member inventories plus authenticated download verification. It leaves existing history unchanged;it does not claim that a large historical repository has become small.
+
+Actual read-only repository checks reproduce the accidental97885962-byte admission duplicate,accept the subsequent native manifests and small report,and refuse a missing base. The exact original admission archive is now a fully verified private attachment;its original Git commit and all frozen benchmark inputs remain available. See [the guard records](../evidence/2026-10-26/runpod-cpu/async-capacity-v4/git-publication-size-guard-r1/README.md).

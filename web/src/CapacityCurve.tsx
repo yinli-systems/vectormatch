@@ -533,7 +533,7 @@ export default function CapacityCurve({
             ],
             ["Initial unknowns", format(point.unknown, 0), ""],
             ["Unresolved", format(point.unresolved, 0), ""],
-            ["Peak backlog", format(point.peakBacklog, 0), "requests"],
+            ["Recorded backlog peak", format(point.peakBacklog, 0), "requests"],
           ].map(([label, value, unit]) => (
             <div key={label}>
               <dt>{label}</dt>
@@ -552,7 +552,8 @@ export default function CapacityCurve({
         latency; a low conditional p99 cannot establish the p99 of all offered
         requests. Windows shorter than 10 seconds are marked as insufficient
         evidence. Every recorded point remains available within its
-        configuration group.
+        configuration group. Backlog peaks follow each report's observation
+        method; a zero sampled peak does not prove that no requests waited.
       </p>
       <div className="capacity-footer">
         <span>

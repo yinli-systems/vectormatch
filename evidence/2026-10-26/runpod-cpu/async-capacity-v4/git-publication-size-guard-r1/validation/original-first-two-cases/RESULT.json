@@ -1,0 +1,63 @@
+{
+  "passed": true,
+  "atUTC": "2026-10-25T23:07:09.204944+00:00",
+  "sourceSha256": "9f62f70c9c91d06d0ec4769a04a24940808a1d49d92213a506277c472cceee3b",
+  "cases": [
+    {
+      "name": "actual-duplicate-admission-refused",
+      "arguments": [
+        "python3",
+        "runtime/cloud/cpu-20261024/git-blob-size-guard-preparation-r1/check-new-git-blobs.py",
+        "--repo",
+        "runtime/cloud/cpu-20261024/async-maintenance-v4-worktree",
+        "--base",
+        "5ac49059",
+        "--head",
+        "071800a9"
+      ],
+      "expectedExit": 1,
+      "actualExit": 1,
+      "result": {
+        "base": "5ac4905986e46ac49ca60591dd0d03c128981ff7",
+        "changedBlobObjectsChecked": 8,
+        "head": "071800a99a6d9a1c575a77c860e25505c3122ca2",
+        "maximumNewBlobBytes": 10485760,
+        "oversized": [
+          {
+            "bytes": 97885962,
+            "gitBlob": "2263600ca27a791b86a7be9dbae055dc56c4e788",
+            "path": "evidence/2026-10-26/runpod-cpu/async-capacity-v4/exact-cut-r2/linux-capacity-admission-r1/complete-linux-correctness-artifact-and-capacity-admission.tar.gz"
+          }
+        ],
+        "passed": false,
+        "policy": "Use immutable private attachments with complete SHA/member inventories for larger evidence. Existing Git history is not rewritten."
+      }
+    },
+    {
+      "name": "subsequent-small-native-manifests-pass",
+      "arguments": [
+        "python3",
+        "runtime/cloud/cpu-20261024/git-blob-size-guard-preparation-r1/check-new-git-blobs.py",
+        "--repo",
+        "runtime/cloud/cpu-20261024/async-maintenance-v4-worktree",
+        "--base",
+        "071800a9",
+        "--head",
+        "HEAD"
+      ],
+      "expectedExit": 0,
+      "actualExit": 0,
+      "result": {
+        "base": "071800a99a6d9a1c575a77c860e25505c3122ca2",
+        "changedBlobObjectsChecked": 70,
+        "head": "53079e9437f13344923fc85ad01d1c9ec6da0a78",
+        "maximumNewBlobBytes": 10485760,
+        "oversized": [],
+        "passed": true,
+        "policy": "Use immutable private attachments with complete SHA/member inventories for larger evidence. Existing Git history is not rewritten."
+      }
+    }
+  ],
+  "actualRepositoryReadOnly": true,
+  "noCpuOrBusinessAction": true
+}
