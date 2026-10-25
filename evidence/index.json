@@ -972,6 +972,102 @@
         "All original native/CSV/raw/index/offer/identity/result bodies and readiness counter rows verified and privately pushed at 072b1888416b5f62fab82aa73112e15d8e480bd3. Same applicatione5ac8f7c/code1a9ee958 as lower new-cohort points. Original failed older startup attempts remain separate.",
         "The exploration gate stopped load increases: confirmation fraction below99%,351 notSent and conditional p99 above1s.16k/s was not launched.20s observations are not sustained capacity,hard realtime or100M proof."
       ]
+    },
+    {
+      "id": "cpu-dispatch-fairness-1",
+      "label": "CPU dispatch ABAB · A1 fixed · 8,000/s · 205 not sent",
+      "scope": "160,000 planned · 159,795 accepted · 205 not sent · finite comparison",
+      "model": "One CPU host · three JVMs · loopback UDP · read128/page32 · one physical session",
+      "commands": 160000,
+      "throughput": 7775.85,
+      "p50Millis": null,
+      "p99Millis": null,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "durability": "sync2 replicated log; forced exact-prefix write/readback before ACK",
+      "artifactPath": "evidence/2026-10-24/runpod-cpu/retention-dispatch-fairness-v3/cloud-arm-1-r1/README.md",
+      "timestamp": "2026-10-25T11:11:57.611987173Z",
+      "limitations": [
+        "Predeclared fixed/rotating/fixed/rotating, arm 1, actual policy FIXED_ZERO_START. One fresh 20s lineage. 7775.85/s accepted inside the arrival window; 159795/160000 ultimately accepted. Server rejection and observed/final unknown are zero.",
+        "Accepted-only conditional p99=1005.502113ms. Global successful-arrival percentiles are unavailable: 205 QUEUE_FULL outcomes are excluded from this conditional distribution.",
+        "14 workers lose requests; max 21 per worker. Sampled aggregate queue high-water 4845; individual queue high-water 64. Original worker identities/FIFO and W128/Q64 are unchanged.",
+        "After first positive offer return, p99=11.126540ms. This includes client polling, loopback, replication and service; it does not isolate physical network RTT or CPU causality.",
+        "Same source9ca02a49/code679e202a for all four arms. Leader0/sync2/read128/page32/batch4/chunk6144/owner1ms/driver100us; one physical session. Both original-PID all-member readiness gates and5s warm-up passed; no JFR.",
+        "Full original native/CSV/wire/frame/index/offer/identity/result evidence and all readiness rows privately verified at 3889f6907abde78a2ff857f01354537ab9c4ccc3. The two pairs retain failures and noise; conditional distributions with missing arrivals cannot support a global-p99 improvement percentage.",
+        "Finite20s comparison; no sustained capacity, statistical significance, hard realtime or100M proof. Existing capacity curves remain separate because this is a repeated dispatch-policy comparison at one fixed offered rate."
+      ]
+    },
+    {
+      "id": "cpu-dispatch-fairness-2",
+      "label": "CPU dispatch ABAB · B1 rotating · 8,000/s · 0 not sent",
+      "scope": "160,000 planned · 160,000 accepted · 0 not sent · finite comparison",
+      "model": "One CPU host · three JVMs · loopback UDP · read128/page32 · one physical session",
+      "commands": 160000,
+      "throughput": 7833.45,
+      "p50Millis": 209.606662,
+      "p99Millis": 443.672731,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "durability": "sync2 replicated log; forced exact-prefix write/readback before ACK",
+      "artifactPath": "evidence/2026-10-24/runpod-cpu/retention-dispatch-fairness-v3/cloud-arm-2-r1/README.md",
+      "timestamp": "2026-10-25T11:28:01.411210142Z",
+      "limitations": [
+        "Predeclared fixed/rotating/fixed/rotating, arm 2, actual policy ROTATING_CONTINUE. One fresh 20s lineage. 7833.45/s accepted inside the arrival window; 160000/160000 ultimately accepted. Server rejection and observed/final unknown are zero.",
+        "Accepted-only conditional p99=443.672731ms. Every planned arrival was accepted, so the global accepted p99 exists.",
+        "0 workers lose requests; max 0 per worker. Sampled aggregate queue high-water 3085; individual queue high-water 32. Original worker identities/FIFO and W128/Q64 are unchanged.",
+        "After first positive offer return, p99=11.542076ms. This includes client polling, loopback, replication and service; it does not isolate physical network RTT or CPU causality.",
+        "Same source9ca02a49/code679e202a for all four arms. Leader0/sync2/read128/page32/batch4/chunk6144/owner1ms/driver100us; one physical session. Both original-PID all-member readiness gates and5s warm-up passed; no JFR.",
+        "Full original native/CSV/wire/frame/index/offer/identity/result evidence and all readiness rows privately verified at a5c470b44a814077d62bdc340e1fec8ebcf30aa2. The two pairs retain failures and noise; conditional distributions with missing arrivals cannot support a global-p99 improvement percentage.",
+        "Finite20s comparison; no sustained capacity, statistical significance, hard realtime or100M proof. Existing capacity curves remain separate because this is a repeated dispatch-policy comparison at one fixed offered rate."
+      ]
+    },
+    {
+      "id": "cpu-dispatch-fairness-3",
+      "label": "CPU dispatch ABAB · A2 fixed · 8,000/s · 401 not sent",
+      "scope": "160,000 planned · 159,599 accepted · 401 not sent · finite comparison",
+      "model": "One CPU host · three JVMs · loopback UDP · read128/page32 · one physical session",
+      "commands": 160000,
+      "throughput": 7679.85,
+      "p50Millis": null,
+      "p99Millis": null,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "durability": "sync2 replicated log; forced exact-prefix write/readback before ACK",
+      "artifactPath": "evidence/2026-10-24/runpod-cpu/retention-dispatch-fairness-v3/cloud-arm-3-r1/README.md",
+      "timestamp": "2026-10-25T11:37:42.423848143Z",
+      "limitations": [
+        "Predeclared fixed/rotating/fixed/rotating, arm 3, actual policy FIXED_ZERO_START. One fresh 20s lineage. 7679.85/s accepted inside the arrival window; 159599/160000 ultimately accepted. Server rejection and observed/final unknown are zero.",
+        "Accepted-only conditional p99=1082.098309ms. Global successful-arrival percentiles are unavailable: 401 QUEUE_FULL outcomes are excluded from this conditional distribution.",
+        "18 workers lose requests; max 39 per worker. Sampled aggregate queue high-water 5700; individual queue high-water 64. Original worker identities/FIFO and W128/Q64 are unchanged.",
+        "After first positive offer return, p99=11.087890ms. This includes client polling, loopback, replication and service; it does not isolate physical network RTT or CPU causality.",
+        "Same source9ca02a49/code679e202a for all four arms. Leader0/sync2/read128/page32/batch4/chunk6144/owner1ms/driver100us; one physical session. Both original-PID all-member readiness gates and5s warm-up passed; no JFR.",
+        "Full original native/CSV/wire/frame/index/offer/identity/result evidence and all readiness rows privately verified at a04403d05b7c960e4f45c2b5b4c7f98290c8e3a6. The two pairs retain failures and noise; conditional distributions with missing arrivals cannot support a global-p99 improvement percentage.",
+        "Finite20s comparison; no sustained capacity, statistical significance, hard realtime or100M proof. Existing capacity curves remain separate because this is a repeated dispatch-policy comparison at one fixed offered rate."
+      ]
+    },
+    {
+      "id": "cpu-dispatch-fairness-4",
+      "label": "CPU dispatch ABAB · B2 rotating · 8,000/s · 0 not sent",
+      "scope": "160,000 planned · 160,000 accepted · 0 not sent · finite comparison",
+      "model": "One CPU host · three JVMs · loopback UDP · read128/page32 · one physical session",
+      "commands": 160000,
+      "throughput": 7828.1,
+      "p50Millis": 346.623567,
+      "p99Millis": 579.389303,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "durability": "sync2 replicated log; forced exact-prefix write/readback before ACK",
+      "artifactPath": "evidence/2026-10-24/runpod-cpu/retention-dispatch-fairness-v3/cloud-arm-4-r1/README.md",
+      "timestamp": "2026-10-25T11:47:46.753767860Z",
+      "limitations": [
+        "Predeclared fixed/rotating/fixed/rotating, arm 4, actual policy ROTATING_CONTINUE. One fresh 20s lineage. 7828.1/s accepted inside the arrival window; 160000/160000 ultimately accepted. Server rejection and observed/final unknown are zero.",
+        "Accepted-only conditional p99=579.389303ms. Every planned arrival was accepted, so the global accepted p99 exists.",
+        "0 workers lose requests; max 0 per worker. Sampled aggregate queue high-water 4168; individual queue high-water 40. Original worker identities/FIFO and W128/Q64 are unchanged.",
+        "After first positive offer return, p99=11.548686ms. This includes client polling, loopback, replication and service; it does not isolate physical network RTT or CPU causality.",
+        "Same source9ca02a49/code679e202a for all four arms. Leader0/sync2/read128/page32/batch4/chunk6144/owner1ms/driver100us; one physical session. Both original-PID all-member readiness gates and5s warm-up passed; no JFR.",
+        "Full original native/CSV/wire/frame/index/offer/identity/result evidence and all readiness rows privately verified at 8feaf631de636ac007508e1e084109adc252236b. The two pairs retain failures and noise; conditional distributions with missing arrivals cannot support a global-p99 improvement percentage.",
+        "Finite20s comparison; no sustained capacity, statistical significance, hard realtime or100M proof. Existing capacity curves remain separate because this is a repeated dispatch-policy comparison at one fixed offered rate."
+      ]
     }
   ],
   "capacityCohorts": [
