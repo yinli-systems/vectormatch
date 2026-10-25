@@ -121,7 +121,18 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
         public byte[] originalWire() { return slot.bytes.clone(); }
         public boolean isDone() { return slot.completion.isDone(); }
         public void arm(){synchronized(lock){
-            if(slot.bank==null)throw new IllegalStateException("only explicitly reserved bank reads are armed here");
+            if(slot.bank==null){
+                if(!slot.explicitArm)throw new IllegalStateException("only explicitly reserved maintenance is armed here");
+                if(Thread.currentThread()!=slot.armingCaller)throw new IllegalStateException("one serial reservation caller required");
+                healthy();if(maintenance!=slot||closing||maintenanceStopped)throw new IllegalStateException("serial reservation terminal;retain original wire");
+                if(slot.armed)return;
+                if(clock.getAsLong()-slot.deadline>=0){
+                    slot.disabled=true;maintenanceStopped=true;
+                    var expired=new UnknownMaintenanceException(slot,new TimeoutException("original serial permit expired before arm"));
+                    slot.completion.completeExceptionally(expired);throw expired;
+                }
+                slot.armed=true;slot.armedNs=clock.getAsLong();wake();return;
+            }
             slot.bank.affinity();if(slot.bank.failure!=null)throw slot.bank.failure;healthy();
             if(readBank!=slot.bank||slot.bank.closed||closing||maintenanceStopped)throw new IllegalStateException("read phase terminal");
             if(slot.armed)return;
@@ -231,7 +242,8 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
         long nextOffer;
         long armedNs=Long.MIN_VALUE,firstOfferNs=Long.MIN_VALUE,firstAcceptedNs=Long.MIN_VALUE,completedNs=Long.MIN_VALUE,acceptedOffers,negativeOffers;
         int possibleOffers;
-        boolean possiblyOffered, disabled,armed=true,consumed;
+        boolean possiblyOffered, disabled,armed=true,consumed,explicitArm;
+        Thread armingCaller;
         ReadBank bank;
         MaintenanceSlot(Request request, long now, long deadline) {
             this.request = request; this.deadline = deadline;reservedNs=now; nextOffer = now;
@@ -244,6 +256,13 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
         synchronized (lock) { return new UnknownMaintenanceException(slot, cause); }
     }
     public MaintenanceTicket submitMaintenance(Operation operation, long absoluteOfferDeadlineNs) {
+        return submitMaintenance(operation,absoluteOfferDeadlineNs,true);
+    }
+    /** Opt-in original control wire stays unofferable until the reserving caller explicitly arms it. */
+    public MaintenanceTicket reserveMaintenance(Operation operation,long absoluteOfferDeadlineNs) {
+        return submitMaintenance(operation,absoluteOfferDeadlineNs,false);
+    }
+    private MaintenanceTicket submitMaintenance(Operation operation,long absoluteOfferDeadlineNs,boolean autoArm) {
         synchronized (lock) {
             healthy();
             if (closing || maintenanceStopped) throw new IllegalStateException("maintenance closed; preserve unresolved evidence");
@@ -255,10 +274,12 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
             if(readBank!=null)throw new IllegalStateException("read bank must close before serial control/ACK");
             if (maintenance != null) {
                 if (!maintenance.request.operation().equals(operation)) throw new IllegalStateException("one unresolved maintenance RPC; cannot change payload/identity");
-                return new MaintenanceTicket(maintenance); // No implicit permit renewal.
+                if(maintenance.explicitArm==autoArm)throw new IllegalStateException("cannot change original maintenance admission mode");
+                return new MaintenanceTicket(maintenance); // No implicit permit renewal or arming.
             }
             if (nextCorrelation == Long.MAX_VALUE) throw new IllegalStateException("transport correlation exhausted");
             maintenance = new MaintenanceSlot(new Request(scope, ++nextCorrelation, operation), now, absoluteOfferDeadlineNs);
+            if(!autoArm){maintenance.armed=false;maintenance.explicitArm=true;maintenance.armingCaller=Thread.currentThread();}
             wake(); return new MaintenanceTicket(maintenance);
         }
     }
@@ -617,7 +638,7 @@ public final class RetentionBatchOwnerV3 implements AutoCloseable {
             if (frame.mayHaveExecuted || creditAllows(frame.slots.size())) delay = Math.min(delay, Math.max(0, frame.nextOffer - now));
             for (Slot slot : frame.slots) delay = Math.min(delay, Math.max(0, slot.permitDeadline - now));
         }
-        if (maintenance != null && !maintenance.disabled) delay = Math.min(delay, Math.max(0, Math.min(maintenance.nextOffer, maintenance.deadline) - now));
+        if (maintenance != null && maintenance.armed && !maintenance.disabled) delay = Math.min(delay, Math.max(0, Math.min(maintenance.nextOffer, maintenance.deadline) - now));
         if(readBank!=null)for(var slot:readBank.pending.values())if(slot.armed&&!slot.disabled&&!slot.completion.isDone())delay=Math.min(delay,Math.max(0,Math.min(slot.nextOffer,slot.deadline)-now));
         return Math.max(1, delay);
     }
