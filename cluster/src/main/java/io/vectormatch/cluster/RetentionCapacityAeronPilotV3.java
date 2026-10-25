@@ -98,7 +98,9 @@ public final class RetentionCapacityAeronPilotV3 {
         if(idleSelection.explicit())registration.put("retentionIdleSelection",idleSelection.observation());
         if(ownerPollSelection.explicit())registration.put("ownerPollSelection",ownerPollSelection.observation());
         if(maintainedConfig!=null){registration.put("scope","LOCAL_THREE_JVM_MAINTAINED_CAPACITY_PRESET");registration.put("maintainedCapacityPreset",maintainedConfig.maintainedCapacityPreset());registration.put("offeredLoadMayExceedCapacity",true);registration.put("windowSeconds",20);}
-        if(readWindow128Experiment){registration.put("scope","LOCAL_THREE_JVM_READ128_CAPACITY_EXPERIMENT");registration.put("preloadWarmupMillis",5000);}
+        if(readWindow128Experiment){registration.put("scope","LOCAL_THREE_JVM_READ128_CAPACITY_EXPERIMENT");registration.put("preloadWarmupMillis",5000);
+            registration.put("allMemberStartupReadinessRequired",true);registration.put("allMemberPreloadReadinessRequired",true);
+            registration.put("readinessQuietPeriodNs",RetentionStartupReadinessV3.QUIET_NS);registration.put("readinessDeadlineNs",RetentionStartupReadinessV3.TIMEOUT_NS);}
         write("registration.json",registration);writeArtifactInventory();
     }
     public static Path run(Path newPairRoot)throws Exception{
@@ -301,6 +303,7 @@ public final class RetentionCapacityAeronPilotV3 {
     }
     private void exercise()throws Exception{
         startOwned();
+        if(readWindow128Experiment)qualifyReadiness("startup-readiness.json");
         try(var client=client("setup");var requests=new DataOutputStream(Files.newOutputStream(root.resolve("setup-requests.bin"),StandardOpenOption.CREATE_NEW));
             var replies=new DataOutputStream(Files.newOutputStream(root.resolve("setup-replies.bin"),StandardOpenOption.CREATE_NEW))){
             for(Command command:setupCommands()){
@@ -312,6 +315,7 @@ public final class RetentionCapacityAeronPilotV3 {
             require(client.leaderMemberId()==0,"appointed leader0 required before arrivals");verifyPosition(client,"setup");
         }
         if(readWindow128Experiment){long begin=System.nanoTime();Thread.sleep(5000);write("preload-warmup.json",Map.of("requestedMillis",5000,"startedMonotonicNs",begin,"endedMonotonicNs",System.nanoTime(),"outsideArrivalWindow",true,"noSyntheticOrdersDuringWarmup",true));}
+        if(readWindow128Experiment)qualifyReadiness("preload-readiness.json");
         disk.check();
         var result=RetentionCapacityExperimentV3.run(root.resolve("load"),root,experimentConfig(),
                 profile,lineage,()->new RetentionBatchAeronTransportV3(root.resolve("owner-driver"),ports,profile,lineage,true,archiveChunkBytes),plan,disk);
@@ -389,6 +393,18 @@ public final class RetentionCapacityAeronPilotV3 {
         write("physical-reference-reconciliation.json",Map.of("passed",true,"successfulPublicationAdmissions",offers,"actualRepliesCompared",compared,
                 "earlierAdmittedRepliesNotObserved",missing,"remainingAdmittedRepliesNotObserved",remaining,
                 "reference","same candidate adapter in actual positive-offer order; not independent algorithm","performedOutsideArrivalWindow",true));
+    }
+    private void qualifyReadiness(String observation)throws Exception{
+        var nodes=new ArrayList<RetentionStartupReadinessV3.Node>();
+        for(Owned record:owned)nodes.add(new RetentionStartupReadinessV3.Node(record.member,record.process.pid(),
+                root.resolve("node-"+record.member+"/driver"),record.log,()->{
+            var info=record.process.info();
+            require(record.process.isAlive()&&info.startInstant().map(record.started::equals).orElse(false)
+                    &&info.command().map(record.command::equals).orElse(false)
+                    &&info.arguments().map(a->List.of(a).equals(record.arguments)).orElse(false),
+                    "Original node identity changed during startup readiness");
+        }));
+        RetentionStartupReadinessV3.await(root.resolve(observation),nodes);
     }
     private void startOwned()throws Exception{
         var classpath=new LinkedHashSet<String>();for(Class<?> type:List.of(RetentionNodeMainV3.class,MatchingEngine.class,MediaDriver.class,DirectBuffer.class))
