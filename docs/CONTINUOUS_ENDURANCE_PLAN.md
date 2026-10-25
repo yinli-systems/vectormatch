@@ -1,6 +1,6 @@
 # Continuous endurance toward 100M accepted orders
 
-This is an implementation plan based on the current source, not a completed benchmark. The immediate CPU experiment remains fixed-page32 read8/32/8/32; none of the changes below belongs in that fixed-factor comparison.
+This is an implementation plan based on the current source,not a completed benchmark. The later [dispatch fairness ABAB](DISPATCH_FAIRNESS_RESULTS.md) and [fine rotating-capacity curve](DISPATCH_CAPACITY_RESULTS.md) are complete finite V3 observations. Their short fresh lineages do not implement continuous endurance. The V4 changes below require separate correctness,artifact and native qualification.
 
 The three targets are separate:100M fresh accepted orders in one continuous lineage,100M accepted orders per second, and100M simultaneous physical connections. Completing the first does not establish either of the others. Multiple reset lineages, virtual workers, read RPCs, replayed results and event fanout must not be relabelled fresh accepted orders or physical connections.
 

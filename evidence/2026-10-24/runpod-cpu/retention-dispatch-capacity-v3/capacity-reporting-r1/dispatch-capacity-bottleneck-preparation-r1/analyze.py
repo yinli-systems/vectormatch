@@ -1,0 +1,31 @@
+from pathlib import Path
+import json,csv,hashlib,datetime,heapq,math,collections,sys
+B=Path(__file__).resolve().parent.parent;rate=int(sys.argv[1]);R=B/('dispatch-capacity-%d-root-review-r1'%rate);L=R/('materialized/attempt-%d/idle-arm/load'%rate);O=B/('dispatch-capacity-%d-bottleneck-r1'%rate);assert not O.exists();inputs={}
+def sha(p):
+ h=hashlib.sha256()
+ with p.open('rb')as f:
+  for chunk in iter(lambda:f.read(1024**2),b''):h.update(chunk)
+ return h.hexdigest()
+def pin(p):inputs[str(p)]=dict(bytes=p.stat().st_size,sha256=sha(p));return p
+def read(p):return json.loads(pin(p).read_text())
+review=read(R/'ROOT_REVIEW.json');audit=read(R/'RAW_AUDIT.json');ready=read(R/'READINESS_REVIEW.json');cfg=read(L/'configuration.json');summary=read(L/'load-result.json');assert review['passed']and review['nativeControlPassed']and audit['passed']and ready['passed'];cycles=[]
+for p in sorted((L/'maintenance').glob('cycle-*.verified.txt')):
+ d=dict(line.split('=',1)for line in pin(p).read_text().splitlines());cycles.append(dict(start=int(d['cycleStartedMonotonicNs'])-cfg['scheduledOriginMonotonicNs'],end=int(d['cycleEndedMonotonicNs'])-cfg['scheduledOriginMonotonicNs']))
+cycles.sort(key=lambda c:c['start']);assert len(cycles)==review['maintenanceCycles']and all(a['end']<=b['start']for a,b in zip(cycles,cycles[1:]));acceptedLatencies=[];afterDispatch=[];afterOffer=[];tail=[];tailN=math.ceil(review['confirmedAcceptedUniqueOrders']*.01);workers={n:dict(arrived=0,accepted=0,notSent=0,notSentReasons={})for n in range(128)};buckets={n:dict(scheduled=0,acceptedEventually=0,notSent=0,confirmedInWallSecond=0,conditionalAcceptedLatencyNs=[])for n in range(120)};reasons=collections.Counter();statuses=collections.Counter()
+with pin(L/'arrivals.csv').open()as stream:
+ for row in csv.DictReader(stream):
+  i=int(row['arrival_index']);worker=int(row['worker']);scheduled=int(row['scheduled_offset_ns']);bucket=scheduled//10**9;w=workers[worker];w['arrived']+=1;buckets[bucket]['scheduled']+=1;statuses[row['status']]+=1
+  if row['status']=='NOT_SENT':
+   w['notSent']+=1;buckets[bucket]['notSent']+=1;why=row['not_sent_reason'];reasons[why]+=1;w['notSentReasons'][why]=w['notSentReasons'].get(why,0)+1;assert int(row['admitted_physical_offers'])==0;continue
+  assert row['status']=='APPLIED'and row['result_code']=='ACCEPTED';dispatch=int(row['dispatch_offset_ns']);positive=int(row['first_successful_offer_return_offset_ns']);reply=int(row['reply_completion_offset_ns']);arrival=int(row['arrival_offset_ns']);latency=reply-scheduled;assert scheduled<=arrival<=dispatch<=positive<=reply;acceptedLatencies.append(latency);afterDispatch.append(reply-dispatch);afterOffer.append(reply-positive);w['accepted']+=1;buckets[bucket]['acceptedEventually']+=1;buckets[bucket]['conditionalAcceptedLatencyNs'].append(latency);buckets[reply//10**9]['confirmedInWallSecond']+=1;entry=(latency,i,scheduled,arrival,dispatch,positive,reply,worker)
+  if len(tail)<tailN:heapq.heappush(tail,entry)
+  elif entry>tail[0]:heapq.heapreplace(tail,entry)
+assert statuses['APPLIED']==review['confirmedAcceptedUniqueOrders']and statuses['NOT_SENT']==review['notSent']and sum(statuses.values())==rate*20;assert sum(w['notSent']for w in workers.values())==review['notSent'];q=lambda a,p:sorted(a)[math.ceil(len(a)*p)-1]if a else None;assert q(acceptedLatencies,.99)==review['acceptedOrderConditionalP99Ns'];total=sum(r[0]for r in tail);before=sum(r[4]-r[2]for r in tail);overlap=sum(max(0,min(r[4],c['end'])-max(r[3],c['start']))for r in tail for c in cycles)
+with pin(L/'backlog.csv').open()as f:backlog=list(csv.DictReader(f))
+observations=[dict(offsetNs=int(r['offset_ns']),queued=int(r['queued']),pending=int(r['pending']),maintenancePhase=int(r['maintenance_phase']),released=int(r['released']))for r in backlog]
+for n,b in list(buckets.items()):
+ if not any(v for k,v in b.items()if k!='conditionalAcceptedLatencyNs'):del buckets[n];continue
+ b['conditionalAcceptedP99Ns']=q(b.pop('conditionalAcceptedLatencyNs'),.99)
+fullReadies=read(R/'materialized/attempt-%d/completion.json'%rate)if False else None
+result=dict(passed=True,atUTC=datetime.datetime.now(datetime.timezone.utc).isoformat(),rate=rate,planned=rate*20,accepted=review['confirmedAcceptedUniqueOrders'],notSent=review['notSent'],notSentReasons=dict(reasons),observedUnknown=review['unknownObserved'],finalUnknown=review['unknownFinal'],serverRejected=review['serverRejected'],allArrivalAcceptedP99Ns=review['allArrivalP99Ns'],conditionalAcceptedP99Ns=q(acceptedLatencies,.99),conditionalAcceptedP50Ns=q(acceptedLatencies,.5),afterDispatchP99Ns=q(afterDispatch,.99),afterFirstPositiveOfferReturnP99Ns=q(afterOffer,.99),slowestOnePercentRows=len(tail),slowestOnePercentPredispatchShare=before/total,slowestOnePercentQueueMaintenanceOverlapShare=overlap/total,maintenanceCycles=len(cycles),maintenanceWallNs=sum(c['end']-c['start']for c in cycles),maintenanceWallInsideArrivalWindowNs=sum(max(0,min(c['end'],20*10**9)-max(c['start'],0))for c in cycles),maximumObservedQueueSizePerWorker=summary['maximumObservedQueueSizePerWorker'],sampledQueueHighWater=max(r['queued']for r in observations),sampledPendingHighWater=max(r['pending']for r in observations),workersWithNotSent=sum(w['notSent']>0 for w in workers.values()),maximumNotSentPerWorker=max(w['notSent']for w in workers.values()),perWorker=workers,wallSecondBuckets=buckets,originalBacklogObservations=observations,maintenanceIntervals=cycles,originalInputPins=inputs,sourceSha256=sha(Path(__file__)),scope='Same-row scheduled/dispatch/positive-offer/reply timestamp decomposition; read-only original data. Predispatch/maintenance overlap is descriptive,not isolated causation. After positive offer includes client polling,loopback network,replication and service; it is not pure network RTT. One CPU host cannot establish cross-host network limits. No larger client window or optimization was executed by this analysis.')
+assert all(Path(n).stat().st_size==r['bytes']and sha(Path(n))==r['sha256']for n,r in inputs.items());O.mkdir();(O/'DIAGNOSIS.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n');print(json.dumps({k:v for k,v in result.items()if k not in ['perWorker','wallSecondBuckets','originalBacklogObservations','maintenanceIntervals','originalInputPins']}))
