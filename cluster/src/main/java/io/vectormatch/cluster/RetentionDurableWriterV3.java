@@ -119,6 +119,29 @@ public final class RetentionDurableWriterV3 implements AutoCloseable {
         if(first<1||through<first||through-first+1!=immutable.size())throw new IllegalArgumentException("complete nonempty event prefix required");
         return submit("events",framedReplies,value->verifyEventFrames(value,immutable,scope,first,through));
     }
+    /** V4 original destructive control intent. Completion precedes arm; it does not authorize crash reissue. */
+    public Ticket persistControlIntentV4(byte[] original,Scope scope,long reservedNs,long deadlineNs){
+        Objects.requireNonNull(original);Objects.requireNonNull(scope);
+        if(original.length<1||original.length>MAX_REQUEST_BYTES||deadlineNs-reservedNs<=0
+                ||deadlineNs-reservedNs>TimeUnit.MINUTES.toNanos(2))throw new IllegalArgumentException("bounded original control permit required");
+        final byte[] owned=original.clone();
+        try{
+            var bytes=new ByteArrayOutputStream();var out=new DataOutputStream(bytes);
+            out.writeInt(0x564d4934);out.writeInt(1);out.writeLong(reservedNs);out.writeLong(deadlineNs);
+            out.writeInt(4);out.writeInt(owned.length);out.write(owned);
+            return submit("control-intent-v4",bytes.toByteArray(),value->{
+                try{
+                    var in=new DataInputStream(new ByteArrayInputStream(value));
+                    if(in.readInt()!=0x564d4934||in.readInt()!=1||in.readLong()!=reservedNs||in.readLong()!=deadlineNs
+                            ||in.readInt()!=4||in.readInt()!=owned.length)throw new IOException("control intent header differs");
+                    byte[] wire=in.readNBytes(owned.length);var request=RetentionWireV3.decode(wire);
+                    if(in.available()!=0||!Arrays.equals(wire,owned)||!request.scope().equals(scope)
+                            ||!(request.operation() instanceof ArchiveCommit||request.operation() instanceof EventAck))
+                        throw new IOException("exact destructive control identity/scope differs");
+                }catch(IOException error){throw new IllegalArgumentException("invalid V4 original control intent",error);}
+            });
+        }catch(IOException impossible){throw new UncheckedIOException(impossible);}
+    }
     private Ticket submit(String kind,byte[] input,Verifier verifier){
         return submit(kind,input,verifier,false);
     }
