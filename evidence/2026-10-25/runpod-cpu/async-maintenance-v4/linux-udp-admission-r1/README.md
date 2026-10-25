@@ -1,0 +1,5 @@
+# V4 actual Linux qualification and one UDP functional admission
+
+Fresh CI run40230780473 on sourceb6a53eeb812877cfb6cabdf01cfeb4548de30502 passed422 Java tests and197 Python tests,zero failures/errors/skips,with11 real PostgreSQL integration tests included in Java. All five Java test tasks actually executed without result cache in a fresh Gradle home. Complete824 nested original source/class/JUnit/log members,all245 CI JAR/class-body equivalences,the454-file actual JDK equivalence,and the metadata-only twelve loaded Linux class origins are retained. Distribution fingerprint:c6fc2e180e266f5d9defb7c1e2e7c80bf3692d5d75b9fe6a87949b5b2edd5001.
+
+The frozen controller/stage/launch sources and exact qualified identity/pidfd bodies admit only one fresh three-JVM UDP functional/cold-restore experiment on the existing prepaid CPU. This package is captured before that native workload is staged or executed. Whole private Git restoration is required before launch. It proves no native Linux V4 run,capacity,SLA,physical-host independence,100M continuity or funded external trading. The earlier failed Linux disk-admission observation remains separately preserved.
