@@ -1,0 +1,23 @@
+{
+  "atUTC": "2026-10-25T09:31:23.585309+00:00",
+  "arguments": [
+    "ssh",
+    "-i",
+    "/Users/kevin/.ssh/id_ed25519",
+    "-o",
+    "IdentitiesOnly=yes",
+    "-o",
+    "BatchMode=yes",
+    "-o",
+    "ConnectTimeout=15",
+    "-o",
+    "StrictHostKeyChecking=yes",
+    "-o",
+    "UserKnownHostsFile=\"/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/current-cpu-connection-r1/known_hosts\"",
+    "-p",
+    "40184",
+    "root@185.226.156.243",
+    "python3 -B -c 'import sys,json,base64,pathlib,tarfile,hashlib,os,socket\nc=json.loads(base64.b64decode(sys.argv[1]));root=pathlib.Path(c['\"'\"'root'\"'\"']);assert str(root)=='\"'\"'/opt/vectormatch-cpu/experiments/read128-capacity-1000-r1'\"'\"'and socket.gethostname()=='\"'\"'33ace3d92505'\"'\"'and not root.exists()\nassert pathlib.Path('\"'\"'/proc/sys/kernel/random/boot_id'\"'\"').read_text().strip()=='\"'\"'8d765c71-dbfa-4354-8db0-6c392e701e6f'\"'\"'\nfor p in root.parents:assert p.is_dir()and not p.is_symlink()\nos.umask(0o077);root.mkdir(mode=0o700);bundle=root/'\"'\"'input-bundle.tar.gz'\"'\"';raw=sys.stdin.buffer.read(1024*1024+1);assert len(raw)<=1024*1024 and hashlib.sha256(raw).hexdigest()==c['\"'\"'bundleSha256'\"'\"'];bundle.write_bytes(raw);seen=set()\nwith tarfile.open(bundle,'\"'\"'r:gz'\"'\"')as t:\n for m in t:\n  assert m.isfile()and m.name in c['\"'\"'rows'\"'\"']and m.name not in seen and '\"'\"'/'\"'\"'not in m.name and m.name not in('\"'\"'.'\"'\"','\"'\"'..'\"'\"');r=c['\"'\"'rows'\"'\"'][m.name];assert m.size==r['\"'\"'bytes'\"'\"']and m.mode==r['\"'\"'mode'\"'\"'];body=t.extractfile(m).read();assert hashlib.sha256(body).hexdigest()==r['\"'\"'sha256'\"'\"'];p=root/m.name\n  with p.open('\"'\"'xb'\"'\"')as f:f.write(body);f.flush();os.fsync(f.fileno())\n  p.chmod(r['\"'\"'mode'\"'\"']);seen.add(m.name)\nassert seen==set(c['\"'\"'rows'\"'\"'])\nfor name,r in c['\"'\"'rows'\"'\"'].items():\n p=root/name;assert p.stat().st_size==r['\"'\"'bytes'\"'\"']and hashlib.sha256(p.read_bytes()).hexdigest()==r['\"'\"'sha256'\"'\"']and p.stat().st_mode&0o777==r['\"'\"'mode'\"'\"']\nprint(json.dumps(dict(passed=True,stagedFiles=c['\"'\"'rows'\"'\"'],noWorkloadLaunched=True,noExistingPathsModified=True)))\n' eyJyb290IjogIi9vcHQvdmVjdG9ybWF0Y2gtY3B1L2V4cGVyaW1lbnRzL3JlYWQxMjgtY2FwYWNpdHktMTAwMC1yMSIsICJyb3dzIjogeyJjYXBhY2l0eV92YWxpZGF0b3JzLnB5IjogeyJieXRlcyI6IDE5MTIwLCAibW9kZSI6IDQyMCwgInNoYTI1NiI6ICI5YTY3MzZhZjFiODZkZDY4YmYwMmI2YjlmZmRmZGUzNzI1NGU2MzdkYzY3NDVmNDcwZWU1ZDFkNzY3OTJkYWM3In0sICJjcHVfcmVhZF93aW5kb3czMl9hYmFiLnB5IjogeyJieXRlcyI6IDgzMTI2LCAibW9kZSI6IDQyMCwgInNoYTI1NiI6ICIxZDE1Y2QyYzUzZTA5MTRjNmQxZDIwM2NjNDg2YzU2M2JlM2QyY2ZkYWExZmExNTlmZmFhOGZmZDIzMWIxNGM0In0sICJmaXJzdF9waWxvdC5weSI6IHsiYnl0ZXMiOiA1MDM0LCAibW9kZSI6IDQyMCwgInNoYTI1NiI6ICIzMGY5ZDNmZmE1NmEzY2IzZDYyYWYyYjhiZDNhNTVhM2M1N2E4NTc1MmZlODI3OGE0ZjMzODE0M2ZjOTUzMzFlIn0sICJpZGxlX2F0dGVzdGF0aW9uLnB5IjogeyJieXRlcyI6IDEwOTE4LCAibW9kZSI6IDQyMCwgInNoYTI1NiI6ICI3NGE2NjZmMDA4N2U5MmRlNmNlMWRhMzExYmQ3M2U0OTQxZGI3Y2MyYjI2NGE0NzJjYzg0YjA1MTJkNDAwMzJhIn0sICJsaW51eC1tZXRhZGF0YS1yb290LXJldmlldy5qc29uIjogeyJieXRlcyI6IDYxNSwgIm1vZGUiOiA0MjAsICJzaGEyNTYiOiAiZjU1ZTBjNDc5ODhiMDZmZmU5ZDdhYjMyZjUzZWVmZjk0NzAwOGFjOWRiMDVjMDYwMGNiMzJlNjdjMTY0OTJjZiJ9LCAibGludXgtbWV0YWRhdGEuanNvbiI6IHsiYnl0ZXMiOiAxMzIxOSwgIm1vZGUiOiA0MjAsICJzaGEyNTYiOiAiZWZlZThhYmQ4YmMzNTY1NjI4NGFjM2ExZDFhZWNjN2NhYjExMDhjOWZkODQxNTM4YzUwMmI3MzBjN2EwYzZiMCJ9LCAib3duZWRfbGludXhfYmFzZV84ZWViLnB5IjogeyJieXRlcyI6IDI0Mzk2LCAibW9kZSI6IDQyMCwgInNoYTI1NiI6ICI4ZWViMTBjMTRkNmU1YTlhYTM4OTVmYmI2NzRmYzVjNTljZWFjN2ZkM2IxNWE2ZTNlMTFkYTMyNWY0NDRhYjg3In0sICJvd25lcl9wb2xsX2F0dGVzdGF0aW9uLnB5IjogeyJieXRlcyI6IDU2ODYsICJtb2RlIjogNDIwLCAic2hhMjU2IjogIjg2OGIxZjQyNjkwNmUxNjYwMmUyYWQ5YTBlN2M3YmJhMzNiYjVlODBlYTk1MGFmMTcxYTk5MDNhYzVkYzRmZGQifSwgInJlbGVhc2UuanNvbiI6IHsiYnl0ZXMiOiA2OTM5LCAibW9kZSI6IDQyMCwgInNoYTI1NiI6ICIxOGVkNjg5ZjA1M2YzZDM2ODNhYzdmOWEyYmUxZjZhNTY3Y2ZjYWM4YjYyOTdkOGNhMTU2Y2VmOGQyZmU5MmNlIn0sICJzaHV0ZG93bl93YXJuaW5nLnB5IjogeyJieXRlcyI6IDUzMTcsICJtb2RlIjogNDIwLCAic2hhMjU2IjogImJiODcyNWM1YmM1NjBjYzlhNzJjODBhNWM1ZDQ0NTM3M2VkYmQwZGE5MWYyY2NjZjQxZWIzNTUwNTY5MzE5YTkifSwgIkZST1pFTi5qc29uIjogeyJieXRlcyI6IDE3NDUsICJzaGEyNTYiOiAiZDQxMjNkNTA3M2EyMDIwYTRlNmJmNjE2MmZmMzk5YWY5OGVhNDIwMDliOTRjOTY5MDY5ZGFkZDUzN2IxZGYzZiIsICJtb2RlIjogNDIwfX0sICJidW5kbGVTaGEyNTYiOiAiN2M0MmJkOGY5Yjk1M2I4NzdhODA0NzEzZmIzMjIxYjdjZGVlMjNkNWJhMTQyZDY4MTMyYjhiMDZkNjMxMmMwMiJ9"
+  ],
+  "oneAttemptOnly": true
+}

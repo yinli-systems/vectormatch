@@ -1,0 +1,14 @@
+from pathlib import Path
+import json,hashlib,subprocess,shlex,base64,datetime,importlib.util
+B=Path(__file__).resolve().parent.parent;P=Path(__file__).resolve().parent;O=B/'read128-capacity-linux-metadata-execution-r1';assert not O.exists()
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+spec=importlib.util.spec_from_file_location('cpu_connection',B/'current-read-window32-collection-preparation-r2/remote_current.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+source=P/'remote_metadata.py';config=P/'metadata-config.json';bundle=P/'inputs.tar.gz';args=m.sshargs()+[shlex.join(['python3','-B','-c',source.read_text(),base64.b64encode(config.read_bytes()).decode()])]
+O.mkdir();(O/'REGISTRATION.json').write_text(json.dumps(dict(atUTC=datetime.datetime.now(datetime.timezone.utc).isoformat(),arguments=args,sourceSha256=sha(source),configSha256=sha(config),bundleSha256=sha(bundle),oneAttemptOnly=True,noBenchmark=True),indent=2)+'\n')
+with bundle.open('rb')as stdin,(O/'ssh.stdout.json').open('xb')as stdout,(O/'ssh.stderr').open('xb')as stderr:r=subprocess.run(args,stdin=stdin,stdout=stdout,stderr=stderr,timeout=120)
+(O/'EXECUTION.json').write_text(json.dumps(dict(exitCode=r.returncode,stdoutSha256=sha(O/'ssh.stdout.json'),stderrSha256=sha(O/'ssh.stderr')),indent=2)+'\n');assert r.returncode==0
+x=json.loads((O/'ssh.stdout.json').read_text());assert x['passed']and x['execution']['allInputsUnchanged']and x['execution']['strictOwnedPidAbsentAfterWait'];body=base64.b64decode(x['observationRawBase64']);(O/'actual-linux-observation.json').write_bytes(body);assert sha(O/'actual-linux-observation.json')==x['observationSha256']
+y=json.loads(body);local=json.loads((P/'local-observation.json').read_text());assert y['osName']=='Linux'and y['actualCodeFingerprint']==local['actualCodeFingerprint']and y['profileSha256']==local['profileSha256']and y['plans']==local['plans']and y['noDriverOrClusterStarted']and not y['performanceEvidence']
+for row in y['actualClassOrigins']:
+ name=Path(row['path']).name;pin=json.loads(config.read_text())['rows']['lib/'+name];assert row['bytes']==pin['bytes']and row['sha256']==pin['sha256']
+(O/'ROOT_REVIEW.json').write_text(json.dumps(dict(passed=True,codeFingerprint=y['actualCodeFingerprint'],actualLinuxPlansMatchLocal=True,allSevenActualLoadedOriginsMatchStagedJars=len(y['actualClassOrigins'])==7,actualProcessIdentity=x['execution']['actualProcessIdentity'],strictOwnedPidAbsentAfterWait=True,observationSha256=sha(O/'actual-linux-observation.json'),noNativePerformanceClaim=True),indent=2)+'\n');print(json.dumps(dict(passed=True,codeFingerprint=y['actualCodeFingerprint'],nativeBenchmarkStarted=False,plans=len(y['plans']))))
