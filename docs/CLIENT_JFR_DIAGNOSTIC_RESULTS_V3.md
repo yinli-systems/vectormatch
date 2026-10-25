@@ -1,0 +1,27 @@
+# Parent/client JFR diagnostic:completed overload observation
+
+This separate instrumented7,500/s20s observation confirms142,548 unique one-unit IOC trades and7,452 definite NOT_SENT/QUEUE_FULL outcomes out of150,000 planned arrivals. Server rejection,observed UNKNOWN and final UNKNOWN are zero. The three final replica snapshots agree. In-window confirmed goodput is6,758.25/s;global accepted-arrival p99 is undefined. Conditional accepted-only p99 is1,418.100777ms and after-positive-offer p99 is23.167883ms. None of41 comparable full-cut intervals clears recorded waiting. This is overload,not a capacity or latency success.
+
+The [prospective diagnostic](CLIENT_JFR_DIAGNOSTIC_V3.md) preserves application79e5a932/source23f9c070,leader0,sync2,ROTATING_CONTINUE,W128/Q64,read128/page32/batch4/chunk6144,owner1ms/driver100us,one physical session,three256MiB-heap JVMs on the same CPU host,readiness and cache preconditioning. Only the parent/client receives JFR/GC logging and an additional128MiB diagnostic allocation reserve. Node arguments remain unchanged. Actual control/readiness/source/raw audits pass;all owned JVMs are strictly observed absent after clean closure. This is not a controlled optimization comparison with the earlier uninstrumented run. The [original capacity curve](VERIFIED_HANDOFF_CAPACITY_RESULTS_V3.md) keeps its74,531 NOT_SENT result and remains stopped;8,000/s is still unexecuted.
+
+## What the recording establishes
+
+The complete4,698,765-byte JFR is one chunk spanning38s,including the20s arrival window. Its SHA-256 is`6632a858417bdab3feef7ab7b01b2eee25c5a5b90f2782eb22c1d6addda5cd80`. A read-only streaming RecordingFile analyzer exposes159,995 recorded events. An independent JDK jfr-summary count agrees for every exposed event type;312 Checkpoint and1 Metadata internal format entries are enumerated separately. The first naive total-count check incorrectly included those format entries and is retained as a failed derived analysis. No jdk.DataLoss event was recorded;time-span coverage and absence of that event do not prove continuous event completeness.
+
+| Arrival-window parent observation | Count | Summed clipped duration,ms | Largest clipped event,ms |
+| --- | ---: | ---: | ---: |
+| Top-level GC pause | 221 | 291.944368 | 4.240591 |
+| Thresholded file force | 172 | 544.658848 | 16.769937 |
+| Thresholded monitor enter | 180 | 327.432196 | 11.007033 |
+
+Recorded error/compiler events are retained separately:all captured JavaErrorThrow targets name java.lang.invoke MethodHandle Holder methods. This is an observation of caught/recorded VM activity,not a claim that no exceptions occurred or an application failure attribution.
+
+These event categories can overlap and must not be summed into a wall-time bottleneck budget. GC pause totals use top-level GCPhasePause only;parallel/nested GC phases are retained separately. File/monitor events are thresholded at1ms. Missing events are not zero cost. Main-thread waits on writer completion account for about3.507s of recorded arrival-window parks;that is one part of10.355s complete maintenance wall time,not an additive disjoint phase decomposition.
+
+404 of789 Java execution samples belong to the network-owner thread,167 to main,216 to the writer and2 to the parent media driver. Owner sample stacks repeatedly include canonical business encoding,ByteArrayOutputStream growth,UTF-8 and identity checks. These sampled counts are not percentages of wall time or exact CPU costs. The1Hz counters and prior per-reply timestamp split do not isolate server,network,GC or host variability. Parent-only recording cannot prove node GC or replica storage costs. A small isolated candidate removes one redundant immutable-batch reconstruction while preserving constructor/nested/decoder guards;it requires its own complete Linux qualification and registered A/B/A/B before any gain is claimed. The asynchronous V4 branch remains separate and undeployed.
+
+## Complete evidence
+
+[Original native/raw/JFR package](../evidence/2026-10-25/runpod-cpu/verified-archive-handoff-v3/client-jfr-7500-arm-d1-native-r1/README.md),private commit`f9759f6c0653830398ddd9ed3ea4bce5bacd6779`,asset`675872060`,SHA-256`15774b7d74a3438821fb5ed8e21d87ea942c9ebbf4835a111f278bbcf2b3dd39`. The complete asset is authenticated-downloaded and every original member checked for SHA,size,mode,owner and directories. It retains all planned-arrival rows,physical requests/replies/offers,identity/readiness/source/lifecycle records,trade/event results,durable payload/receipts,JFR,GC log and repository remnants. No raw row is dropped. Exact phase/receipt audits retain canonical forced full readback before both destructive ACKs. File force/readback is not proof of survival after physical-host loss.
+
+[Complete diagnostic reporting package](../evidence/2026-10-25/runpod-cpu/verified-archive-handoff-v3/client-jfr-reporting-r1/README.md) retains all derivations,streaming analyzer source/classes,independent CLI parity and failed check,original Linux configuration-smoke bodies,private proofs and UI before/after/HTTP receipts. The console retains all67 prior runs/29 cohorts and appends one separate instrumented observation,68/30. HTTP-data checks are not browser rendering. This run establishes neither an optimization improvement,a sustained ceiling,millisecond SLA,production certification,HFT endorsement,100M continuity nor external/funded trading readiness.

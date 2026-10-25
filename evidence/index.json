@@ -1570,6 +1570,27 @@
         "Comparable full-cut intervals clearing recorded waiting:0/19. Conditional accepted-only p99:4557.860156ms. Global accepted-arrival p99 is undefined on any notSent.",
         "Same qualified sampler/readiness/cache preconditioning;fresh lineages are not continuous endurance. One short observation per rate;no statistical,physical-host isolation or millisecond SLA claim."
       ]
+    },
+    {
+      "id": "cpu-handoff-client-jfr-7500",
+      "label": "Parent JFR diagnostic · 7,500/s",
+      "scope": "150,000 planned;142,548 accepted/trades;7,452 definite NOT_SENT",
+      "model": "One CPU host · three JVMs · loopback UDP · parent/client JFR",
+      "commands": 150000,
+      "throughput": 6758.25,
+      "p50Millis": null,
+      "p99Millis": null,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "timestamp": "2026-10-25T19:04:38.927668491Z",
+      "durability": "sync2;canonical forced payload/receipt readback before both ACKs",
+      "artifactPath": "evidence/2026-10-25/runpod-cpu/verified-archive-handoff-v3/client-jfr-7500-arm-d1-native-r1/README.md",
+      "limitations": [
+        "Instrumented diagnostic only;global accepted-arrival p99 undefined because7,452 planned arrivals are notSent. Accepted-only p99=1418.100777ms. Zero rejection/observed UNKNOWN/final UNKNOWN.",
+        "Parent-only JFR;node JVMs unrecorded. Instrumentation and host variability prevent optimization attribution or pooling with the uninstrumented curve.",
+        "221 observed parent GC pause events total291.944368ms;404/789 execution samples belong to network owner. Sampling/thresholds are incomplete;not isolated costs.",
+        "No progression to8000,sustained capacity,independent physical-node isolation,millisecond SLA,production certification or100M claim."
+      ]
     }
   ],
   "capacityCohorts": [
@@ -3881,6 +3902,35 @@
           "drainSeconds": 2.270914586,
           "classification": "VALID_SEVERE_OVERLOAD",
           "peakBacklog": 8192,
+          "valid": true,
+          "stable": null,
+          "windowSeconds": 20
+        }
+      ]
+    },
+    {
+      "id": "cpu-handoff-client-jfr-diagnostic",
+      "title": "Parent JFR · instrumented diagnostic",
+      "updatedAt": "2026-10-25T19:04:38.927668491Z",
+      "reportPath": "docs/CLIENT_JFR_DIAGNOSTIC_RESULTS_V3.md",
+      "configurationFingerprint": "79e5a932a4c22a3abe3cf9199938975478aff6c49bccf74b8e729b29dd228e2f",
+      "scope": "One separate instrumented7500/s20s lineage;parent JFR/GC and128MiB additional diagnostic allocation reserve. Original failed uninstrumented curve remains stopped. Exact application,JDK,leader,sync2,W128/Q64,read128/page32/batch4/chunk6144,owner1ms/driver100us and readiness retained. No optimization/capacity comparison.",
+      "points": [
+        {
+          "id": "cpu-handoff-client-jfr-7500",
+          "rate": 7500,
+          "workers": 128,
+          "goodput": 6758.25,
+          "p99Millis": null,
+          "clientNotSent": 7452,
+          "rejected": 0,
+          "serverErrors": 0,
+          "unknown": 0,
+          "unresolved": 0,
+          "allOfferedAcceptedP99Millis": null,
+          "drainSeconds": 1.089789565,
+          "classification": "VALID_INSTRUMENTED_OVERLOAD",
+          "peakBacklog": 7991,
           "valid": true,
           "stable": null,
           "windowSeconds": 20
