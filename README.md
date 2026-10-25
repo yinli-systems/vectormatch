@@ -4,6 +4,8 @@
 
 A private engineering project exploring a limit-order matching engine, replicated execution, and real-time market data. Every capacity claim must link to its workload, hardware, durability settings, and raw results.
 
+[Review a ~3.7MB source checkout](docs/REVIEW_AND_REPRODUCE.md) · [Forced Linux correctness results](docs/PRODUCTION_CORRECTNESS_RESULTS.md) · [Production acceptance gates](docs/PRODUCTION_ACCEPTANCE.md)
+
 ## Delivery principles
 
 - Price-time priority, integer accounting, explicit reservation and settlement.
