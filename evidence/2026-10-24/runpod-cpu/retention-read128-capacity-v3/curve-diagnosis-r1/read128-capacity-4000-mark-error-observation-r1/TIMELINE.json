@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "scheduledOriginUTC": "2026-10-25T09:47:34.490485501Z",
+  "recordedErrors": [
+    {
+      "member": 0,
+      "service": -1,
+      "firstUTC": "2026-10-25T09:47:28.374000+00:00",
+      "lastUTC": "2026-10-25T09:47:28.374000+00:00",
+      "firstOffsetFromArrivalSeconds": -6.116484880447388,
+      "lastOffsetFromArrivalSeconds": -6.116484880447388,
+      "occurrences": 1,
+      "type": "io.aeron.archive.client.ArchiveException: ERROR - response for correlationId=91, error: failed to create replay publication: io.aeron.exceptions.RegistrationException: ERROR - existing publication has clashing sessionId=706719490 for streamId=100 channel=aeron:udp?endpoint=127.0.0.1:42205|mtu=1248|term-length=64m|init-term-id=0|term-id=0|term-offset=1056|session-id=706719490|linger=0ns|alias=catchup-followerId-2|eos=false, errorCodeValue=1"
+    },
+    {
+      "member": 2,
+      "service": -1,
+      "firstUTC": "2026-10-25T09:47:28.193000+00:00",
+      "lastUTC": "2026-10-25T09:47:28.358000+00:00",
+      "firstOffsetFromArrivalSeconds": -6.297484874725342,
+      "lastOffsetFromArrivalSeconds": -6.1324849128723145,
+      "occurrences": 3,
+      "type": "io.aeron.exceptions.RegistrationException: ERROR - io.aeron.exceptions.AeronException : ERROR - channel error - Address already in use (at java.base/sun.nio.ch.Net.bind0(Native Method)): aeron:udp?rejoin=false|mtu=1248|reliable=true|endpoint=127.0.0.1:42202|term-length=64k, errorCodeValue=11"
+    },
+    {
+      "member": 2,
+      "service": -1,
+      "firstUTC": "2026-10-25T09:47:38.362000+00:00",
+      "lastUTC": "2026-10-25T09:47:38.362000+00:00",
+      "firstOffsetFromArrivalSeconds": 3.8715150356292725,
+      "lastOffsetFromArrivalSeconds": 3.8715150356292725,
+      "occurrences": 1,
+      "type": "io.aeron.exceptions.TimeoutException: WARN - failed to join catchup log"
+    }
+  ],
+  "originalLogsNotReclassified": true,
+  "conclusion": "Startup channel/session errors precede scheduled arrivals; catchup timeout overlaps arrival window. This attempt remains unqualified. A constant sleep and leader0 client replies do not prove all followers healthy.",
+  "timestampPrecision": "Original error epoch milliseconds; scheduled nanosecond UTC truncated to microseconds by Python3.9 for this derived comparison.",
+  "initialInlineAttempt": "Python3.9 rejected nanosecond ISO text before output creation; corrected only parsing; no native execution."
+}
