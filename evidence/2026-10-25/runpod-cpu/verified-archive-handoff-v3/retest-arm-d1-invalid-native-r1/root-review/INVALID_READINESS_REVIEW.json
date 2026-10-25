@@ -1,0 +1,66 @@
+{
+  "acceptedOrders": 80000,
+  "allOwnedStopped": true,
+  "atUTC": "2026-10-25T17:31:19.306199+00:00",
+  "caseId": "d1",
+  "failingPid": 89217,
+  "failingRole": "window-128-node-1",
+  "gates": [
+    {
+      "file": "startup-readiness.json",
+      "review": {
+        "actualFinalQuietNs": 2041985356,
+        "commitPosition": 96,
+        "endedMonotonicNs": 157355398972632,
+        "maximumSampleGapNs": 104502655,
+        "notAtomicOrHardRealtime": true,
+        "originalPidAndCounterBindingsVerified": true,
+        "passed": true,
+        "samples": 30,
+        "startedMonotonicNs": 157352415925439
+      },
+      "sha256": "3ae5ce0151c77ac4da3bdf1c495e04296d34b30bf81c284ed7510422a4555e9b"
+    },
+    {
+      "file": "preload-readiness.json",
+      "review": {
+        "actualFinalQuietNs": 2030049485,
+        "commitPosition": 1376,
+        "endedMonotonicNs": 157362654641583,
+        "maximumSampleGapNs": 102001414,
+        "notAtomicOrHardRealtime": true,
+        "originalPidAndCounterBindingsVerified": true,
+        "passed": true,
+        "samples": 21,
+        "startedMonotonicNs": 157360620447087
+      },
+      "sha256": "475d44316b59b11c3a6197bb721146bf5a60767a6d66ed1a8ce57c91f2cca853"
+    }
+  ],
+  "hypothesis": "Follower pid89217 had empty cmdline with R/R state during execution. Actual same-kernel owned512MiB natural exits reproduce R/empty with PF_EXITING for18-20ms before terminal proof. Original D1 did not capture flags,so this supports the exit-teardown explanation without proving every historical kernel step. Preserve invalid status and do not advance retest C2/D2.",
+  "knownOriginalOutcomesComplete": true,
+  "nativeControlPassed": false,
+  "nextRunQualified": false,
+  "notSent": 0,
+  "originalExceptionPidAndExactReadPhaseUnavailable": false,
+  "originalNativeErrors": [
+    {
+      "error": "IdentityReadError('Incomplete process identity pid=89217 phase=cmdline state=R/R startTicks=15735209 argvBytes=0')",
+      "phase": "execution"
+    }
+  ],
+  "passed": true,
+  "performanceQualified": false,
+  "rawAuditSha256": "76177a0ee38575163e10bec8774287eb5b684142b9b2306c387378f0fc9fb26e",
+  "rejected": 0,
+  "rootReviewSha256": "e755d06ae79d9bd46f10db5229dc3c6f70be012f64e7899793dad89f1c170a08",
+  "sourceSha256": "f451c708a9e50f1bcda128d9dc7702f3392f7e31b932fa772a1fa96c6530d13e",
+  "sources": [
+    "https://man7.org/linux/man-pages/man5/proc_pid_cmdline.5.html",
+    "https://docs.kernel.org/filesystems/proc.html"
+  ],
+  "tradeEvents": 80000,
+  "unknownFinal": 0,
+  "unknownObserved": 0,
+  "workloadReviewSha256": "e8cd23d95c425693da48f5b4e46b3845d33e1b119980b948365a88ba90f75db8"
+}
