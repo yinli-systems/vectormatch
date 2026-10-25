@@ -20,7 +20,7 @@ class CapacityLeaderTest(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.directory = Path(self.temporary.name)
         # Actual official ClusterTool list-members output from the earlier cloud run.
-        raw = json.loads((ROOT / "evidence/2026-10-23/runpod-cluster/before-cold-restart/node0.json").read_text())
+        raw = json.loads((Path(__file__).resolve().parent / "fixtures/historical/2026-10-23/runpod-cluster/before-cold-restart/node0.json").read_text())
         self.members = raw["list-members"]
         self.assertIn("leadershipTermId=3", self.members["stdout"])
         for name in ("pre-members.json", "post-members.json"):

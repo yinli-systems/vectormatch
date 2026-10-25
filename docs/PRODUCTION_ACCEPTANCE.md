@@ -1,0 +1,34 @@
+# Production acceptance and trading rollout
+
+This is an implementation and evidence contract, not a production certification. Each gate remains unverified until its linked results pass. No HFT firm endorsement, hard real-time guarantee, zero latency, 100M/s or 100M physical connections is established by this repository.
+
+## Starting point: 25 October 2026
+
+The maintained five-point V3 curve uses three JVMs on one CPU host, loopback UDP and fresh 20-second lineages. At 7,500/s, the first observation has 294.01ms all-arrival p99 and 24/46 cut intervals that clear recorded waiting. At 8,000/s, p99 is 380.73ms, 0/49 intervals clear waiting and the finite progression gate fails. Boundary repeats use the same qualified application artifact; see [the repeat contract](CAPACITY_BOUNDARY_REPEATS_V3.md). These results do not pass the trading latency target below. Historical three-Pod results use a different workload and cannot be combined with this curve.
+
+GitHub Actions run [40197642613](https://github.com/yinli-systems/vectormatch/actions/runs/40197642613) did not start either job. Both check annotations report failed account payments or an insufficient spending limit. No runner steps executed. This is an account-level blocker, not evidence that code tests failed. Hosted spending limits have not been changed. A separately labelled, manually dispatched one-job runner on the existing prepaid CPU can provide independent Linux verification without a new cloud resource. Preserve its logs and identify it as self-hosted; do not disguise the hosted failure.
+
+## Gates and required evidence
+
+| Gate | Required behavior | Acceptance evidence |
+| --- | --- | --- |
+| Reproducible delivery | Clean source checkout without bulk evidence; exact toolchains; all tests, real PostgreSQL integration, failover smoke, Python regression tests and web checks | Actual CI job and source SHA, commands, exit codes, full JUnit results including skips, toolchain hashes and logs. No test exclusions to obtain green. |
+| Authenticated trading | TLS; explicit principals; account and producer authorization; public market feed separated from private data; default-deny administrative routes | Wrong-account, revoked-credential, malformed-frame, replay, stale-sequence and rate-limit tests; no secrets in logs. The loopback workbench remains a development tool. |
+| Replicated risk controls | Bounded notional, price/size and outstanding orders; deterministic integer risk; operator kill switch; cancel-only mode; auditable risk changes | Boundary and overflow tests; replicated replay/snapshot equality; unauthorized risk changes denied; kill switch still allows authorized cancels. Gateway checks alone do not suffice. |
+| Complete command history | Stable lineage + producer + sequence + payload digest; final outcomes queryable after hot-cache eviction; timeout does not mean rejection | Commit/reply-loss tests and a durable history lookup that returns the original final result or explicitly unknown. Conflicting retries cannot create a second trade. |
+| Continuous operation | 1M, then 10M, then 100M new orders in one business lineage with bounded memory and disk | [V4 endurance contract](CONTINUOUS_ENDURANCE_PLAN.md); exact counts, segmented original evidence, archive acknowledgements, invariant checks, checkpoint anchors and binary cold recovery. Fresh short runs cannot be added together. |
+| Failure tolerance | Leader loss, follower loss/rejoin, gateway disconnect, exporter failure, disk full and disk I/O failure during load | Fault timeline, every admitted command reconciled, no divergent balances/trades, no silent ACK before the documented durability boundary. Recovery bounds measured separately from healthy latency. Independent physical-host failure remains unverified on one CPU host. |
+| Millisecond trading latency | Initial target: all-arrival scheduled-to-confirmation p99 <=5ms and p99.9 <=20ms for 10 minutes at a predeclared rate <=70% of the measured sustainable knee, with concurrent maintenance | Three repeats at the same artifact/configuration; all planned arrivals retained; zero unknown, rejection or notSent for this target workload; latency histogram, per-second backlog and resource traces. Also report offer-to-reply and core-only latency separately. This target is not currently met and is not a contractual SLA. |
+| Market distribution and scale | Bounded subscriber queues, explicit gaps and resynchronization; per-market sequencing; private account isolation; shard ownership and cross-market risk protocol | Slow-consumer and disconnect/replay tests; actual physical connection counts; fan-out throughput, bandwidth, tail latency and shard failure tests. Logical clients are not physical sessions. |
+| External venue paper/testnet | Separate adapter from the deterministic core; authenticated venue protocol; client-order identity; partial-fill/cancel races; restart reconciliation; venue rate limits | Sandbox order/trade IDs and sanitized protocol receipts reconciled with balances and local ledger; disconnect and retry tests. Synthetic matching, paper trading and funded trading remain distinct evidence. |
+| Funded trading readiness | Explicit account/venue, asset allowlist, capital and loss limits, strategy, operator ownership, reconciliation and emergency stop | All preceding applicable gates; a concrete dry-run report and reviewed limits. No funded orders until the user explicitly authorizes those account/strategy/amount parameters. Technical readiness alone does not authorize live trading. |
+
+## Execution order
+
+1. Close both already registered boundary repeats and retain every original outcome; repair reproducible CI and record the hosted account blocker.
+2. Instrument maintenance phases before optimizing. Compare each change with the control on the same newly qualified artifact. Never weaken fsync, canonical readback, acknowledgement ordering or evidence bounds to improve a number.
+3. Build a separate authenticated trading gateway and deterministic risk controls with recovery tests; maintain local workbench compatibility. Choose the first venue through supported sandbox capabilities and user account availability.
+4. Implement versioned continuous retention and history lookup, then run 1M ->10M ->100M with fault injection and cold restore. Advance only after the previous level closes.
+5. Verify the healthy latency target, sustained capacity and market distribution independently. Physical-host isolation and external venue latency require their own environments and budget; the current prepaid single host cannot prove either.
+
+All gates require reproducible evidence rather than a numeric project score. Raw synthetic evidence remains private under the existing authorization. No history rewrite, public publication, new paid resources or funded-trading activation follows from this contract.

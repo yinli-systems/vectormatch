@@ -8,6 +8,7 @@ import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[2]
+HISTORICAL = Path(__file__).resolve().parent / "fixtures/historical/2026-10-23"
 SPEC = importlib.util.spec_from_file_location("capacity_config", ROOT / "scripts/verify-capacity-config.py")
 config = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(config)
@@ -28,7 +29,7 @@ class CapacityConfigTest(unittest.TestCase):
     def test_historical_cloud_argument_receipts_still_match_exactly(self):
         # Real recorded receipts independently anchor legacy argv and hashing.
         for cohort in ("runpod-capacity", "runpod-capacity-extended", "runpod-capacity-128", "runpod-capacity-long"):
-            directory = next(p for p in sorted((ROOT / "evidence/2026-10-23" / cohort / "runs").iterdir())
+            directory = next(p for p in sorted((HISTORICAL / cohort / "runs").iterdir())
                              if (p / "load-process.json").exists() and (p / "result.json").exists())
             with self.subTest(cohort=cohort):
                 trial = json.loads((directory / "trial.json").read_text())
@@ -125,7 +126,7 @@ class CapacityConfigTest(unittest.TestCase):
 
     def test_historical_node_argv_is_unchanged_without_new_opt_in(self):
         for cohort in ("runpod-capacity", "runpod-capacity-extended", "runpod-capacity-128", "runpod-capacity-long"):
-            root = ROOT / "evidence/2026-10-23" / cohort
+            root = HISTORICAL / cohort
             directory = next(p for p in sorted((root / "runs").iterdir())
                              if (p / "load-process.json").exists() and (p / "result.json").exists())
             fixed = json.loads((root / "campaign.json").read_text())["fixed"]
@@ -361,7 +362,7 @@ class CapacityConfigTest(unittest.TestCase):
                 config.load_generator_jvm_arguments(self.trial, {**runtime, **changes}, fixed)
 
     def terminal_unknown_fixture(self, root):
-        source_root = ROOT / "evidence/2026-10-23/runpod-optimization/window350k/pilot"
+        source_root = HISTORICAL / "runpod-optimization/window350k/pilot"
         source = source_root / "runs/w-pilot-10000-w128"
         directory = root / "runs/w-pilot-10000-w128"
         directory.mkdir(parents=True)
