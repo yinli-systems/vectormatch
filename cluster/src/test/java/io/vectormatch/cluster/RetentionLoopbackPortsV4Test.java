@@ -7,6 +7,12 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RetentionLoopbackPortsV4Test {
+    @Test void hostRangeContainsAnActuallyAssignedUdpClientPort() throws Exception {
+        var range=RetentionLoopbackPortsV4.hostRange();
+        try(var client=new DatagramSocket(0,InetAddress.getByName("127.0.0.1"))) {
+            assertTrue(client.getLocalPort()>=range.first()&&client.getLocalPort()<=range.last());
+        }
+    }
     @Test void everyMemberEndpointMustAvoidTheActualEphemeralInterval() {
         var linux=RetentionLoopbackPortsV4.parse("32768\t60999\n");
         assertFalse(RetentionLoopbackPortsV4.allowed(40265,linux));

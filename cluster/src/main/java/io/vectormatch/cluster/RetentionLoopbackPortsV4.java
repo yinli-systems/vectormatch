@@ -21,7 +21,14 @@ final class RetentionLoopbackPortsV4 {
     }
     static Range hostRange() throws IOException {
         Path linux=Path.of("/proc/sys/net/ipv4/ip_local_port_range");
-        if(Files.isRegularFile(linux))return parse(Files.readString(linux));
+        if(Files.isRegularFile(linux)) {
+            // procfs reports zero length; this JDK's readString can return only its first byte.
+            try(var input=Files.newInputStream(linux)) {
+                byte[] output=input.readNBytes(129);
+                if(output.length>128)throw new IOException("Ephemeral port range exceeds bounded input");
+                return parse(new String(output,StandardCharsets.US_ASCII));
+            }
+        }
         if(!System.getProperty("os.name").startsWith("Mac"))throw new IOException("Ephemeral port range unavailable on this platform");
         Process process=new ProcessBuilder("/usr/sbin/sysctl","-n","net.inet.ip.portrange.first","net.inet.ip.portrange.last").redirectErrorStream(true).start();
         try {
