@@ -116,7 +116,15 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
         if(bytes.length>MAX_REPLY_BYTES+MAX_REQUEST_BYTES||size>maximumTraceBytes-traceBytes)throw new IOException("V4 bounded trace exhausted;no further arm/ACK");
         trace.writeInt(kind);trace.writeLong(++traceRecords);trace.writeLong(System.nanoTime());trace.writeInt(bytes.length);trace.write(bytes);trace.flush();traceBytes+=size;
     }
-    private void transition(Phase next)throws IOException{record(3,(phase.name()+","+next.name()+","+reservedEvents+","+reservedHistoryBytes).getBytes(java.nio.charset.StandardCharsets.US_ASCII));phase=next;}
+    private void transition(Phase next)throws IOException{
+        record(3,RetentionCapacityJsonV3.json(Map.of("from",phase.name(),"to",next.name(),"reservedCommands",reservedCommands,
+                "reservedEvents",reservedEvents,"reservedHistoryBytes",reservedHistoryBytes,"readBankOpen",bank!=null,
+                "pendingLogicalCommands",owner.snapshot().get("pendingLogicalCommands"))).getBytes(java.nio.charset.StandardCharsets.US_ASCII));phase=next;
+    }
+    private void recordReceipt(String kind,RetentionDurableWriterV3.Persisted receipt)throws IOException{
+        record(5,RetentionCapacityJsonV3.json(Map.of("kind",kind,"path",receipt.path().toString(),"bytes",receipt.bytes(),"sha256",receipt.sha256(),
+                "receiptPath",receipt.path().resolveSibling(receipt.path().getFileName()+".verified.txt").toString())).getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
     private void countRpc(){if(++rpcs>maximumRpcs)throw new IllegalStateException("V4 finite RPC limit exhausted");}
     private void reserveControl(Operation operation,boolean destructive)throws IOException{
         countRpc();control=owner.reserveMaintenance(operation,System.nanoTime()+RPC_NS);record(1,control.originalWire());record(4,RetentionCapacityJsonV3.json(control.observation()).getBytes(java.nio.charset.StandardCharsets.US_ASCII));
@@ -171,10 +179,11 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
                 if(eventOffset==events.events().size()){pipeline.submitEvents(eventBytes.toByteArray());transition(Phase.FILE_WAIT);}
             }
             case FILE_WAIT -> {
-                var ready=pipeline.poll();if(ready.isEmpty())return;proof=ready.orElseThrow();transition(Phase.ACK_DRAIN);
+                var ready=pipeline.poll();if(ready.isEmpty())return;proof=ready.orElseThrow();recordReceipt("archive",proof.archive());
+                if(proof.events().isPresent())recordReceipt("events",proof.events().orElseThrow());transition(Phase.ACK_DRAIN);
             }
             case ACK_DRAIN -> {if(!pending()){reserveAck(true);transition(Phase.ARCHIVE_INTENT);}}
-            case ARCHIVE_INTENT -> {if(intent.poll().isPresent()){control.arm();transition(Phase.ARCHIVE_ACK);}}
+            case ARCHIVE_INTENT -> {var ready=intent.poll();if(ready.isPresent()){recordReceipt("archive-control-intent",ready.orElseThrow());control.arm();record(4,RetentionCapacityJsonV3.json(control.observation()).getBytes(java.nio.charset.StandardCharsets.US_ASCII));transition(Phase.ARCHIVE_ACK);}}
             case ARCHIVE_ACK -> {
                 var reply=controlReply();if(reply==null)return;
                 if(!(reply.payload() instanceof State state)||state.maintenance()==null||state.maintenance().code()!=RetentionServiceV3.MaintenanceCode.APPLIED
@@ -183,7 +192,7 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
                 control=null;intent=null;
                 if(events.events().isEmpty())finish();else{reserveAck(false);transition(Phase.EVENT_INTENT);}
             }
-            case EVENT_INTENT -> {if(intent.poll().isPresent()){control.arm();transition(Phase.EVENT_ACK);}}
+            case EVENT_INTENT -> {var ready=intent.poll();if(ready.isPresent()){recordReceipt("event-control-intent",ready.orElseThrow());control.arm();record(4,RetentionCapacityJsonV3.json(control.observation()).getBytes(java.nio.charset.StandardCharsets.US_ASCII));transition(Phase.EVENT_ACK);}}
             case EVENT_ACK -> {
                 var reply=controlReply();if(reply==null)return;
                 if(!(reply.payload() instanceof State state)||state.maintenance()==null||state.maintenance().code()!=RetentionServiceV3.MaintenanceCode.APPLIED
@@ -217,6 +226,7 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
                 var out=new DataOutputStream(eventBytes);out.writeInt(raw.length);out.write(raw);
             }
             record(4,RetentionCapacityJsonV3.json(read.ticket.observation()).getBytes(java.nio.charset.StandardCharsets.US_ASCII));bank.consume(read.ticket);
+            record(4,RetentionCapacityJsonV3.json(read.ticket.observation()).getBytes(java.nio.charset.StandardCharsets.US_ASCII));
         }
         reads.clear();bank.close();bank=null;return true;
     }

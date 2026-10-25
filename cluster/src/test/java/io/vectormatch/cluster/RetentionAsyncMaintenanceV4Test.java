@@ -103,7 +103,7 @@ class RetentionAsyncMaintenanceV4Test {
                 byte[] actual=fixture.io.snapshotOwned();assertArrayEquals(state(reference).snapshot(),actual);
                 var restored=RetentionServiceV3.restore(actual,fixture.profile,LINEAGE);assertArrayEquals(actual,restored.snapshot());assertEquals(5,restored.businessSeq());assertEquals(5,restored.exportedEventSeq());
                 assertEquals(2,fixture.io.offers(ArchiveCommit.class));assertEquals(2,fixture.io.offers(EventAck.class));
-                try(var input=new DataInputStream(Files.newInputStream(root.resolve("trace-v4.bin")))){assertEquals(0x564d5434,input.readInt());assertEquals(1,input.readInt());long count=0;while(input.available()>0){int kind=input.readInt();assertTrue(kind>=1&&kind<=4);assertEquals(++count,input.readLong());input.readLong();int n=input.readInt();assertTrue(n>0&&n<=12288);assertEquals(n,input.readNBytes(n).length);}assertEquals(fixture.coordinator.snapshot().get("traceRecords"),count);}
+                try(var input=new DataInputStream(Files.newInputStream(root.resolve("trace-v4.bin")))){assertEquals(0x564d5434,input.readInt());assertEquals(1,input.readInt());long count=0;while(input.available()>0){int kind=input.readInt();assertTrue(kind>=1&&kind<=5);assertEquals(++count,input.readLong());input.readLong();int n=input.readInt();assertTrue(n>0&&n<=12288);assertEquals(n,input.readNBytes(n).length);}assertEquals(fixture.coordinator.snapshot().get("traceRecords"),count);}
             }finally{archiveRelease.countDown();eventRelease.countDown();}
         }
     }
