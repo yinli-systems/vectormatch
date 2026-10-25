@@ -1,0 +1,22 @@
+# Fixed1000/s read32/128 ABAB: repeated lower maintenance tails
+
+Both paired comparisons reduced scheduled-arrival p99:22.79% and26.64%. Maintenance wall time fell22.13% and24.69%. These four finite observations support the explicit128-credit candidate at this workload. Offered rate remains1000/s, so they do not prove a higher throughput ceiling.
+
+|Arm|Selected read credits|Scheduled-arrival p50 ms|Scheduled-arrival p99 ms|Maintenance wall s|In-window accepted/s|Sampled queue high-water|
+|---|---:|---:|---:|---:|---:|---:|
+|A1|32|7.186710|295.531859|2.016069952|999.65|13|
+|B1|128|7.148273|228.180420|1.569989240|999.75|1|
+|A2|32|7.161387|324.536026|2.131991565|999.65|14|
+|B2|128|7.122895|238.083127|1.605704278|999.70|1|
+
+Each row is a fresh20000-order lineage over20seconds; all planned orders uniquely accepted, zero observed/final UNKNOWN, rejection, notSent and scheduler lateness>20ms. Distinct reset lineages are not cumulative endurance. Common128 staging/failure envelope, leader0/sync2/page32/batch4/chunk6144/owner1ms/driver100us/W128Q64/session1, three JVMs on one CPU host over loopback UDP. A recorded five-second pre-load warm-up occurs after setup/position closure in every arm and before the scheduled arrival origin. No JFR in either arm. Warm-up policy defines this new cohort; these rows cannot be compared directly with the prior un-warmed/JFR-maintained-capacity points.
+
+All four arms load the same source `adab914a2ba17e693ee3dd231012402366f033c2`, actual four-anchor installed-JAR fingerprint `993fa7ad238cb2fff0949d2b7ee92d929ee95d4627f91d2f6d31a358599b2c36` and release `2c2edc237f788917ae4dc7b3b880b5554ae8870a7c7f43e3f1d1e161225079a0`. Both selected windows reserve identical max128 common operational budgets; only selected credits differ. Actual raw registry high-waters32/128/32/128 match the respective selections. Positive offer limits, absolute deadlines, raw budgets, global retry/negative limits, phase exclusion and force/readback before destructive ACK remain enforced. Legacy/default APIs retain their original ceilings.
+
+Independent local reviews stream every original outer/inner member and verify SHA/size/mode/owner/empty directories. Every original CSV identity, canonical command hash and result binds to full decoded request/reply frames and physical frame-index/offer associations. Complete20000-row p50/p99/in-window counts and all maintenance walls were recomputed again for the final comparison; common budgets and four distinct lineages match. Candidate matching-reference and three matching checkpoint logs remain distinct from an independent algorithm oracle, binary snapshot-record decode and cold application restart proof.
+
+The slowest200-arrival predispatch shares remain96.97%–97.66%, with queue/maintenance overlap95.38%–96.65%. Larger credits shorten maintenance pauses in both pairs; the remaining p99 is still dominated by waiting before business dispatch in this cohort. This does not independently isolate network/server/storage causal costs, and no hard realtime, zero latency,100M/s,100M physical connections or100M continuous-lineage claim is established.
+
+Before the first128 arm, source review found the reused idle evidence validator admitted only8|32 role labels. A1used32 and passed under the exact original frozen controller. A separately retained source revision extends only that role-label selector to32|128; all other actual idle/PID/file/log/owner checks are AST-identical. The first-arm old freeze and each later actual root/raw/private gate bind the transition; application/JARs/plans/warm-up/protocol are unchanged. Local fixture, launcher-parse, premature-collection and early private-verification rejections are retained. None reran orders or weakened checks. A1/B1 complete campaign TARs include previous siblings; A2/B2 retain all current-arm/top-level sources/gates/metadata/revision backups and SHA-bind prior fully privately archived native closures. Remote originals remain retained.
+
+Full original evidence: [A1](../evidence/2026-10-24/runpod-cpu/retention-read-window128-v3/cloud-arm-1-r1/README.md), [B1](../evidence/2026-10-24/runpod-cpu/retention-read-window128-v3/cloud-arm-2-r1/README.md), [A2](../evidence/2026-10-24/runpod-cpu/retention-read-window128-v3/cloud-arm-3-r1/README.md), [B2](../evidence/2026-10-24/runpod-cpu/retention-read-window128-v3/cloud-arm-4-r1/README.md). [62-test source/build/failure-boundary qualification](../evidence/2026-10-24/runpod-cpu/retention-read-window128-v3/local-unit-validation-r1/README.md).

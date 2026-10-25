@@ -1,0 +1,13 @@
+{
+  "atUTC": "2026-10-25T09:22:01.579222+00:00",
+  "arguments": [
+    "python3",
+    "-B",
+    "-c",
+    "import pathlib,sys,base64,hashlib,os,json\nbody=base64.b64decode(sys.argv[1]);sha=sys.argv[2];arm=int(sys.argv[3]);assert arm in(1,2,3)and hashlib.sha256(body).hexdigest()==sha\nroot=pathlib.Path('/opt/vectormatch-cpu/experiments/read-window128-abab-r1');p=root/('arm-'+str(arm)+'-gate.json');assert root.is_dir()and not root.is_symlink()and not p.exists();x=json.loads(body);assert x['passed']and x['arm']==arm\nwith p.open('xb')as f:f.write(body);f.flush();os.fsync(f.fileno())\np.chmod(0o600);assert p.read_bytes()==body and p.stat().st_mode&0o777==0o600;print(json.dumps(dict(passed=True,arm=arm,sha256=sha,mode=384,noWorkloadLaunched=True)))\n",
+    "ewogICJhbGwyMDAwMFJhd091dGNvbWVzVmVyaWZpZWQiOiB0cnVlLAogICJhbGxPcmlnaW5hbE5hdGl2ZUFuZFJhd1ByaXZhdGVHaXRCbG9ic1ZlcmlmaWVkIjogdHJ1ZSwKICAiYXJjaGl2ZUludmVudG9yeVNoYTI1NiI6ICIyYWMyNWQ2ODMzOWNiNDZmYmRlMjBjNTc3Y2RmMDJhN2YwMzE1N2M4MTViNTRlYWIwNWUwM2I4NGRkYTUxZmE2IiwKICAiYXJtIjogMywKICAiY2xvc2VkTmF0aXZlQXJjaGl2ZVNoYTI1NiI6ICJiZjg2ZjE2Yzg5ZjEyMTM5ZGIwMWRiMWFhODQ3YjM3NGZjZmU1ZDM3OTVlZDVmOWE3MDVhODYzY2NmMjdlZGU4IiwKICAiY29kZUZpbmdlcnByaW50IjogIjk5M2ZhN2FkMjM4Y2IyZmZmMDk0OWQyYjdlZTkyZDkyOWVlOTVkNDYyN2Y5MWQyZjZkMzFhMzU4NTk5YjJjMzYiLAogICJwYXNzZWQiOiB0cnVlLAogICJwcml2YXRlQ29tbWl0IjogIjQ1MTE2ZDY0MmU1M2FjNDdjMzU5MGYxMDVkNmZkNDU3NmQ0YmY4YzIiLAogICJwcml2YXRlUHVzaFNoYTI1NiI6ICJkNjY0MDA4NzdjZDEyOThmMzlmZTIxODQ2MjRkOWEzN2I1NDhhYWVlYWU1ZTMyMmIxNmU1MzRlMTlkMjkyN2EyIiwKICAicmF3QXVkaXRTaGEyNTYiOiAiZDM3MDJmMzJhM2EzZGY1ZGVmNzJiYzcwMTFhMzY5YmM4ZjUyZjg3ODRhZTAzYWFlNmFiMDk5MjJkMWE3OTMzNCIsCiAgInJlYWRXaW5kb3ciOiAzMiwKICAicmVsZWFzZVNoYTI1NiI6ICIyYzJlZGMyMzdmNzg4OTE3YWU0ZGM3YjNiODgwYjU1NTRhZTg4NzBhN2M3ZjQzZTNmMWQxZTE2MTIyNTA3OWEwIiwKICAicm9vdFJldmlld1NoYTI1NiI6ICJhMmQwZWRjNjE4NTdiODZiMTNhMDcxZjIwYzZkM2Q3YzUxNzRmNzA2OTk4NTMxYjcyNjFhOTAyNTYxNTM2MGRiIiwKICAic2NvcGUiOiAiUk9PVF9DTE9TRURfUkFXX1BSSVZBVEVfUkVBRDEyOF9BUk0iLAogICJzb3VyY2VGcmVlemVTaGEyNTYiOiAiYTFkMjIwNDcwNmM2MjA4NGNiMzZlYTljMjI1ZjZjMTc2ZDQxYTAwYTM1YmIzNDU0N2Q0ZGNmZWIyZDYwMThmMCIsCiAgInN0cmljdFNjaGVkdWxlclZhbGlkIjogdHJ1ZQp9Cg==",
+    "631e21710f1942e0c48a56c505056b0d7e144ab34571fd0481d2b99afd452f75",
+    "3"
+  ],
+  "exclusiveGateOnly": true
+}
