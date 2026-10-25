@@ -16,7 +16,18 @@ jobs:
     runs-on: [self-hosted, Linux, X64, '${{ inputs.runner_label }}']
     timeout-minutes: 45
     steps:
+      - name: Require sparse-checkout-capable Git before any source download
+        run: |
+          "$VM_CI_PYTHON" - <<'PY'
+          import re, subprocess
+          version = subprocess.check_output(['git', '--version'], text=True).strip()
+          match = re.search(r'git version (\d+)\.(\d+)', version)
+          assert match and tuple(map(int, match.groups())) >= (2, 28), version + ': sparse checkout requires Git >=2.28; refusing full-archive fallback'
+          print(version)
+          PY
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        id: source
+        timeout-minutes: 5
         with:
           persist-credentials: false
           sparse-checkout: |
@@ -44,5 +55,5 @@ jobs:
       - name: Verify Linux toolchain and run all correctness gates
         run: bash scripts/ci-existing-cpu.sh
       - name: Record JUnit and regression evidence
-        if: always()
+        if: always() && steps.source.outcome == 'success'
         run: python3 scripts/ci-summary.py
