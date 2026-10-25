@@ -1,0 +1,5 @@
+# Same-artifact boundary repeats: complete reporting
+
+Two fresh20s repeat lineages at7500/s and8000/s,identical source566dd2fa/code2b8d7594 to the first fine curve. Every original order accepted,zero notSent/rejected/observed or final UNKNOWN.7500/s p99=263.319874ms and27/46 clearing intervals;8000/s p99=580.140180ms and2/48 clearing intervals. The latter again misses the finite99% in-window confirmation gate. No higher load or optimization was executed. Two observations per boundary rate do not establish sustained capacity,significance,hard real time or any100M proof.
+
+Complete native/raw evidence remains in sibling repeat-2-native-7500-r1 and repeat-2-native-8000-r1,including lossless whole compressed scope archives,original member inventories,CSV,wire/offer/identity/result/readiness and lifecycle evidence. This package retains the complete analysis sources,inputs/proofs,per-worker and interval analysis,derived index,previous index,application/HTTP receipts and exact published files. All49 earlier UI records and all original five-point values are retained;51 records/20 cohorts. HTTP response equals the local derived index;no browser-render claim.

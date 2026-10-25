@@ -1188,6 +1188,50 @@
         "Complete original native,CSV,wire/frame/index/offer,identity/result,source and readiness bodies privately verified at f54e4a84be114864a9a9d4480ea9ce21fabe7c22. Compressed original scopes retain every byte/member/mode/owner/directory. Earlier failed local planner qualification remains archived.",
         "Finite progression gate not met;load escalation stops. Separate20s trials,not sustained capacity,statistical significance,hard realtime or any100M target. Historical cohorts remain separate."
       ]
+    },
+    {
+      "id": "cpu-rotating-fine-7500-repeat-2",
+      "label": "CPU rotating dispatch · 7,500/s · repeat 2",
+      "scope": "150,000 planned · all accepted · finite 20s boundary repeat",
+      "model": "One CPU host · three JVMs · loopback UDP · one physical session",
+      "commands": 150000,
+      "throughput": 7467.45,
+      "p50Millis": 114.09339,
+      "p99Millis": 263.319874,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "durability": "sync2 replicated log; exact-prefix force and full readback before both ACKs",
+      "timestamp": "2026-10-25T13:38:45.570645061Z",
+      "artifactPath": "evidence/2026-10-24/runpod-cpu/retention-dispatch-capacity-v3/repeat-2-native-7500-r1/README.md",
+      "limitations": [
+        "Same source566dd2fa/code2b8d7594 as the first observation. Finite20s;all150000 accepted;notSent/rejected/observed UNKNOWN/final UNKNOWN=0/0/0/0.",
+        "Window confirmation=99.5660%;finite gate met. Recorded waiting clears in 27/46 offered cut intervals;first/last cut-end waiting=1693/1628.",
+        "All prior observations retained,including the earlier 8000/s gate miss. Two short observations per boundary rate do not establish significance,sustained capacity,an SLA or any100M target.",
+        "Leader0/sync2/ROTATING_CONTINUE/read128/page32/batch4/chunk6144/owner1ms/driver100us/W128Q64. Two original-PID2s readiness gates and5s warm-up;no JFR.128 logical workers are one physical session.",
+        "Full original native/raw/CSV/wire/offer/identity/readiness evidence privately verified at cae75ae95e23e7df62dcbf5fec3482531eef6eba. Candidate-codec/reference checks are not an independent matching oracle or cold binary recovery."
+      ]
+    },
+    {
+      "id": "cpu-rotating-fine-8000-repeat-2",
+      "label": "CPU rotating dispatch · 8,000/s · repeat 2",
+      "scope": "160,000 planned · all accepted · finite 20s boundary repeat",
+      "model": "One CPU host · three JVMs · loopback UDP · one physical session",
+      "commands": 160000,
+      "throughput": 7832.65,
+      "p50Millis": 221.817785,
+      "p99Millis": 580.14018,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "durability": "sync2 replicated log; exact-prefix force and full readback before both ACKs",
+      "timestamp": "2026-10-25T13:55:34.560571005Z",
+      "artifactPath": "evidence/2026-10-24/runpod-cpu/retention-dispatch-capacity-v3/repeat-2-native-8000-r1/README.md",
+      "limitations": [
+        "Same source566dd2fa/code2b8d7594 as the first observation. Finite20s;all160000 accepted;notSent/rejected/observed UNKNOWN/final UNKNOWN=0/0/0/0.",
+        "Window confirmation=97.9081%;finite gate not met. Recorded waiting clears in 2/48 offered cut intervals;first/last cut-end waiting=2460/4771.",
+        "All prior observations retained,including the earlier 8000/s gate miss. Two short observations per boundary rate do not establish significance,sustained capacity,an SLA or any100M target.",
+        "Leader0/sync2/ROTATING_CONTINUE/read128/page32/batch4/chunk6144/owner1ms/driver100us/W128Q64. Two original-PID2s readiness gates and5s warm-up;no JFR.128 logical workers are one physical session.",
+        "Full original native/raw/CSV/wire/offer/identity/readiness evidence privately verified at 488e359a049977d95aa95a1f7237ad44697fd0ba. Candidate-codec/reference checks are not an independent matching oracle or cold binary recovery."
+      ]
     }
   ],
   "capacityCohorts": [
@@ -2972,8 +3016,8 @@
       "id": "cpu-rotating-fine-566dd2fa-20s",
       "title": "CPU rotating dispatch · fine rates · finite20s",
       "updatedAt": "2026-10-25T13:07:59.393228083Z",
-      "scope": "One CPU host / three JVMs / loopback UDP.128 logical workers,one physical session. Fixed leader0/sync2/read128/page32/batch4/chunk6144/owner1ms/driver100us/W128Q64. Original-PID readiness around setup/5s warm-up;no JFR. Each point is one separate20s lineage. Stable markers require both the finite gate and zero recorded waiting in every compared interval. A missed gate alone leaves stability unreported;it does not prove unbounded backlog. Neither a sustained throughput ceiling nor an SLA is established. Full original compressed scopes privately verified.",
-      "reportPath": "docs/DISPATCH_CAPACITY_RESULTS.md",
+      "scope": "One CPU host / three JVMs / loopback UDP.128 logical workers,one physical session. Fixed leader0/sync2/read128/page32/batch4/chunk6144/owner1ms/driver100us/W128Q64. Original-PID readiness around setup/5s warm-up;no JFR. Each point is one separate20s lineage. Stable markers require both the finite gate and zero recorded waiting in every compared interval. A missed gate alone leaves stability unreported;it does not prove unbounded backlog. Neither a sustained throughput ceiling nor an SLA is established. Full original compressed scopes privately verified. Same-artifact boundary repeat2 at7500/8000 is appended;original five observations remain unchanged. Two repeats per boundary rate are not statistical significance or sustained capacity.",
+      "reportPath": "docs/CAPACITY_BOUNDARY_REPEATS_V3.md",
       "configurationFingerprint": "2b8d7594e03f8eeeef7aaf8e07db12c3bb585ba4ba67970d065c7174420fbf68",
       "points": [
         {
@@ -3067,6 +3111,44 @@
           "drainSeconds": 0.378157141,
           "classification": "FINITE_20S_GATE_NOT_MET",
           "peakBacklog": 2745,
+          "valid": true,
+          "stable": null,
+          "windowSeconds": 20
+        },
+        {
+          "id": "cpu-rotating-fine-7500-repeat-2",
+          "rate": 7500,
+          "workers": 128,
+          "goodput": 7467.45,
+          "p99Millis": 263.319874,
+          "clientNotSent": 0,
+          "rejected": 0,
+          "serverErrors": 0,
+          "unknown": 0,
+          "unresolved": 0,
+          "allOfferedAcceptedP99Millis": 263.319874,
+          "drainSeconds": 0.047699829,
+          "classification": "FINITE_20S_GATE_MET",
+          "peakBacklog": 1570,
+          "valid": true,
+          "stable": null,
+          "windowSeconds": 20
+        },
+        {
+          "id": "cpu-rotating-fine-8000-repeat-2",
+          "rate": 8000,
+          "workers": 128,
+          "goodput": 7832.65,
+          "p99Millis": 580.14018,
+          "clientNotSent": 0,
+          "rejected": 0,
+          "serverErrors": 0,
+          "unknown": 0,
+          "unresolved": 0,
+          "allOfferedAcceptedP99Millis": 580.14018,
+          "drainSeconds": 0.684575575,
+          "classification": "FINITE_20S_GATE_NOT_MET",
+          "peakBacklog": 3342,
           "valid": true,
           "stable": null,
           "windowSeconds": 20

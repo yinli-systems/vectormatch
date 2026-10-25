@@ -1,5 +1,7 @@
 # Rotating dispatch: fine maintained CPU capacity curve
 
+The subsequently completed [same-artifact boundary repeats](CAPACITY_BOUNDARY_REPEATS_V3.md#completed-observations) retain all points below unchanged. At7500/s both finite gates pass but neither observation clears every maintenance interval; at8000/s both gates fail. Two observations at each boundary rate are not a sustained-capacity or statistical-significance result.
+
 This single20s-per-point curve has highest tested all-interval recovery rate 7000/s,and highest finite-gate passing rate 7500/s. 4000/s clears recorded waiting in23/23 compared offered intervals; 6000/s clears recorded waiting in36/36 compared offered intervals; 7000/s clears recorded waiting in43/43 compared offered intervals; 7500/s clears recorded waiting in24/46 compared offered intervals; 8000/s clears recorded waiting in0/49 compared offered intervals. These are observed finite recovery/gate results,not a sustained ceiling.
 
 Each point below uses one fresh20s lineage of scheduled synthetic IOC orders,one physical session and128 logical producers. All requests,outcomes and raw/native bytes are retained. The source and Linux JAR fingerprint are common to every point. This is a finite exploration;passing points do not establish sustained capacity or a realtime SLA.
