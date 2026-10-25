@@ -1,0 +1,13 @@
+{
+  "atUTC": "2026-10-25T09:18:58.139353+00:00",
+  "arguments": [
+    "python3",
+    "-B",
+    "-c",
+    "import pathlib,sys,base64,hashlib,os,json\nbody=base64.b64decode(sys.argv[1]);sha=sys.argv[2];arm=int(sys.argv[3]);assert arm in(1,2,3)and hashlib.sha256(body).hexdigest()==sha\nroot=pathlib.Path('/opt/vectormatch-cpu/experiments/read-window128-abab-r1');p=root/('arm-'+str(arm)+'-gate.json');assert root.is_dir()and not root.is_symlink()and not p.exists();x=json.loads(body);assert x['passed']and x['arm']==arm\nwith p.open('xb')as f:f.write(body);f.flush();os.fsync(f.fileno())\np.chmod(0o600);assert p.read_bytes()==body and p.stat().st_mode&0o777==0o600;print(json.dumps(dict(passed=True,arm=arm,sha256=sha,mode=384,noWorkloadLaunched=True)))\n",
+    "ewogICJhbGwyMDAwMFJhd091dGNvbWVzVmVyaWZpZWQiOiB0cnVlLAogICJhbGxPcmlnaW5hbE5hdGl2ZUFuZFJhd1ByaXZhdGVHaXRCbG9ic1ZlcmlmaWVkIjogdHJ1ZSwKICAiYXJjaGl2ZUludmVudG9yeVNoYTI1NiI6ICJmN2JjYmYwODQ5NmNlNTRiYThmOGZkNWVlMWJmZmRiNWE2ZTM1NzEyOWRiZjM1YmQ2OWY3NmY5ZWI0ODg0ZjFiIiwKICAiYXJtIjogMiwKICAiY2xvc2VkTmF0aXZlQXJjaGl2ZVNoYTI1NiI6ICJkMWIxZDYxODEzNGZhNTk0NTM1MWUxNjE4ZjYyN2RiNWI5ZGRkZjJlZDc1NjU0M2ZhOGMwNGUzYmM2Y2NhODMwIiwKICAiY29kZUZpbmdlcnByaW50IjogIjk5M2ZhN2FkMjM4Y2IyZmZmMDk0OWQyYjdlZTkyZDkyOWVlOTVkNDYyN2Y5MWQyZjZkMzFhMzU4NTk5YjJjMzYiLAogICJwYXNzZWQiOiB0cnVlLAogICJwcml2YXRlQ29tbWl0IjogIjEzMzU5ZWVhZmFiM2FhZGZhNmQ0NzU5MzliZTQzMGE1MGY3ZmQ1YTYiLAogICJwcml2YXRlUHVzaFNoYTI1NiI6ICI4OWI5NGNlMTNmMzQ5MGM3OTlkYWZhZjFmZWEzNmViZGJjOGU0MTNmYWNmM2VjYWJiMTI5YzE0OWY5OWUxZTI1IiwKICAicmF3QXVkaXRTaGEyNTYiOiAiODM5Mjc5MGE0Njg5MzljYjE1YjhiYzFmMGFlOGIyMDMxZWQyMThiZjI3MWIyNmYwNmVlNzI3NDA0MzY3NDk0NiIsCiAgInJlYWRXaW5kb3ciOiAxMjgsCiAgInJlbGVhc2VTaGEyNTYiOiAiMmMyZWRjMjM3Zjc4ODkxN2FlNGRjN2IzYjg4MGI1NTU0YWU4ODcwYTdjN2Y0M2UzZjFkMWUxNjEyMjUwNzlhMCIsCiAgInJvb3RSZXZpZXdTaGEyNTYiOiAiZDE0ZTg0NDMyOGI0ZjU0MjJmNDk4NjUxYzUxODAzYzE2NjdkNWRhODE2Yjc5NjUzZGI1ODk1ZGFkMTE0MjllYyIsCiAgInNjb3BlIjogIlJPT1RfQ0xPU0VEX1JBV19QUklWQVRFX1JFQUQxMjhfQVJNIiwKICAic291cmNlRnJlZXplU2hhMjU2IjogImExZDIyMDQ3MDZjNjIwODRjYjM2ZWE5YzIyNWY2YzE3NmQ0MWEwMGEzNWJiMzQ1NDdkNGRjZmViMmQ2MDE4ZjAiLAogICJzdHJpY3RTY2hlZHVsZXJWYWxpZCI6IHRydWUKfQo=",
+    "700cf36714d2a6105438516b01bb95362da072dad7a92443c4227ece2aeaa5d1",
+    "2"
+  ],
+  "exclusiveGateOnly": true
+}

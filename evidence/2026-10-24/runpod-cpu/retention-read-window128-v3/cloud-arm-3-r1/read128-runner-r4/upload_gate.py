@@ -1,0 +1,8 @@
+from pathlib import Path
+import sys,json,hashlib,importlib.util,shlex,datetime,base64
+B=Path(__file__).resolve().parent.parent;arm=int(sys.argv[1]);assert arm in(1,2,3);O=B/('read128-arm-%d-gate-upload-r1'%arm);O.mkdir();P=B/('read128-arm-%d-private-proof-r1/GATE.json'%arm);x=json.loads(P.read_text());assert x['passed']and x['arm']==arm;body='''import pathlib,sys,base64,hashlib,os,json
+body=base64.b64decode(sys.argv[1]);sha=sys.argv[2];arm=int(sys.argv[3]);assert arm in(1,2,3)and hashlib.sha256(body).hexdigest()==sha
+root=pathlib.Path('/opt/vectormatch-cpu/experiments/read-window128-abab-r1');p=root/('arm-'+str(arm)+'-gate.json');assert root.is_dir()and not root.is_symlink()and not p.exists();x=json.loads(body);assert x['passed']and x['arm']==arm
+with p.open('xb')as f:f.write(body);f.flush();os.fsync(f.fileno())
+p.chmod(0o600);assert p.read_bytes()==body and p.stat().st_mode&0o777==0o600;print(json.dumps(dict(passed=True,arm=arm,sha256=sha,mode=384,noWorkloadLaunched=True)))
+''';(O/'executed-upload.py').write_text(body);spec=importlib.util.spec_from_file_location('r',B/'current-read-window32-collection-preparation-r2/remote_current.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);args=['python3','-B','-c',body,base64.b64encode(P.read_bytes()).decode(),hashlib.sha256(P.read_bytes()).hexdigest(),str(arm)];(O/'REGISTRATION.json').write_text(json.dumps(dict(atUTC=datetime.datetime.now(datetime.timezone.utc).isoformat(),arguments=args,exclusiveGateOnly=True),indent=2)+'\n');r=m.run(shlex.join(args),timeout=60);(O/'stdout.json').write_text(r.stdout);(O/'stderr').write_text(r.stderr);assert r.returncode==0;print(r.stdout)
