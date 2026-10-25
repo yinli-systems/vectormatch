@@ -4,7 +4,7 @@
 
 A private engineering project exploring a limit-order matching engine, replicated execution, and real-time market data. Every capacity claim must link to its workload, hardware, durability settings, and raw results.
 
-[Review a ~3.7MB source checkout](docs/REVIEW_AND_REPRODUCE.md) · [Forced Linux correctness results](docs/PRODUCTION_CORRECTNESS_RESULTS.md) · [Production acceptance gates](docs/PRODUCTION_ACCEPTANCE.md)
+[Source-only review checkout](docs/REVIEW_AND_REPRODUCE.md) · [Forced Linux correctness results](docs/PRODUCTION_CORRECTNESS_RESULTS.md) · [Writer timing results](docs/WRITER_TIMING_RESULTS_V3.md) · [Production acceptance gates](docs/PRODUCTION_ACCEPTANCE.md)
 
 ## Delivery principles
 
@@ -18,7 +18,9 @@ A private engineering project exploring a limit-order matching engine, replicate
 
 Executable deterministic matching, a local journaled workbench, a three-process Aeron Cluster backend, replicated bounded outbox, and transactional PostgreSQL event export. The React console shows actual order books, commands, replica checks, cached projection observations, and recorded benchmark evidence. See [the implementation contract](docs/IMPLEMENTATION.md).
 
-The latest [five-point rotating-dispatch curve](docs/DISPATCH_CAPACITY_RESULTS.md) fixes one new artifact and measures4,000/6,000/7,000/7,500/8,000 scheduled orders/s. All original orders are accepted with zero notSent,rejection or UNKNOWN.7,000/s is the highest tested rate reaching zero recorded waiting in every compared full-cut interval.7,500/s passes the finite gate with p99294.013ms,but only24/46 intervals clear waiting.8,000/s has p99380.731ms,7,833.45/s in-window goodput and0/49 clearing intervals;load escalation stops. These single20s lineages do not establish a sustained ceiling. The console retains49 records/20 distinct cohorts and full private restoration evidence.
+The [registered writer timing A1/B1/A2/B2](docs/WRITER_TIMING_RESULTS_V3.md) closes four fresh80,000-order observations at4,000/s,with zero notSent,rejection or UNKNOWN. Original-control p99 is245.28/249.92ms;instrumented p99 is229.15/239.41ms. Repeated archive prevalidation accounts for15.6–17.3% of measured maintenance wall time,motivating a separately tested [immutable handoff candidate](docs/VERIFIED_ARCHIVE_HANDOFF_V3.md). This is an instrumentation comparison,not an optimization result or a millisecond SLA. The console retains55 runs/22 distinct cohorts;every prior observation remains unchanged.
+
+The [five-point rotating-dispatch curve](docs/DISPATCH_CAPACITY_RESULTS.md) measures4,000/6,000/7,000/7,500/8,000 scheduled orders/s. All original orders are accepted with zero notSent,rejection or UNKNOWN.7,000/s is the highest tested rate reaching zero recorded waiting in every compared full-cut interval.7,500/s passes the finite gate with p99294.013ms,but only24/46 intervals clear waiting.8,000/s has p99380.731ms,7,833.45/s in-window goodput and0/49 clearing intervals;load escalation stops. The [same-artifact boundary repeats](docs/CAPACITY_BOUNDARY_REPEATS_V3.md) retain the same qualitative boundary:27/46 clearing intervals at7,500/s and2/48 at8,000/s. These finite20s lineages do not establish a sustained ceiling.
 
 The preceding [same-artifact dispatch fairness ABAB](docs/DISPATCH_FAIRNESS_RESULTS.md) fixes8,000 arrivals/s and all resource/durability settings. Both rotating arms accept all160,000 original orders,with global accepted p99443.673/579.389ms. Fixed arms retain205/401 QUEUE_FULL outcomes and therefore have no global successful-arrival p99;their accepted-only conditional p99 is1005.502/1082.098ms. In-window goodput changes7775.85→7833.45/s and7679.85→7828.10/s. The direction repeats across both pairs,with host noise and every missing outcome retained. Rotation remains opt-in;these20s comparisons establish neither sustained capacity nor statistical significance.
 
