@@ -1,0 +1,5 @@
+# V4 paired finite capacity report: 500/s
+
+All four original native/raw assets have committed private manifests and full authenticated re-download/every-member verification. This small archive preserves comparison derivation,console before/after data,the final human report and all four private progression proofs without duplicating raw attachments in Git. Failed local report-helper drafts are retained;they failed source compilation before publication or any benchmark action. A transient GitHub metadata TCP refusal stopped progression before D2;the same already-uploaded C2 asset was read-only verified afterward,without repeating the benchmark or upload.
+
+See RESULT.json for the registered finite and paired-direction decisions,POINT_PRIVATE_REFERENCES for exact original attachment identities,and published/docs for the human-readable scope. The next rate is gated on this report being privately pushed and restored from actual Git. No default performance promotion,SLA,independent-host/storage durability,100M continuity or funded external trading is claimed.
