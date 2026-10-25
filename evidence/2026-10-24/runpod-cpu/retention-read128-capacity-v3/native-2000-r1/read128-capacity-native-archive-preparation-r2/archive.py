@@ -1,0 +1,27 @@
+from pathlib import Path
+import sys,json,hashlib,stat,shutil,datetime
+R=Path.cwd();B=R/'runtime/cloud/cpu-20261024';rate=int(sys.argv[1]);assert rate in(1000,2000,4000,8000,16000);O=R/('evidence/2026-10-24/runpod-cpu/retention-read128-capacity-v3/native-%d-r1'%rate);assert not O.exists()
+def sha(p):
+ h=hashlib.sha256()
+ with p.open('rb')as f:
+  for b in iter(lambda:f.read(1024**2),b''):h.update(b)
+ return h.hexdigest()
+def tree(p):
+ files={};dirs={}
+ for q in[p,*sorted(p.rglob('*'))]:
+  assert not q.is_symlink();s=q.stat();n=q.relative_to(p).as_posix();row=dict(mode=stat.S_IMODE(s.st_mode),uid=s.st_uid,gid=s.st_gid)
+  if q.is_dir():dirs[n]=row
+  else:files[n]=dict(row,bytes=s.st_size,sha256=sha(q))
+ return dict(files=files,directories=dirs)
+names={k:'read128-capacity-%d-%s-r1'%(rate,k)for k in ['preflight','launch','collection','root-review','review-execution']};names.update({k:'read128-capacity-controller-%d-%s-r1'%(rate,k)for k in ['preparation','review','stage']})
+for p in sorted(B.glob('read128-capacity-%d-probe-r*'%rate)):names[p.name]=p.name
+if rate==1000:names.update({n:n for n in ['read128-capacity-linux-metadata-preparation-r1','read128-capacity-linux-metadata-execution-r1','read128-capacity-root-review-preparation-r1','read128-capacity-runner-r1','current-maintained-capacity-streaming-decoder-preparation-r1','current-maintained-capacity-streaming-decoder-validation-r1']})
+else:
+ names.update({n:n for n in ['read128-capacity-controller-generator-r1','read128-capacity-native-archive-preparation-r1']});names['prior-private-proof']='read128-capacity-%d-private-proof-r1'%(rate//2)
+ names.update({n:n for n in ['read128-capacity-native-archive-preparation-r2','read128-capacity-controller-generator-review-r1','read128-capacity-runner-r1','read128-capacity-root-review-preparation-r1','read128-capacity-private-proof-preparation-r1']})
+root=json.loads((B/names['root-review']/'ROOT_REVIEW.json').read_text());raw=json.loads((B/names['root-review']/'RAW_AUDIT.json').read_text());assert root['passed']and raw['passed']and root['strictKnownSourceQualification'];before={k:tree(B/n)for k,n in names.items()};O.mkdir()
+for k,n in names.items():shutil.copytree(B/n,O/k);assert tree(B/n)==tree(O/k)==before[k]
+(O/'SOURCE_MIRRORS.json').write_text(json.dumps(dict(sources=names,inventories=before),indent=2,sort_keys=True)+'\n');shutil.copy2(Path(__file__),O/'executed-archive.py');refs={}
+for n in ['local-unit-validation-r1']+(['native-1000-r1']if rate>1000 else[]):
+ p=O.parent/n;refs[n]={k:dict(bytes=(p/k).stat().st_size,sha256=sha(p/k))for k in ['INVENTORY.json','CLOSED.json']}
+(O/'SHARED_EVIDENCE_REFERENCES.json').write_text(json.dumps(refs,indent=2,sort_keys=True)+'\n');(O/'RESULTS.json').write_text(json.dumps(dict(rootReview=root,rawAudit=raw),indent=2,sort_keys=True)+'\n');(O/'README.md').write_text('# Fixed128-credit maintained capacity '+str(rate)+'/s\n\nOne fresh'+str(rate*20)+'-order lineage over20seconds. In-window confirmed accepted goodput '+str(root['arrivalWindowGoodputPerSecond'])+'/s; all-arrival accepted p99 '+str(root['allArrivalP99Ns'])+'ns; notSent '+str(root['notSent'])+', serverRejected '+str(root['serverRejected'])+', unknown '+str(root['unknownFinal'])+'. Conditional accepted p99 is retained separately. Missing/rejected arrivals leave all-arrival accepted p99 null.\n\nSame application3acc8428/code08f0ad10,leader0/sync2/read128/page32/batch4/chunk6144/owner1ms/driver100us/W128Q64/session1,three JVMs on one CPU host and loopback UDP. Equal5s pre-load warm-up, no JFR. This is a new capacity cohort, separate from prior read32/128 ABAB and older maintained-load points. Exact codec budgets preserve all existing raw/allocation/retry/unknown/journal/writer caps.\n\nComplete original native/source/control/closed-process/CSV/wire archives and all available review inputs are retained. Full local streaming verifies every outer/inner member SHA/size/mode/owner/empty directory. All planned deterministic command identities/hashes are independently reconstructed through candidate codec without submitting orders, then every applied row binds to actual decoded request/reply/result and full frame/offer records. Known notSent rows are retained and require zero admitted positive offers. Candidate matching reference and checkpoint logs do not establish an independent algorithm oracle, binary snapshot decode or cold recovery.\n\nA20-second observation is not sustained capacity or a hard-realtime SLA. Physical frame count is not order count. The same existing prepaid/free CPU Pod is used; no new resources. Higher rates require complete raw/private closure of the preceding point and predeclared progression gates.\n');i=tree(O);(O/'INVENTORY.json').write_text(json.dumps(i,indent=2,sort_keys=True)+'\n');(O/'CLOSED.json').write_text(json.dumps(dict(passed=True,atUTC=datetime.datetime.now(datetime.timezone.utc).isoformat(),rate=rate,inventorySha256=sha(O/'INVENTORY.json'),payloadFiles=len(i['files']),allOriginalCopiedSourceScopesCompleteAndEqual=True,noNewBenchmarkByArchive=True),indent=2,sort_keys=True)+'\n');print(json.dumps(dict(passed=True,rate=rate,payloadFiles=len(i['files']),inventorySha256=sha(O/'INVENTORY.json'))))
