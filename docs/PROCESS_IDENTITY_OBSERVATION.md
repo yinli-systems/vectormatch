@@ -8,7 +8,7 @@ On the same CPU and kernel6.8.0-147-generic,six owned512MiB processes exiting na
 
 The revised sampler parses stat flags. Incomplete argv with PF_EXITING permits a bounded wait for the same birth to become Z/X/x or disappear,at most1s/1024 stat reads. PF_EXITING alone is never absence. A live or stuck process,changed birth,cleared exit flag,malformed stat or permission failure still refuses qualification. The directory descriptor remains bound throughout. Signaling still uses the original ownership/pidfd checks;no numeric-PID fallback is added. This is a control-plane exit fix,not a trading latency optimization or a hard kernel-time guarantee.
 
-The revised focused suite has26 tests:23 fixtures pass on the Mac with3 explicit Linux skips;all26 pass on the actual CPU's Python3.8,including6 natural512MiB exits and30 short-lived exits. Full independent CI and a new controller-source qualification are still required before another performance campaign. Prior frozen sources,raw evidence and failed statuses remain unchanged.
+The revised focused suite has26 tests:23 fixtures pass on the Mac with3 explicit Linux skips;all26 pass on the actual CPU's Python3.8,including6 natural512MiB exits and30 short-lived exits. Independent [forced CI8](https://github.com/yinli-systems/vectormatch/actions/runs/40216970368) on sourcebd936811 passes394 Java tests including11 PostgreSQL tests,and197 Linux Python tests,all0 skips,plus failover/web gates. All five test modules execute without restored results. Exact controller-source/private qualification remains required before another performance campaign. Prior frozen sources,raw evidence and failed statuses remain unchanged.
 
 ## Original C2 observation
 

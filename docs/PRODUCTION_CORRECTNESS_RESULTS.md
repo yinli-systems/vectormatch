@@ -13,6 +13,14 @@ The latest [forced complete run40213694660](https://github.com/yinli-systems/vec
 
 The fresh failover smoke observes old leader1 -> new leader0 and11,465.454ms from leader kill to the next confirmed command. That duration includes client failure handling and reconnection; it is not isolated election latency. This is three local JVMs on one CPU host, not independent physical machines or a recovery-time SLA. Its final state hash `b064fc0f0e58768bcb2d0fd4ad34a4b0965d89ca29ecd4b5689e69f437e1fb5e` also matches the preceding successful smokes. Healthy trading latency and fault-affected requests require their own workload measurements.
 
+## Latest forced execution
+
+[CI8](https://github.com/yinli-systems/vectormatch/actions/runs/40216970368) on source`bd936811` passes394 Java tests,including11 real PostgreSQL integration tests,and197 Linux Python tests,all with0 skips. All five Java test tasks execute with a fresh Gradle user home and no restored test results. Failover/snapshot/restart and web build/format gates pass. The revised identity sampler has26 focused tests,including six512MiB natural exits;all26 also pass on the actual controller Python3.8 runtime. All227 actual CI8 application classes equal qualified CI6 classes;performance JAR identities remain unchanged.
+
+The fresh one-host three-JVM failure smoke observes leader2→0 and11,231.716ms from kill to the next confirmed command,including client failure handling/reconnection. Its final state hash matches earlier smokes. This is neither a millisecond failure-recovery SLA nor physical-host fault isolation. GitHub-hosted runner billing remains blocked;CI8 is an actual one-job non-root self-hosted job on the existing prepaid CPU.
+
+## Previous forced execution
+
 ## Earlier results remain visible
 
 | Attempt | Revision | Outcome |

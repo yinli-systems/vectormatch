@@ -1,0 +1,7 @@
+# Proven-exit sampler qualification
+
+Actual CI8 sourcebd936811 passes394 Java/11 PostgreSQL/197 Python tests plus failover/web,all0 skips;all five Java test tasks execute without restored results. All26 focused tests also pass on the actual controller Python3.8,including6 natural512MiB exits. Same-kernel raw observations reproduce18–20ms R/empty/PF_EXITING teardown. The revised sampler waits boundedly for terminal proof;PF_EXITING alone never means absent.
+
+All227 actual CI8 application classes equal qualified CI6 classes;existing F3/79 artifacts are retained. All454 CI8/benchmark JDK files agree. The bridge changes only process_identity and the loader's base-source hash;all other lifecycle/signal AST and four attestation/readiness bodies remain unchanged. A real owned-child proof rejects a wrong identity without signal and passes the original pidfd SIGTERM/strict-exit path. No forced kill or numeric-PID fallback.
+
+Both prior campaigns remain incomplete,with original C2 and retest D1 invalid and all never-executed arms preserved. Their private source/raw closures remain verifiable. This package includes complete original CI8 source/compiler/test/log evidence,actual controller tests,diagnosis,bridge/native proof and previous reporting proof/checker failure/corrected checker. A fresh C1/D1/C2/D2 is registered under verified-archive-handoff-exitwait with common source and unchanged4000/s20s setup. No orders execute before whole-Git private qualification. This is not a performance improvement,SLA,100M result or production certification.
