@@ -1,0 +1,64 @@
+{
+  "acceptedOrders": 80000,
+  "allOwnedStopped": true,
+  "atUTC": "2026-10-25T16:45:45.314722+00:00",
+  "caseId": "c2",
+  "gates": [
+    {
+      "file": "startup-readiness.json",
+      "review": {
+        "actualFinalQuietNs": 2039574348,
+        "commitPosition": 96,
+        "endedMonotonicNs": 154737183238531,
+        "maximumSampleGapNs": 103256105,
+        "notAtomicOrHardRealtime": true,
+        "originalPidAndCounterBindingsVerified": true,
+        "passed": true,
+        "samples": 29,
+        "startedMonotonicNs": 154734309816931
+      },
+      "sha256": "7c5d5ac72924b3d88b29be04b81032fbb593fb7db3dfb8a7729205a01cd2db1d"
+    },
+    {
+      "file": "preload-readiness.json",
+      "review": {
+        "actualFinalQuietNs": 2019638189,
+        "commitPosition": 1376,
+        "endedMonotonicNs": 154744453783276,
+        "maximumSampleGapNs": 101161718,
+        "notAtomicOrHardRealtime": true,
+        "originalPidAndCounterBindingsVerified": true,
+        "passed": true,
+        "samples": 21,
+        "startedMonotonicNs": 154742430880615
+      },
+      "sha256": "be0d634a740fd049abd95f0c66919db8c2dba10f03e9b21ec3993a3c0b8babe4"
+    }
+  ],
+  "hypothesis": "Separate stat/cmdline reads can race process exit;empty cmdline is documented for zombies. Existing error has no PID/phase,so this does not establish the exact C2 trigger. Preserve invalid status;fix/reproduce the sampler before a new registered comparison.",
+  "knownOriginalOutcomesComplete": true,
+  "nativeControlPassed": false,
+  "nextRunQualified": false,
+  "notSent": 0,
+  "originalExceptionPidAndExactReadPhaseUnavailable": true,
+  "originalNativeErrors": [
+    {
+      "error": "RuntimeError('Incomplete process identity')",
+      "phase": "execution"
+    }
+  ],
+  "passed": true,
+  "performanceQualified": false,
+  "rawAuditSha256": "d3bec33b77e09f7f2d7df2923f8ce1b76c54bf4f22e192cbd9497c748602f0da",
+  "rejected": 0,
+  "rootReviewSha256": "308f2bc92dc0296a274a82b5790d922d3fa62db52ca47c489c6002eb7e3697b1",
+  "sourceSha256": "650602934f76afecaf6f45fa4ad1e10c167561af28406cf81ba701d6f48c9d3f",
+  "sources": [
+    "https://man7.org/linux/man-pages/man5/proc_pid_cmdline.5.html",
+    "https://docs.kernel.org/filesystems/proc.html"
+  ],
+  "tradeEvents": 80000,
+  "unknownFinal": 0,
+  "unknownObserved": 0,
+  "workloadReviewSha256": "c31b07eeaedc0125621a1c0c5ff3caf7c9700ee459b34849abd04ab8b55e89b0"
+}

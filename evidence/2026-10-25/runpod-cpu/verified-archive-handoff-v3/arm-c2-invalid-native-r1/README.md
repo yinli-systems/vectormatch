@@ -1,0 +1,5 @@
+# INVALID C2: complete original evidence
+
+The original controller fails with Incomplete process identity during execution. All owned processes are confirmed stopped. Every planned80,000 order and trade reconciles with0 notSent/rejection/UNKNOWN,and all three snapshot logs agree,but nativeControlPassed and performanceQualified remain false. This is an invalid observation,not a valid capacity/latency point;D2 is not authorized by this archive.
+
+The exact exception lacks PID/read-phase detail. Separate stat/cmdline sampling has a plausible exit race;the exact trigger is not established. Preserve every original file,source,error,process/readiness record and raw order/event tape. No original metric/status is overwritten or reclassified as a valid benchmark. The full compressed scope body is an attachment under the same private repository;the committed manifest and full member inventory identify its exact bytes. The independent private proof must download all bytes and verify every member. Qualified source and timing gates do not override the original native failure.
