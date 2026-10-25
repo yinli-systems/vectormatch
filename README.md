@@ -24,6 +24,8 @@ The old-artifact 1,000/s CONTINUE measurement remains excluded for its 1,535-com
 
 <!-- exact-cut-v4-status:start -->
 
+Completed coarse curve: all four finite gates pass through **4,000/s**, and all four fail at **6,000/s**. The interval between them and long-run capacity remain unmeasured. [Curve, raw references and failure semantics](docs/EXACT_CUT_CAPACITY_RESULTS_V4.md).
+
 Latest exact-cut comparison:6000 scheduled arrivals/s,artifact `65c41d519ea78af9ba14d8b4a878adefc2cc388f6682f4ae6dea513351e40e69`,source `0c8303b2`.
 
 C1:113280/120000 accepted,p99 undefined,goodput 5299.05/s; D1:120000/120000 accepted,p99 796.814ms,goodput 5779.9/s; C2:113105/120000 accepted,p99 undefined,goodput 5281.2/s; D2:120000/120000 accepted,p99 690.515ms,goodput 5803.5/s.

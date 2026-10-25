@@ -4,6 +4,18 @@ Application source0c8303b250c61653eb1a0827ce54a67eab83e2a3; the exact Linux arti
 
 [Prospective protocol](EXACT_CUT_CAPACITY_PROTOCOL_V4.md) fixes rates, policies, bounds and acceptance criteria. Every full raw point is a private-repository attachment with committed SHA and member inventory, authenticated re-download and complete verification. All previous79 runs and34 cohorts remain unchanged at the start of this campaign. Earlier artifact2ea38974 capacity and the disqualified1535-command cut are separate evidence; no old performance result transfers to this artifact.
 
+## Completed coarse curve
+
+The highest repeated passing tested rate is **4,000 scheduled arrivals/s**. The first failed tested rate is **6,000/s**. This brackets a finite-workload transition; it does not identify a precise sustained ceiling. All 20 points use the same compiled artifact, fixed leader 0, sync level 2 and configuration, with three actual UDP-connected JVMs on one physical CPU host.
+
+![Complete finite capacity curve](../evidence/2026-10-26/runpod-cpu/async-capacity-v4/exact-cut-r2/complete-coarse-curve-r1/exact-cut-v4-through-6000.png)
+
+At 6,000/s, PAUSE C1/C2 leave 6,720/6,895 of 120,000 scheduled orders unsent; their all-arrival p99 is undefined. CONTINUE D1/D2 eventually accept all 120,000, but in-window goodput is only 5,779.9/5,803.5 per second and global p99 is 796.814/690.515 ms. Both fail the prospective gate requiring at least 99% of scheduled throughput inside the 20-second arrival window. Upward escalation stopped. Across all points, observed/final UNKNOWN and server rejection are zero; these facts do not erase unsent work or delayed completion.
+
+Every point passes financial reconciliation, exact archive cuts, receipt/event audit, canonical physical-order replay and all three snapshots/cold restores. Those are correctness checks, separate from failed capacity gates. None meets the 10 ms global p99 engineering target. CONTINUE reduces global p99 against PAUSE in these observations, but the full registered paired criterion is inconsistent across rates, so no default optimization is promoted.
+
+[Figure provenance, original Git report references and regeneration script](../evidence/2026-10-26/runpod-cpu/async-capacity-v4/exact-cut-r2/complete-coarse-curve-r1/README.md). [Qualified read-only diagnostic probe](../evidence/2026-10-26/runpod-cpu/async-capacity-v4/exact-cut-r2/readonly-counter-probe-qualification-r1/README.md) is available for the next explicitly instrumented experiment; it has not yet profiled these workloads.
+
 ## 500 scheduled arrivals/s
 
 All four arms use the same compiled artifact and fixed leader/configuration. These are separate20-second fresh lineages on one physical CPU.
