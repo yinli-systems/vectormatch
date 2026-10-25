@@ -1,0 +1,53 @@
+{
+  "allOtherRawEvidenceUnmaterialized": true,
+  "atUTC": "2026-10-25T14:55:25.521429+00:00",
+  "mode": "Local shared-object clone validates sparse patterns without copying the large object database;does not measure internet clone bandwidth or time",
+  "onlyEvidenceIndexMaterialized": true,
+  "passed": true,
+  "patterns": "/*\n!/evidence/*\n/evidence/index.json\n",
+  "revision": "aed9430d133d86bfe9fc6abe47ede623ef3309b2",
+  "steps": [
+    {
+      "args": [
+        "git",
+        "clone",
+        "--shared",
+        "--no-checkout",
+        "/Users/kevin/Documents/ChatGPT/App 2",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/source-only-review-checkout-r1/checkout"
+      ],
+      "exitCode": 0,
+      "stderr": "Cloning into '/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/source-only-review-checkout-r1/checkout'...\ndone.\n",
+      "stdout": ""
+    },
+    {
+      "args": [
+        "git",
+        "-C",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/source-only-review-checkout-r1/checkout",
+        "sparse-checkout",
+        "set",
+        "--no-cone",
+        "--stdin"
+      ],
+      "exitCode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "args": [
+        "git",
+        "-C",
+        "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/source-only-review-checkout-r1/checkout",
+        "checkout",
+        "--detach",
+        "aed9430d133d86bfe9fc6abe47ede623ef3309b2"
+      ],
+      "exitCode": 0,
+      "stderr": "HEAD is now at aed9430d Set runner-specific Gradle home in supported step context\n",
+      "stdout": ""
+    }
+  ],
+  "workingTreeBytes": 3707864,
+  "workingTreeFiles": 340
+}
