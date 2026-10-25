@@ -2,6 +2,12 @@
 
 This is a design for a separate opt-in V4 implementation,not an executed optimization. V3 measurements and artifacts remain unchanged. The proven-exit C1 observation at4,000/s accepts all80,000 synthetic orders/trades with236.456120ms scheduled-to-confirmed p99;96.79% of the slowest1% requests' total latency occurs before dispatch. Its27 maintenance cycles consume5.687831711s. These are descriptive observations on one CPU host,not an isolated causal experiment.
 
+## Implemented isolated components
+
+The separate V4 branch now has nonblocking durable-writer ticket polling,bounded off-caller archive preparation,and a one-cut asynchronous file-prefix pipeline. The pipeline retains owned original inputs and only constructs a combined private receipt after the original archive ticket and,for a nonempty event range,the exact event ticket finish force/full-readback/receipt completion. Empty event ranges require no invented event file. Foreign/double consume,wrong prior event frontier,lifetime cut limits,delayed archive/event force and corrupted event evidence are covered by21 actual forced local Mac tests with zero failure/error/skip. The pipeline never submits a destructive ACK or mutates replicated state;its file-credit consume does not release any network ACK fence. Borrowed workers are not cancelled.
+
+These are locally tested components,not an integrated network coordinator,Linux V4 qualification,an executed optimization or a100M implementation. Read-wave scheduling,business headroom,original maintenance identities/raw schema and binary cold recovery still require the gates below. The current encoding C/D comparison uses none of this code.
+
 ## Work that currently blocks dispatch
 
 `RetentionCapacityExperimentV3.dispatch()` drains pending business requests and synchronously calls `maintenance.exportThrough()`. Arrivals continue to accumulate. That call prepares a prefix,reads archive chunks,verifies/forces/readbacks the archive,reads events,verifies/forces/readbacks their payload and receipts,and only then issues both destructive acknowledgements. The archive and event read-bank leases also remain held while their respective writer ticket is awaited. Merely releasing a bank sooner does not unblock a synchronous caller.

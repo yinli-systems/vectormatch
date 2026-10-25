@@ -1,0 +1,5 @@
+# V4 asynchronous file-prefix pipeline:local qualification
+
+Complete actual forced local Mac source/compiled classes/commands/logs/JUnit:21 tests,zero failure/error/skip,covering writer polling,archive preparation and the new one-cut file-prefix persistence pipeline. Delayed archive force and delayed event force independently prevent a combined durable receipt. Caller mutation cannot change owned jobs,corrupted event evidence never produces success,foreign/double consume and lifetime admission are refused,wrong previous event frontiers fail before file writing,and rejected zero-event commands need no invented event file.
+
+The pipeline never issues an ACK or mutates replicated state. File-credit consume is not network ACK permission. Original failed/unconsumed inputs remain available;borrowed workers are not cancelled. This is not an integrated network coordinator,Linux V4 qualification,deployment,an optimization gain or100M continuity. It is excluded from the concurrent immutable-batch encoding comparison. All original input/compiled/test/result bodies are preserved in the complete scope TAR.
