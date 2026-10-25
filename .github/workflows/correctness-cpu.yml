@@ -15,8 +15,6 @@ jobs:
   correctness:
     runs-on: [self-hosted, Linux, X64, '${{ inputs.runner_label }}']
     timeout-minutes: 45
-    env:
-      GRADLE_USER_HOME: ${{ runner.temp }}/gradle-user-home
     steps:
       - name: Require sparse-checkout-capable Git before any source download
         run: |
@@ -48,6 +46,8 @@ jobs:
           distribution: temurin
           java-version: '21.0.13+9.0.LTS'
       - uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
+        env:
+          GRADLE_USER_HOME: ${{ runner.temp }}/gradle-user-home
         with:
           gradle-version: '8.14.3'
           cache-disabled: true
@@ -55,6 +55,8 @@ jobs:
         with:
           node-version: '24.22.1'
       - name: Verify Linux toolchain and run all correctness gates
+        env:
+          GRADLE_USER_HOME: ${{ runner.temp }}/gradle-user-home
         run: bash scripts/ci-existing-cpu.sh
       - name: Record JUnit and regression evidence
         if: always() && steps.source.outcome == 'success'
