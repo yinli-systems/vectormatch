@@ -33,6 +33,13 @@ final class RetentionStartupReadinessV3 {
             AeronCounters.ARCHIVE_ERROR_COUNT_TYPE_ID,
             AeronCounters.CLUSTER_CONSENSUS_MODULE_ERROR_COUNT_TYPE_ID,
             AeronCounters.CLUSTER_CLUSTERED_SERVICE_ERROR_COUNT_TYPE_ID);
+    // Pinned ClusteredMediaDriver.launch supplies the driver's ERRORS counter to Archive
+    // when RetentionNodeMainV3 leaves Archive.Context.errorCounter unset. A dedicated
+    // Archive counter therefore need not exist. If present, it is still checked below.
+    private static final Set<Integer> REQUIRED_ERROR_TYPES = Set.of(
+            AeronCounters.DRIVER_SYSTEM_COUNTER_TYPE_ID,
+            AeronCounters.CLUSTER_CONSENSUS_MODULE_ERROR_COUNT_TYPE_ID,
+            AeronCounters.CLUSTER_CLUSTERED_SERVICE_ERROR_COUNT_TYPE_ID);
 
     record Node(int member, long pid, Path driverDirectory, Path log, Runnable verifyOwnership) {}
     record Counter(int id, int type, long registration, long value) {}
@@ -72,8 +79,8 @@ final class RetentionStartupReadinessV3 {
         long position=samples.getFirst().value(AeronCounters.CLUSTER_COMMIT_POSITION_TYPE_ID);
         for(Sample s:samples) {
             if(s.pid()<=1||s.heartbeatAgeMillis()<0||s.heartbeatAgeMillis()>2000)return false;
-            if(!s.counters().keySet().containsAll(CLUSTER_TYPES)||!s.counters().keySet().containsAll(ERROR_TYPES))return false;
-            for(int type:ERROR_TYPES)if(s.value(type)!=0)return false;
+            if(!s.counters().keySet().containsAll(CLUSTER_TYPES)||!s.counters().keySet().containsAll(REQUIRED_ERROR_TYPES))return false;
+            for(int type:ERROR_TYPES)if(s.counters().containsKey(type)&&s.value(type)!=0)return false;
             if(s.value(AeronCounters.CLUSTER_CONSENSUS_MODULE_STATE_TYPE_ID)!=ConsensusModule.State.ACTIVE.code()
                     ||s.value(AeronCounters.CLUSTER_ELECTION_STATE_TYPE_ID)!=ElectionState.CLOSED.code()
                     ||s.value(AeronCounters.CLUSTER_NODE_ROLE_TYPE_ID)!=(s.member()==0?Cluster.Role.LEADER:Cluster.Role.FOLLOWER).code()

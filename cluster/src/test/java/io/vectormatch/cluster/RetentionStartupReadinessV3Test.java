@@ -59,6 +59,22 @@ class RetentionStartupReadinessV3Test {
         assertTrue(missing.counters().isEmpty());
         assertFalse(RetentionStartupReadinessV3.ready(List.of(healthy(0),healthy(1),missing)));
     }
+    @Test void sharedArchiveDriverErrorCounterMatchesTheActualLinuxStartupRoster(){
+        var samples=new ArrayList<RetentionStartupReadinessV3.Sample>();
+        for(int member=0;member<3;member++){
+            var manager=healthyCounters(member);
+            int archive=manager.findByTypeIdAndRegistrationId(AeronCounters.ARCHIVE_ERROR_COUNT_TYPE_ID,107);
+            manager.free(archive);
+            var observed=RetentionStartupReadinessV3.sample(manager,member,1000+member,20);
+            assertFalse(observed.counters().containsKey(AeronCounters.ARCHIVE_ERROR_COUNT_TYPE_ID));
+            samples.add(observed);
+        }
+        assertTrue(RetentionStartupReadinessV3.ready(samples));
+        var node=samples.get(2);var absent=new LinkedHashMap<>(node.counters());absent.remove(AeronCounters.DRIVER_SYSTEM_COUNTER_TYPE_ID);
+        samples.set(2,new RetentionStartupReadinessV3.Sample(2,1002,20,Map.copyOf(absent)));
+        assertFalse(RetentionStartupReadinessV3.ready(samples));
+        assertFalse(RetentionStartupReadinessV3.ready(changed(AeronCounters.ARCHIVE_ERROR_COUNT_TYPE_ID,1)));
+    }
     @Test void nativeErrorsFailBeforeOrdersAndCannotPassThePredicate(){
         var m=healthyCounters(2);m.setCounterValue(m.findByTypeIdAndRegistrationId(CONSENSUS_ERRORS,105),1);
         assertThrows(IllegalStateException.class,()->RetentionStartupReadinessV3.sample(m,2,1002,10));
