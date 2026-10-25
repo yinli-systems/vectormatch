@@ -1316,6 +1316,72 @@
         "Same registered cache preconditioning and two original-PID2s readiness gates around5s warm-up.128 logical workers are one physical session;three JVMs share one host.",
         "Instrumentation comparison only. No optimization,statistical significance,sustained capacity,millisecond SLA,independent-host isolation or100M claim. Candidate-codec checks are not an independent matching oracle."
       ]
+    },
+    {
+      "id": "cpu-handoff-initial-c1",
+      "label": "Initial handoff · C1",
+      "scope": "80,000 original orders/trades reconciled;finite20s comparison",
+      "model": "One CPU host · three JVMs · loopback UDP · one physical session",
+      "commands": 80000,
+      "throughput": 3993.45,
+      "p50Millis": 7.249749,
+      "p99Millis": 229.613096,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "durability": "sync2;full canonical force/readback and payload/receipt completion before both ACKs",
+      "timestamp": "2026-10-25T16:23:26.159817990Z",
+      "artifactPath": "evidence/2026-10-25/runpod-cpu/verified-archive-handoff-v3/arm-c1-native-r1/README.md",
+      "limitations": [
+        "Synthetic one-unit IOC executions against one pre-funded seeded maker at10 ticks;80,000 unique trade events agree with original order outcomes. Not a multi-level/cancel or external-venue workload.",
+        "C2 retains nativeControlPassed=false and performanceQualified=false although every business outcome reconciles. Its latency is diagnostic only. D2 never executes.",
+        "First pair p99 drops2.90%,but after-positive-offer p99 worsens11.07→17.01ms. One pair is not a repeated optimization or significance result.",
+        "Complete original native/raw scope asset675524354 fully authenticated-downloaded/member-verified at3c4b668d09b31e0f2ba95674cf84dc8bfb826555;all0 notSent/rejection/observed/final UNKNOWN.",
+        "All previous cohorts retained.128 logical workers are one physical session;no physical-host isolation,millisecond SLA,production certification or100M proof."
+      ]
+    },
+    {
+      "id": "cpu-handoff-initial-d1",
+      "label": "Initial handoff · D1",
+      "scope": "80,000 original orders/trades reconciled;finite20s comparison",
+      "model": "One CPU host · three JVMs · loopback UDP · one physical session",
+      "commands": 80000,
+      "throughput": 3993.45,
+      "p50Millis": 7.219561,
+      "p99Millis": 222.965821,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "durability": "sync2;full canonical force/readback and payload/receipt completion before both ACKs",
+      "timestamp": "2026-10-25T16:30:49.932455378Z",
+      "artifactPath": "evidence/2026-10-25/runpod-cpu/verified-archive-handoff-v3/arm-d1-native-r1/README.md",
+      "limitations": [
+        "Synthetic one-unit IOC executions against one pre-funded seeded maker at10 ticks;80,000 unique trade events agree with original order outcomes. Not a multi-level/cancel or external-venue workload.",
+        "C2 retains nativeControlPassed=false and performanceQualified=false although every business outcome reconciles. Its latency is diagnostic only. D2 never executes.",
+        "First pair p99 drops2.90%,but after-positive-offer p99 worsens11.07→17.01ms. One pair is not a repeated optimization or significance result.",
+        "Complete original native/raw scope asset675543971 fully authenticated-downloaded/member-verified at0d1206ed8119369a17ef6c8c18afcb96d6ae9f47;all0 notSent/rejection/observed/final UNKNOWN.",
+        "All previous cohorts retained.128 logical workers are one physical session;no physical-host isolation,millisecond SLA,production certification or100M proof."
+      ]
+    },
+    {
+      "id": "cpu-handoff-initial-c2",
+      "label": "Initial handoff · C2 · INVALID process observation",
+      "scope": "80,000 original orders/trades reconciled;native control invalid",
+      "model": "One CPU host · three JVMs · loopback UDP · one physical session",
+      "commands": 80000,
+      "throughput": 3993.45,
+      "p50Millis": 8.837137,
+      "p99Millis": 240.568357,
+      "unknown": 0,
+      "correctnessPassed": false,
+      "durability": "sync2;full canonical force/readback and payload/receipt completion before both ACKs",
+      "timestamp": "2026-10-25T16:37:10.951987981Z",
+      "artifactPath": "evidence/2026-10-25/runpod-cpu/verified-archive-handoff-v3/arm-c2-invalid-native-r1/README.md",
+      "limitations": [
+        "Synthetic one-unit IOC executions against one pre-funded seeded maker at10 ticks;80,000 unique trade events agree with original order outcomes. Not a multi-level/cancel or external-venue workload.",
+        "C2 retains nativeControlPassed=false and performanceQualified=false although every business outcome reconciles. Its latency is diagnostic only. D2 never executes.",
+        "First pair p99 drops2.90%,but after-positive-offer p99 worsens11.07→17.01ms. One pair is not a repeated optimization or significance result.",
+        "Complete original native/raw scope asset675570512 fully authenticated-downloaded/member-verified at17a7d5dd6db4afecd71ef866d0e8ac0492017507;all0 notSent/rejection/observed/final UNKNOWN.",
+        "All previous cohorts retained.128 logical workers are one physical session;no physical-host isolation,millisecond SLA,production certification or100M proof."
+      ]
     }
   ],
   "capacityCohorts": [
@@ -3329,6 +3395,83 @@
           "drainSeconds": 0.213501624,
           "classification": "FINITE_20S_TIMING_DIAGNOSTIC",
           "peakBacklog": 1046,
+          "valid": true,
+          "stable": null,
+          "windowSeconds": 20
+        }
+      ]
+    },
+    {
+      "id": "cpu-handoff-initial-c-4000-20s",
+      "title": "Initial handoff comparison · timing control",
+      "updatedAt": "2026-10-25T16:37:10.951987981Z",
+      "configurationFingerprint": "f3a5745cb67f6d46aae28ef68dede0a5b7a767a795dab3bd07c3b5d4143464ca",
+      "reportPath": "docs/VERIFIED_ARCHIVE_HANDOFF_INITIAL_RESULTS_V3.md",
+      "scope": "Original process sampler. C1/D1 valid;C2 invalid due incomplete process identity;D2 never executed.4,000/s,fresh80,000-order20s lineages,one physical session/three JVMs on one CPU host. Same leader0/sync2/read128/page32/batch4/chunk6144/owner1ms/driver100us/W128Q64/readiness/warm-up/cache procedure. Incomplete comparison;no repeatable optimization,sustained-capacity or SLA claim.",
+      "points": [
+        {
+          "id": "cpu-handoff-initial-c1",
+          "rate": 4000,
+          "workers": 128,
+          "goodput": 3993.45,
+          "p99Millis": 229.613096,
+          "allOfferedAcceptedP99Millis": 229.613096,
+          "clientNotSent": 0,
+          "rejected": 0,
+          "serverErrors": 0,
+          "unknown": 0,
+          "unresolved": 0,
+          "drainSeconds": 0.176477151,
+          "classification": "FINITE_20S_COMPARISON_INCOMPLETE",
+          "peakBacklog": 1096,
+          "valid": true,
+          "stable": null,
+          "windowSeconds": 20
+        },
+        {
+          "id": "cpu-handoff-initial-c2",
+          "rate": 4000,
+          "workers": 128,
+          "goodput": 3993.45,
+          "p99Millis": 240.568357,
+          "allOfferedAcceptedP99Millis": null,
+          "clientNotSent": 0,
+          "rejected": 0,
+          "serverErrors": 0,
+          "unknown": 0,
+          "unresolved": 0,
+          "drainSeconds": 0.188518351,
+          "classification": "INVALID_PROCESS_IDENTITY_OBSERVATION",
+          "peakBacklog": 1038,
+          "valid": false,
+          "stable": null,
+          "windowSeconds": 20
+        }
+      ]
+    },
+    {
+      "id": "cpu-handoff-initial-d-4000-20s",
+      "title": "Initial handoff comparison · immutable handoff candidate",
+      "updatedAt": "2026-10-25T16:30:49.932455378Z",
+      "configurationFingerprint": "79e5a932a4c22a3abe3cf9199938975478aff6c49bccf74b8e729b29dd228e2f",
+      "reportPath": "docs/VERIFIED_ARCHIVE_HANDOFF_INITIAL_RESULTS_V3.md",
+      "scope": "Original process sampler. C1/D1 valid;C2 invalid due incomplete process identity;D2 never executed.4,000/s,fresh80,000-order20s lineages,one physical session/three JVMs on one CPU host. Same leader0/sync2/read128/page32/batch4/chunk6144/owner1ms/driver100us/W128Q64/readiness/warm-up/cache procedure. Incomplete comparison;no repeatable optimization,sustained-capacity or SLA claim.",
+      "points": [
+        {
+          "id": "cpu-handoff-initial-d1",
+          "rate": 4000,
+          "workers": 128,
+          "goodput": 3993.45,
+          "p99Millis": 222.965821,
+          "allOfferedAcceptedP99Millis": 222.965821,
+          "clientNotSent": 0,
+          "rejected": 0,
+          "serverErrors": 0,
+          "unknown": 0,
+          "unresolved": 0,
+          "drainSeconds": 0.186060829,
+          "classification": "FINITE_20S_COMPARISON_INCOMPLETE",
+          "peakBacklog": 1039,
           "valid": true,
           "stable": null,
           "windowSeconds": 20
