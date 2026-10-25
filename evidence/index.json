@@ -1777,6 +1777,44 @@
       ],
       "p50Millis": 8.122894,
       "p99Millis": 59.925139
+    },
+    {
+      "id": "cpu-async-v4-1000-c1",
+      "label": "V4 old artifact · unpaired 1,000/s PAUSE control",
+      "scope": "20,000 accepted one-unit trades;20-second independent arrival clock;comparison stopped after subsequent D1 contract failure",
+      "model": "One prepaid CPU;three JVMs;loopback UDP;leader0;sync2;127 active load producers",
+      "commands": 20000,
+      "trades": 20000,
+      "throughput": 998.25,
+      "p50Millis": 7.199355,
+      "p99Millis": 191.116921,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "timestamp": "2026-10-25T21:54:46.178227823Z",
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/async-capacity-v4/rate-1000-c1-native-r1/README.md",
+      "limitations": [
+        "Only one qualified control arm;no paired or sustained-capacity conclusion.",
+        "Source6716f74a/artifact2ea38974. This does not qualify the subsequent exact-cut fix.",
+        "Native replay,snapshots,cold restore and original independent checker passed;three setup commands excluded from latency statistics."
+      ]
+    },
+    {
+      "id": "cpu-async-v4-1000-d1-disqualified",
+      "label": "V4 1,000/s D1 · capacity measurement disqualified",
+      "scope": "Native20,000 trades and cold restore pass;capacity contract fails:first cut1535 instead of1536",
+      "model": "One prepaid CPU;three JVMs;loopback UDP;old artifact2ea38974",
+      "commands": 20000,
+      "trades": 20000,
+      "unknown": 0,
+      "correctnessPassed": false,
+      "timestamp": "2026-10-25T21:56:03.550611071Z",
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/async-capacity-v4/rate-1000-d1-original-checker-failure-r1/README.md",
+      "limitations": [
+        "Overall measurement validation failed;this is not a failed financial matching result.",
+        "Original strict checker falsely rejected an already-admitted drain publication;corrected admission checking then found a real1535-command cut.",
+        "Raw latency values remain in the original archive but are excluded from qualified capacity curves and headline metrics.",
+        "Second pair and upward escalation stopped;new artifact and fresh comparisons required."
+      ]
     }
   ],
   "capacityCohorts": [

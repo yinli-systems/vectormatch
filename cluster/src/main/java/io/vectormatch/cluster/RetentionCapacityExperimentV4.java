@@ -132,7 +132,7 @@ public final class RetentionCapacityExperimentV4 {
         }catch(Throwable failure){abort.compareAndSet(null,failure);schedulerDone.set(true);}
     }
     private void dispatch()throws Exception{
-        var order=new RetentionCapacityDispatchOrderV3(true);boolean cutRequested=false;
+        var order=new RetentionCapacityDispatchOrderV3(true);var cutGate=new RetentionCapacityCutGateV4();boolean cutRequested=false;
         while(true){
             Throwable failed=abort.get();if(failed!=null)throw new IllegalStateException("V4 source/observer abort",failed);
             long now=System.nanoTime();int work=completePending(now);maintenance.step();phase.set(maintenance.phase().ordinal());
@@ -141,8 +141,9 @@ public final class RetentionCapacityExperimentV4 {
             boolean empty=schedulerDone.get()&&rows.queued()==0&&pendingCount.get()==0;
             if(maintenance.phase()==RetentionAsyncMaintenanceV4.Phase.IDLE){
                 long retained=maintenance.knownBusinessSeq()-maintenance.archivedThrough();
-                if(retained+pendingCount.get()>=RetentionCapacityPlanV4.CUT||empty&&retained>0)cutRequested=true;
-                if(cutRequested&&pendingCount.get()==0&&retained>0){maintenance.start(maintenance.archivedThrough()+Math.min(RetentionCapacityPlanV4.CUT,retained));cutRequested=false;work++;}
+                var decision=cutGate.observe(maintenance.knownBusinessSeq(),maintenance.archivedThrough(),pendingCount.get(),empty);
+                cutRequested=decision!=RetentionCapacityCutGateV4.Decision.ADMIT;
+                if(decision==RetentionCapacityCutGateV4.Decision.START){maintenance.start(cutGate.through());cutRequested=false;work++;}
                 if(empty&&maintenance.knownBusinessSeq()==maintenance.archivedThrough())break;
             }
             if(maintenance.businessAllowed()&&!cutRequested){

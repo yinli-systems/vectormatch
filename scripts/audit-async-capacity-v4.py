@@ -1,5 +1,5 @@
 from pathlib import Path
-import sys,struct,json,csv,collections,hashlib,datetime
+import sys,struct,json,csv,collections,hashlib,datetime,bisect
 native=Path(sys.argv[1]).resolve();state=native/'load';output=Path(sys.argv[2]);assert not output.exists();output.mkdir()
 class Reader:
  def __init__(self,body):self.body=body;self.offset=0
@@ -19,6 +19,9 @@ def header(body,reply=False):
  r=Reader(body);assert r.value('I')==(0x564d5233 if reply else 0x564d5733)and r.value('H')==3
  scope=(r.text(64),r.text(64));cid=r.value('q');assert cid>0;return r,scope,cid
 registration=json.loads((native/'registration.json').read_text());configuration=json.loads((state/'configuration.json').read_text());summary=json.loads((state/'load-result.json').read_text());planned=configuration['arrivals'];assert planned==configuration['ratePerSecond']*20 and configuration['activeLoadWorkers']==127 and configuration['allocatedLogicalWorkers']==128;accepted=summary['confirmedAcceptedUniqueOrders'];assert summary['unknownFinal']==summary['unknownObserved']==summary['serverRejected']==summary['duplicateOrOutOfRangeAcceptedOrderIds']==0 and summary['releasedArrivals']==planned and accepted+summary['notSent']==planned;scope=(registration['profile'],registration['lineage'])
+with(state/'arrivals.csv').open()as f:admission_rows=list(csv.DictReader(f))
+admission_slots={(int(row['correlation_id']),int(row['batch_index'])):row for row in admission_rows if row['correlation_id']and row['batch_index']}
+assert len(admission_slots)==sum(bool(row['correlation_id']and row['batch_index'])for row in admission_rows)
 trace=Reader((state/'maintenance-v4.bin').read_bytes());assert trace.value('I')==0x564d5434 and trace.value('i')==1
 records=[];requests={};logical_replies={};observations=collections.defaultdict(list);phases=[];receipts=[];last_ns=-1
 while trace.offset<len(trace.body):
@@ -46,6 +49,15 @@ for kind,number,ns,body in records:
  elif cid not in retained:retained.add(cid)
  peak=max(peak,len(retained));assert len(retained)<=32
 assert not retained and peak>0
+phase_times=[ns for ns,_ in phases]
+def phase_at(ns):
+ index=bisect.bisect_right(phase_times,ns)-1
+ return (phases[index][1]['to'],phase_times[index])if index>=0 else('INITIALIZING',-1)
+allowed_admission={'IDLE','VERIFY_WAIT','FILE_WAIT'}if configuration['fileWorkDispatchPolicy']=='CONTINUE'else{'IDLE'}
+for row in admission_rows:
+ if row['submit_offset_ns']:assert phase_at(configuration['scheduledOriginMonotonicNs']+int(row['submit_offset_ns']))[0]in allowed_admission,('new logical submission during closed admission phase',row['arrival_index'])
+legitimate_drain_publications=[]
+
 def timed(path,limit):
  assert path.stat().st_size<=512*1024*1024
  with path.open('rb')as f:
@@ -71,11 +83,16 @@ for ordinal,row in enumerate(codes,1):
  r,s,cid=header(body);assert s==scope;operation=r.value('B');assert cid not in originals or originals[cid]==body;originals[cid]=body;calls[cid].append(called)
  if int(row['return_code'])>=0:expected_positive.append(body);positives.append(body);positive_counts[cid]+=1
  if operation in(1,8):
-  phase='INITIALIZING'
-  for timestamp,value in phases:
-   if timestamp>called:break
-   phase=value['to']
-  assert phase in ({'IDLE','VERIFY_WAIT','FILE_WAIT'} if configuration['fileWorkDispatchPolicy']=='CONTINUE' else {'IDLE'}),('business offer outside explicitly admitted phase',phase,cid)
+  phase,phase_started=phase_at(called)
+  if phase not in allowed_admission:
+   assert configuration['fileWorkDispatchPolicy']=='CONTINUE'and operation==8 and phase in('EVENT_DRAIN','ACK_DRAIN'),('business publication outside admission/draining phases',phase,cid)
+   count=r.value('i');assert 1<=count<=4
+   expected_admission='VERIFY_WAIT'if phase=='EVENT_DRAIN'else'FILE_WAIT'
+   for index in range(count):
+    n=r.value('i');assert 1<=n<=2048;nested=r.read(n);original=admission_slots[cid,index]
+    submit=configuration['scheduledOriginMonotonicNs']+int(original['submit_offset_ns'])
+    assert digest(nested)==original['command_sha256']and submit<phase_started and phase_at(submit)[0]==expected_admission,('drain publication lacks prior original admission',cid,index)
+   r.end();legitimate_drain_publications.append(dict(correlationId=cid,phase=phase,phaseStartedNs=phase_started,offerCalledNs=called,members=count))
 assert expected_positive==positives
 for cid,value in requests.items():assert originals[cid]==value['body']and 1<=positive_counts[cid]<=4
 business_commands={}
@@ -115,6 +132,7 @@ for body in physical_replies:
 for cid,body in logical_replies.items():assert body in physical_by_cid[cid]
 for cid,values in observations.items():
  deadline=values[0][1]['absoluteOfferDeadlineNs'];assert all(value['absoluteOfferDeadlineNs']==deadline and value['possibleOffers']<=4 for _,value in values)
+(output/'PHASE_CHECKPOINT.json').write_text(json.dumps(dict(phaseChecksPassed=True,fullAuditPassed=False,allNewLogicalSubmissionsWithinAllowedAdmissionPhases=True,priorOriginalPublicationsDuringDrain=legitimate_drain_publications),indent=2)+chr(10))
 receipt_by_path={};events=[];input_pins={}
 for timestamp,value in receipts:
  path=Path(value['path']);assert path.parent==state/'writer'and not path.is_symlink();body=path.read_bytes();assert len(body)==value['bytes']and digest(body)==value['sha256']
@@ -141,7 +159,7 @@ for cid,request in requests.items():
  r,s,_=header(wire);tag=r.value('B');producer=r.text(48);sequence=r.value('q')
  if tag==2:
   commits+=1;assert producer=='archive'and sequence==commits
-  ack_scope=(r.text(64),r.text(64));first=r.value('q');last=r.value('q');previous=r.text(64);chain=r.text(64);payload=r.text(64);r.end();assert ack_scope[1]==scope[1]and first==through+1 and last==min(commits*1536,accepted+3)
+  ack_scope=(r.text(64),r.text(64));first=r.value('q');last=r.value('q');previous=r.text(64);chain=r.text(64);payload=r.text(64);r.end();assert ack_scope[1]==scope[1]and first==through+1 and last==min(commits*1536,accepted+3),('fixed-cut-contract',first,last,min(commits*1536,accepted+3))
   if previous_chain is not None:assert previous==previous_chain
   previous_chain=chain;through=last
   archives=[(time,value)for time,value,body in receipt_by_path.values()if value['kind']=='archive'and value['sha256']==payload];assert len(archives)==1 and archives[0][0]<min(calls[cid])
@@ -176,5 +194,5 @@ if accepted==planned:
 else:assert summary['allArrivalP99Ns']is None
 
 for p in [state/'maintenance-v4.bin',state/'physical-requests.bin',state/'physical-replies.bin',state/'physical-offer-codes.csv',state/'physical-request-index.csv',state/'arrivals.csv',state/'configuration.json',state/'load-result.json',*sorted((state/'writer').glob('*'))]:input_pins[p.name]=dict(bytes=p.stat().st_size,sha256=digest(p.read_bytes()))
-result=dict(passed=True,atUTC=datetime.datetime.now(datetime.timezone.utc).isoformat(),sourceSha256=digest(Path(__file__).read_bytes()),scope='Independent Python finite-capacity arrivals/trace/physical-offer/event/receipt audit;not a second matching algorithm or storage durability certification',plannedArrivals=planned,confirmedAcceptedTrades=accepted,notSent=not_sent,arrivalWindowGoodputPerSecond=in_window/20,allArrivalP99Ns=summary['allArrivalP99Ns'],fileWorkDispatchPolicy=configuration['fileWorkDispatchPolicy'],logicalRpcs=len(requests),physicalOffers=len(attempts),positiveOffers=len(positives),physicalReplies=len(physical_replies),maximumRetainedReadCredits=peak,readGenerations=len(generations),allReadCreditsConsumed=True,allOriginalDeadlinesUnchanged=True,allDestructiveOriginalIntentsAndBothPrefixReceiptsPredateOffers=True,archiveCommitIdentities=commits,eventAckIdentities=acks,throughBusinessSeq=through,eventCounts=dict(counts),uniqueOneUnitTrades=len(trades),notional=sum(e['price']*e['quantity']for e in trades),inputs=input_pins)
+result=dict(passed=True,atUTC=datetime.datetime.now(datetime.timezone.utc).isoformat(),sourceSha256=digest(Path(__file__).read_bytes()),scope='Independent Python finite-capacity original logical-admission/drain-publication/physical-result/event/receipt audit;not a second matching algorithm or storage durability certification',allNewLogicalSubmissionsWithinAllowedAdmissionPhases=True,priorOriginalPublicationsDuringDrain=legitimate_drain_publications,plannedArrivals=planned,confirmedAcceptedTrades=accepted,notSent=not_sent,arrivalWindowGoodputPerSecond=in_window/20,allArrivalP99Ns=summary['allArrivalP99Ns'],fileWorkDispatchPolicy=configuration['fileWorkDispatchPolicy'],logicalRpcs=len(requests),physicalOffers=len(attempts),positiveOffers=len(positives),physicalReplies=len(physical_replies),maximumRetainedReadCredits=peak,readGenerations=len(generations),allReadCreditsConsumed=True,allOriginalDeadlinesUnchanged=True,allDestructiveOriginalIntentsAndBothPrefixReceiptsPredateOffers=True,archiveCommitIdentities=commits,eventAckIdentities=acks,throughBusinessSeq=through,eventCounts=dict(counts),uniqueOneUnitTrades=len(trades),notional=sum(e['price']*e['quantity']for e in trades),inputs=input_pins)
 (output/'RESULT.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n');print(json.dumps({k:v for k,v in result.items()if k!='inputs'}))

@@ -1,0 +1,7 @@
+# Exact-cut source and admission checker qualification
+
+All74 forced local tests pass,including the observed1535-known/one-locally-pending race,127 overlap positions,final-only partial cuts,budget preservation and invalid observations. Complete registered core/cluster sources,compiled class bodies,JUnit and logs are inside this small archive. The independent checker passes14 actual system-Python3.8 checks over11 fixtures. Its full951 original fixture/result/source files are preserved in the authenticated private attachment identified by CPU_AUDITOR_ASSET;every member was re-downloaded and verified. No Java or business command was issued by this read-only checker qualification.
+
+The earlier local checker draft incorrectly expected the real1000/s input to pass after accepting its legitimate drain;the exact-cut guard correctly found the independent1535-command contract violation. That failed draft and all test outputs are retained. Complete local fixture inventories are preserved;the local clones remain on the workstation,and the complete actual CPU fixtures are in the attachment. The original1000/s native/checker failure remains a separate217-file attachment and is not repaired or reused as a capacity result.
+
+This checkpoint qualifies local source behavior and checker semantics. Full Linux438-test regression,new actual JAR/JDK origins and fresh paired capacity results remain pending. The old500/s observations belong to artifact2ea38974 and do not qualify this new source.
