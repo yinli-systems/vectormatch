@@ -194,6 +194,21 @@ public final class RetentionEngineV3 {
         public long stateGeneration() { return generation; }
     }
 
+    /** State-independent credit bound. A command exceeding the profile's fanout is rejected before mutation. */
+    public record ReservationBound(int events,long historyBytes) {}
+    public static ReservationBound reservationBound(Profile profile,Command command) {
+        Objects.requireNonNull(profile);Objects.requireNonNull(command);
+        int events=1;
+        if(command instanceof Place place){
+            long quantity=place.quantityLots();
+            events=quantity<=0?0:(int)Math.min((long)profile.maxEventsPerCommand(),quantity==Long.MAX_VALUE?Long.MAX_VALUE:quantity+1);
+        }
+        events=Math.min(events,profile.maxEventsPerCommand());
+        long bytes=ENTRY_FRAME_BYTES+RetentionCodecV3.commandBytes(command).length+RESULT_MAX_BYTES
+                +events*(EVENT_MAX_BYTES+2*ORDER_MAX_BYTES);
+        return new ReservationBound(events,bytes);
+    }
+
     /** Does not alter counters, retry state, history, balances, or token generations. */
     public Admission previewAdmission(Command command) {
         if (!validIdentity(command)

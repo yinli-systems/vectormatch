@@ -1,0 +1,3 @@
+# V4 integrated coordinator: actual local correctness
+
+58 forced local Mac tests across seven suites,zero failure/error/skip. Complete registered core/cluster sources,compiled classes,commands,logs,JUnit and five failed development attempts plus the first ten-test passing attempt are preserved in the scope TAR. The registered source bodies remained unchanged throughout the successful run. See the captured design document for protocol/resource fences and explicit limits. This is integrated in-process correctness evidence,not Linux/network deployment,capacity,100M continuity or production certification.

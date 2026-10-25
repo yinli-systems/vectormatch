@@ -1,0 +1,5 @@
+# V4 actual Linux UDP functional qualification
+
+Complete116 native original files,1226936644 logical bytes,raw tapes,receipts,node state,snapshots,ownership/cleanup observations,independent Python audit and derivation are nested in this archive. The original native collection is6061798 bytes,SHA-256 b9f3ede47df22a67806968058b20561025b005558bd6ed5c50292ea5f9744a72. Every nested member is verified.1003 business commands include1000 unique one-unit trades;128 additional positive-original commands are independently counted during the first file wait. All three snapshot/cold-restore hashes match. All six node lifetimes and parent are strictly absent.
+
+This is finite same-host correctness,not a throughput/p99 benchmark,physical-host durability,client continuation after cold restore,100M continuity,production certification or funded external trading. The first controller attempt remains failed and separately archived. Prepared console metadata preserves all72 prior runs and32 capacity cohorts and adds no performance number. See the captured result document for exact limits and reproduction.

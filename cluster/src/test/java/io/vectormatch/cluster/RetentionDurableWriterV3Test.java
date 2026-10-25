@@ -120,6 +120,56 @@ class RetentionDurableWriterV3Test {
         assertEquals(0,writer.snapshot().get("completed"));
         assertThrows(IllegalStateException.class,()->writer.persistVerifiedArchive(captured));
     }
+    @Test void pollingDoesNotPublishAPartialReceiptAndReturnsTheSameCompletedProof()throws Exception{
+        Prefix p=prefix();var entered=new CountDownLatch(1);var release=new CountDownLatch(1);
+        Path path=root.resolve("poll-pending");
+        var writer=new RetentionDurableWriterV3(path,4096,8192,2,file->{
+            entered.countDown();try{if(!release.await(5,TimeUnit.SECONDS))throw new IOException("gate deadline");}
+            catch(InterruptedException error){Thread.currentThread().interrupt();throw new IOException(error);}
+        });
+        try{
+            var ticket=writer.persistArchive(p.bytes,profile.core(),lineage,p.ack);
+            assertTrue(entered.await(2,TimeUnit.SECONDS));
+            assertTimeoutPreemptively(Duration.ofSeconds(1),()->{
+                for(int i=0;i<100;i++)assertTrue(ticket.poll().isEmpty());
+            });
+            assertFalse(Files.exists(path.resolve("0001-archive.bin.verified.txt")));
+            release.countDown();var completed=ticket.await(Duration.ofSeconds(2));
+            assertSame(completed,ticket.poll().orElseThrow());assertSame(completed,ticket.poll().orElseThrow());
+            assertArrayEquals(p.bytes,Files.readAllBytes(completed.path()));
+        }finally{release.countDown();writer.close();}
+    }
+    @Test void pollingACompletedReadbackFailureCannotAuthorizeAnAck()throws Exception{
+        Prefix p=prefix();Path path=root.resolve("poll-failed");
+        var writer=new RetentionDurableWriterV3(path,4096,8192,2,file->{
+            byte[] bytes=Files.readAllBytes(file);bytes[bytes.length-1]^=1;
+            Files.write(file,bytes,StandardOpenOption.TRUNCATE_EXISTING);
+        });
+        try{
+            var ticket=writer.persistArchive(p.bytes,profile.core(),lineage,p.ack);
+            assertThrows(IOException.class,()->ticket.await(Duration.ofSeconds(2)));
+            assertThrows(IOException.class,ticket::poll);assertThrows(IOException.class,ticket::poll);
+            assertEquals(0,writer.snapshot().get("completed"));
+            assertTrue(Files.exists(path.resolve("0001-archive.bin")));
+            assertFalse(Files.exists(path.resolve("0001-archive.bin.verified.txt")));
+        }finally{assertThrows(IOException.class,writer::close);}
+    }
+    @Test void pendingPollPreservesTheOwnersInterruptAndTheWritersWork()throws Exception{
+        Prefix p=prefix();var entered=new CountDownLatch(1);var release=new CountDownLatch(1);
+        var writer=new RetentionDurableWriterV3(root.resolve("poll-interrupted"),4096,8192,2,file->{
+            entered.countDown();try{if(!release.await(5,TimeUnit.SECONDS))throw new IOException("gate deadline");}
+            catch(InterruptedException error){Thread.currentThread().interrupt();throw new IOException(error);}
+        });
+        try{
+            var ticket=writer.persistArchive(p.bytes,profile.core(),lineage,p.ack);
+            assertTrue(entered.await(2,TimeUnit.SECONDS));
+            Thread.currentThread().interrupt();
+            try{assertTrue(ticket.poll().isEmpty());assertTrue(Thread.currentThread().isInterrupted());}
+            finally{Thread.interrupted();}
+            release.countDown();assertNotNull(ticket.await(Duration.ofSeconds(2)));
+            assertTrue(ticket.poll().isPresent());
+        }finally{Thread.interrupted();release.countDown();writer.close();}
+    }
     @Test void verifiedHandoffRetainsOutstandingAndLifetimeFileBudgets()throws Exception{
         Prefix p=prefix();var captured=RetentionDurableWriterV3.captureAndVerifyArchive(p.bytes,profile.core(),lineage,p.ack);
         var entered=new CountDownLatch(1);var release=new CountDownLatch(1);

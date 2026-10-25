@@ -37,3 +37,16 @@ tasks.register<JavaExec>("replicatedConcurrencyComparison") {
     jvmArgs(application.applicationDefaultJvmArgs)
 }
 
+tasks.register<JavaExec>("asyncMaintenanceSmokeV4") {
+    group = "verification"
+    description = "Runs a fresh three-JVM UDP asynchronous-maintenance correctness and cold-restore experiment. No capacity claim."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("io.vectormatch.cluster.RetentionAsyncAeronSmokeV4")
+    jvmArgs(application.applicationDefaultJvmArgs)
+    maxHeapSize = "256m"
+    doFirst {
+        args(providers.gradleProperty("asyncV4Root").orNull
+            ?: throw GradleException("Pass -PasyncV4Root=<new-state-directory>; existing state is refused."))
+    }
+}
+
