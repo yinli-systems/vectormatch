@@ -20,19 +20,29 @@ Executable deterministic matching, a local journaled workbench, a three-process 
 
 The bounded [asynchronous maintenance V4](docs/ASYNC_MAINTENANCE_V4.md) is available as an opt-in coordinator. It admits business during independent file work,retains bounded command/event/byte credits,and records original control identity before destructive ACK. Its [actual Linux UDP results](docs/ASYNC_MAINTENANCE_V4_RESULTS.md) establish finite correctness. The [registered capacity comparison](docs/ASYNC_CAPACITY_RESULTS_V4.md) now includes two PAUSE/CONTINUE pairs at 500 arrivals/s.
 
-The old-artifact 1,000/s CONTINUE measurement is excluded after the independent checker exposed a 1,535-command first cut instead of 1,536. The [exact-cut correction](docs/CAPACITY_CUT_GATE_CORRECTION_V4.md) has passed 74 local source tests and 14 actual CPU checker tests; full Linux application regression and fresh comparisons remain pending. Earlier 500/s latency results do not qualify the new artifact.
+The old-artifact 1,000/s CONTINUE measurement remains excluded for its 1,535-command first cut. The [exact-cut correction](docs/CAPACITY_CUT_GATE_CORRECTION_V4.md) now has a successful full Linux regression:442 Java and197 Python tests,including11 PostgreSQL integration tests,zero failure/error/skip. CI17's procfs-reader regression and CI18's disk refusals remain archived. The [fresh exact-cut capacity campaign](docs/EXACT_CUT_CAPACITY_RESULTS_V4.md) uses its own qualified artifact and cohorts;earlier latency results do not transfer.
+
+<!-- exact-cut-v4-status:start -->
+
+Latest exact-cut comparison:500 scheduled arrivals/s,artifact `65c41d519ea78af9ba14d8b4a878adefc2cc388f6682f4ae6dea513351e40e69`,source `0c8303b2`.
+
+C1:10000/10000 accepted,p99 187.522ms,goodput 499.8/s; D1:10000/10000 accepted,p99 66.299ms,goodput 499.85/s; C2:10000/10000 accepted,p99 182.215ms,goodput 499.85/s; D2:10000/10000 accepted,p99 67.375ms,goodput 499.8/s.
+
+All four finite gates passed:True. Both preregistered pair directions passed:False. Both candidates meet10ms p99:False. These are two pairs of20-second fresh lineages on one physical host;no long-run SLA or default performance promotion. [Exact values and complete private raw references](docs/EXACT_CUT_CAPACITY_RESULTS_V4.md).
+
+<!-- exact-cut-v4-status:end -->
 
 ## Verified evidence
 
 | Path | Actual evidence | Limit |
 | --- | --- | --- |
-| Linux correctness |435 Java tests and 197 Python tests; zero failure/error/skip; 11 real PostgreSQL tests included |Source `6716f74a`; existing one-job CPU runner; hosted billing still blocked |
+| Linux correctness |442 Java tests and197 Python tests;zero failure/error/skip;11 real PostgreSQL tests included |Source `0c8303b2`;existing one-job CPU runner;hosted billing still blocked |
 | V4 replicated execution |1003 commands,1000 unique trades,2003 events;three exact archive cuts;128 extra confirmations during a held original file |Three JVMs sharing one CPU host;functional fixture |
 | Snapshot/cold restore |All three snapshots and all three restarted services match the complete state hash |No new orders/client continuation after cold restore |
-| V4 paired capacity at 500/s |Four 20-second arms each confirm all 10,000 trades; p99 PAUSE 286.78/175.01 ms vs CONTINUE 65.65/59.93 ms |Both registered direction checks pass; 10 ms target remains unmet; separate fresh lineages |
+| Original-artifact V4 paired capacity at500/s |Four 20-second arms each confirm all 10,000 trades; p99 PAUSE 286.78/175.01 ms vs CONTINUE 65.65/59.93 ms |Both registered direction checks pass; 10 ms target remains unmet; separate fresh lineages |
 | Previous V3 maintained capacity |6000/s and7000/s accept all planned arrivals;p99208.34/317.32ms in finite20s observations |7500/s loses74531/150000 arrivals;global accepted-arrival p99 is undefined;escalation stops |
 
-The earlier V4 held-file fixture has no measured throughput or p99. The new finite comparison uses one qualified artifact (`2ea38974`), fixed leader/configuration, 127 active load producers and a 1536-command cut. Both pairs improve global p99 without worse post-offer p99 or lower in-window goodput; this is a bounded observation, with no default performance promotion or long-run latency guarantee. The [V3 capacity curve](docs/VERIFIED_HANDOFF_CAPACITY_RESULTS_V3.md), [negative immutable-batch encoding comparison](docs/BATCH_WIRE_VALIDATION_RESULTS_V3.md), [writer timing/handoff comparisons](docs/VERIFIED_ARCHIVE_HANDOFF_EXIT_WAIT_RESULTS_V3.md) and [client JFR diagnostic](docs/CLIENT_JFR_DIAGNOSTIC_RESULTS_V3.md) remain separate. Full raw attachments are retained in the same private repository with SHA-256, member inventories and authenticated download verification. The console contains 79 runs and 34 capacity cohorts; the earlier 77 runs and all 34 cohorts remain unchanged. The added 1,000/s entries distinguish the unpaired control from the disqualified measurement.
+The earlier V4 held-file fixture has no measured throughput or p99. The original finite comparison uses one qualified artifact (`2ea38974`), fixed leader/configuration, 127 active load producers and a 1536-command cut. Both pairs improve global p99 without worse post-offer p99 or lower in-window goodput; this is a bounded observation, with no default performance promotion or long-run latency guarantee. The [V3 capacity curve](docs/VERIFIED_HANDOFF_CAPACITY_RESULTS_V3.md), [negative immutable-batch encoding comparison](docs/BATCH_WIRE_VALIDATION_RESULTS_V3.md), [writer timing/handoff comparisons](docs/VERIFIED_ARCHIVE_HANDOFF_EXIT_WAIT_RESULTS_V3.md) and [client JFR diagnostic](docs/CLIENT_JFR_DIAGNOSTIC_RESULTS_V3.md) remain separate. Full raw attachments are retained in the same private repository with SHA-256, member inventories and authenticated download verification. The console contains 83 runs and 36 capacity cohorts;all79 runs and34 cohorts present before the exact-cut campaign retain their original records. New exact-cut curves have separate configuration fingerprints.
 
 This remains a trading-systems research prototype. The [production acceptance gates](docs/PRODUCTION_ACCEPTANCE.md) still require sustained latency/capacity evidence,continuous100M lineage,physical-node fault isolation,production authentication/risk controls and external venue/account qualification. No hard realtime,millisecond SLA,HFT endorsement or funded external trading readiness is claimed. [Continuous endurance](docs/CONTINUOUS_ENDURANCE_PLAN.md) requires persistent journal anchors and producer/frontier recovery,not repeated reset fixtures.
 
