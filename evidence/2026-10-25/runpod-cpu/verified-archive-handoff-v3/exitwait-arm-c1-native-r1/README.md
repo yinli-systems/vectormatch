@@ -1,0 +1,7 @@
+# Immutable handoff comparison:C1 original native/raw evidence
+
+Fresh80,000 IOC arrivals@4000/s for20s;artifactf3a5745cb67f6d46aae28ef68dede0a5b7a767a795dab3bd07c3b5d4143464ca. Accepted80000,notSent0,rejected0,observed/final UNKNOWN0/0;all-arrival p99236456120ns. This is one finite comparison observation,not a sustained-capacity or millisecond-SLA claim.
+
+Every original closed native TAR,CSV,wire/frame/offer,decoder/identity,configuration/readiness/lifecycle and source record is preserved in one complete compressed original-scope TAR. ASSET_MANIFEST identifies the exact private draft-release asset,size,SHA-256 and authenticated API URL;ORIGINAL_SCOPE_INVENTORIES pins every member's bytes/mode/owner/directory. No raw row is sampled or omitted. Git retains the small manifest and audits;the full compressed original body is an attachment under the same private repository. The private progression proof must authenticate and download the entire committed asset,reverify its SHA and all members,before the next case can start. Upload alone does not qualify progression.
+
+Leader0/sync2/ROTATING_CONTINUE/read128/page32/batch4/chunk6144/owner1ms/driver100us/W128Q64,one physical session/three JVMs on the same CPU. Original two2s readiness gates,5s warm-up,cache preconditioning,resource/durability/evidence bounds retained. Complete canonical forced readback and both payload/receipt forces precede either destructive ACK. Candidate-codec checks are not an independent matching oracle or binary cold restore.
