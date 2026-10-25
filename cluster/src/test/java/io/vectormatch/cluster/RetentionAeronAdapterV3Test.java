@@ -82,11 +82,22 @@ class RetentionAeronAdapterV3Test {
     @Test void newReadOperationsAreBoundedCanonicalAndDoNotEnterMaintenanceNamespace() {
         var a = adapter(); call(a, new Business(new Deposit(1, "fund", 1, Asset.BASE, 10)));
         var descriptor = (Descriptor) call(a, new PrepareArchive(1)).payload();
-        for (Operation op : List.of(new FetchEvents(1, 16), new PrepareArchive(1), new ArchiveChunk(descriptor.acknowledgement(), descriptor.totalBytes(), 0, 3072))) {
+        assertEquals(16,DEFAULT_EVENT_FETCH_COUNT);assertEquals(32,MAX_SUPPORTED_EVENT_FETCH_COUNT);
+        for (Operation op : List.of(new FetchEvents(1, 16), new FetchEvents(1, 32), new PrepareArchive(1), new ArchiveChunk(descriptor.acknowledgement(), descriptor.totalBytes(), 0, 3072))) {
             Request r = request(op); assertEquals(r, RetentionWireV3.decode(RetentionWireV3.encode(r)));
         }
-        assertThrows(IllegalArgumentException.class, () -> new FetchEvents(1, 17));
+        assertThrows(IllegalArgumentException.class, () -> new FetchEvents(1, 33));
         assertThrows(IllegalArgumentException.class, () -> new ArchiveChunk(descriptor.acknowledgement(), descriptor.totalBytes(), 0, MAX_SUPPORTED_ARCHIVE_CHUNK+1));
         assertEquals(1, call(a, new Position()).counters().applicationMutation());
+    }
+    @Test void largestSupportedEventPageIsCanonicalAndReadOnly() {
+        var a=adapter();
+        for(int sequence=1;sequence<=32;sequence++)call(a,new Business(new Deposit(1,"page-boundary",sequence,Asset.BASE,1)));
+        var before=call(a,new Position()).counters();
+        Reply reply=call(a,new FetchEvents(1,32));assertEquals("",reply.error());
+        var events=((Events)reply.payload()).batch().events();assertEquals(32,events.size());
+        assertEquals(1,events.getFirst().eventSeq());assertEquals(32,events.getLast().eventSeq());
+        assertEquals(reply,RetentionReplyV3.decode(RetentionReplyV3.encode(reply)));
+        assertEquals(before,call(a,new Position()).counters());
     }
 }
