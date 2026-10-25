@@ -1,0 +1,67 @@
+"""One fresh500/s native qualification; reviewed ownership/closure machinery reused byte-for-byte."""
+from pathlib import Path
+import argparse,hashlib,importlib.util,json,os,platform,shutil,socket,stat,sys
+HERE=Path(__file__).resolve().parent
+PREP=Path('/opt/vectormatch-cpu/experiments/ready-shared-capacity-4000-r1')
+
+def digest(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+def require(value,message):
+    if not value:raise RuntimeError(message)
+
+def main():
+    p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--freeze-sha256',required=True);p.add_argument('--start-new',action='store_true');a=p.parse_args()
+    require(HERE==PREP,'Exact new synthetic namespace required')
+    frozen=HERE/'FROZEN.json';require(digest(frozen)==a.freeze_sha256,'Root-frozen source manifest differs')
+    pins=json.loads(frozen.read_text())
+    for n,row in pins['files'].items():
+        q=HERE/n;require(q.is_file()and not q.is_symlink()and q.stat().st_size==row['bytes']and digest(q)==row['sha256']and stat.S_IMODE(q.stat().st_mode)==row['mode'],'Source/package body differs: '+n)
+    spec=importlib.util.spec_from_file_location('cpu_read_window32_abab',HERE/'cpu_read_window32_abab.py');m=importlib.util.module_from_spec(spec);sys.modules[spec.name]=m;spec.loader.exec_module(m)
+    require(digest(m.__file__)=='1d15cd2c53e0914c6d1d203cc486c563be3d2cfdaa1fa159ffaa8ffd231b14c4','Original reviewed lifecycle source differs')
+    m.JOB=PREP/'attempt-4000';m.PAIR=m.JOB/'idle-arm';m.ARM=1;m.WINDOWS=[128];m.READ_WINDOW_ORDER=(128,);m.OWNER_PARK_ORDER=(1000000,)
+    # PREP inside the original module remains its original path solely for the original absence/boot baseline.
+    exec(compile((HERE/'capacity_validators.py').read_text(),str(HERE/'capacity_validators.py'),'exec'),m.__dict__)
+    release_path=HERE/'release.json';release=json.loads(release_path.read_text());m.FROZEN_RELEASE_SHA=digest(release_path)
+    m.SOURCE_COMMIT=release['sourceCommit'];m.CODE_FINGERPRINT=release['codeFingerprint']
+    from readiness_validation import validate_readiness
+    original_validate=m.validate_result
+    def validate_with_readiness(b,registry,r):
+        result=original_validate(b,registry,r)
+        cfg=m.json_bounded(b,m.PAIR/'load/configuration.json');warm=m.json_bounded(b,m.PAIR/'preload-warmup.json');reg=m.json_bounded(b,m.PAIR/'registration.json')
+        require(reg['allMemberStartupReadinessRequired']is True and reg['allMemberPreloadReadinessRequired']is True and reg['readinessQuietPeriodNs']==2000000000 and reg['readinessDeadlineNs']==45000000000,'Actual application readiness registration differs')
+        nodes={member:next(row['identity']['pid']for row in registry.records.values()if row['role']=='window-128-node-'+str(member))for member in range(3)}
+        first=m.json_bounded(b,m.PAIR/'startup-readiness.json');last=m.json_bounded(b,m.PAIR/'preload-readiness.json');reports=[validate_readiness(doc,nodes,cfg['scheduledOriginMonotonicNs'])for doc in [first,last]]
+        require(first['endedMonotonicNs']<=warm['startedMonotonicNs']and warm['endedMonotonicNs']<=last['startedMonotonicNs'],'Actual startup/setup/warmup/preload readiness order differs')
+        result['actualAllMemberReadinessGates']=reports;return result
+    m.validate_result=validate_with_readiness
+    base=m.load_base()
+    def parent_argv(r):
+        return [r['java'],'-Dvectormatch.retention.idleMaxParkNs=100000','-Dvectormatch.retention.ownerPollMaxParkNs=1000000']+r['parentJvmArguments']+['-cp',':'.join(r['classPath']),m.MAIN,str(m.PAIR),'maintained-read128-capacity','4000','42000']
+    def preflight(b,r):
+        require(platform.system()=='Linux'and platform.machine()=='x86_64'and socket.gethostname()=='33ace3d92505'and os.geteuid()==0,'Exact Linux/root/current CPU required')
+        b.no_links(PREP);require(not m.JOB.exists()and not m.PAIR.exists(),'Fresh only; no rerun or resume')
+        for n,row in pins['files'].items():
+            q=HERE/n;b.no_links(q);require(q.stat().st_size==row['bytes']and digest(q)==row['sha256'],'Staged source changed before launch')
+        require(digest(r['java'])==r['javaExecutableSha256']and digest(Path(r['java']).parents[1]/'release')==r['jdkReleaseSha256'],'Actual pinned JDK differs')
+        for n,row in r['artifacts'].items():
+            q=Path(n);b.no_links(q);require(q.stat().st_size==row['bytes']and digest(q)==row['sha256'],'Actual new installed JAR differs')
+        observation=json.loads((HERE/'linux-metadata.json').read_text());review=json.loads((HERE/'linux-metadata-root-review.json').read_text())
+        require(review['passed']and review['actualLinuxPlansMatchLocal']and review['allEightActualLoadedOriginsMatchStagedJars']and review['strictOwnedPidAbsentAfterWait']and review['observationSha256']==digest(HERE/'linux-metadata.json'),'Actual Linux metadata closure differs')
+        require(observation['actualCodeFingerprint']==r['codeFingerprint']and observation['profileSha256']==r['profileFingerprint']and observation['plans']['4000']['plan']==r['derivedPlan'],'Actual Linux selected plan/code differs')
+        require(r['derivedPlan']['arrivals']==80000 and r['derivedPlan']['maxReadOnlyInFlight']==128 and r['derivedPlan']['eventFetchCount']==32 and r['derivedPlan']['admissionRejections']==[],'Exact finite codec admission differs')
+        prior=r['priorQualification'];push=json.loads((HERE/'prior-private-push.json').read_text());raw=json.loads((HERE/'prior-raw-audit.json').read_text());rootReview=json.loads((HERE/'prior-root-review.json').read_text());collection=json.loads((HERE/'prior-collection.json').read_text())
+        require(digest(HERE/'prior-private-push.json')==prior['privatePushSha256']and digest(HERE/'prior-collection.json')==prior['collectionSha256']and digest(HERE/'prior-raw-audit.json')==push['rawAuditSha256']and digest(HERE/'prior-root-review.json')==push['rootReviewSha256'],'Prior actual root/raw/private original bodies differ')
+        require(push['passed']and push['private']and push['remoteCommitVerified']and push['allOriginalNativeAndRawEvidencePushed']and push['finiteProgressionPermitted']and push['codeFingerprint']==r['codeFingerprint']and raw['passed']and raw['allPlannedDeterministicCommandIdentitiesAndHashesVerified'],'Prior actual same-artifact qualification/private push required')
+        require(rootReview['strictKnownSourceQualification']and rootReview['windowConfirmationFraction']>=.99 and rootReview['notSent']==rootReview['serverRejected']==rootReview['unknownObserved']==rootReview['unknownFinal']==0 and rootReview['allArrivalP99Ns']is not None and rootReview['allArrivalP99Ns']<=1000000000,'Previous point exceeded finite progression gate; investigate/repeat boundary before increasing')
+        ready=json.loads((HERE/'prior-readiness.json').read_text());require(push['allMemberReadinessGatesIndependentlyVerified']and ready['passed']and ready['bothGatesClosedBeforeScheduledOrigin']and digest(HERE/'prior-readiness.json')==push['readinessReviewSha256'],'Previous all-member readiness body differs')
+        previousArchive=Path(collection['archive']['path']);b.no_links(previousArchive);require(previousArchive.stat().st_size==collection['archive']['bytes']and m.digest(previousArchive)==collection['archive']['sha256'],'Prior complete original native archive missing/changed')
+        m.verify_archive_members(previousArchive,collection['fullOriginalInventory'],prefix='original')
+        idle=m.strict_idle(b);protected=m.protected_state(b,r)
+        minimum=m.minimum_initial_free_bytes(r);require(shutil.disk_usage(m.ROOT).free>=minimum,'Full finite growth/archive/1GiB free-space budget required')
+        require(b.memory_headroom()>=8*m.GIB,'8GiB fresh memory headroom required')
+        return dict(passed=True,atUtc=b.now(),idle=idle,protectedOriginal=protected,noJavaStarted=True,minimumInitialFreeBytes=minimum,sourceFreezeSha256=a.freeze_sha256,scope='First fresh80000@4000 with common128 qualification of NEW maintained-capacity artifact; no higher-load permission implied by this controller')
+    m.parent_argv=parent_argv;m.preflight=preflight
+    if not a.start_new:print(json.dumps(preflight(base,release)));return
+    result=m.execute(base,release,release_path)
+    print(json.dumps(dict(result,newArtifactSourceCommit=release['sourceCommit'],maintainedCapacityPreset=True,rate=4000,allHigherPresetsStillUnexecuted=True)))
+
+if __name__=='__main__':main()

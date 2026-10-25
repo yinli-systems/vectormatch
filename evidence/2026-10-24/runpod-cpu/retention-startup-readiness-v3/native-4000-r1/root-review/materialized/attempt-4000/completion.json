@@ -1,0 +1,944 @@
+{
+  "allOwnedStopped": true,
+  "arm": 1,
+  "atUtc": "2026-10-25T10:32:20.185848+00:00",
+  "capacityOrEnduranceProven": false,
+  "commonEventFetchEnvelope": false,
+  "commonReadWindow32Envelope": true,
+  "errors": [],
+  "eventFetchCount": 32,
+  "frozenReleaseSha256": "9288c1fb734b2d5cb0fd22ed8306f71a09223cc6daf014eca306b20c4f3679fd",
+  "functionalPilotOnly": true,
+  "hardKernelDeadlineGuaranteed": false,
+  "noNewResources": true,
+  "ownerPollMaximumParkNs": 1000000,
+  "passed": true,
+  "readWindow": 128,
+  "result": {
+    "actualAllMemberReadinessGates": [
+      {
+        "actualFinalQuietNs": 2032430838,
+        "commitPosition": 96,
+        "endedMonotonicNs": 132817388762107,
+        "maximumSampleGapNs": 102792024,
+        "notAtomicOrHardRealtime": true,
+        "originalPidAndCounterBindingsVerified": true,
+        "passed": true,
+        "samples": 25,
+        "startedMonotonicNs": 132814930657143
+      },
+      {
+        "actualFinalQuietNs": 2021841072,
+        "commitPosition": 1376,
+        "endedMonotonicNs": 132824632870082,
+        "maximumSampleGapNs": 101516328,
+        "notAtomicOrHardRealtime": true,
+        "originalPidAndCounterBindingsVerified": true,
+        "passed": true,
+        "samples": 21,
+        "startedMonotonicNs": 132822607784668
+      }
+    ],
+    "arms": [
+      {
+        "archiveChunkBytes": 6144,
+        "batchCap": 4,
+        "commonEventFetchEnvelope": false,
+        "commonReadWindow128Envelope": true,
+        "completion": {
+          "allOwnedStopped": true,
+          "capacityOrEnduranceProven": false,
+          "commonReadWindow128Envelope": true,
+          "eventFetchCount": 32,
+          "fixedLeader": 0,
+          "independentHosts": false,
+          "offeredRate": 4000,
+          "passed": true,
+          "preloadWarmupMillis": 5000,
+          "readWindow": 128
+        },
+        "eventFetchCount": 32,
+        "functional": {
+          "acceptedPlaceCount": 80001,
+          "actualEgressBounds": {
+            "activeImageCorrelations": [
+              11
+            ],
+            "actualImageObservations": 24,
+            "aeronSessionHeaderBytes": 32,
+            "defaultMetadataSubstituted": false,
+            "images": [
+              {
+                "activeAtLastObservation": false,
+                "actualMtuLength": 1248,
+                "actualTermBufferLength": 16777216,
+                "associatedApplicationReplies": 0,
+                "derivedMaxMessageLength": 2097152,
+                "imageCorrelationId": 7,
+                "largestObservedApplicationReplyBytes": 0,
+                "publicationSessionId": 980730107,
+                "streamId": 102
+              },
+              {
+                "activeAtLastObservation": true,
+                "actualMtuLength": 1248,
+                "actualTermBufferLength": 16777216,
+                "associatedApplicationReplies": 68403,
+                "derivedMaxMessageLength": 2097152,
+                "imageCorrelationId": 11,
+                "largestObservedApplicationReplyBytes": 6701,
+                "publicationSessionId": 1851911836,
+                "streamId": 102
+              }
+            ],
+            "lifecycleEvents": [
+              {
+                "event": "ADDED",
+                "imageCorrelationId": 7,
+                "observedAtMonotonicNs": 132824760153691,
+                "sequence": 1,
+                "source": "actual owner-thread egress subscription Image observation"
+              },
+              {
+                "event": "ADDED",
+                "imageCorrelationId": 11,
+                "observedAtMonotonicNs": 132824760153691,
+                "sequence": 2,
+                "source": "actual owner-thread egress subscription Image observation"
+              },
+              {
+                "event": "REMOVED",
+                "imageCorrelationId": 7,
+                "observedAtMonotonicNs": 132826766240676,
+                "sequence": 3,
+                "source": "actual owner-thread egress subscription Image observation"
+              }
+            ],
+            "maximumEverObservedImages": 16,
+            "maximumLifecycleEvents": 256,
+            "minimumActualDerivedMaxMessageLength": 2097152,
+            "replyHeaderImageAssociations": 68403,
+            "requiredApplicationReplyBytes": 6919,
+            "requiredCompleteMessageBytes": 6951,
+            "sameOwnerThreadRequired": true,
+            "source": "actual AeronCluster.egressSubscription Images plus reassembled reply Header.context Image"
+          },
+          "actualSourceSummary": {
+            "acceptedOrderConditionalP99Ns": 241596422,
+            "acceptedOrdersInArrivalWindow": 79869,
+            "allArrivalAcceptedOrderP99Ns": 241596422,
+            "allArrivalP99Ns": 241596422,
+            "allArrivalP99Policy": "all planned arrivals must each confirm one distinct ACCEPTED order; null on notSent, unknown, unreleased, business rejection or duplicate/out-of-range orderId; allArrivalReplyP99Ns instead includes finite business-reject replies",
+            "allArrivalReplyP99Ns": 241596422,
+            "archiveChunkBytes": 6144,
+            "arrivalClockPausedForMaintenance": false,
+            "arrivalCsvBytes": 17576096,
+            "arrivalWindowGoodputPerSecond": 3993.45,
+            "arrivalWindowSeconds": 20.0,
+            "batchCap": 4,
+            "commonChunkEnvelope": false,
+            "commonReadWindow128Envelope": true,
+            "commonReadWindowEnvelope": true,
+            "completedLogicalReplies": 80000,
+            "completedReplyConditionalP99Ns": 241596422,
+            "confirmedAcceptedUniqueOrders": 80000,
+            "diskGuard": {
+              "accounting": "POSIX st_blocks * 512 from bounded no-symlink owned-directory walk",
+              "allocatedGrowthBytes": 756600832,
+              "baselineAllocatedBytes": 0,
+              "checks": 25,
+              "latestAllocatedBytes": 756600832,
+              "latestDirectories": 28,
+              "latestFiles": 225,
+              "latestLogicalBytes": 2149887289,
+              "maximumAllocatedGrowthBytes": 1034958485,
+              "maximumEntries": 2048,
+              "minimumFreeRuntimeBytes": 1073741824,
+              "minimumObservedFreeBytes": 46627897344,
+              "ownedRoot": "/opt/vectormatch-cpu/experiments/ready-shared-capacity-4000-r1/attempt-4000/idle-arm"
+            },
+            "duplicateOrOutOfRangeAcceptedOrderIds": 0,
+            "eventFetchCount": 32,
+            "externalCorrectnessVerificationRequired": true,
+            "finiteStabilityClaimed": false,
+            "journalRunBudget": {
+              "archiveIdentities": 27,
+              "archivedThrough": 80003,
+              "byteLimit": 4194304,
+              "eventIdentities": 27,
+              "exportedEventSeq": 160003,
+              "maximumPossibleOffersPerMutatingRpc": 4,
+              "recordLimit": 1024,
+              "reservedJournalBytes": 263628,
+              "reservedJournalRecords": 216
+            },
+            "lastKnownReplyDrainNs": 187360261,
+            "maintainedCapacityPreset": true,
+            "maintenanceCycles": 27,
+            "maintenanceRpcMetrics": {
+              "archiveChunkBytes": 6144,
+              "archiveIdentities": 27,
+              "archivedThrough": 80003,
+              "byteLimit": 4194304,
+              "commonReadWindow128Envelope": true,
+              "completedCycles": 27,
+              "eventFetchCount": 32,
+              "eventIdentities": 27,
+              "exportedEventSeq": 160003,
+              "failed": false,
+              "logicalRpcCount": 11221,
+              "maximumLogicalRpcs": 12144,
+              "maximumPossibleOffersPerMutatingRpc": 4,
+              "readWindow": 128,
+              "recordLimit": 1024,
+              "reservedJournalBytes": 263628,
+              "reservedJournalRecords": 216,
+              "rpcKinds": {
+                "ArchiveChunk": {
+                  "count": 6139,
+                  "failed": 0,
+                  "maxElapsedNs": 47519417,
+                  "totalElapsedNs": 70135098044
+                },
+                "ArchiveCommit": {
+                  "count": 27,
+                  "failed": 0,
+                  "maxElapsedNs": 29215740,
+                  "totalElapsedNs": 476395372
+                },
+                "EventAck": {
+                  "count": 27,
+                  "failed": 0,
+                  "maxElapsedNs": 6597003,
+                  "totalElapsedNs": 120057789
+                },
+                "FetchEvents": {
+                  "count": 5001,
+                  "failed": 0,
+                  "maxElapsedNs": 36725642,
+                  "totalElapsedNs": 52880336389
+                },
+                "PrepareArchive": {
+                  "count": 27,
+                  "failed": 0,
+                  "maxElapsedNs": 16051263,
+                  "totalElapsedNs": 330811739
+                }
+              }
+            },
+            "maximumObservedQueueSizePerWorker": 10,
+            "notSent": 0,
+            "ownerPollActual": {
+              "available": true,
+              "osLatenessBounded": false,
+              "ownerPollMaxParkNs": 1000000,
+              "requestedSleepOnly": true,
+              "schema": "retention-owner-poll-actual-v1",
+              "source": "actual-constructed-owner-snapshot",
+              "waitPolicy": "deadline-aware park up to 1ms; OS lateness is not bounded"
+            },
+            "ownerPollSelection": {
+              "factor": "owner poll requested park cap only",
+              "hardRealtimeGuaranteed": false,
+              "maximumParkNs": 1000000,
+              "property": "vectormatch.retention.ownerPollMaxParkNs",
+              "schema": "retention-owner-poll-selection-v1"
+            },
+            "perArrivalCsvComplete": true,
+            "physicalOfferTape": {
+              "boundedActiveRegistry": 129,
+              "extraSuccessfulPhysicalAdmissions": 0,
+              "lastActualTransportObservation": {
+                "actualEgressBounds": {
+                  "activeImageCorrelations": [
+                    11
+                  ],
+                  "actualImageObservations": 24,
+                  "aeronSessionHeaderBytes": 32,
+                  "defaultMetadataSubstituted": false,
+                  "images": [
+                    {
+                      "activeAtLastObservation": false,
+                      "actualMtuLength": 1248,
+                      "actualTermBufferLength": 16777216,
+                      "associatedApplicationReplies": 0,
+                      "derivedMaxMessageLength": 2097152,
+                      "imageCorrelationId": 7,
+                      "largestObservedApplicationReplyBytes": 0,
+                      "publicationSessionId": 980730107,
+                      "streamId": 102
+                    },
+                    {
+                      "activeAtLastObservation": true,
+                      "actualMtuLength": 1248,
+                      "actualTermBufferLength": 16777216,
+                      "associatedApplicationReplies": 68403,
+                      "derivedMaxMessageLength": 2097152,
+                      "imageCorrelationId": 11,
+                      "largestObservedApplicationReplyBytes": 6701,
+                      "publicationSessionId": 1851911836,
+                      "streamId": 102
+                    }
+                  ],
+                  "lifecycleEvents": [
+                    {
+                      "event": "ADDED",
+                      "imageCorrelationId": 7,
+                      "observedAtMonotonicNs": 132824760153691,
+                      "sequence": 1,
+                      "source": "actual owner-thread egress subscription Image observation"
+                    },
+                    {
+                      "event": "ADDED",
+                      "imageCorrelationId": 11,
+                      "observedAtMonotonicNs": 132824760153691,
+                      "sequence": 2,
+                      "source": "actual owner-thread egress subscription Image observation"
+                    },
+                    {
+                      "event": "REMOVED",
+                      "imageCorrelationId": 7,
+                      "observedAtMonotonicNs": 132826766240676,
+                      "sequence": 3,
+                      "source": "actual owner-thread egress subscription Image observation"
+                    }
+                  ],
+                  "maximumEverObservedImages": 16,
+                  "maximumLifecycleEvents": 256,
+                  "minimumActualDerivedMaxMessageLength": 2097152,
+                  "replyHeaderImageAssociations": 68403,
+                  "requiredApplicationReplyBytes": 6919,
+                  "requiredCompleteMessageBytes": 6951,
+                  "sameOwnerThreadRequired": true,
+                  "source": "actual AeronCluster.egressSubscription Images plus reassembled reply Header.context Image"
+                },
+                "aeronClientId": 1,
+                "archiveChunkBytes": 6144,
+                "clusterSessionId": 2,
+                "driverDirectory": "/opt/vectormatch-cpu/experiments/ready-shared-capacity-4000-r1/attempt-4000/idle-arm/owner-driver",
+                "egressChannel": "aeron:udp?rejoin=false|mtu=1248|endpoint=127.0.0.1:0",
+                "ingressChannel": "aeron:udp?mtu=1248|term-length=64k",
+                "keepAliveIntervalNs": 100000000,
+                "leaderMemberId": 0,
+                "leadershipTermId": 0,
+                "lineageId": "capacity-pilot-9b0343e9-86f9-4a38-9621-1bf2dcdffbe0",
+                "maintenanceEnabled": true,
+                "mtuLength": 1248,
+                "nakUnicastDelayNs": 1000,
+                "nakUnicastRetryDelayRatio": 100,
+                "newLeaderEvents": [],
+                "ownerThreadId": 44,
+                "ownerThreadName": "retention-v3-batch-network-owner",
+                "profileSha256": "732201775469861083f9dd0798a465dec1d0ed6bff39ed281dbef58c28b9fc68",
+                "retentionIdlePolicy": {
+                  "associationScope": "Direct shared-driver object and bounded factory creations associated with exact launched contexts. Intended uses follow pinned per-role constructor order, not a global call order or a count of active threads.",
+                  "expectedConsumptionCounts": {
+                    "owner-driver-shared": 1
+                  },
+                  "hardRealtimeGuaranteed": false,
+                  "instances": [
+                    {
+                      "association": "actual installed shared-driver getter object",
+                      "factoryCallerFrameLimit": 5,
+                      "factoryCallerStack": [
+                        {
+                          "class": "io.vectormatch.cluster.RetentionBatchAeronTransportV3",
+                          "classTruncated": false,
+                          "line": 60,
+                          "method": "<init>",
+                          "methodTruncated": false
+                        },
+                        {
+                          "class": "io.vectormatch.cluster.RetentionCapacityAeronPilotV3",
+                          "classTruncated": false,
+                          "line": 321,
+                          "method": "lambda$exercise$0",
+                          "methodTruncated": false
+                        },
+                        {
+                          "class": "io.vectormatch.cluster.RetentionCapacityExperimentV3",
+                          "classTruncated": false,
+                          "line": 116,
+                          "method": "lambda$execute$0",
+                          "methodTruncated": false
+                        },
+                        {
+                          "class": "io.vectormatch.cluster.RetentionBatchOwnerV3",
+                          "classTruncated": false,
+                          "line": 627,
+                          "method": "own",
+                          "methodTruncated": false
+                        },
+                        {
+                          "class": "io.vectormatch.cluster.RetentionBatchOwnerV3",
+                          "classTruncated": false,
+                          "line": 442,
+                          "method": "lambda$new$0",
+                          "methodTruncated": false
+                        }
+                      ],
+                      "factoryCallerTailMayBeOmitted": true,
+                      "factoryCallerTextByteLimit": 256,
+                      "instanceOrdinal": 1,
+                      "maximumParkNs": 100000,
+                      "maximumSpins": 10,
+                      "maximumYields": 5,
+                      "minimumParkNs": 1000,
+                      "role": "owner-driver-shared",
+                      "roleConsumptionBound": 1,
+                      "roleConsumptionOrdinal": 1,
+                      "sourceDerivedIntendedUse": "directly installed shared-driver context object",
+                      "strategyClass": "org.agrona.concurrent.BackoffIdleStrategy",
+                      "strategyDescription": "BackoffIdleStrategy{alias=backoff, maxSpins=10, maxYields=5, minParkPeriodNs=1000, maxParkPeriodNs=100000}"
+                    }
+                  ],
+                  "instancesDistinct": true,
+                  "node": -1,
+                  "observedConsumptionCounts": {
+                    "owner-driver-shared": 1
+                  },
+                  "pid": 42006,
+                  "runningAgentThreadCountIndependentlyObserved": false,
+                  "schema": "retention-idle-actual-v2",
+                  "selectedLogicalRoles": [
+                    "owner-driver-shared"
+                  ],
+                  "selection": {
+                    "factor": "maximum requested park only",
+                    "maximumParkNs": 100000,
+                    "property": "vectormatch.retention.idleMaxParkNs",
+                    "schema": "retention-idle-selection-v1"
+                  },
+                  "sleepDurationMeasured": false
+                },
+                "source": "actual-sole-owner-aeron-cluster-and-owned-driver",
+                "strategyClass": "org.agrona.concurrent.BackoffIdleStrategy",
+                "strategyDescription": "BackoffIdleStrategy{alias=backoff, maxSpins=10, maxYields=5, minParkPeriodNs=1000, maxParkPeriodNs=100000}",
+                "threadingMode": "SHARED"
+              },
+              "negativePhysicalOffers": 381,
+              "physicalOfferAttempts": 68784,
+              "readBusinessControlPhaseExclusionEnforced": true,
+              "readOnlyRawRegistryHighWater": 128,
+              "readWindow": 128,
+              "recordedReplies": 68403,
+              "successfulPhysicalAdmissions": 68403,
+              "uniqueRecordedRequests": 68403
+            },
+            "primitiveArrivalColumnBytes": 9680000,
+            "ratePerSecond": 4000,
+            "rawTraceByteLimit": 427084992,
+            "readWindow": 128,
+            "releasedArrivals": 80000,
+            "replyReplayed": 0,
+            "retentionIdleSelection": {
+              "factor": "maximum requested park only",
+              "maximumParkNs": 100000,
+              "property": "vectormatch.retention.idleMaxParkNs",
+              "schema": "retention-idle-selection-v1"
+            },
+            "scheduledArrivals": 80000,
+            "scheduledOriginMonotonicNs": 132825768558423,
+            "scheduledOriginUTC": "2026-10-25T10:31:51.140418131Z",
+            "schedulerLatenessOver20ms": 0,
+            "schedulerMaxLatenessNs": 3703636,
+            "schedulerTimingValid": true,
+            "schema": "retention-v3-openloop-capacity-v1",
+            "scope": "Finite same-system openloop source; no percentile SLA, sustained/infinite capacity or 100M claim. All-arrival p99 undefined when any arrival is notSent/unknown/unreleased.",
+            "serverAdmissionRejectedObserved": 0,
+            "serverNotAttemptedObserved": 0,
+            "serverRejected": 0,
+            "serverRejectionCodes": {},
+            "setupAcceptedOrders": 1,
+            "setupBusinessCommands": 3,
+            "sourceFailureType": null,
+            "totalSourceDrainNs": 225511087,
+            "traceBytes": 110675168,
+            "unknownFinal": 0,
+            "unknownObserved": 0
+          },
+          "allPlannedArrivalsRequiredAccepted": false,
+          "allThreeSnapshotLogsMatched": true,
+          "archiveChunkBytes": 6144,
+          "businessSeq": 80003,
+          "commonReadWindow128Envelope": true,
+          "commonReadWindowEnvelope": true,
+          "eventFetchCount": 32,
+          "eventSeq": 160003,
+          "finalCombinedSha256": "ac4a5518d59a346b3f52d8166a5f06a600d6d5cdceed4898fc3f313b32b2a540",
+          "maintainedCapacityPreset": true,
+          "noCapacityPromotion": true,
+          "passed": true,
+          "readWindow": 128
+        },
+        "idleAttestation": {
+          "actualSleepDurationMeasured": false,
+          "configuredMaximumParkNs": 100000,
+          "historicalValidatorScope": "Actual installed instances/factory consumption evidence; owner loop remains unchanged at up to1ms",
+          "nodeRolesPerProcess": 4,
+          "ownerDriverRoles": 1,
+          "passed": true,
+          "reports": [
+            {
+              "actualFactoryCreations": 7,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 4,
+              "node": 0,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "archive-shared": 2,
+                "consensus": 2,
+                "driver-shared": 1,
+                "service": 2
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 7,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 4,
+              "node": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "archive-shared": 2,
+                "consensus": 2,
+                "driver-shared": 1,
+                "service": 2
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 7,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 4,
+              "node": 2,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "archive-shared": 2,
+                "consensus": 2,
+                "driver-shared": 1,
+                "service": 2
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 1,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 1,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "owner-driver-shared": 1
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            }
+          ],
+          "scope": "Actual node and owner MediaDriver strategies only; load-owner polling is attested separately"
+        },
+        "nodeLogClassifications": [
+          {
+            "afterSigtermWallTimeProven": false,
+            "allLogLinesClassifiedAndRetained": true,
+            "candidateClassification": "NO_LOG_WARNINGS",
+            "lineCount": 5,
+            "logBytes": 10295,
+            "logSha256": "826c6e6405442783d95b2e198834a2a2be0873a62b97cafcd314ebf1d3aff12b",
+            "matchingFinalCheckpointLine1Based": 5,
+            "nextRunAuthorized": false,
+            "node": 0,
+            "originalStrictWrapperResultChanged": false,
+            "pid": 42031,
+            "rawFunctionalGatePerformedHere": false,
+            "warningPairCount": 0,
+            "warningPairs": []
+          },
+          {
+            "afterSigtermWallTimeProven": false,
+            "allLogLinesClassifiedAndRetained": true,
+            "candidateClassification": "NO_LOG_WARNINGS",
+            "lineCount": 4,
+            "logBytes": 10268,
+            "logSha256": "a3cf049ea1421bf052bd99a826cd2e88b1c1e4a412971c11b128f59d94bae476",
+            "matchingFinalCheckpointLine1Based": 4,
+            "nextRunAuthorized": false,
+            "node": 1,
+            "originalStrictWrapperResultChanged": false,
+            "pid": 42033,
+            "rawFunctionalGatePerformedHere": false,
+            "warningPairCount": 0,
+            "warningPairs": []
+          },
+          {
+            "afterSigtermWallTimeProven": false,
+            "allLogLinesClassifiedAndRetained": true,
+            "candidateClassification": "NO_LOG_WARNINGS",
+            "lineCount": 4,
+            "logBytes": 10268,
+            "logSha256": "45fbfe84f1cfa0f214647c4540e6a017c8417cbd33bd4afd4d7b28e590e33bb1",
+            "matchingFinalCheckpointLine1Based": 4,
+            "nextRunAuthorized": false,
+            "node": 2,
+            "originalStrictWrapperResultChanged": false,
+            "pid": 42040,
+            "rawFunctionalGatePerformedHere": false,
+            "warningPairCount": 0,
+            "warningPairs": []
+          }
+        ],
+        "ownerPollAttestation": {
+          "actualConfiguredIdleFactoryCreations": 22,
+          "actualSleepDurationMeasured": false,
+          "exactRegisteredParentAndThreeNodeArgumentsVerified": true,
+          "hardRealtimeOrPerformanceClaimed": false,
+          "nodeIdleReports": [
+            {
+              "actualFactoryCreations": 7,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 4,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "archive-shared": 2,
+                "consensus": 2,
+                "driver-shared": 1,
+                "service": 2
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 7,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 4,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "archive-shared": 2,
+                "consensus": 2,
+                "driver-shared": 1,
+                "service": 2
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            },
+            {
+              "actualFactoryCreations": 7,
+              "actualSleepDurationMeasured": false,
+              "configuredMaximumParkNs": 100000,
+              "hardRealtimeGuaranteed": false,
+              "logicalRoles": 4,
+              "passed": true,
+              "perRoleActualFactoryCreations": {
+                "archive-shared": 2,
+                "consensus": 2,
+                "driver-shared": 1,
+                "service": 2
+              },
+              "runningAgentThreadCountIndependentlyObserved": false
+            }
+          ],
+          "ownerBeforeAliveAfterStopped": true,
+          "ownerDriverObservationCount": 24,
+          "ownerPollMaximumParkNs": 1000000,
+          "ownerPropertyParentOnly": true,
+          "parentIdleReport": {
+            "actualFactoryCreations": 1,
+            "actualSleepDurationMeasured": false,
+            "configuredMaximumParkNs": 100000,
+            "hardRealtimeGuaranteed": false,
+            "logicalRoles": 1,
+            "passed": true,
+            "perRoleActualFactoryCreations": {
+              "owner-driver-shared": 1
+            },
+            "runningAgentThreadCountIndependentlyObserved": false
+          },
+          "passed": true,
+          "schema": "retention-owner-poll-bundle-v1",
+          "scope": "Pure evidence reconciliation; caller separately proves archive bytes, PID/start/argv ownership, business/canonical/raw correctness and closed lifecycle",
+          "selectionIntentAndConstructedOwnerSnapshotReconciled": true,
+          "serverDriverMaximumParkNs": 100000
+        },
+        "ownerPollMaximumParkNs": 1000000,
+        "readWindow": 128,
+        "retainedPostCheckpointEosWarningPairs": 0,
+        "serverDriverMaximumParkNs": 100000
+      }
+    ],
+    "capacityOrEnduranceProven": false,
+    "functionalPilotOnly": true,
+    "passed": true
+  },
+  "serverDriverMaximumParkNs": 100000
+}
