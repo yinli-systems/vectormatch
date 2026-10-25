@@ -1,0 +1,29 @@
+# V4 finite capacity protocol: prospective comparison
+
+Status: implementation and local functional qualification; Linux capacity results pending. This protocol does not promote V4 performance or the earlier encoder candidate.
+
+## Fixed workload and comparison
+
+Use one compiled artifact for both PAUSE and CONTINUE. The only policy difference is admission of business commands while the original archive verification/file worker is active. Both arms use the same asynchronous preparation/persistence workers, original wire/deadline/ACK fences and file budgets. PAUSE admits business only in IDLE; CONTINUE also admits it in VERIFY_WAIT and FILE_WAIT. Reads, destructive ACKs and intents remain exclusive in both arms.
+
+Each point has 20 seconds of independent scheduled arrivals. Presets are500,1000,2000,4000 and6000 per second; no other rate is admitted. Ascend only after closing and reviewing the prior point. For each rate run PAUSE C1,CONTINUE D1,PAUSE C2,CONTINUE D2,serially on the existing prepaid CPU,with no CI or other benchmark overlap. Keep leader0,sync2,three JVMs with256MiB heap,the finite profile,ports42000,batch4,cut1536,read-window32,event-page32,chunk6144,rotating dispatch and effective idle policies identical. Fresh state for every arm means these are separate finite lineages,not continuous endurance.
+
+There are128 allocated worker slots/queues,but127 active load producers. Worker0 remains bound to the bootstrap maker;worker1's producer also funds the taker before its load sequence starts. The8192 allocated queue positions include8128 active load positions. No producer binding is reset to manufacture a128-client claim. A fresh engine receives three setup commands and one resting maker order. Each load order is one IOC buy that must execute one real matching-engine trade against it;these are synthetic internal trades,not funded venue orders. The arrival clock never pauses for maintenance. Queue overflow,expiry,notSent,rejection and original unknown outcomes remain in the per-arrival ledger.
+
+Two quiet readiness gates surround bootstrap and a five-second warmup without synthetic business. Warmup,physical-order canonical replay,three-node snapshots and actual cold restore occur outside the arrival window. The source closes with a same-session Position barrier. Independent Python parsing links each accepted arrival to its original nested command hash,identity,batch index and observed physical result;recomputes all-arrival p99 and in-window goodput;verifies unique one-unit trade events,all exported event sequences,original deadlines,read credits and before-ACK forced/readback receipts. The Java reference is the same adapter replayed in physical positive-offer order,not a second matching algorithm.
+
+## Admission and refusal
+
+Derive codec/history/file/RPC bounds from the exact workload before creating nodes. Max128 cuts,512 writer payload jobs and1024 maintenance journal records remain enforced. The plan bounds four positive offers per original,all negative offers,all original replies,metadata,CSV and trace bytes. Raw bytes are capped at2GiB total and512MiB per file;writer payloads at1GiB. A per-file ceiling may stop an unusually retry-heavy otherwise admitted run;it never permits discarding raw evidence. The allocated-growth plan is at most2.5GiB plus a1GiB free floor;the512MiB native allowance is a monitored reserve,not a proof of arbitrary Aeron allocation. Root inode/device identity,allocated blocks and free bytes are sampled. Any budget/floor/identity failure stops progression and preserves original files. No runtime floor is lowered.
+
+## Outcomes and decision
+
+Report planned/released/definitely accepted arrivals,in-window goodput,end-to-end p50/p99 from scheduled arrival,post-offer latency,queue/pending time series,maintenance intervals,drain,notSent/rejections,observed and final unknowns,GC/CPU if actually captured,and complete identity/configuration fingerprints. Global accepted-order p99 is undefined if any planned arrival is notSent,unknown,unreleased,rejected or duplicated. A conditional percentile cannot replace it. Preserve failed points and do not retry under the same attempt name.
+
+A finite acceptance gate requires all originals accounted for,no unknown/rejection/notSent/duplicate orders,valid independent schedule timing,in-window goodput at least99% of plan,and full replay/event/snapshot/cold-restore checks. This is not a long-run stability guarantee. The first failure stops upward rate escalation for diagnosis. A performance improvement requires both C1/D1 and C2/D2 to improve global p99 with no reduction in in-window goodput and no worsening of post-offer p99;otherwise the result is inconclusive or negative. Exact values and mixed directions remain published. A10ms end-to-end p99 is an engineering target,not an achieved guarantee or a criterion that can be silently relaxed.
+
+## Reproduction and remaining gates
+
+`./gradlew :cluster:capacityAeronV4 -PcapacityV4Root=<new-directory> -PcapacityV4Rate=500 -PcapacityV4Policy=CONTINUE` runs one native point. It refuses existing state and unsupported presets. Local Mac execution qualifies correctness only and is not combined with Linux capacity curves. All native runs share one physical host;three JVMs do not establish host/network/storage fault isolation.
+
+Continuous100M work needs persistent journal anchors,producer high-water marks and durable result lookup plus a segmented64-bit raw ledger;repeated fresh fixtures do not establish continuity. Authentication/TLS,replicated risk limits,kill/cancel-only controls,multi-market sharding,independent hosts and storage failures,long-running latency/fault testing,and authorized external paper/funded execution remain separate production gates. No zero-latency,hard real-time,HFT endorsement,production10/10 or funded-trading claim follows from this protocol.

@@ -58,12 +58,15 @@ class RetentionAsyncMaintenanceV4Test {
         final RetentionAsyncMaintenanceV4 coordinator;
         final Path files;
         Fixture(RetentionServiceV3.Profile profile,RetentionDurableWriterV3.AfterForce hook,long traceLimit)throws Exception{
+            this(profile,hook,traceLimit,true);
+        }
+        Fixture(RetentionServiceV3.Profile profile,RetentionDurableWriterV3.AfterForce hook,long traceLimit,boolean businessDuringFileWork)throws Exception{
             this.profile=profile;files=root.resolve("files");io=new IO(profile);
             owner=new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(profile,LINEAGE,4),()->io,()->System.nanoTime()+clock.get());
             preparation=new RetentionArchivePreparationV4(Math.toIntExact(profile.core().maxPendingSerializedBytes()+1024),64L*1024*1024,4);
             writer=new RetentionDurableWriterV3(files,profile.core().maxPendingSerializedBytes()+1024,128L*1024*1024,16,hook);
             pipeline=new RetentionPrefixPersistenceV4(preparation,writer,profile,LINEAGE,4);
-            coordinator=new RetentionAsyncMaintenanceV4(owner,writer,pipeline,profile,LINEAGE,root.resolve("trace-v4.bin"),4,32,6144,32,10000,traceLimit);
+            coordinator=new RetentionAsyncMaintenanceV4(owner,writer,pipeline,profile,LINEAGE,root.resolve("trace-v4.bin"),4,32,6144,32,10000,traceLimit,businessDuringFileWork);
             driveTo(RetentionAsyncMaintenanceV4.Phase.IDLE);
         }
         Fixture(RetentionDurableWriterV3.AfterForce hook)throws Exception{this(RetentionBatchProfilesV3.finiteLoadProfile(),hook,4L*1024*1024);}
@@ -206,6 +209,37 @@ class RetentionAsyncMaintenanceV4Test {
             f.driveTo(RetentionAsyncMaintenanceV4.Phase.ARCHIVE_READ);assertTrue(f.coordinator.trySubmit(0,new Deposit(1,"p",2,Asset.BASE,1),System.nanoTime()+TimeUnit.SECONDS.toNanos(20)).isEmpty());
             f.driveTo(RetentionAsyncMaintenanceV4.Phase.ARCHIVE_INTENT);assertFalse(f.coordinator.businessAllowed());assertTrue(f.coordinator.trySubmit(0,new Deposit(1,"p",2,Asset.BASE,1),System.nanoTime()+TimeUnit.SECONDS.toNanos(20)).isEmpty());
             f.finish();f.deposit(2,1);assertEquals(2L,f.coordinator.snapshot().get("knownBusinessSeq"));
+        }
+    }
+    @Test void fixedOlderClosedCutDoesNotGrowWhenLaterBusinessIsAlreadyConfirmed()throws Exception{
+        try(var f=new Fixture(path->{})){
+            for(int n=1;n<=4;n++)f.deposit(n,1);
+            assertEquals(4,f.coordinator.knownBusinessSeq());f.coordinator.start(2);var first=f.finish();
+            assertEquals(1,first.acknowledgement().firstCommandSeq());assertEquals(2,first.acknowledgement().throughCommandSeq());assertEquals(2,first.throughEventSeq());
+            var state=RetentionServiceV3.restore(f.io.snapshotOwned(),f.profile,LINEAGE);assertEquals(4,state.businessSeq());assertEquals(2,state.archivedThroughCommandSeq());assertEquals(2,state.pendingHistoryCount());assertEquals(2,state.outboxSize());assertEquals(2,f.coordinator.snapshot().get("reservedCommands"));
+            f.coordinator.start(4);var second=f.finish();assertEquals(3,second.acknowledgement().firstCommandSeq());assertEquals(4,f.coordinator.archivedThrough());assertEquals(4,f.coordinator.knownBusinessSeq());assertEquals(0,f.coordinator.snapshot().get("reservedCommands"));
+        }
+    }
+    @Test void sameArtifactPauseControlKeepsBusinessClosedDuringOriginalFileWork()throws Exception{
+        var entered=new CountDownLatch(1);var release=new CountDownLatch(1);
+        try(var f=new Fixture(RetentionBatchProfilesV3.finiteLoadProfile(),path->{if(path.getFileName().toString().equals("0001-archive.bin")){entered.countDown();try{if(!release.await(5,TimeUnit.SECONDS))throw new IOException("pause-control gate");}catch(InterruptedException e){Thread.currentThread().interrupt();throw new IOException(e);}}},4L*1024*1024,false)){
+            try{
+                for(int n=1;n<=3;n++)f.deposit(n,1);f.coordinator.start(3);f.driveTo(RetentionAsyncMaintenanceV4.Phase.FILE_WAIT);assertTrue(entered.await(2,TimeUnit.SECONDS));assertFalse(f.coordinator.businessAllowed());
+                assertTrue(f.coordinator.trySubmit(0,new Deposit(1,"p",4,Asset.BASE,1),System.nanoTime()+TimeUnit.SECONDS.toNanos(20)).isEmpty());assertEquals(3,f.coordinator.knownBusinessSeq());assertEquals(0,f.io.offers(ArchiveCommit.class));
+                release.countDown();f.finish();assertEquals(4,f.writer.snapshot().get("submitted"));assertTrue(f.coordinator.businessAllowed());f.deposit(4,1);
+            }finally{release.countDown();}
+        }
+    }
+    @Test void tradeClosingAnOlderMakerDuringFileWorkSurvivesAckUntilItsOwnCommandIsArchived()throws Exception{
+        var entered=new CountDownLatch(1);var release=new CountDownLatch(1);
+        try(var f=new Fixture(path->{if(path.getFileName().toString().equals("0001-archive.bin")){entered.countDown();try{if(!release.await(5,TimeUnit.SECONDS))throw new IOException("late trade gate");}catch(InterruptedException e){Thread.currentThread().interrupt();throw new IOException(e);}}})){
+            try{
+                for(var command:List.<Command>of(new Deposit(1,"p",1,Asset.BASE,1),new Deposit(2,"p",1,Asset.QUOTE,10),RetentionEngineV3.place(1,"p",2,Side.SELL,10,1,TimeInForce.GTC))){var ticket=f.coordinator.trySubmit(command.accountId()==1?0:1,command,System.nanoTime()+TimeUnit.SECONDS.toNanos(20)).orElseThrow();assertTrue(ticket.await(Duration.ofSeconds(3)).result().accepted());f.coordinator.step();}
+                f.coordinator.start(3);f.driveTo(RetentionAsyncMaintenanceV4.Phase.FILE_WAIT);assertTrue(entered.await(2,TimeUnit.SECONDS));
+                var ticket=f.coordinator.trySubmit(1,RetentionEngineV3.place(2,"p",2,Side.BUY,10,1,TimeInForce.IOC),System.nanoTime()+TimeUnit.SECONDS.toNanos(20)).orElseThrow();assertTrue(ticket.await(Duration.ofSeconds(3)).result().accepted());f.coordinator.step();release.countDown();f.finish();
+                var first=RetentionServiceV3.restore(f.io.snapshotOwned(),f.profile,LINEAGE);assertEquals(1,first.pendingHistoryCount());assertEquals(2,first.outboxSize());assertEquals(OrderStatus.FILLED,first.hotOrder(1).orElseThrow().status());assertEquals(OrderStatus.FILLED,first.hotOrder(2).orElseThrow().status());
+                f.coordinator.start(4);f.finish();var second=RetentionServiceV3.restore(f.io.snapshotOwned(),f.profile,LINEAGE);assertEquals(0,second.pendingHistoryCount());assertEquals(0,second.outboxSize());assertTrue(second.hotOrder(1).isEmpty());assertTrue(second.hotOrder(2).isEmpty());assertEquals(1,second.account(2).base().available());assertEquals(10,second.account(1).quote().available());
+            }finally{release.countDown();}
         }
     }
 }

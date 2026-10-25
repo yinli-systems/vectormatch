@@ -1,0 +1,265 @@
+package io.vectormatch.cluster;
+
+import io.vectormatch.core.MatchingEngine.*;
+import io.vectormatch.core.RetentionEngineV3;
+import java.io.*;
+import java.nio.channels.*;
+import java.nio.file.*;
+import java.time.*;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import java.util.concurrent.locks.LockSupport;
+import java.util.function.Consumer;
+import static io.vectormatch.cluster.RetentionCapacityLedgerV4.*;
+import static io.vectormatch.cluster.RetentionWireV3.*;
+import static io.vectormatch.cluster.RetentionReplyV3.*;
+
+/** Finite V4 open-loop source. Only file-work admission policy differs between controls;arrival clock never pauses. */
+public final class RetentionCapacityExperimentV4 {
+    public static final long TASK_LIFETIME_NS=TimeUnit.SECONDS.toNanos(90),RPC_PERMIT_NS=TimeUnit.SECONDS.toNanos(2),DRAIN_NS=TimeUnit.SECONDS.toNanos(90);
+    public record Config(int rate,boolean continueDuringFileWork){
+        public Config{new RetentionCapacityPlanV4.Config(rate,continueDuringFileWork);}
+        public int arrivals(){return rate*20;}public int batchCap(){return 4;}public int archiveChunkBytes(){return 6144;}
+        public int readWindow(){return 32;}public int eventFetchCount(){return 32;}public boolean rotatingDispatch(){return true;}
+        public String dispatchOrderPolicy(){return "ROTATING_CONTINUE";}public long windowNs(){return 20_000_000_000L;}
+        public long offsetNs(int index){return 1_000_000_000L*index/rate;}
+    }
+    @FunctionalInterface public interface BeforeArrivals {void run(RetentionBatchOwnerV3 owner)throws Exception;}
+    public record Result(Path directory,Map<String,Object> summary){}
+    private final Path root,stateRoot;
+    private final Config config;
+    private final RetentionServiceV3.Profile profile;
+    private final String lineage;
+    private final RetentionCapacityPlanV4.Plan plan;
+    private final RetentionCapacityDiskGuardV4 disk;
+    private final RetentionIdlePolicyV3.Selection idleSelection;
+    private final RetentionOwnerPollPolicyV3.Selection ownerPollSelection;
+    private final RetentionCapacityLedgerV4 rows;
+    private final AtomicReference<Throwable> abort=new AtomicReference<>();
+    private final AtomicBoolean stopping=new AtomicBoolean(),schedulerDone=new AtomicBoolean();
+    private final AtomicInteger pendingCount=new AtomicInteger(),phase=new AtomicInteger();
+    private final RetentionBatchOwnerV3.Ticket[] pending=new RetentionBatchOwnerV3.Ticket[WORKERS];
+    private final int[] pendingRows=new int[WORKERS];
+    private final List<long[]> backlog=new ArrayList<>(256);
+    private final RawBudget rawBudget;
+    private final Tape tape;
+    private RetentionBatchOwnerV3 owner;
+    private RetentionDurableWriterV3 writer;
+    private RetentionArchivePreparationV4 preparation;
+    private RetentionPrefixPersistenceV4 pipeline;
+    private RetentionAsyncMaintenanceV4 maintenance;
+    private final BeforeArrivals beforeArrivals;
+    private Thread scheduler,sampler;
+    private long origin,windowEnd,latestBusiness=3,exposureEnd=MISSING,drainEnd=MISSING;
+    private final long tapeOrigin=System.nanoTime();
+    private String originUtc;
+    private int cycles;
+    private long creditBlockedDispatchChecks;
+    private Throwable primary;
+
+    private RetentionCapacityExperimentV4(Path newRoot,Path ownedStateRoot,Config config,RetentionServiceV3.Profile profile,String lineage,RetentionCapacityPlanV4.Plan plan,RetentionCapacityDiskGuardV4 disk,BeforeArrivals beforeArrivals)throws IOException{
+        ownerPollSelection=RetentionOwnerPollPolicyV3.systemSelection();
+        idleSelection=RetentionIdlePolicyV3.systemSelection();
+        this.config=Objects.requireNonNull(config);this.profile=Objects.requireNonNull(profile);this.plan=Objects.requireNonNull(plan);plan.requireAdmitted();this.disk=Objects.requireNonNull(disk);
+        if(plan.arrivals()!=config.arrivals()||!disk.plan().equals(plan)||!disk.ownedRoot().equals(ownedStateRoot.toAbsolutePath().normalize()))throw new IllegalArgumentException("exact V4 config/plan/fresh-root disk binding required");
+        this.beforeArrivals=Objects.requireNonNull(beforeArrivals);
+        this.lineage=new Scope(profile.fingerprint(),lineage).lineageId();
+        root=newRoot.toAbsolutePath().normalize();stateRoot=ownedStateRoot.toAbsolutePath().normalize();Files.createDirectory(root);
+        rows=new RetentionCapacityLedgerV4(config.arrivals());
+        rawBudget=new RawBudget((plan.allRawBytes()-plan.coordinatorTraceBytes()),Math.addExact(4096L,640L*config.arrivals()));tape=new Tape();
+    }
+    public static Result run(Path newRoot,Path ownedStateRoot,Config config,RetentionServiceV3.Profile profile,String lineage,
+            RetentionBatchOwnerV3.IOFactory factory,RetentionCapacityPlanV4.Plan plan,RetentionCapacityDiskGuardV4 disk,BeforeArrivals gate)throws Exception{
+        return new RetentionCapacityExperimentV4(newRoot,ownedStateRoot,config,profile,lineage,plan,disk,gate).execute(factory);
+    }
+    public static RetentionCapacityPlanV4.Plan boundedPlan(Config config,RetentionServiceV3.Profile profile){return RetentionCapacityPlanV4.plan(new RetentionCapacityPlanV4.Config(config.rate(),config.continueDuringFileWork()),profile);}
+    private Result execute(RetentionBatchOwnerV3.IOFactory factory)throws Exception{
+        boolean arraysSaved=false;
+        try{
+            // Exact finite admission/disk plan is recorded separately; no cloud resource is created here.
+            disk.check();RetentionCapacityJsonV3.writeNew(root.resolve("admission-plan.json"),plan.observation());
+            writer=new RetentionDurableWriterV3(root.resolve("writer"),profile.core().maxPendingSerializedBytes()+1024,1024L*1024*1024,512);
+            owner=new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(profile,lineage,config.batchCap()),()->tape.attach(factory.open()),ownerPollSelection.effectiveMaximumParkNs());
+            preparation=new RetentionArchivePreparationV4(Math.toIntExact(profile.core().maxPendingSerializedBytes()+1024),RetentionCapacityPlanV4.WRITER_LIMIT,plan.cycles());
+            pipeline=new RetentionPrefixPersistenceV4(preparation,writer,profile,lineage,plan.cycles());
+            maintenance=new RetentionAsyncMaintenanceV4(owner,writer,pipeline,profile,lineage,root.resolve("maintenance-v4.bin"),plan.cycles(),32,6144,32,plan.maximumMaintenanceRpcs(),plan.coordinatorTraceBytes(),config.continueDuringFileWork());
+            while(maintenance.phase()!=RetentionAsyncMaintenanceV4.Phase.IDLE){maintenance.step();LockSupport.parkNanos(50_000);}
+            for(var setup:List.<Command>of(new Deposit(1,"maker",1,Asset.BASE,config.arrivals()),new Deposit(2,"load-w1",1,Asset.QUOTE,10L*config.arrivals()),RetentionEngineV3.place(1,"maker",2,Side.SELL,10,config.arrivals(),TimeInForce.GTC))){
+                var ticket=maintenance.trySubmit(setup.accountId()==1?0:1,setup,System.nanoTime()+TimeUnit.SECONDS.toNanos(20)).orElseThrow();var outcome=ticket.await(Duration.ofSeconds(20));
+                if(outcome.terminal()!=RetentionBatchOwnerV3.Terminal.APPLIED||!outcome.result().accepted())throw new IOException("V4 bootstrap not definitely accepted");maintenance.step();
+            }
+            beforeArrivals.run(owner);
+            Instant wall=Instant.now();long mono=System.nanoTime();origin=mono+TimeUnit.SECONDS.toNanos(1);originUtc=wall.plusNanos(origin-mono).toString();windowEnd=origin+config.windowNs();
+            writeConfiguration();scheduler=new Thread(this::schedule,"v4-capacity-arrivals");sampler=new Thread(this::sample,"v4-capacity-backlog-observer");scheduler.start();sampler.start();
+            dispatch();drainEnd=System.nanoTime();
+            var barrier=owner.exchangeMaintenance(new Position(),Duration.ofSeconds(20));if(!barrier.error().isEmpty())throw new IOException("V4 final same-session barrier failed");Files.write(root.resolve("final-source-position.bin"),RetentionReplyV3.encode(barrier),StandardOpenOption.CREATE_NEW);
+        }catch(Throwable failure){primary=failure;abort.compareAndSet(null,failure);}
+        finally{
+            stopping.set(true);joinOwned(scheduler,5);joinOwned(sampler,5);
+            long now=System.nanoTime();rows.rejectQueued(now,primary==null?HARD_DRAIN:RUN_ABORTED);
+            for(int worker=0;worker<WORKERS;worker++)if(pending[worker]!=null){int index=pendingRows[worker];observe(index,pending[worker]);rows.status[index]=UNKNOWN_FINAL;if(rows.unknownObserved[index]==MISSING)rows.unknownObserved[index]=now;pending[worker].revoke();}
+            if(owner!=null){
+                try{RetentionCapacityJsonV3.writeNew(root.resolve("owner-before-close.json"),owner.snapshot());}catch(Throwable failure){recordFailure(failure);}
+                try{owner.close();}catch(Throwable failure){recordFailure(failure);}
+                try{RetentionCapacityJsonV3.writeNew(root.resolve("transport-observations.json"),owner.transportSamples());}catch(Throwable failure){recordFailure(failure);}
+                try{RetentionCapacityJsonV3.writeNew(root.resolve("owner-after-close.json"),owner.snapshot());}catch(Throwable failure){recordFailure(failure);}
+            }
+            if(maintenance!=null)try{maintenance.close();}catch(Throwable failure){recordFailure(failure);}
+            if(pipeline!=null)try{pipeline.close();}catch(Throwable failure){recordFailure(failure);}
+            if(preparation!=null)try{preparation.close();}catch(Throwable failure){recordFailure(failure);}
+            if(writer!=null){try{writer.close();}catch(Throwable failure){recordFailure(failure);}finally{try{RetentionCapacityJsonV3.writeNew(root.resolve("writer-after-close.json"),writer.snapshot());}catch(Throwable failure){recordFailure(failure);}}}
+            try{tape.closeFiles();}catch(Throwable failure){recordFailure(failure);}
+            try{saveArrivals();arraysSaved=true;}catch(Throwable failure){recordFailure(failure);}
+        }
+        Map<String,Object> summary=summary();summary.put("perArrivalCsvComplete",arraysSaved);summary.put("sourceFailureType",primary==null?null:primary.getClass().getName());
+        RetentionCapacityJsonV3.writeNew(root.resolve(primary==null?"load-result.json":"failure.json"),summary);
+        if(primary!=null){if(primary instanceof Exception error)throw error;if(primary instanceof Error error)throw error;throw new IllegalStateException(primary);}
+        return new Result(root,Collections.unmodifiableMap(summary));
+    }
+    private void recordFailure(Throwable failure){if(primary==null)primary=failure;else if(primary!=failure)primary.addSuppressed(failure);}
+    private void writeConfiguration()throws IOException{
+        var values=new LinkedHashMap<String,Object>(plan.observation());values.put("schema","retention-v4-openloop-capacity-1");values.put("ratePerSecond",config.rate());values.put("fileWorkDispatchPolicy",config.continueDuringFileWork()?"CONTINUE":"PAUSE");values.put("dispatchOrderPolicy",config.dispatchOrderPolicy());values.put("batchCap",4);values.put("profileSha256",profile.fingerprint());values.put("actualCodeSha256",RetentionNodeMainV3.codeFingerprint());values.put("lineage",lineage);values.put("scheduledOriginUTC",originUtc);values.put("scheduledOriginMonotonicNs",origin);values.put("tapeOriginMonotonicNs",tapeOrigin);values.put("primitiveArrivalColumnBytes",rows.primitiveColumnBytes());values.put("arrivalClockPausesForMaintenance",false);values.put("producerIdentityRule","worker=1+index%127;sequence=1+index/127 plus one for worker1's bootstrap deposit");values.put("taskLifetimeNs",TASK_LIFETIME_NS);values.put("physicalOfferPermitNsFromDispatch",RPC_PERMIT_NS);values.put("drainAdmissionNs",DRAIN_NS);values.put("scope","Finite openloop source;external canonical/leader/config/raw proof required before capacity claims");RetentionCapacityJsonV3.writeNew(root.resolve("configuration.json"),values);
+    }
+    private void schedule(){
+        try{
+            for(int index=0;index<config.arrivals()&&!stopping.get();index++){
+                long target=origin+config.offsetNs(index);while(!stopping.get()){long wait=target-System.nanoTime();if(wait<=0)break;LockSupport.parkNanos(Math.min(wait,1_000_000));}
+                if(stopping.get())break;rows.release(index,target,System.nanoTime());
+            }
+            while(!stopping.get()&&System.nanoTime()-windowEnd<0)LockSupport.parkNanos(Math.min(1_000_000,windowEnd-System.nanoTime()));
+            exposureEnd=System.nanoTime();schedulerDone.set(true);
+        }catch(Throwable failure){abort.compareAndSet(null,failure);schedulerDone.set(true);}
+    }
+    private void dispatch()throws Exception{
+        var order=new RetentionCapacityDispatchOrderV3(true);boolean cutRequested=false;
+        while(true){
+            Throwable failed=abort.get();if(failed!=null)throw new IllegalStateException("V4 source/observer abort",failed);
+            long now=System.nanoTime();int work=completePending(now);maintenance.step();phase.set(maintenance.phase().ordinal());
+            var cycle=maintenance.takeCompleted();if(cycle.isPresent()){cycles++;work++;}
+            if(now-windowEnd>=DRAIN_NS)break;
+            boolean empty=schedulerDone.get()&&rows.queued()==0&&pendingCount.get()==0;
+            if(maintenance.phase()==RetentionAsyncMaintenanceV4.Phase.IDLE){
+                long retained=maintenance.knownBusinessSeq()-maintenance.archivedThrough();
+                if(retained+pendingCount.get()>=RetentionCapacityPlanV4.CUT||empty&&retained>0)cutRequested=true;
+                if(cutRequested&&pendingCount.get()==0&&retained>0){maintenance.start(maintenance.archivedThrough()+Math.min(RetentionCapacityPlanV4.CUT,retained));cutRequested=false;work++;}
+                if(empty&&maintenance.knownBusinessSeq()==maintenance.archivedThrough())break;
+            }
+            if(maintenance.businessAllowed()&&!cutRequested){
+                int first=order.begin();for(int offset=0;offset<WORKERS;offset++){int worker=RetentionCapacityDispatchOrderV3.worker(first,offset);if(pending[worker]!=null)continue;
+                    if(maintenance.phase()==RetentionAsyncMaintenanceV4.Phase.IDLE&&maintenance.knownBusinessSeq()-maintenance.archivedThrough()+pendingCount.get()>=RetentionCapacityPlanV4.CUT){cutRequested=true;order.deferredAtCut(worker);break;}
+                    Integer index=rows.peek(worker);if(index==null)continue;now=System.nanoTime();
+                    if(now-(origin+config.offsetNs(index)+TASK_LIFETIME_NS)>=0){if(!index.equals(rows.poll(worker)))throw new IOException("V4 sole-consumer FIFO head changed");rows.dispatch[index]=now;rows.status[index]=NOT_SENT;rows.reason[index]=EXPIRED_BEFORE_DISPATCH;rows.end[index]=now;order.taken(worker);continue;}
+                    long deadline=Math.min(origin+config.offsetNs(index)+TASK_LIFETIME_NS,now+RPC_PERMIT_NS),submitStarted=System.nanoTime();
+                    var ticket=maintenance.trySubmit(worker,command(index),deadline);
+                    if(ticket.isEmpty()){creditBlockedDispatchChecks++;order.deferredAtCut(worker);break;}
+                    // Register the original ticket before the fallible queue observation;never lose it to cleanup.
+                    pending[worker]=ticket.orElseThrow();pendingRows[worker]=index;pendingCount.incrementAndGet();rows.dispatch[index]=now;rows.submit[index]=submitStarted;rows.status[index]=PENDING;
+                    if(!index.equals(rows.poll(worker)))throw new IOException("V4 sole-consumer FIFO head changed after original submit");order.taken(worker);work++;
+                }
+            }
+            if(work==0)LockSupport.parkNanos(50_000);
+        }
+    }
+    private Command command(int index){return RetentionEngineV3.place(2,producer(worker(index)),producerSequence(index),Side.BUY,10,1,TimeInForce.IOC);}
+    private int completePending(long now){
+        int count=0;for(int worker=0;worker<WORKERS;worker++)if(pending[worker]!=null){
+            int index=pendingRows[worker];var ticket=pending[worker];
+            if(ticket.isDone()){
+                var outcome=ticket.await(Duration.ofMillis(1));observe(index,ticket);
+                if(outcome.terminal()==RetentionBatchOwnerV3.Terminal.NOT_SENT){rows.status[index]=NOT_SENT;rows.reason[index]=EXPIRED_BEFORE_DISPATCH;if(rows.end[index]==MISSING)rows.end[index]=now;}
+                else{rows.status[index]=APPLIED;var result=outcome.result();rows.resultCode[index]=(byte)result.code().ordinal();rows.replayed[index]=(byte)(outcome.replayed()?1:0);rows.commandSeq[index]=result.commandSeq();rows.orderId[index]=result.orderId();rows.remaining[index]=result.remainingQuantity();rows.tradeCount[index]=result.tradeCount();latestBusiness=Math.max(latestBusiness,outcome.frontier().businessSeq());}
+                if(rows.correlation[index]!=MISSING)tape.retireBusiness(rows.correlation[index]);pending[worker]=null;pendingCount.decrementAndGet();count++;
+            }else if(rows.unknownObserved[index]==MISSING&&rows.submit[index]!=MISSING&&now-rows.submit[index]>=RPC_PERMIT_NS){observe(index,ticket);rows.unknownObserved[index]=now;ticket.revoke();}
+        }return count;
+    }
+    private void observe(int index,RetentionBatchOwnerV3.Ticket ticket){Map<String,Object> view=ticket.observation();rows.firstOffer[index]=number(view,"firstWireOfferCallNs");rows.firstPhysicalAdmission[index]=number(view,"firstPhysicalAdmissionNs");rows.end[index]=number(view,"replyCompletionNs");rows.correlation[index]=number(view,"correlationId");Object batch=view.get("batchIndex");rows.batchIndex[index]=batch==null?-1:((Number)batch).intValue();rows.admittedPhysicalOffers[index]=((Number)view.get("admittedPhysicalOfferCount")).longValue();Object initial=view.get("initialAdmissionStatus");if(initial!=null)rows.serverAdmission[index]=(byte)BatchStatus.valueOf(initial.toString()).ordinal();}
+    private static long number(Map<String,Object> map,String key){Object value=map.get(key);return value==null?MISSING:((Number)value).longValue();}
+    private void sample(){
+        try(var stream=new DataOutputStream(rawBudget.open(root.resolve("backlog.csv"),false))){
+            stream.writeBytes("offset_ns,queued,pending,maintenance_phase,released,usable_bytes,owned_allocated_bytes,disk_observer_elapsed_ns\n");
+            while(!stopping.get()){
+                long now=System.nanoTime();int queued=rows.queued(),pendingN=pendingCount.get();long free=Files.getFileStore(stateRoot).getUsableSpace();
+                long checkStart=System.nanoTime();var allocated=disk.check();long observerNs=System.nanoTime()-checkStart;
+                if(free<RetentionCapacityPlanV4.FREE_FLOOR)throw new IOException("SOURCE_DISK_FREE_FLOOR");
+                long[] sample={now-origin,queued,pendingN,phase.get(),rows.released.get(),free};synchronized(backlog){if(backlog.size()>=256)throw new IOException("bounded sampler rows exceeded");backlog.add(sample);}
+                stream.writeBytes(sample[0]+","+queued+","+pendingN+","+sample[3]+","+sample[4]+","+free+","+allocated.allocatedBytes()+","+observerNs+"\n");stream.flush();LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(1));
+            }
+        }catch(Throwable failure){abort.compareAndSet(null,failure);}
+    }
+    private void joinOwned(Thread thread,int seconds){if(thread==null)return;if(thread==scheduler||thread==sampler)LockSupport.unpark(thread);boolean interrupted=Thread.interrupted();long until=System.nanoTime()+TimeUnit.SECONDS.toNanos(seconds);while(thread.isAlive()&&System.nanoTime()-until<0)try{thread.join(20);}catch(InterruptedException error){interrupted=true;}if(interrupted)Thread.currentThread().interrupt();if(thread.isAlive())recordFailure(new IllegalStateException("owned source thread did not stop: "+thread.getName()));}
+    private void saveArrivals()throws IOException{
+        try(var stream=new BufferedOutputStream(Files.newOutputStream(root.resolve("arrivals.csv"),StandardOpenOption.CREATE_NEW),65536)){
+            stream.write("arrival_index,worker,producer,request_seq,command_sha256,scheduled_offset_ns,arrival_offset_ns,dispatch_offset_ns,submit_offset_ns,first_wire_offer_call_offset_ns,first_successful_offer_return_offset_ns,reply_completion_offset_ns,unknown_observed_offset_ns,correlation_id,batch_index,admitted_physical_offers,status,not_sent_reason,result_code,initial_server_admission_status,reply_replayed,command_seq,order_id,remaining_quantity,trade_count\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+            for(int i=0;i<config.arrivals();i++){
+                String line=i+","+worker(i)+","+producer(worker(i))+","+producerSequence(i)+","+businessCanonicalSha256(command(i))+","+config.offsetNs(i)+","+offset(rows.arrival[i])+","+offset(rows.dispatch[i])+","+offset(rows.submit[i])+","+offset(rows.firstOffer[i])+","+offset(rows.firstPhysicalAdmission[i])+","+offset(rows.end[i])+","+offset(rows.unknownObserved[i])+","+absolute(rows.correlation[i])+","+(rows.batchIndex[i]<0?"":rows.batchIndex[i])+","+rows.admittedPhysicalOffers[i]+","+status(rows.status[i])+","+rows.reason[i]+","+(rows.resultCode[i]<0?"":ResultCode.values()[rows.resultCode[i]].name())+","+(rows.serverAdmission[i]<0?"":BatchStatus.values()[rows.serverAdmission[i]].name())+","+(rows.replayed[i]!=0)+","+absolute(rows.commandSeq[i])+","+absolute(rows.orderId[i])+","+absolute(rows.remaining[i])+","+absolute(rows.tradeCount[i])+"\n";
+                byte[] bytes=line.getBytes(java.nio.charset.StandardCharsets.US_ASCII);if(bytes.length>640)throw new IOException("bounded per-arrival row exceeded640bytes");rawBudget.csvBytes+=bytes.length;stream.write(bytes);
+            }
+        }
+    }
+    private String offset(long value){return value==MISSING?"":Long.toString(value-origin);}
+    private static String absolute(long value){return value==MISSING?"":Long.toString(value);}
+    private static String status(byte value){return switch(value){case QUEUED->"QUEUED";case PENDING->"PENDING";case APPLIED->"APPLIED";case NOT_SENT->"NOT_SENT";case UNKNOWN_FINAL->"UNKNOWN_FINAL";default->"UNRELEASED_RUN_ABORT";};}
+    private Map<String,Object> summary(){
+        int applied=0,notSent=0,unknown=0,unknownObserved=0,replay=0,serverRejected=0,admissionRejected=0,notAttempted=0,uniqueAccepted=0,duplicateOrder=0,withinWindow=0;
+        long[] confirmed=new long[rows.arrivals()],accepted=new long[rows.arrivals()];int cn=0,an=0;long lastEnd=windowEnd;BitSet seen=new BitSet(config.arrivals()+2);
+        var rejectCodes=new TreeMap<String,Integer>();
+        for(int i=0;i<config.arrivals();i++){
+            if(rows.unknownObserved[i]!=MISSING)unknownObserved++;
+            if(rows.serverAdmission[i]==BatchStatus.ADMISSION_REJECTED.ordinal())admissionRejected++;
+            if(rows.serverAdmission[i]==BatchStatus.NOT_ATTEMPTED.ordinal())notAttempted++;
+            if(rows.status[i]==NOT_SENT)notSent++;else if(rows.status[i]==UNKNOWN_FINAL||rows.status[i]==PENDING)unknown++;
+            if(rows.status[i]==APPLIED){applied++;if(rows.replayed[i]!=0)replay++;if(rows.end[i]!=MISSING){confirmed[cn++]=rows.end[i]-(origin+config.offsetNs(i));lastEnd=Math.max(lastEnd,rows.end[i]);}
+                if(rows.resultCode[i]==ResultCode.ACCEPTED.ordinal()){
+                    if(rows.orderId[i]<2||rows.orderId[i]>config.arrivals()+1){duplicateOrder++;continue;}int id=(int)rows.orderId[i];if(seen.get(id)){duplicateOrder++;continue;}seen.set(id);uniqueAccepted++;if(rows.end[i]!=MISSING){accepted[an++]=rows.end[i]-(origin+config.offsetNs(i));if(rows.end[i]-windowEnd<=0)withinWindow++;}
+                }else{serverRejected++;String key=rows.resultCode[i]<0?"MISSING":ResultCode.values()[rows.resultCode[i]].name();rejectCodes.merge(key,1,Integer::sum);}
+            }
+        }
+        var out=new LinkedHashMap<String,Object>();if(idleSelection.explicit())out.put("retentionIdleSelection",idleSelection.observation());if(ownerPollSelection.explicit()){out.put("ownerPollSelection",ownerPollSelection.observation());out.put("ownerPollActual",ownerPollSelection.actualObservation(owner));}
+        out.put("schema","retention-v4-openloop-capacity-1");out.put("fileWorkDispatchPolicy",config.continueDuringFileWork()?"CONTINUE":"PAUSE");out.put("dispatchOrderPolicy",config.dispatchOrderPolicy());out.put("scheduledArrivals",config.arrivals());out.put("releasedArrivals",rows.released.get());out.put("ratePerSecond",config.rate());out.put("batchCap",4);out.put("archiveChunkBytes",6144);out.put("eventFetchCount",32);out.put("readWindow",32);out.put("activeLoadWorkers",127);out.put("allocatedLogicalWorkers",128);out.put("arrivalWindowSeconds",20);out.put("scheduledOriginUTC",originUtc);out.put("scheduledOriginMonotonicNs",origin);out.put("creditBlockedDispatchChecks",creditBlockedDispatchChecks);
+        out.put("schedulerLatenessOver20ms",rows.lateOver20ms);out.put("schedulerMaxLatenessNs",rows.maxSchedulerLateness);out.put("schedulerTimingValid",rows.lateOver20ms==0&&rows.released.get()==config.arrivals()&&exposureEnd-origin>=config.windowNs());out.put("arrivalClockPausedForMaintenance",false);
+        out.put("completedLogicalReplies",applied);out.put("notSent",notSent);out.put("unknownObserved",unknownObserved);out.put("unknownFinal",unknown);out.put("serverRejected",serverRejected);out.put("serverAdmissionRejectedObserved",admissionRejected);out.put("serverNotAttemptedObserved",notAttempted);out.put("serverRejectionCodes",rejectCodes);out.put("replyReplayed",replay);out.put("confirmedAcceptedUniqueOrders",uniqueAccepted);out.put("duplicateOrOutOfRangeAcceptedOrderIds",duplicateOrder);out.put("setupBusinessCommands",3);out.put("setupAcceptedOrders",1);out.put("acceptedOrdersInArrivalWindow",withinWindow);out.put("arrivalWindowGoodputPerSecond",withinWindow/(config.windowNs()/1e9));out.put("lastKnownReplyDrainNs",Math.max(0,lastEnd-windowEnd));out.put("totalSourceDrainNs",drainEnd==MISSING?null:Math.max(0,drainEnd-windowEnd));out.put("completedReplyConditionalP99Ns",quantile(confirmed,cn,0.99));out.put("acceptedOrderConditionalP99Ns",quantile(accepted,an,0.99));out.put("allArrivalReplyP99Ns",notSent==0&&unknown==0&&applied==config.arrivals()?quantile(confirmed,cn,0.99):null);Long allAcceptedP99=allAcceptedP99(config.arrivals(),applied,notSent,unknown,serverRejected,duplicateOrder,uniqueAccepted,accepted,an);out.put("allArrivalAcceptedOrderP99Ns",allAcceptedP99);out.put("allArrivalP99Ns",allAcceptedP99);out.put("allArrivalP99Policy","all planned arrivals must each confirm one distinct ACCEPTED order; null on notSent, unknown, unreleased, business rejection or duplicate/out-of-range orderId; allArrivalReplyP99Ns instead includes finite business-reject replies");
+        out.put("maintenanceCycles",cycles);out.put("maintenanceRpcMetrics",maintenance==null?null:maintenance.snapshot());out.put("diskGuard",disk.snapshot());out.put("journalRunBudget",maintenance==null?null:maintenance.snapshot());out.put("maximumObservedQueueSizePerWorker",rows.queueHighWater);out.put("primitiveArrivalColumnBytes",rows.primitiveColumnBytes());out.put("traceBytes",rawBudget.used.get());out.put("arrivalCsvBytes",rawBudget.csvBytes);out.put("rawTraceByteLimit",rawBudget.limit);out.put("physicalOfferTape",tape.snapshot());out.put("externalCorrectnessVerificationRequired",true);out.put("finiteStabilityClaimed",false);out.put("scope","Finite same-system openloop source; no percentile SLA, sustained/infinite capacity or 100M claim. All-arrival p99 undefined when any arrival is notSent/unknown/unreleased.");return out;
+    }
+    static Long allAcceptedP99(int planned,int applied,int notSent,int unknown,int rejected,int duplicate,int unique,long[] accepted,int count){return applied==planned&&notSent==0&&unknown==0&&rejected==0&&duplicate==0&&unique==planned&&count==planned?quantile(accepted,count,0.99):null;}
+    static Long quantile(long[] values,int count,double p){if(count==0)return null;long[] sorted=Arrays.copyOf(values,count);Arrays.sort(sorted);return sorted[Math.max(0,(int)Math.ceil(p*count)-1)];}
+
+    private static final class RawBudget{
+        final long limit,reservedCsv;final AtomicLong used=new AtomicLong();volatile long csvBytes;
+        RawBudget(long limit,long reservedCsv){if(reservedCsv>=limit)throw new IllegalArgumentException("CSV reserve exceeds trace envelope");this.limit=limit;this.reservedCsv=reservedCsv;}
+        OutputStream open(Path file,boolean network)throws IOException{
+            FileChannel channel=FileChannel.open(file,StandardOpenOption.CREATE_NEW,StandardOpenOption.WRITE);var buffer=new BufferedOutputStream(Channels.newOutputStream(channel),65536);
+            return new OutputStream(){private long fileBytes;public void write(int b)throws IOException{reserve(1);buffer.write(b);}public void write(byte[] b,int off,int n)throws IOException{reserve(n);buffer.write(b,off,n);}private void reserve(int n)throws IOException{fileBytes=Math.addExact(fileBytes,n);if(fileBytes>512L*1024*1024)throw new IOException("SOURCE_SINGLE_RAW_FILE_512MIB_CAP; preserve originals and stop");if(used.addAndGet(n)>limit-reservedCsv)throw new IOException("SOURCE_RAW_BYTE_BUDGET; preserve partial trace, no capacity success");}public void flush()throws IOException{buffer.flush();}public void close()throws IOException{try{buffer.flush();channel.force(true);}finally{buffer.close();}}};
+        }
+    }
+    private final class Tape implements RetentionBatchOwnerIOV3{
+        private record Recorded(String sha,long offset,int members,boolean business,boolean readOnly,int admissions){}
+        private final Map<Long,Recorded> active=new HashMap<>();
+        private final DataOutputStream requests,replies;
+        private final OutputStream codes,index;
+        private RetentionBatchOwnerIOV3 delegate;
+        private int readOnlyRegistryHighWater;
+        private long requestOffset,frames,attempts,positive,negative,replyCount,extraPositive,initialTerm=Long.MIN_VALUE;private Map<String,Object> lastObservation=Map.of();
+        Tape()throws IOException{requests=new DataOutputStream(rawBudget.open(root.resolve("physical-requests.bin"),true));replies=new DataOutputStream(rawBudget.open(root.resolve("physical-replies.bin"),true));codes=rawBudget.open(root.resolve("physical-offer-codes.csv"),true);index=rawBudget.open(root.resolve("physical-request-index.csv"),true);codes.write("attempt,correlation_id,wire_offset,offer_call_tape_offset_ns,offer_return_tape_offset_ns,return_code\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));index.write("frame,correlation_id,wire_offset,wire_length,first_offer_offset_ns,members,wire_sha256\n".getBytes(java.nio.charset.StandardCharsets.US_ASCII));}
+        RetentionBatchOwnerIOV3 attach(RetentionBatchOwnerIOV3 io){delegate=Objects.requireNonNull(io);return this;}
+        public synchronized long offer(byte[] bytes){try{
+            if(abort.get()!=null)throw new IOException("source guard aborted before next offer");Request request=RetentionWireV3.decode(bytes);String sha=HexFormat.of().formatHex(ClusterStateSnapshot.digest(bytes));Recorded record=active.get(request.correlationId());
+            if(record==null){if(active.size()>=129)throw new IOException("bounded active tape registry129 exceeded");boolean business=request.operation() instanceof BusinessBatch,readOnly=request.operation() instanceof ArchiveChunk||request.operation() instanceof FetchEvents;
+                if(readOnly&&active.values().stream().anyMatch(v->!v.readOnly)||!readOnly&&active.values().stream().anyMatch(v->v.readOnly))throw new IOException("read-only phase overlaps business/control in physical tape");
+                if(readOnly&&active.size()>=config.readWindow())throw new IOException("selected read-only physical registry window exceeded");
+                int members=business?((BusinessBatch)request.operation()).commands().size():1;record=new Recorded(sha,requestOffset,members,business,readOnly,0);active.put(request.correlationId(),record);if(readOnly)readOnlyRegistryHighWater=Math.max(readOnlyRegistryHighWater,active.size());requests.writeLong(System.nanoTime()-tapeOrigin);requests.writeInt(bytes.length);requests.write(bytes);requestOffset+=12L+bytes.length;frames++;index.write((frames+","+request.correlationId()+","+record.offset+","+bytes.length+","+(System.nanoTime()-tapeOrigin)+","+members+","+sha+"\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII));}
+            else if(!record.sha.equals(sha))throw new IOException("original correlation payload changed");
+            if(negative>=plan.negativeOfferLimit()||record.admissions>=4)throw new IOException("SOURCE_FINITE_OFFER_BUDGET");
+            boolean extra=record.admissions>0;
+            if(extra&&extraPositive>=3L*(plan.arrivals()+plan.maximumMaintenanceRpcs()))throw new IOException("SOURCE_GLOBAL_RETRY_BUDGET");
+            if(extra)extraPositive++;
+            long called=System.nanoTime()-tapeOrigin;long code=delegate.offer(bytes);long returned=System.nanoTime()-tapeOrigin;attempts++;if(code>=0){positive++;active.put(request.correlationId(),new Recorded(record.sha,record.offset,record.members,record.business,record.readOnly,record.admissions+1));}else{negative++;if(extra)extraPositive--;}codes.write((attempts+","+request.correlationId()+","+record.offset+","+called+","+returned+","+code+"\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII));return code;
+        }catch(IOException error){throw new UncheckedIOException(error);}}
+        public int poll(Consumer<Reply> consumer){if(abort.get()!=null)throw new IllegalStateException("source/observer guard abort",abort.get());return delegate.poll(reply->{try{synchronized(this){byte[] bytes=RetentionReplyV3.encode(reply);replies.writeLong(System.nanoTime()-tapeOrigin);replies.writeInt(bytes.length);replies.write(bytes);replyCount++;Recorded record=active.get(reply.correlationId());if(record!=null&&(!(reply.payload() instanceof Batch batch)||batch.entries().stream().allMatch(e->e.status()==BatchStatus.APPLIED)))active.remove(reply.correlationId());}consumer.accept(reply);}catch(IOException error){throw new UncheckedIOException(error);}});}
+        synchronized void retireBusiness(long correlation){Recorded record=active.get(correlation);if(record!=null&&record.business){if(record.members<=1)active.remove(correlation);else active.put(correlation,new Recorded(record.sha,record.offset,record.members-1,true,false,record.admissions));}}
+        public synchronized Map<String,Object> observation(){Map<String,Object> actual=delegate.observation();lastObservation=actual;Object leader=actual.get("leaderMemberId"),term=actual.get("leadershipTermId");if(leader instanceof Number id&&id.intValue()!=0)throw new IllegalStateException("FIXED_LEADER_CHANGED");if(term instanceof Number value){if(initialTerm==Long.MIN_VALUE)initialTerm=value.longValue();else if(value.longValue()!=initialTerm)throw new IllegalStateException("FIXED_TERM_CHANGED");}Object events=actual.get("newLeaderEvents");if(events instanceof Iterable<?> list)for(Object event:list)if(event instanceof Map<?,?> row){Object eventLeader=row.get("leaderMemberId"),eventTerm=row.get("leadershipTermId");if(!(eventLeader instanceof Number id)||id.intValue()!=0||!(eventTerm instanceof Number value)||value.longValue()!=initialTerm)throw new IllegalStateException("FIXED_LEADER_EVENT_CHANGED");}return actual;}
+        public void close(){if(delegate!=null){delegate.close();delegate=null;}}
+        synchronized void closeFiles()throws IOException{try{requests.close();}finally{try{replies.close();}finally{try{codes.close();}finally{index.close();}}}}
+        synchronized Map<String,Object> snapshot(){var out=new LinkedHashMap<String,Object>();out.put("uniqueRecordedRequests",frames);out.put("physicalOfferAttempts",attempts);out.put("successfulPhysicalAdmissions",positive);out.put("negativePhysicalOffers",negative);out.put("recordedReplies",replyCount);out.put("boundedActiveRegistry",129);out.put("extraSuccessfulPhysicalAdmissions",extraPositive);out.put("lastActualTransportObservation",lastObservation);out.put("readWindow",config.readWindow());out.put("readOnlyRawRegistryHighWater",readOnlyRegistryHighWater);out.put("readBusinessControlPhaseExclusionEnforced",true);return Collections.unmodifiableMap(out);}
+    }
+}

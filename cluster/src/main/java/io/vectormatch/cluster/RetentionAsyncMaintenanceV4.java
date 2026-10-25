@@ -39,6 +39,7 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
     private final RetentionServiceV3.Profile profile;
     private final Scope scope;
     private final int maximumCuts,readWindow,chunkBytes,eventCount;
+    private final boolean businessDuringFileWork;
     private final long maximumRpcs;
     private final DataOutputStream trace;
     private final long maximumTraceBytes;
@@ -63,11 +64,19 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
     public RetentionAsyncMaintenanceV4(RetentionBatchOwnerV3 owner,RetentionDurableWriterV3 writer,
             RetentionPrefixPersistenceV4 pipeline,RetentionServiceV3.Profile profile,String lineage,
             Path newTrace,int maximumCuts,int readWindow,int chunkBytes,int eventCount,long maximumRpcs,long maximumTraceBytes)throws IOException{
+        this(owner,writer,pipeline,profile,lineage,newTrace,maximumCuts,readWindow,chunkBytes,eventCount,maximumRpcs,maximumTraceBytes,true);
+    }
+    /** Common-artifact control: only the dispatch admission policy changes; file/RPC/ACK work is identical. */
+    public RetentionAsyncMaintenanceV4(RetentionBatchOwnerV3 owner,RetentionDurableWriterV3 writer,
+            RetentionPrefixPersistenceV4 pipeline,RetentionServiceV3.Profile profile,String lineage,
+            Path newTrace,int maximumCuts,int readWindow,int chunkBytes,int eventCount,long maximumRpcs,long maximumTraceBytes,
+            boolean businessDuringFileWork)throws IOException{
         this.owner=Objects.requireNonNull(owner);this.writer=Objects.requireNonNull(writer);this.pipeline=Objects.requireNonNull(pipeline);
         this.profile=Objects.requireNonNull(profile);scope=new Scope(profile.fingerprint(),lineage);
         if(maximumCuts<1||maximumCuts>128||maximumRpcs<1||maximumRpcs>250000||maximumTraceBytes<4096||maximumTraceBytes>512L*1024*1024)
             throw new IllegalArgumentException("finite V4 cut/RPC/trace limits required");
         this.maximumCuts=maximumCuts;this.maximumRpcs=maximumRpcs;this.maximumTraceBytes=maximumTraceBytes;
+        this.businessDuringFileWork=businessDuringFileWork;
         this.readWindow=RetentionCapacityPlanV3.requireReadWindow128(readWindow);
         this.chunkBytes=requireArchiveChunkBytes(chunkBytes);this.eventCount=requireEventFetchCount(eventCount);
         Path path=newTrace.toAbsolutePath().normalize();for(Path p=path;p!=null;p=p.getParent())if(Files.isSymbolicLink(p))throw new IOException("symlink trace refused");
@@ -77,6 +86,7 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
             record(3,RetentionCapacityJsonV3.json(Map.of("schema","retention-async-maintenance-v4-1","scope",scope.toString(),
                     "maximumCuts",maximumCuts,"maximumRpcs",maximumRpcs,"maximumTraceBytes",maximumTraceBytes,
                     "readWindow",readWindow,"archiveChunkBytes",chunkBytes,"eventFetchCount",eventCount,
+                    "fileWorkDispatchPolicy",businessDuringFileWork?"CONTINUE":"PAUSE",
                     "recoveryMode","fresh lineage only;persisted monotonic permits must not be reissued after restart")).getBytes(java.nio.charset.StandardCharsets.US_ASCII));
             reserveControl(new Position(),false);
         }catch(IOException|RuntimeException|Error error){try{trace.close();}catch(IOException close){error.addSuppressed(close);}throw error;}
@@ -85,7 +95,10 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
     private void healthy(){affinity();if(failure!=null||phase==Phase.CLOSED)throw new IllegalStateException("V4 coordinator terminal",failure);}
     private boolean pending(){return ((Number)owner.snapshot().get("pendingLogicalCommands")).longValue()!=0;}
     /** This gate never admits new business while any read lease/control/ACK fence is active. */
-    public boolean businessAllowed(){affinity();return failure==null&&(phase==Phase.IDLE||phase==Phase.VERIFY_WAIT||phase==Phase.FILE_WAIT);}
+    public boolean businessAllowed(){affinity();return failure==null&&(phase==Phase.IDLE||businessDuringFileWork&&(phase==Phase.VERIFY_WAIT||phase==Phase.FILE_WAIT));}
+    public Phase phase(){affinity();return phase;}
+    public long knownBusinessSeq(){affinity();return lastKnownBusiness;}
+    public long archivedThrough(){affinity();return lastArchive==null?0:lastArchive.throughCommandSeq();}
     public Optional<RetentionBatchOwnerV3.Ticket> trySubmit(int worker,Command command,long deadline)throws IOException{
         healthy();observeBusiness();if(!businessAllowed())return Optional.empty();
         // Validate the complete canonical business envelope before reserving any credit.
@@ -113,7 +126,7 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
     }
     private void record(int kind,byte[] bytes)throws IOException{
         long size=4L+8+8+4+bytes.length;
-        if(bytes.length>MAX_REPLY_BYTES+MAX_REQUEST_BYTES||size>maximumTraceBytes-traceBytes)throw new IOException("V4 bounded trace exhausted;no further arm/ACK");
+        if(bytes.length>MAX_REPLY_BYTES+MAX_REQUEST_BYTES||(kind==3||kind==4)&&bytes.length>2048||kind==5&&bytes.length>8192||size>maximumTraceBytes-traceBytes)throw new IOException("V4 bounded trace exhausted;no further arm/ACK");
         trace.writeInt(kind);trace.writeLong(++traceRecords);trace.writeLong(System.nanoTime());trace.writeInt(bytes.length);trace.write(bytes);trace.flush();traceBytes+=size;
     }
     private void transition(Phase next)throws IOException{
@@ -140,7 +153,7 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
     public void start(long throughBusinessSeq)throws IOException{
         healthy();observeBusiness();if(phase!=Phase.IDLE||completed!=null||pending()||cycles>=maximumCuts)throw new IllegalStateException("consume prior cycle and drain business before a new cut");
         long first=lastArchive==null?1:lastArchive.throughCommandSeq()+1;
-        if(throughBusinessSeq!=lastKnownBusiness||throughBusinessSeq<first||throughBusinessSeq-first+1>RetentionBatchMaintenanceV3.COMMAND_CUT)
+        if(throughBusinessSeq>lastKnownBusiness||throughBusinessSeq<first||throughBusinessSeq-first+1>RetentionBatchMaintenanceV3.COMMAND_CUT)
             throw new IllegalArgumentException("exact known nonempty prefix <=3072 required");
         through=throughBusinessSeq;
         try{transition(Phase.PREPARE_WAIT);reserveControl(new PrepareArchive(through),false);}catch(Throwable error){throw fail(error);}

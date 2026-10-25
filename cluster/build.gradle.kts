@@ -50,3 +50,20 @@ tasks.register<JavaExec>("asyncMaintenanceSmokeV4") {
     }
 }
 
+tasks.register<JavaExec>("capacityAeronV4") {
+    group = "verification"
+    description = "Runs one finite 20-second V4 UDP point with physical-order replay and three-node cold restore."
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("io.vectormatch.cluster.RetentionCapacityAeronV4")
+    jvmArgs(application.applicationDefaultJvmArgs)
+    maxHeapSize = "768m"
+    doFirst {
+        args(providers.gradleProperty("capacityV4Root").orNull
+            ?: throw GradleException("Pass -PcapacityV4Root=<new-state-directory>."),
+            providers.gradleProperty("capacityV4Rate").orNull
+            ?: throw GradleException("Pass -PcapacityV4Rate=500|1000|2000|4000|6000."),
+            providers.gradleProperty("capacityV4Policy").orNull
+            ?: throw GradleException("Pass -PcapacityV4Policy=PAUSE|CONTINUE."))
+    }
+}
+
