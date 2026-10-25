@@ -188,6 +188,7 @@ class RetentionMaintenanceReadWindowV3Test {
             }
             assertEquals("1",cycleFields.get("writerTimingSchema"));assertTrue(Long.parseLong(cycleFields.get("coordinatorArchiveVerificationNs"))>=0);
             for(String prefix:List.of("archive","events")){
+                assertEquals(prefix.equals("archive")?"true":"false",cycleFields.get(prefix+"WriterVerifiedArchiveHandoff"));
                 assertEquals("true",cycleFields.get(prefix+"WriterPresent"));long serialNs=0;
                 for(String phase:List.of("Prevalidation","InputHash","Write","Force","Readback","ReceiptWrite","ReceiptForce")){
                     long duration=Long.parseLong(cycleFields.get(prefix+"Writer"+phase+"Ns"));assertTrue(duration>=0);serialNs+=duration;

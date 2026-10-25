@@ -1,0 +1,25 @@
+# Candidate: immutable verified archive handoff
+
+This candidate is not a demonstrated performance gain. The registered writer-timing comparison uses frozen older artifacts, so its A1/B1/A2/B2 observations remain unchanged by this source change. Qualification and a separate controlled performance comparison are required before adoption.
+
+The first instrumented observation locates 829,553,798ns in repeated archive prevalidation, out of 5,322,435,258ns of maintenance wall time over 27 cycles. This motivates removing one duplicate parse; it is not a prediction of the resulting tail latency. The second instrumented observation must also be retained and reviewed.
+
+## Ownership and validation boundary
+
+`captureAndVerifyArchive` bounds the input before allocation, clones the caller's byte array and performs the existing complete canonical verification against the exact profile, lineage and acknowledgement. Only this factory can construct `VerifiedArchive`. It exposes the immutable verification result, never its owned byte array. The coordinator uses that same verification result for its command/event prefix checks.
+
+`persistVerifiedArchive` passes the private owned image to the bounded writer queue. It removes the second pre-write parse and handoff clone. It does not accept an arbitrary public boolean, digest or caller-constructed verification result as authority. The original byte-array writer API retains its defensive clone and prevalidation behavior for other callers.
+
+The writer still checks file/run/outstanding budgets before admission, hashes the input, creates a fresh file, writes all bytes, calls `force(true)`, reads the entire bounded file, checks its hash and performs complete canonical verification of the readback. It writes and forces the bounded success receipt before completing the ticket. The coordinator awaits both archive and event tickets before either destructive acknowledgement. Event persistence is unchanged.
+
+The coordinator's archive-verification duration now includes the capture clone. The writer's copy duration is zero for this owned handoff; its prevalidation duration measures only the branch overhead. Each cycle explicitly records `archiveWriterVerifiedArchiveHandoff=true`; the event field is false. Other timing definitions remain unchanged. No force, readback, queue/file/byte bound, business rule, replication setting or acknowledgement fence is relaxed. File force/readback still does not establish independent storage or directory-entry crash durability.
+
+## Qualification and comparison
+
+Local targeted tests cover caller/result mutation, wrong scope/digest/length, post-force corruption, queue admission and lifetime file budgets, alongside the existing maintenance read-window and adapter tests. Record exact source hashes and all results. Next run the full forced Linux suite, real PostgreSQL integration and failover smoke in an independent checkout before producing and qualifying new Linux JARs.
+
+After closing all four timing arms, register a fresh C1/D1/C2/D2 comparison at 4,000 scheduled arrivals/s for 20 seconds, 80,000 fresh IOC arrivals per lineage. C uses the qualified timing artifact `f3a5745c`; D uses the newly qualified candidate fingerprint, which must be recorded before any D workload. Keep leader0, sync2, ROTATING_CONTINUE, read128, page32, batch4, chunk6144, owner1ms, driver100us, W128/Q64, one physical session, JDK/container/affinity/cgroups, readiness, warm-up, durability and evidence bounds fixed. Apply the same registered project-only read-only cache preconditioning while idle before every arm.
+
+Preserve complete native/raw evidence and close each private archive before the next arm. Audit the handoff flag, all phase/receipt bindings and every arrival. Report all-arrival p99, in-window goodput, conditional offer-to-reply latency, backlog/rejection/UNKNOWN, maintenance phase accounting and every comparable recovery interval. Invalid scheduling, native faults, unresolved outcomes or incomplete evidence stop progression. A single lower number cannot establish a gain; two observations per artifact do not establish statistical significance or a sustained SLA. No higher rate is registered by this document.
+
+Raw evidence storage for the next comparison must have an independently verified upload/download manifest before launch; the current Git-body archive grows the code repository on every run. An alternative under the same private repository can retain complete assets plus size/SHA-256 and restoration scripts, without rewriting historical Git evidence. That storage change must be documented and verified separately; it cannot substitute summaries for original bytes.

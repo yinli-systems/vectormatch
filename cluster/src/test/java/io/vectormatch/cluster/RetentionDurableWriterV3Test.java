@@ -33,6 +33,7 @@ class RetentionDurableWriterV3Test {
         try(var writer=new RetentionDurableWriterV3(path,4096,16384,4)){
             var archive=writer.persistArchive(p.bytes,profile.core(),lineage,p.ack).await(Duration.ofSeconds(2));
             var events=writer.persistEvents(p.framedEvents,p.events,new Scope(profile.fingerprint(),lineage),1,3).await(Duration.ofSeconds(2));
+            assertFalse(archive.verifiedArchiveHandoff());assertFalse(events.verifiedArchiveHandoff());
             assertArrayEquals(p.bytes,Files.readAllBytes(archive.path()));assertArrayEquals(p.framedEvents,Files.readAllBytes(events.path()));
             for(Path payload:List.of(archive.path(),events.path()))assertTrue(Files.readString(payload.resolveSibling(payload.getFileName()+".verified.txt")).contains("forceTrueCompleted=true\nfullReadbackVerified=true"));
             assertEquals(2,writer.snapshot().get("completed"));assertTrue(archive.forceNs()>=0);assertTrue(archive.readbackNs()>=0);
@@ -82,5 +83,58 @@ class RetentionDurableWriterV3Test {
             assertThrows(IllegalArgumentException.class,()->capped.persistArchive(p.bytes,profile.core(),lineage,p.ack));
             assertEquals(1,capped.snapshot().get("submitted"));
         }
+    }
+    @Test void verifiedHandoffOwnsItsBytesAndCannotBeAlteredThroughCallerOrReturnedHistory()throws Exception{
+        Prefix p=prefix();byte[] caller=p.bytes.clone();
+        var captured=RetentionDurableWriterV3.captureAndVerifyArchive(caller,profile.core(),lineage,p.ack);
+        Arrays.fill(caller,(byte)0);
+        byte[] exposed=captured.verification().entries().getFirst().canonicalBytes();Arrays.fill(exposed,(byte)0);
+        assertThrows(UnsupportedOperationException.class,()->captured.verification().entries().clear());
+        try(var writer=new RetentionDurableWriterV3(root.resolve("owned-verified"),4096,8192,2)){
+            var persisted=writer.persistVerifiedArchive(captured).await(Duration.ofSeconds(2));
+            assertArrayEquals(p.bytes,Files.readAllBytes(persisted.path()));
+            assertTrue(persisted.verifiedArchiveHandoff());assertEquals(0,persisted.phaseTimings().handoffCopyNs());
+            assertTrue(Files.readString(persisted.path().resolveSibling("0001-archive.bin.verified.txt"))
+                    .contains("forceTrueCompleted=true\nfullReadbackVerified=true\n"));
+        }
+    }
+    @Test void verifiedHandoffRejectsWrongScopeDigestAndMalformedCanonicalPrefixBeforeAdmission()throws Exception{
+        Prefix p=prefix();byte[] corrupted=p.bytes.clone();corrupted[corrupted.length-1]^=1;
+        assertThrows(IllegalArgumentException.class,()->RetentionDurableWriterV3.captureAndVerifyArchive(corrupted,profile.core(),lineage,p.ack));
+        assertThrows(IllegalArgumentException.class,()->RetentionDurableWriterV3.captureAndVerifyArchive(p.bytes,profile.core(),"other-lineage",p.ack));
+        assertThrows(IllegalArgumentException.class,()->RetentionDurableWriterV3.captureAndVerifyArchive(new byte[79],profile.core(),lineage,p.ack));
+        assertThrows(NullPointerException.class,()->RetentionDurableWriterV3.captureAndVerifyArchive(p.bytes,profile.core(),lineage,null));
+        try(var writer=new RetentionDurableWriterV3(root.resolve("verified-caps"),p.bytes.length-1,2L*p.bytes.length,1)){
+            var captured=RetentionDurableWriterV3.captureAndVerifyArchive(p.bytes,profile.core(),lineage,p.ack);
+            assertThrows(IllegalArgumentException.class,()->writer.persistVerifiedArchive(captured));
+            assertEquals(0,writer.snapshot().get("submitted"));
+        }
+    }
+    @Test void verifiedHandoffStillRejectsPostForceCorruptionAndNeverPublishesSuccess()throws Exception{
+        Prefix p=prefix();var captured=RetentionDurableWriterV3.captureAndVerifyArchive(p.bytes,profile.core(),lineage,p.ack);
+        Path path=root.resolve("verified-corrupt");
+        var writer=new RetentionDurableWriterV3(path,4096,8192,2,file->{byte[] bytes=Files.readAllBytes(file);bytes[bytes.length-1]^=1;Files.write(file,bytes,StandardOpenOption.TRUNCATE_EXISTING);});
+        assertThrows(IOException.class,()->writer.persistVerifiedArchive(captured).await(Duration.ofSeconds(2)));
+        assertThrows(IOException.class,writer::close);
+        assertTrue(Files.exists(path.resolve("0001-archive.bin")));assertFalse(Files.exists(path.resolve("0001-archive.bin.verified.txt")));
+        assertEquals(0,writer.snapshot().get("completed"));
+        assertThrows(IllegalStateException.class,()->writer.persistVerifiedArchive(captured));
+    }
+    @Test void verifiedHandoffRetainsOutstandingAndLifetimeFileBudgets()throws Exception{
+        Prefix p=prefix();var captured=RetentionDurableWriterV3.captureAndVerifyArchive(p.bytes,profile.core(),lineage,p.ack);
+        var entered=new CountDownLatch(1);var release=new CountDownLatch(1);
+        try(var writer=new RetentionDurableWriterV3(root.resolve("verified-queue"),4096,16384,3,file->{
+            entered.countDown();try{if(!release.await(2,TimeUnit.SECONDS))throw new IOException("gate deadline");}
+            catch(InterruptedException error){Thread.currentThread().interrupt();throw new IOException(error);}
+        })){
+            var first=writer.persistVerifiedArchive(captured);assertTrue(entered.await(2,TimeUnit.SECONDS));
+            var second=writer.persistVerifiedArchive(captured);
+            assertThrows(IllegalStateException.class,()->writer.persistVerifiedArchive(captured));
+            assertEquals(2,writer.snapshot().get("outstandingHighWater"));release.countDown();
+            first.await(Duration.ofSeconds(2));second.await(Duration.ofSeconds(2));
+            writer.persistVerifiedArchive(captured).await(Duration.ofSeconds(2));
+            assertThrows(IllegalArgumentException.class,()->writer.persistVerifiedArchive(captured));
+            assertEquals(3,writer.snapshot().get("completed"));
+        }finally{release.countDown();}
     }
 }

@@ -24,17 +24,43 @@ public final class RetentionDurableWriterV3 implements AutoCloseable {
     public record PhaseTimings(long handoffCopyNs,long queueWaitNs,long prevalidationNs,long inputHashNs,
                                long writeNs,long forceNs,long readbackNs,long receiptWriteNs,
                                long receiptForceNs,long writerElapsedNs){}
+    /** An owned immutable byte image, validated before handoff. No caller can construct or mutate it. */
+    public static final class VerifiedArchive {
+        private final byte[] bytes;
+        private final RetentionEngineV3.Profile profile;
+        private final String lineage;
+        private final RetentionEngineV3.ArchiveAck acknowledgement;
+        private final RetentionArchiveVerifierV3.Verified verification;
+        private VerifiedArchive(byte[] bytes,RetentionEngineV3.Profile profile,String lineage,
+                                RetentionEngineV3.ArchiveAck acknowledgement,
+                                RetentionArchiveVerifierV3.Verified verification){
+            this.bytes=bytes;this.profile=profile;this.lineage=lineage;
+            this.acknowledgement=acknowledgement;this.verification=verification;
+        }
+        public RetentionArchiveVerifierV3.Verified verification(){return verification;}
+    }
+    public static VerifiedArchive captureAndVerifyArchive(byte[] input,RetentionEngineV3.Profile profile,
+                                                          String lineage,RetentionEngineV3.ArchiveAck acknowledgement){
+        Objects.requireNonNull(input);Objects.requireNonNull(profile);Objects.requireNonNull(acknowledgement);
+        long maximum=Math.min(RetentionEngineV3.MAX_SNAPSHOT_BYTES-32L,profile.maxPendingSerializedBytes()+1024L);
+        if(input.length<80||input.length>maximum)throw new IllegalArgumentException("invalid bounded archive handoff length");
+        byte[] owned=input.clone();
+        var verified=RetentionArchiveVerifierV3.verify(owned,profile,lineage,acknowledgement);
+        return new VerifiedArchive(owned,profile,lineage,acknowledgement,verified);
+    }
     public static final class Persisted {
         private final Path path;
         private final String sha256;
         private final long bytes;
         private final PhaseTimings phases;
-        private Persisted(Path path, String sha256, long bytes, PhaseTimings phases) {
-            this.path=path;this.sha256=sha256;this.bytes=bytes;this.phases=phases;
+        private final boolean verifiedArchiveHandoff;
+        private Persisted(Path path, String sha256, long bytes, PhaseTimings phases,boolean verifiedArchiveHandoff) {
+            this.path=path;this.sha256=sha256;this.bytes=bytes;this.phases=phases;this.verifiedArchiveHandoff=verifiedArchiveHandoff;
         }
         public Path path(){return path;} public String sha256(){return sha256;} public long bytes(){return bytes;}
         public long writeNs(){return phases.writeNs();} public long forceNs(){return phases.forceNs();} public long readbackNs(){return phases.readbackNs();}
         public PhaseTimings phaseTimings(){return phases;}
+        public boolean verifiedArchiveHandoff(){return verifiedArchiveHandoff;}
     }
     public final class Ticket {
         private final Job job;
@@ -47,7 +73,7 @@ public final class RetentionDurableWriterV3 implements AutoCloseable {
             catch(TimeoutException|ExecutionException failure){throw new IOException("writer not proven complete; preserve partial file, no ACK authorization",failure);}
         }
     }
-    private record Job(String name,byte[] bytes,Verifier verifier,long enqueuedNs,long copyNs,CompletableFuture<Persisted> done){}
+    private record Job(String name,byte[] bytes,Verifier verifier,boolean verifiedArchiveHandoff,long enqueuedNs,long copyNs,CompletableFuture<Persisted> done){}
     private final Object lock=new Object();
     private final Path root;
     private final long maxFileBytes,maxTotalBytes;
@@ -76,19 +102,28 @@ public final class RetentionDurableWriterV3 implements AutoCloseable {
         Objects.requireNonNull(profile);Objects.requireNonNull(acknowledgement);
         return submit("archive",bytes,value->RetentionArchiveVerifierV3.verify(value,profile,lineage,acknowledgement));
     }
+    public Ticket persistVerifiedArchive(VerifiedArchive archive){
+        Objects.requireNonNull(archive);
+        return submit("archive",archive.bytes,
+                value->RetentionArchiveVerifierV3.verify(value,archive.profile,archive.lineage,archive.acknowledgement),true);
+    }
     public Ticket persistEvents(byte[] framedReplies,List<Event> expected,Scope scope,long first,long through){
         List<Event> immutable=List.copyOf(expected);Objects.requireNonNull(scope);
         if(first<1||through<first||through-first+1!=immutable.size())throw new IllegalArgumentException("complete nonempty event prefix required");
         return submit("events",framedReplies,value->verifyEventFrames(value,immutable,scope,first,through));
     }
     private Ticket submit(String kind,byte[] input,Verifier verifier){
+        return submit(kind,input,verifier,false);
+    }
+    private Ticket submit(String kind,byte[] input,Verifier verifier,boolean verifiedArchiveHandoff){
         synchronized(lock){
             if(closing||failure!=null)throw new IllegalStateException("writer closed/failed; no retry under a fresh path",failure);
             if(input==null||input.length==0||input.length>maxFileBytes||input.length>maxTotalBytes-reservedBytes||submitted>=maxJobs)
                 throw new IllegalArgumentException("writer file/run budget exceeded before write");
             if(outstanding>=2)throw new IllegalStateException("one active plus one queued writer job bound");
-            long copyStarted=System.nanoTime();byte[] copy=input.clone();long copyNs=System.nanoTime()-copyStarted;
-            Job job=new Job(String.format(Locale.ROOT,"%04d-%s.bin",submitted+1,kind),copy,verifier,System.nanoTime(),copyNs,new CompletableFuture<>());
+            long copyStarted=System.nanoTime();byte[] copy=verifiedArchiveHandoff?input:input.clone();
+            long copyNs=verifiedArchiveHandoff?0:System.nanoTime()-copyStarted;
+            Job job=new Job(String.format(Locale.ROOT,"%04d-%s.bin",submitted+1,kind),copy,verifier,verifiedArchiveHandoff,System.nanoTime(),copyNs,new CompletableFuture<>());
             if(!queue.offer(job))throw new IllegalStateException("one queued writer job bound");
             reservedBytes+=copy.length;submitted++;outstanding++;highWater=Math.max(highWater,outstanding);return new Ticket(job);
         }
@@ -100,7 +135,9 @@ public final class RetentionDurableWriterV3 implements AutoCloseable {
                 synchronized(lock){if(closing&&queue.isEmpty())break;}
                 job=queue.poll(20,TimeUnit.MILLISECONDS);if(job==null)continue;
                 try{
-                    long writerStarted=System.nanoTime();job.verifier.verify(job.bytes);long prevalidationEnded=System.nanoTime();
+                    long writerStarted=System.nanoTime();
+                    if(!job.verifiedArchiveHandoff)job.verifier.verify(job.bytes);
+                    long prevalidationEnded=System.nanoTime();
                     if(Files.getFileStore(root).getUsableSpace()<job.bytes.length+32L*1024*1024)throw new IOException("writer free-space guard before file creation");
                     long hashStarted=System.nanoTime();String expectedSha=hash(job.bytes);long hashEnded=System.nanoTime();Path path=root.resolve(job.name);
                     long start=System.nanoTime(),writeEnd,forceEnd;
@@ -129,7 +166,7 @@ public final class RetentionDurableWriterV3 implements AutoCloseable {
                     var phases=new PhaseTimings(job.copyNs,writerStarted-job.enqueuedNs,prevalidationEnded-writerStarted,
                             hashEnded-hashStarted,writeEnd-start,forceEnd-writeEnd,verified-forceEnd,
                             receiptWriteEnd-receiptStarted,receiptForceEnd-receiptWriteEnd,System.nanoTime()-writerStarted);
-                    Persisted result=new Persisted(path,expectedSha,readback.length,phases);
+                    Persisted result=new Persisted(path,expectedSha,readback.length,phases,job.verifiedArchiveHandoff);
                     synchronized(lock){completed++;completedBytes+=result.bytes;outstanding--;}
                     job.done.complete(result);
                 }catch(Throwable error){job.done.completeExceptionally(error);throw error;}

@@ -243,10 +243,11 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
             });
         }
         long archiveVerifyStarted=System.nanoTime();
-        var verified=RetentionArchiveVerifierV3.verify(payload,profile.core(),lineage,ack);
+        var captured=RetentionDurableWriterV3.captureAndVerifyArchive(payload,profile.core(),lineage,ack);
+        var verified=captured.verification();
         long coordinatorArchiveVerificationNs=System.nanoTime()-archiveVerifyStarted;
         if(verified.entries().size()!=count||verified.previousEventSeq()!=budget.lastEvent)throw new IOException("archive exact command/event prefix differs");
-        var archiveFile=writer.persistArchive(payload,profile.core(),lineage,ack).await(Duration.ofSeconds(35));
+        var archiveFile=writer.persistVerifiedArchive(captured).await(Duration.ofSeconds(35));
         activeReadBank.close();activeReadBank=null;
         var expectedEvents=new ArrayList<Event>();for(var entry:verified.entries())expectedEvents.addAll(entry.execution().events());
         long throughEvent=verified.entries().getLast().eventSeqAfter();Path eventFile=null;
@@ -293,7 +294,7 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
     private static String writerTiming(String prefix,RetentionDurableWriterV3.Persisted file){
         if(file==null)return prefix+"WriterPresent=false\n";
         var t=file.phaseTimings();
-        return prefix+"WriterPresent=true\n"+prefix+"WriterCopyNs="+t.handoffCopyNs()+"\n"+prefix+"WriterQueueWaitNs="+t.queueWaitNs()+"\n"
+        return prefix+"WriterPresent=true\n"+prefix+"WriterVerifiedArchiveHandoff="+file.verifiedArchiveHandoff()+"\n"+prefix+"WriterCopyNs="+t.handoffCopyNs()+"\n"+prefix+"WriterQueueWaitNs="+t.queueWaitNs()+"\n"
                 +prefix+"WriterPrevalidationNs="+t.prevalidationNs()+"\n"+prefix+"WriterInputHashNs="+t.inputHashNs()+"\n"
                 +prefix+"WriterWriteNs="+t.writeNs()+"\n"+prefix+"WriterForceNs="+t.forceNs()+"\n"+prefix+"WriterReadbackNs="+t.readbackNs()+"\n"
                 +prefix+"WriterReceiptWriteNs="+t.receiptWriteNs()+"\n"+prefix+"WriterReceiptForceNs="+t.receiptForceNs()+"\n"+prefix+"WriterElapsedNs="+t.writerElapsedNs()+"\n";
