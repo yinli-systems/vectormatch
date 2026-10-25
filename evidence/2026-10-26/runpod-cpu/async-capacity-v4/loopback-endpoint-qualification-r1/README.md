@@ -1,0 +1,5 @@
+# Loopback endpoint and initial readiness qualification
+
+Three endpoint tests and the complete real three-JVM legacy smoke pass locally. All15 server endpoints are excluded from the measured host ephemeral interval and probed for explicit conflicts. The occupied-port test verifies fallback and socket release. Linux uses/proc;macOS queries the actual sysctl bounds. No kernel setting or client timeout is changed. Random smoke/test allocations share this selector. New fixed capacity uses22000 and refuses overlap with the host interval.
+
+Initial legacy startup also requires the existing strict two-second quiet quorum/error-counter gate before its first client. A first local attempt mistakenly applied this fresh-term0 gate to cold recovery;it correctly refused the later term. That failed input/source/compiled/JUnit/native scope is retained. The corrected scope applies the fresh gate only to generation1;the existing all-three restored-state/canonical checks still qualify cold continuation. Complete sources,compiled bodies,all tests and both original native scopes are included. No performance claim follows.

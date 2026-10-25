@@ -213,15 +213,6 @@ class MultiplexedClusterIntegrationTest {
         builder.environment().put(NetworkTransport.MTU_ENV, "1248"); return builder.start();
     }
     private static int ports() throws Exception {
-        for (int attempt = 0; attempt < 30; attempt++) {
-            int base = ThreadLocalRandom.current().nextInt(35000, 55000); List<DatagramSocket> sockets = new ArrayList<>();
-            try {
-                for (int member = 0; member < 3; member++) for (int offset = 1; offset <= 5; offset++)
-                    sockets.add(new DatagramSocket(base + member * 100 + offset, InetAddress.getLoopbackAddress()));
-                return base;
-            } catch (BindException occupied) { /* Probe another isolated port range. */ }
-            finally { sockets.forEach(DatagramSocket::close); }
-        }
-        throw new IllegalStateException("No local test port range available");
+        return RetentionLoopbackPortsV4.availableBase();
     }
 }

@@ -162,9 +162,16 @@ public final class RetentionAeronSmokeV3 {
                         + " lineage=" + lineage + " code=" + code;
                 ready &= logs.contains(expected) && logs.contains("VECTOR_V3_SERVICE_READY profile=" + profile.fingerprint() + " lineage=" + lineage);
             }
-            if (ready) break;
+            if (ready) { if(generation==1)qualifyReady(); break; }
             require(System.nanoTime() < deadline, "all three actual profile/lineage/code readiness deadline exceeded"); Thread.sleep(20);
         }
+    }
+    private void qualifyReady() throws Exception {
+        var nodes=new ArrayList<RetentionStartupReadinessV3.Node>();
+        for(Owned record:owned)if(record.generation==generation)nodes.add(new RetentionStartupReadinessV3.Node(record.member,record.process.pid(),root.resolve("node-"+record.member+"/driver"),record.log,()->{
+            var info=record.process.info();require(record.process.isAlive()&&info.startInstant().map(record.started::equals).orElse(false)&&info.command().map(record.command::equals).orElse(false)&&info.arguments().map(args->List.of(args).equals(record.arguments)).orElse(false),"Original node identity changed during readiness");
+        }));
+        RetentionStartupReadinessV3.await(root.resolve("startup-readiness-g"+generation),nodes);
     }
     private void snapshot(int leader, String expectedHash) throws Exception {
         require(ClusterTool.snapshot(root.resolve("node-" + leader).resolve("cluster").toFile(), System.out), "V3 snapshot request failed");
@@ -232,16 +239,7 @@ public final class RetentionAeronSmokeV3 {
     private void writeNew(String name, String contents) throws IOException { Files.writeString(root.resolve(name), contents, StandardOpenOption.CREATE_NEW); }
     private static String sha(byte[] bytes) { return HexFormat.of().formatHex(ClusterStateSnapshot.digest(bytes)); }
     private static int ports() throws Exception {
-        for (int attempt = 0; attempt < 30; attempt++) {
-            int base = ThreadLocalRandom.current().nextInt(35000, 55000); List<DatagramSocket> sockets = new ArrayList<>();
-            try {
-                for (int member = 0; member < 3; member++) for (int offset = 1; offset <= 5; offset++)
-                    sockets.add(new DatagramSocket(base + member * 100 + offset, InetAddress.getByName("127.0.0.1")));
-                return base;
-            } catch (BindException occupied) { /* No state/commands exist yet; choose an unused port range. */ }
-            finally { sockets.forEach(DatagramSocket::close); }
-        }
-        throw new IllegalStateException("no separated loopback UDP port range available");
+        return RetentionLoopbackPortsV4.availableBase();
     }
     private static void require(boolean condition, String message) { if (!condition) throw new IllegalStateException(message); }
 }

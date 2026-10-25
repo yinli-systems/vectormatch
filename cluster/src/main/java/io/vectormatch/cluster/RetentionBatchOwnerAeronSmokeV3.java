@@ -402,16 +402,7 @@ public final class RetentionBatchOwnerAeronSmokeV3 {
     private void writeNew(String name, String contents) throws IOException { Files.writeString(root.resolve(name), contents, StandardOpenOption.CREATE_NEW); }
     private static String sha(byte[] bytes) { return HexFormat.of().formatHex(ClusterStateSnapshot.digest(bytes)); }
     private static int ports() throws Exception {
-        for (int attempt = 0; attempt < 30; attempt++) {
-            int base = ThreadLocalRandom.current().nextInt(35000, 55000); List<DatagramSocket> sockets = new ArrayList<>();
-            try {
-                for (int member = 0; member < 3; member++) for (int offset = 1; offset <= 5; offset++)
-                    sockets.add(new DatagramSocket(base + member * 100 + offset, InetAddress.getByName("127.0.0.1")));
-                return base;
-            } catch (BindException occupied) { /* No state/commands exist yet; choose an unused port range. */ }
-            finally { sockets.forEach(DatagramSocket::close); }
-        }
-        throw new IllegalStateException("no separated loopback UDP port range available");
+        return RetentionLoopbackPortsV4.availableBase();
     }
     private static void require(boolean condition, String message) { if (!condition) throw new IllegalStateException(message); }
 }

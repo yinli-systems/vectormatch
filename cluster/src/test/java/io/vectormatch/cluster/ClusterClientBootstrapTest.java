@@ -219,21 +219,7 @@ class ClusterClientBootstrapTest {
     }
 
     private static int availablePortBase() throws Exception {
-        for (int attempt = 0; attempt < 30; attempt++) {
-            int base = 35000 + java.util.concurrent.ThreadLocalRandom.current().nextInt(20000);
-            List<DatagramSocket> probes = new ArrayList<>();
-            try {
-                for (int member = 0; member < 3; member++) {
-                    for (int offset = 1; offset <= 5; offset++) {
-                        probes.add(new DatagramSocket(base + member * 100 + offset, InetAddress.getLoopbackAddress()));
-                    }
-                }
-                return base;
-            } catch (java.net.BindException occupied) {
-                // Try another isolated range without touching any existing local service.
-            } finally { probes.forEach(DatagramSocket::close); }
-        }
-        throw new IllegalStateException("No available local test port range");
+        return RetentionLoopbackPortsV4.availableBase();
     }
 
     private static void stop(List<Process> nodes) {

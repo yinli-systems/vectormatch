@@ -491,10 +491,7 @@ public final class RetentionCapacityAeronPilotV3 {
         finally{sockets.forEach(DatagramSocket::close);}
     }
     private static int ports()throws IOException{
-        for(int attempt=0;attempt<30;attempt++){int base=java.util.concurrent.ThreadLocalRandom.current().nextInt(35000,55000);var sockets=new ArrayList<DatagramSocket>();
-            try{for(int member=0;member<3;member++)for(int offset=1;offset<=5;offset++)sockets.add(new DatagramSocket(base+member*100+offset,InetAddress.getByName("127.0.0.1")));return base;}
-            catch(BindException occupied){/* Fresh unused range, before registration/business. */}finally{sockets.forEach(DatagramSocket::close);}}
-        throw new IOException("no loopback UDP range");
+        return RetentionLoopbackPortsV4.availableBase();
     }
     private static void require(boolean ok,String reason){if(!ok)throw new IllegalStateException(reason);}
 }

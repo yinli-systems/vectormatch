@@ -19,7 +19,7 @@ public final class RetentionCapacityAeronV4 {
     private final Path root;
     private final RetentionServiceV3.Profile profile=RetentionBatchProfilesV3.finiteLoadProfile();
     private final String code=RetentionNodeMainV3.codeFingerprint(),lineage="capacity-v4-"+UUID.randomUUID();
-    private final int ports=42000;
+    private final int ports=22000;
     private final List<Owned> owned=new ArrayList<>();
     private boolean allOwnedStopped=true;
     private int generation;
@@ -28,7 +28,7 @@ public final class RetentionCapacityAeronV4 {
     private final RetentionCapacityDiskGuardV4 disk;
     private RetentionCapacityAeronV4(Path newRoot,int rate,boolean proceed)throws Exception{
         config=new RetentionCapacityExperimentV4.Config(rate,proceed);
-        plan=RetentionCapacityExperimentV4.boundedPlan(config,profile);plan.requireAdmitted();
+        plan=RetentionCapacityExperimentV4.boundedPlan(config,profile);plan.requireAdmitted();RetentionLoopbackPortsV4.verifyFixed(ports);
         root=newRoot.toAbsolutePath().normalize();
         for(Path path=root;path!=null;path=path.getParent())require(!Files.isSymbolicLink(path),"symlink native root refused");
         Files.createDirectory(root);disk=RetentionCapacityDiskGuardV4.openFresh(root,plan);
