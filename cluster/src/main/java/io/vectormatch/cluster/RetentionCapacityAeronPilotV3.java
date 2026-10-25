@@ -95,6 +95,7 @@ public final class RetentionCapacityAeronPilotV3 {
                 "profileSha256",profile.fingerprint(),"codeSha256",code,"lineage",lineage,"ports",ports));
         registration.put("archiveChunkBytes",archiveChunkBytes);registration.put("eventFetchCount",eventFetchCount);if(eventFetchExperiment)registration.put("commonEventFetchEnvelope",true);if(readWindow32Experiment)registration.put("commonReadWindow32Envelope",true);if(readWindow128Experiment)registration.put("commonReadWindow128Envelope",true);registration.put("commonChunkEnvelope",commonEnvelope);registration.put("readWindow",readWindow);registration.put("commonReadWindowEnvelope",readWindowExperiment);
         registration.put("dispatchOrderPolicy",experimentConfig().dispatchOrderPolicy());
+        if(experimentConfig().fineDispatchCapacityPreset())registration.put("fineDispatchCapacityPreset",true);
         if(maintainedConfig==null&&workload==Workload.LONG_CUTS){registration.put("workloadPreset","long-cuts-33792-v1");registration.put("expectedFullCommandCuts",workload.fullCommandCuts());registration.put("expectedTrailingCommands",workload.trailingCommands());registration.put("equivalentFullLoadCutNumbers",List.of(2,3,4,5,6,7,8,9,10,11));}
         if(idleSelection.explicit())registration.put("retentionIdleSelection",idleSelection.observation());
         if(ownerPollSelection.explicit())registration.put("ownerPollSelection",ownerPollSelection.observation());
@@ -187,6 +188,9 @@ public final class RetentionCapacityAeronPilotV3 {
     public static Path runRead128DispatchFairness(Path newArmRoot,int ports,boolean rotating)throws Exception{
         return runReadWindow128Configuration(newArmRoot,ports,RetentionCapacityExperimentV3.Config.read128DispatchFairness(rotating));
     }
+    public static Path runRead128DispatchCapacity(Path newArmRoot,int ports,int rate,boolean rotating)throws Exception{
+        return runReadWindow128Configuration(newArmRoot,ports,RetentionCapacityExperimentV3.Config.read128DispatchCapacity(rate,rotating));
+    }
     private static Path runReadWindow128Configuration(Path newArmRoot,int ports,RetentionCapacityExperimentV3.Config config)throws Exception{
         int window=config.readWindow();
         var idle=RetentionIdlePolicyV3.systemSelection();var owner=RetentionOwnerPollPolicyV3.systemSelection();
@@ -264,6 +268,11 @@ public final class RetentionCapacityAeronPilotV3 {
         if(!selection.explicit())throw new IllegalArgumentException("idle-window8 requires explicit JVM property "+RetentionIdlePolicyV3.PROPERTY+"=100000|1000000 before launch");
     }
     public static void main(String[] args)throws Exception{
+        if(args.length>=2&&args[1].equals("read128-dispatch-capacity")){
+            if(args.length!=5||!Set.of("fixed","rotating").contains(args[2])||!Set.of("4000","6000","7000","7500","8000").contains(args[3])||!args[4].equals("42000"))throw new IllegalArgumentException("read128-dispatch-capacity requires fixed|rotating,explicit4000|6000|7000|7500|8000 and42000");
+            Path result=runRead128DispatchCapacity(Path.of(args[0]),42000,Integer.parseInt(args[3]),args[2].equals("rotating"));
+            System.out.println("VECTOR_V3_READ128_DISPATCH_CAPACITY_CORRECTNESS_PASS evidence="+result);return;
+        }
         if(args.length>=2&&args[1].equals("read128-dispatch-fairness")){
             if(args.length!=4||!Set.of("fixed","rotating").contains(args[2])||!args[3].equals("42000"))throw new IllegalArgumentException("read128-dispatch-fairness requires fixed|rotating and42000;160000@8000");
             Path result=runRead128DispatchFairness(Path.of(args[0]),42000,args[2].equals("rotating"));
@@ -344,7 +353,7 @@ public final class RetentionCapacityAeronPilotV3 {
             var functional=new LinkedHashMap<String,Object>(Map.of("passed",true,"businessSeq",position.counters().businessSeq(),"eventSeq",position.counters().eventSeq(),
                     "acceptedPlaceCount",position.counters().acceptedPlaceCount(),"finalCombinedSha256",position.counters().stateHash(),
                     "allThreeSnapshotLogsMatched",true,"noCapacityPromotion",true,"actualSourceSummary",result.summary(),"actualEgressBounds",actualEgress,"archiveChunkBytes",archiveChunkBytes));
-            functional.put("dispatchOrderPolicy",experimentConfig().dispatchOrderPolicy());functional.put("eventFetchCount",eventFetchCount);if(eventFetchExperiment)functional.put("commonEventFetchEnvelope",true);if(readWindow32Experiment)functional.put("commonReadWindow32Envelope",true);if(readWindow128Experiment)functional.put("commonReadWindow128Envelope",true);functional.put("readWindow",readWindow);functional.put("commonReadWindowEnvelope",readWindowExperiment);if(maintainedConfig!=null){functional.put("maintainedCapacityPreset",maintainedConfig.maintainedCapacityPreset());functional.put("allPlannedArrivalsRequiredAccepted",false);}write(maintainedConfig==null?"functional-result.json":"capacity-correctness-result.json",functional);
+            functional.put("dispatchOrderPolicy",experimentConfig().dispatchOrderPolicy());if(experimentConfig().fineDispatchCapacityPreset())functional.put("fineDispatchCapacityPreset",true);functional.put("eventFetchCount",eventFetchCount);if(eventFetchExperiment)functional.put("commonEventFetchEnvelope",true);if(readWindow32Experiment)functional.put("commonReadWindow32Envelope",true);if(readWindow128Experiment)functional.put("commonReadWindow128Envelope",true);functional.put("readWindow",readWindow);functional.put("commonReadWindowEnvelope",readWindowExperiment);if(maintainedConfig!=null){functional.put("maintainedCapacityPreset",maintainedConfig.maintainedCapacityPreset());functional.put("allPlannedArrivalsRequiredAccepted",false);}write(maintainedConfig==null?"functional-result.json":"capacity-correctness-result.json",functional);
         }
         disk.check();write("disk-after-functional.json",disk.snapshot());
     }

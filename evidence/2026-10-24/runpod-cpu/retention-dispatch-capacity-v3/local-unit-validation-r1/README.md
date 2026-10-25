@@ -1,0 +1,7 @@
+# Fine dispatch-capacity local qualification
+
+The first79-test attempt retains its failed6000/s planner qualification and all original source/class/JUnit/fixture bytes. After an explicit separate fine-plan entry was added,79 distinct tests across17 suites passed:76 prior readiness/maintenance/capacity/fairness regressions plus3 fine-preset/admission/CLI guards. Both policies at each explicit4000/6000/7000/7500/8000 rate share an identical admitted codec/resource plan and20s scheduled arrivals. Legacy factories and accepted rates retain their original restrictions;rotation remains opt-in.
+
+Read128/page32/batch4/chunk6144,W128/Q64,one pending logical order per worker,original deadlines,maintenance fencing,force/readback before ACK,raw/disk caps and all service/wire formats remain unchanged. Arbitrary/malformed selections fail before creating a native experiment root. No throughput or sustained-capacity result follows from these local tests.
+
+Complete actual source-before-build,registered test runtime classpath,installed JARs and actual compiled class bodies,JUnit XML/HTML,JDK executable/release and bounded no-follow fixture trees are retained. Every TAR member SHA/size/mode/owner and directory is verified;fixture links are lexical metadata and never followed. New homogeneous Linux class origins and original native/raw/readiness/private closure are required before any rate progression.

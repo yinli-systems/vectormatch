@@ -245,6 +245,11 @@ public final class RetentionCapacityPlanV3 {
         int arrivals=RetentionCapacityExperimentV3.Config.maintainedCapacityArrivals(rate);
         return readWindowEnvelope(arrivals,4,profile,32,128,extras,negatives,128);
     }
+    /** Explicit finer dispatch curve; legacy capacity rate selection remains unchanged. */
+    public static Plan dispatchCapacityReadWindow128Plan(int rate,RetentionServiceV3.Profile profile,long extras,long negatives){
+        int arrivals=RetentionCapacityExperimentV3.Config.dispatchCapacityArrivals(rate);
+        return readWindowEnvelope(arrivals,4,profile,32,128,extras,negatives,128);
+    }
     private static Plan readWindowEnvelope(int arrivals,int batchCap,RetentionServiceV3.Profile profile,
                                              int eventFetchCount,int readWindow,long extras,long negatives,int hardCapacity) {
         Plan base=readWindowPlan(arrivals,batchCap,profile,8,extras,negatives,eventFetchCount);
