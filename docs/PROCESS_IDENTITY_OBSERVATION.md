@@ -1,4 +1,16 @@
-# Process identity sampling and invalid C2
+# Process identity sampling and invalid observations
+
+## A second, longer exit window
+
+The separately registered common-sampler retest stops at D1. Its original error identifies follower PID89217,start15735209,phase cmdline,state R/R,and zero argument bytes. All four JVMs stop;every80,000 order/trade and all three snapshot logs reconcile. Its reconstructed218.194957ms p99 remains diagnostic: nativeControlPassed and performanceQualified are false. Retest C2/D2 are not executed. The first retest C1 remains a separate valid observation,not a completed performance comparison.
+
+On the same CPU and kernel6.8.0-147-generic,six owned512MiB processes exiting naturally reproduce empty argv while stat is still R,with PF_EXITING set,for approximately18–20ms before terminal proof. Each exits0 and disappears from /proc;no signals are sent. This exceeds the first sampler's two1ms retries. The original D1 error did not capture flags,so this reproduction supports the teardown explanation without proving every historical kernel step. Linux6.8 [exit_mm](https://github.com/torvalds/linux/blob/v6.8/kernel/exit.c) clears the address space before exit_notify sets the zombie state;[get_task_cmdline](https://github.com/torvalds/linux/blob/v6.8/fs/proc/base.c) returns no bytes when no address space remains.
+
+The revised sampler parses stat flags. Incomplete argv with PF_EXITING permits a bounded wait for the same birth to become Z/X/x or disappear,at most1s/1024 stat reads. PF_EXITING alone is never absence. A live or stuck process,changed birth,cleared exit flag,malformed stat or permission failure still refuses qualification. The directory descriptor remains bound throughout. Signaling still uses the original ownership/pidfd checks;no numeric-PID fallback is added. This is a control-plane exit fix,not a trading latency optimization or a hard kernel-time guarantee.
+
+The revised focused suite has26 tests:23 fixtures pass on the Mac with3 explicit Linux skips;all26 pass on the actual CPU's Python3.8,including6 natural512MiB exits and30 short-lived exits. Full independent CI and a new controller-source qualification are still required before another performance campaign. Prior frozen sources,raw evidence and failed statuses remain unchanged.
+
+## Original C2 observation
 
 The original C2 controller fails with `Incomplete process identity`. It records neither the failing PID nor which read was incomplete. All four owned JVMs subsequently stop cleanly. Independent original-byte checks reconcile all80,000 accepted orders and80,000 trade events,zero notSent/rejection/observed or final UNKNOWN,and matching three-node snapshots. Nevertheless,nativeControlPassed and performanceQualified remain false. Its240.568357ms reconstructed p99 is diagnostic data from an invalid observation;D2 is not executed.
 

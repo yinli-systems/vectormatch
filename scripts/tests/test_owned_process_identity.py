@@ -16,9 +16,11 @@ identity = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(identity)
 
 
-def stat(pid=123, state="R", start=456):
+def stat(pid=123, state="R", start=456, flags=0):
     # state is field3;starttime is field22,not a whitespace split of comm.
-    return (str(pid) + " (name with ) space) " + " ".join([state] + ["0"] * 18 + [str(start)])).encode()
+    fields = [state] + ["0"] * 18 + [str(start)]
+    fields[6] = str(flags)
+    return (str(pid) + " (name with ) space) " + " ".join(fields)).encode()
 
 
 class IdentityFixtureTest(unittest.TestCase):
@@ -63,6 +65,51 @@ class IdentityFixtureTest(unittest.TestCase):
         with patch.object(identity, "_read_at", side_effect=[stat(), b"", stat(), stat(), b"java\0", stat()]), patch.object(identity.time, "sleep"):
             result = identity.read_identity(123, self.root)
         self.assertEqual(["java"], result["arguments"])
+
+    def test_exiting_empty_command_line_waits_beyond_old_retry_before_terminal_proof(self):
+        exiting = stat(flags=identity.PF_EXITING)
+        with patch.object(identity, "_read_at", side_effect=[stat(), b"", exiting] + [exiting] * 20 + [stat(state="Z")]), patch.object(identity.time, "sleep") as sleep:
+            self.assertIsNone(identity.read_identity(123, self.root))
+        self.assertEqual(20, sleep.call_count)
+
+    def test_exiting_flag_alone_never_proves_absence_and_wait_is_read_bounded(self):
+        (self.process / "stat").write_bytes(stat(flags=identity.PF_EXITING))
+        (self.process / "cmdline").write_bytes(b"")
+        with patch.object(identity.time, "sleep") as sleep, patch.object(identity.time, "monotonic", return_value=0):
+            with self.assertRaisesRegex(identity.IdentityReadError, "Unproven process exit pid=123"):
+                identity.read_identity(123, self.root)
+        self.assertEqual(identity.EXIT_WAIT_READS, sleep.call_count)
+
+    def test_exiting_wait_also_obeys_monotonic_deadline(self):
+        (self.process / "stat").write_bytes(stat(flags=identity.PF_EXITING))
+        (self.process / "cmdline").write_bytes(b"")
+        with patch.object(identity.time, "sleep") as sleep, patch.object(identity.time, "monotonic", side_effect=[0, 2]):
+            with self.assertRaisesRegex(identity.IdentityReadError, "phase=exit-wait"):
+                identity.read_identity(123, self.root)
+        sleep.assert_not_called()
+
+    def test_exiting_wait_cannot_accept_a_different_birth_even_if_zombie(self):
+        exiting = stat(flags=identity.PF_EXITING)
+        with patch.object(identity, "_read_at", side_effect=[stat(), b"", exiting, stat(state="Z", start=999)]):
+            with self.assertRaisesRegex(identity.IdentityReadError, "startTicks=456->999"):
+                identity.read_identity(123, self.root)
+
+    def test_exiting_wait_permission_failure_is_not_absence(self):
+        exiting = stat(flags=identity.PF_EXITING)
+        with patch.object(identity, "_read_at", side_effect=[stat(), b"", exiting, PermissionError(13, "denied")]):
+            with self.assertRaises(PermissionError):
+                identity.read_identity(123, self.root)
+
+    def test_exiting_wait_disappearance_is_proven_absence(self):
+        exiting = stat(flags=identity.PF_EXITING)
+        with patch.object(identity, "_read_at", side_effect=[stat(), b"", exiting, ProcessLookupError(3, "exited")]):
+            self.assertIsNone(identity.read_identity(123, self.root))
+
+    def test_exiting_flag_disappearing_while_live_is_refused(self):
+        exiting = stat(flags=identity.PF_EXITING)
+        with patch.object(identity, "_read_at", side_effect=[stat(), b"", exiting, stat()]):
+            with self.assertRaisesRegex(identity.IdentityReadError, "Unproven process exit"):
+                identity.read_identity(123, self.root)
 
     def test_live_partial_arguments_are_refused_without_exposing_their_bytes(self):
         (self.process / "cmdline").write_bytes(b"do-not-log-this-secret")
@@ -140,6 +187,32 @@ class IdentityFixtureTest(unittest.TestCase):
 
 @unittest.skipUnless(sys.platform.startswith("linux"), "actual /proc semantics require Linux")
 class LinuxProcessTest(unittest.TestCase):
+    def test_owned_large_memory_natural_exit_keeps_proven_exit_semantics(self):
+        code = ("import mmap,os,sys; "
+                "m=mmap.mmap(-1,512*1024*1024,flags=mmap.MAP_PRIVATE|mmap.MAP_ANONYMOUS); "
+                "m.madvise(mmap.MADV_NOHUGEPAGE); "
+                "m[::4096]=b'x'*(len(m)//4096); "
+                "print('READY',flush=True); "
+                "assert sys.stdin.buffer.read(1)==b'x'; os._exit(0)")
+        for _ in range(6):
+            with subprocess.Popen([sys.executable, "-c", code], stdin=subprocess.PIPE,
+                                  stdout=subprocess.PIPE, stderr=subprocess.PIPE) as child:
+                self.assertEqual(b"READY\n", child.stdout.readline())
+                before = identity.read_identity(child.pid)
+                self.assertIsNotNone(before)
+                child.stdin.write(b"x")
+                child.stdin.flush()
+                deadline = time.monotonic() + 3
+                while child.poll() is None and time.monotonic() < deadline:
+                    result = identity.read_identity(child.pid)
+                    if result is None:
+                        self.assertEqual(0, child.wait(timeout=2))
+                    else:
+                        self.assertEqual(before, result)
+                self.assertEqual(0, child.wait(timeout=2))
+                self.assertEqual(b"", child.stderr.read())
+            self.assertFalse(Path("/proc", str(child.pid)).exists())
+
     def test_live_self_has_a_complete_stable_birth_and_command(self):
         first = identity.read_identity(os.getpid())
         second = identity.read_identity(os.getpid())

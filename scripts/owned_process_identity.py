@@ -10,6 +10,11 @@ from pathlib import Path
 import time
 
 
+PF_EXITING = 0x00000004
+EXIT_WAIT_SECONDS = 1.0
+EXIT_WAIT_READS = 1024
+
+
 class IdentityReadError(RuntimeError):
     pass
 
@@ -39,19 +44,39 @@ def _stat_identity(body, pid, phase):
         valid = valid and int(body[:opening].strip()) == pid
         start = int(fields[19]) if valid else 0
         state = fields[0].decode("ascii") if valid else "?"
-        valid = valid and start > 0 and len(state) == 1
+        flags = int(fields[6]) if valid else -1
+        valid = valid and start > 0 and len(state) == 1 and flags >= 0
     except (ValueError, UnicodeError):
         valid = False
     if not valid:
         raise IdentityReadError("Incomplete process identity pid=%d phase=%s stat" % (pid, phase))
-    return state, start
+    return state, start, flags
+
+
+def _wait_for_exit(directory, pid, start):
+    # exit_mm clears mm before exit_notify sets EXIT_ZOMBIE. Empty argv with
+    # PF_EXITING permits waiting, never an immediate claim of process absence.
+    deadline = time.monotonic() + EXIT_WAIT_SECONDS
+    last = None
+    for _ in range(EXIT_WAIT_READS):
+        last = _stat_identity(_read_at(directory, "stat", 65536), pid, "exit-wait")
+        if last[1] != start:
+            raise IdentityReadError("Process identity changed pid=%d startTicks=%d->%d" % (pid, start, last[1]))
+        if last[0] in ("Z", "X", "x"):
+            return None
+        if not last[2] & PF_EXITING or time.monotonic() >= deadline:
+            break
+        time.sleep(0.001)
+    raise IdentityReadError("Unproven process exit pid=%d phase=exit-wait state=%s startTicks=%d flags=%d" %
+                            (pid, last[0], start, last[2]))
 
 
 def read_identity(pid, proc_root=Path("/proc")):
     """Return exact PID/start/argv observation, None only on proven exit/absence.
 
     Permission failures and malformed live identities propagate. Two 1ms retries
-    handle a bounded exec/exit transition; they never authorize signaling a PID.
+    handle transient argv reads. PF_EXITING with incomplete argv allows at most
+    1s/1024 stat reads to prove exit; it never authorizes signaling a PID.
     """
     if type(pid) is not int or pid <= 0:
         raise ValueError("positive integer PID required")
@@ -72,6 +97,8 @@ def read_identity(pid, proc_root=Path("/proc")):
             if arguments.endswith(b"\0") and arguments.split(b"\0", 1)[0]:
                 return dict(pid=pid, startTicks=first[1], commandSha256=hashlib.sha256(arguments).hexdigest(),
                             arguments=[os.fsdecode(value) for value in arguments[:-1].split(b"\0")])
+            if second[2] & PF_EXITING:
+                return _wait_for_exit(directory, pid, first[1])
             last = (first[0], second[0], first[1], len(arguments))
             if attempt < 2:
                 time.sleep(0.001)

@@ -1,5 +1,7 @@
 # Registered handoff retest with one common qualified identity sampler
 
+Execution status:incomplete. C1 passes its complete private closure with80,000 accepted orders/trades and241.521518ms all-arrival p99. D1 reconciles all80,000 orders/trades but fails native process identity sampling for follower PID89217,state R/R,empty argv;its218.194957ms p99 is diagnostic only. Retest C2/D2 are not executed. The [exit-window investigation](PROCESS_IDENTITY_OBSERVATION.md) reproduces an18–20ms teardown window on the same kernel. This frozen registration is retained;the revised sampler requires separate qualification and a fresh registration before further performance orders.
+
 This is a new comparison with new exclusive namespaces and business lineages. The [initial campaign](VERIFIED_ARCHIVE_HANDOFF_INITIAL_RESULTS_V3.md) remains incomplete:C1/D1 are valid,C2 is invalid,D2 never executes. Its exact exception lacks PID/read-phase detail;the independently reproduced sampler defect does not establish that historical trigger. All three original native assets must be privately restored and member-verified before this retest begins. No original outcome,invalid status or lineage is overwritten or replayed.
 
 ## Frozen components
