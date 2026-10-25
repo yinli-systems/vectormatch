@@ -1,0 +1,7 @@
+# Writer timing comparison:A2 complete original evidence
+
+Fresh80000 IOC arrivals@4000/s over20s. Accepted80000,notSent0,rejected0,observed/final UNKNOWN0/0. In-window goodput3993.45/s;global accepted p99249916563ns. Artifact2b8d7594e03f8eeeef7aaf8e07db12c3bb585ba4ba67970d065c7174420fbf68;timing schema expected:False.
+
+Fixed leader0/sync2/ROTATING_CONTINUE/read128/page32/batch4/chunk6144/owner1ms/driver100us/W128Q64,one physical session,existing shared CPU host. Both original-PID2s readiness gates and5s warm-up pass;no JFR. Original lifecycle,exact-PID/pidfd shutdown,strict native checks,raw bounds and all planned outcomes are preserved. Registered project-only read-only cache preconditioning and every failed/passed preflight remain retained.8GiB headroom,CPU/RAM/disk limits and business parameters are unchanged.
+
+The compressed complete scope archive preserves every original closed native TAR,CSV,wire/frame/offer,decoder/identity/result,source,readiness and process record. Every member's SHA/size/mode/owner/directory is independently checked. Lossless32MiB parts reconstruct the entire compressed TAR. No original raw row or failed input is sampled or omitted. Candidate-codec/reference checks are not an independent algorithm oracle or cold binary recovery. Full private closure precedes the next registered case. This20s diagnostic is not an optimization,statistical significance,sustained capacity,millisecond SLA or100M proof.
