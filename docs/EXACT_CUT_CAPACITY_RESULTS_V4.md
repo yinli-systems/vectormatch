@@ -71,3 +71,25 @@ Each original command/result,trade/event prefix,deadline,read credit and forced/
 Two pairs of finite20-second fresh lineages on one physical host;direction criterion is not statistical significance,endurance,SLA,independent-host durability,100M continuity or funded trading.
 
 The next preregistered rate is 4000 only after this review is privately published. A failed finite gate stops upward escalation;conditional percentiles never replace undefined all-arrival p99.
+
+
+## 4000 scheduled arrivals/s
+
+All four arms use the same compiled artifact and fixed leader/configuration. These are separate20-second fresh lineages on one physical CPU.
+
+| Arm | Policy | Accepted/planned | In-window goodput/s | End-to-end p50 ms | End-to-end p99 ms | Post-offer p99 ms | notSent | UNKNOWN final |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| C1 | PAUSE | 80000/80000 | 3993.45 | 55.206 | 200.988 | 16.047 | 0 | 0 |
+| D1 | CONTINUE | 80000/80000 | 3993.45 | 27.403 | 128.860 | 20.616 | 0 | 0 |
+| C2 | PAUSE | 80000/80000 | 3993.45 | 56.483 | 216.867 | 12.629 | 0 | 0 |
+| D2 | CONTINUE | 80000/80000 | 3993.45 | 17.755 | 89.341 | 14.127 | 0 | 0 |
+
+All four prospective finite gates passed:True. Both registered paired direction criteria passed:False. Both candidates meet the10ms p99 target:False. No default performance promotion follows from these two pairs.
+
+C1/D1:global p99 change -35.88670819610987%;post-offer p99 change 28.466672545101666%;in-window goodput difference 0.0/s.
+C2/D2:global p99 change -58.803620461275386%;post-offer p99 change 11.866836280794523%;in-window goodput difference 0.0/s.
+Each original command/result,trade/event prefix,deadline,read credit and forced/readback receipt passed independent audit. The same adapter replays the actual positive physical-offer order and checks every received reply. All three snapshots and actual cold restores agree in every arm. Each full raw asset was authenticated,re-downloaded and every member byte/mode/owner/directory verified before progression.
+
+Two pairs of finite20-second fresh lineages on one physical host;direction criterion is not statistical significance,endurance,SLA,independent-host durability,100M continuity or funded trading.
+
+The next preregistered rate is 6000 only after this review is privately published. A failed finite gate stops upward escalation;conditional percentiles never replace undefined all-arrival p99.
