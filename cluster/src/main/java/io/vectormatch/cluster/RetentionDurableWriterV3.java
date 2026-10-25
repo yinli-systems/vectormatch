@@ -20,15 +20,21 @@ import static io.vectormatch.cluster.RetentionWireV3.*;
 public final class RetentionDurableWriterV3 implements AutoCloseable {
     @FunctionalInterface interface AfterForce { void check(Path path) throws IOException; }
     @FunctionalInterface private interface Verifier { void verify(byte[] bytes); }
+    /** Monotonic durations in this JVM. Copy/queue precede the writer elapsed interval. */
+    public record PhaseTimings(long handoffCopyNs,long queueWaitNs,long prevalidationNs,long inputHashNs,
+                               long writeNs,long forceNs,long readbackNs,long receiptWriteNs,
+                               long receiptForceNs,long writerElapsedNs){}
     public static final class Persisted {
         private final Path path;
         private final String sha256;
-        private final long bytes, writeNs, forceNs, readbackNs;
-        private Persisted(Path path, String sha256, long bytes, long writeNs, long forceNs, long readbackNs) {
-            this.path=path;this.sha256=sha256;this.bytes=bytes;this.writeNs=writeNs;this.forceNs=forceNs;this.readbackNs=readbackNs;
+        private final long bytes;
+        private final PhaseTimings phases;
+        private Persisted(Path path, String sha256, long bytes, PhaseTimings phases) {
+            this.path=path;this.sha256=sha256;this.bytes=bytes;this.phases=phases;
         }
         public Path path(){return path;} public String sha256(){return sha256;} public long bytes(){return bytes;}
-        public long writeNs(){return writeNs;} public long forceNs(){return forceNs;} public long readbackNs(){return readbackNs;}
+        public long writeNs(){return phases.writeNs();} public long forceNs(){return phases.forceNs();} public long readbackNs(){return phases.readbackNs();}
+        public PhaseTimings phaseTimings(){return phases;}
     }
     public final class Ticket {
         private final Job job;
@@ -41,7 +47,7 @@ public final class RetentionDurableWriterV3 implements AutoCloseable {
             catch(TimeoutException|ExecutionException failure){throw new IOException("writer not proven complete; preserve partial file, no ACK authorization",failure);}
         }
     }
-    private record Job(String name,byte[] bytes,Verifier verifier,CompletableFuture<Persisted> done){}
+    private record Job(String name,byte[] bytes,Verifier verifier,long enqueuedNs,long copyNs,CompletableFuture<Persisted> done){}
     private final Object lock=new Object();
     private final Path root;
     private final long maxFileBytes,maxTotalBytes;
@@ -81,7 +87,8 @@ public final class RetentionDurableWriterV3 implements AutoCloseable {
             if(input==null||input.length==0||input.length>maxFileBytes||input.length>maxTotalBytes-reservedBytes||submitted>=maxJobs)
                 throw new IllegalArgumentException("writer file/run budget exceeded before write");
             if(outstanding>=2)throw new IllegalStateException("one active plus one queued writer job bound");
-            byte[] copy=input.clone();Job job=new Job(String.format(Locale.ROOT,"%04d-%s.bin",submitted+1,kind),copy,verifier,new CompletableFuture<>());
+            long copyStarted=System.nanoTime();byte[] copy=input.clone();long copyNs=System.nanoTime()-copyStarted;
+            Job job=new Job(String.format(Locale.ROOT,"%04d-%s.bin",submitted+1,kind),copy,verifier,System.nanoTime(),copyNs,new CompletableFuture<>());
             if(!queue.offer(job))throw new IllegalStateException("one queued writer job bound");
             reservedBytes+=copy.length;submitted++;outstanding++;highWater=Math.max(highWater,outstanding);return new Ticket(job);
         }
@@ -93,9 +100,9 @@ public final class RetentionDurableWriterV3 implements AutoCloseable {
                 synchronized(lock){if(closing&&queue.isEmpty())break;}
                 job=queue.poll(20,TimeUnit.MILLISECONDS);if(job==null)continue;
                 try{
-                    job.verifier.verify(job.bytes);
+                    long writerStarted=System.nanoTime();job.verifier.verify(job.bytes);long prevalidationEnded=System.nanoTime();
                     if(Files.getFileStore(root).getUsableSpace()<job.bytes.length+32L*1024*1024)throw new IOException("writer free-space guard before file creation");
-                    String expectedSha=hash(job.bytes);Path path=root.resolve(job.name);
+                    long hashStarted=System.nanoTime();String expectedSha=hash(job.bytes);long hashEnded=System.nanoTime();Path path=root.resolve(job.name);
                     long start=System.nanoTime(),writeEnd,forceEnd;
                     try(FileChannel file=FileChannel.open(path,StandardOpenOption.CREATE_NEW,StandardOpenOption.WRITE)){
                         ByteBuffer data=ByteBuffer.wrap(job.bytes);while(data.hasRemaining()){
@@ -109,12 +116,20 @@ public final class RetentionDurableWriterV3 implements AutoCloseable {
                     if(readback.length!=job.bytes.length||!hash(readback).equals(expectedSha))throw new IOException("full forced prefix readback differs");
                     job.verifier.verify(readback);long verified=System.nanoTime();
                     if(verified-start>TimeUnit.SECONDS.toNanos(30))throw new IOException("writer completed after finite admission deadline; preserve file without success receipt");
-                    Persisted result=new Persisted(path,expectedSha,readback.length,writeEnd-start,forceEnd-writeEnd,verified-forceEnd);
-                    String receipt="payload="+job.name+"\nbytes="+result.bytes+"\nsha256="+expectedSha+"\nforceTrueCompleted=true\nfullReadbackVerified=true\nwriteNs="+result.writeNs+"\nforceNs="+result.forceNs+"\nreadbackNs="+result.readbackNs+"\nscope=FileChannel.force(true) issued and logical bytes read back; no independent storage/directory-fsync durability guarantee\n";
+                    long receiptStarted=System.nanoTime();
+                    String receipt="payload="+job.name+"\nbytes="+readback.length+"\nsha256="+expectedSha+"\nforceTrueCompleted=true\nfullReadbackVerified=true\nwriteNs="+(writeEnd-start)+"\nforceNs="+(forceEnd-writeEnd)+"\nreadbackNs="+(verified-forceEnd)+"\nscope=FileChannel.force(true) issued and logical bytes read back; no independent storage/directory-fsync durability guarantee\n";
                     if(receipt.getBytes(java.nio.charset.StandardCharsets.UTF_8).length>1024)throw new IOException("bounded writer receipt exceeds 1024 bytes");
+                    long receiptWriteEnd,receiptForceEnd;
                     try(FileChannel file=FileChannel.open(root.resolve(job.name+".verified.txt"),StandardOpenOption.CREATE_NEW,StandardOpenOption.WRITE)){
-                        ByteBuffer data=ByteBuffer.wrap(receipt.getBytes(java.nio.charset.StandardCharsets.UTF_8));while(data.hasRemaining())file.write(data);file.force(true);
+                        ByteBuffer data=ByteBuffer.wrap(receipt.getBytes(java.nio.charset.StandardCharsets.UTF_8));while(data.hasRemaining())file.write(data);
+                        receiptWriteEnd=System.nanoTime();file.force(true);receiptForceEnd=System.nanoTime();
                     }
+                    // Receipt force/close precedes success. Its own force timing cannot be embedded
+                    // in the same already-forced receipt; publish it through the completed ticket.
+                    var phases=new PhaseTimings(job.copyNs,writerStarted-job.enqueuedNs,prevalidationEnded-writerStarted,
+                            hashEnded-hashStarted,writeEnd-start,forceEnd-writeEnd,verified-forceEnd,
+                            receiptWriteEnd-receiptStarted,receiptForceEnd-receiptWriteEnd,System.nanoTime()-writerStarted);
+                    Persisted result=new Persisted(path,expectedSha,readback.length,phases);
                     synchronized(lock){completed++;completedBytes+=result.bytes;outstanding--;}
                     job.done.complete(result);
                 }catch(Throwable error){job.done.completeExceptionally(error);throw error;}

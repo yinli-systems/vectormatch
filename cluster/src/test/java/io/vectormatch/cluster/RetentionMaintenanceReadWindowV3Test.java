@@ -182,6 +182,23 @@ class RetentionMaintenanceReadWindowV3Test {
                 else{assertEquals("0",values[9]);assertEquals("0",values[10]);assertEquals("",values[11]);assertEquals("",values[12]);}
             }
             assertEquals(2,phases.size());assertTrue(Files.readString(f.directory.resolve("raw/cycle-1.verified.txt")).contains("readWindow="+window));
+            Map<String,String> cycleFields=new HashMap<>();
+            for(String line:Files.readAllLines(f.directory.resolve("raw/cycle-1.verified.txt"))){
+                String[] value=line.split("=",2);assertEquals(2,value.length);assertNull(cycleFields.put(value[0],value[1]),"duplicate timing field");
+            }
+            assertEquals("1",cycleFields.get("writerTimingSchema"));assertTrue(Long.parseLong(cycleFields.get("coordinatorArchiveVerificationNs"))>=0);
+            for(String prefix:List.of("archive","events")){
+                assertEquals("true",cycleFields.get(prefix+"WriterPresent"));long serialNs=0;
+                for(String phase:List.of("Prevalidation","InputHash","Write","Force","Readback","ReceiptWrite","ReceiptForce")){
+                    long duration=Long.parseLong(cycleFields.get(prefix+"Writer"+phase+"Ns"));assertTrue(duration>=0);serialNs+=duration;
+                }
+                assertTrue(Long.parseLong(cycleFields.get(prefix+"WriterElapsedNs"))>=serialNs);
+                assertTrue(Long.parseLong(cycleFields.get(prefix+"WriterCopyNs"))>=0);assertTrue(Long.parseLong(cycleFields.get(prefix+"WriterQueueWaitNs"))>=0);
+                Path payload=Path.of(cycleFields.get(prefix.equals("archive")?"archiveFile":"eventFile"));
+                Path durableReceipt=payload.resolveSibling(payload.getFileName()+".verified.txt");assertTrue(Files.size(durableReceipt)<=1024);
+                String text=Files.readString(durableReceipt);
+                for(String phase:List.of("Write","Force","Readback"))assertTrue(text.contains(Character.toLowerCase(phase.charAt(0))+phase.substring(1)+"Ns="+cycleFields.get(prefix+"Writer"+phase+"Ns")+"\n"));
+            }
             if(window==8){long firstChunk=f.io.offers.stream().filter(r->r.operation() instanceof ArchiveChunk).findFirst().orElseThrow().correlationId();assertNotEquals(firstChunk,f.io.deliveredReads.getFirst());}
         }
     }

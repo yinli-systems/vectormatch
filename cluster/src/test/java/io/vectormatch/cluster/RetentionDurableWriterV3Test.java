@@ -36,6 +36,15 @@ class RetentionDurableWriterV3Test {
             assertArrayEquals(p.bytes,Files.readAllBytes(archive.path()));assertArrayEquals(p.framedEvents,Files.readAllBytes(events.path()));
             for(Path payload:List.of(archive.path(),events.path()))assertTrue(Files.readString(payload.resolveSibling(payload.getFileName()+".verified.txt")).contains("forceTrueCompleted=true\nfullReadbackVerified=true"));
             assertEquals(2,writer.snapshot().get("completed"));assertTrue(archive.forceNs()>=0);assertTrue(archive.readbackNs()>=0);
+            for(var persisted:List.of(archive,events)){
+                var t=persisted.phaseTimings();
+                assertTrue(java.util.stream.LongStream.of(t.handoffCopyNs(),t.queueWaitNs(),t.prevalidationNs(),t.inputHashNs(),
+                        t.writeNs(),t.forceNs(),t.readbackNs(),t.receiptWriteNs(),t.receiptForceNs(),t.writerElapsedNs()).allMatch(n->n>=0));
+                assertTrue(t.writerElapsedNs()>=t.prevalidationNs()+t.inputHashNs()+t.writeNs()+t.forceNs()+t.readbackNs()+t.receiptWriteNs()+t.receiptForceNs(),
+                        "serial writer phases must not double-count elapsed time; copy/queue are outside it");
+                String receipt=Files.readString(persisted.path().resolveSibling(persisted.path().getFileName()+".verified.txt"));
+                assertTrue(receipt.contains("writeNs="+t.writeNs()+"\nforceNs="+t.forceNs()+"\nreadbackNs="+t.readbackNs()+"\n"));
+            }
         }
         assertThrows(FileAlreadyExistsException.class,()->new RetentionDurableWriterV3(path,4096,16384,4));
     }

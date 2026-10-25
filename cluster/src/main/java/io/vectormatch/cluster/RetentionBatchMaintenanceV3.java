@@ -242,12 +242,15 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
                 System.arraycopy(chunk.data(),0,payload,requested.offset(),requested.count());
             });
         }
+        long archiveVerifyStarted=System.nanoTime();
         var verified=RetentionArchiveVerifierV3.verify(payload,profile.core(),lineage,ack);
+        long coordinatorArchiveVerificationNs=System.nanoTime()-archiveVerifyStarted;
         if(verified.entries().size()!=count||verified.previousEventSeq()!=budget.lastEvent)throw new IOException("archive exact command/event prefix differs");
         var archiveFile=writer.persistArchive(payload,profile.core(),lineage,ack).await(Duration.ofSeconds(35));
         activeReadBank.close();activeReadBank=null;
         var expectedEvents=new ArrayList<Event>();for(var entry:verified.entries())expectedEvents.addAll(entry.execution().events());
         long throughEvent=verified.entries().getLast().eventSeqAfter();Path eventFile=null;
+        RetentionDurableWriterV3.Persisted eventPersisted=null;
         if(throughEvent-budget.lastEvent!=expectedEvents.size())throw new IOException("archive event total/gap differs");
         if(!expectedEvents.isEmpty()){
             ByteArrayOutputStream bytes=new ByteArrayOutputStream();DataOutputStream out=new DataOutputStream(bytes);int index=0;
@@ -266,7 +269,8 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
                     byte[] raw=RetentionReplyV3.encode(reply);if(bytes.size()+4L+raw.length>fileLimit)throw new IOException("event evidence allocation cap exceeded");out.writeInt(raw.length);out.write(raw);
                 });index=next;
             }
-            eventFile=writer.persistEvents(bytes.toByteArray(),expectedEvents,scope,budget.lastEvent+1,throughEvent).await(Duration.ofSeconds(35)).path();
+            eventPersisted=writer.persistEvents(bytes.toByteArray(),expectedEvents,scope,budget.lastEvent+1,throughEvent).await(Duration.ofSeconds(35));
+            eventFile=eventPersisted.path();
             activeReadBank.close();activeReadBank=null;
         }
         // Both immutable payload and exact event prefix are forced/readback verified before either destructive ACK.
@@ -282,8 +286,17 @@ public final class RetentionBatchMaintenanceV3 implements AutoCloseable {
         }
         budget.lastArchive=ack;budget.lastEvent=throughEvent;cycleCount++;
         String receipt="cycle="+cycleCount+"\ncycleStartedMonotonicNs="+cycleStarted+"\ncycleEndedMonotonicNs="+System.nanoTime()+"\nlogicalRpcCountAtStart="+rpcAtStart+"\nlogicalRpcCountAtEnd="+rpcCount+"\narchiveChunkBytes="+archiveChunkBytes+"\neventFetchCount="+eventFetchCount+"\nreadWindow="+readWindow+"\nfirstCommandSeq="+from+"\nthroughCommandSeq="+through+"\nthroughEventSeq="+throughEvent+"\narchiveFile="+archiveFile.path()+"\narchiveSha256="+archiveFile.sha256()+"\neventFile="+eventFile+"\nforceAndReadbackBeforeBothAcks=true\nreservedJournalRecords="+budget.reservedJournalRecords+"\nreservedJournalBytes="+budget.reservedJournalBytes+"\ncapacityClaim=false\n";
+        receipt+="writerTimingSchema=1\ncoordinatorArchiveVerificationNs="+coordinatorArchiveVerificationNs+"\n"+writerTiming("archive",archiveFile)+writerTiming("events",eventPersisted);
         Files.writeString(rawRoot.resolve("cycle-"+cycleCount+".verified.txt"),receipt,StandardOpenOption.CREATE_NEW);
         return new Cycle(ack,archiveFile.path(),eventFile,verified.entries(),throughEvent);
+    }
+    private static String writerTiming(String prefix,RetentionDurableWriterV3.Persisted file){
+        if(file==null)return prefix+"WriterPresent=false\n";
+        var t=file.phaseTimings();
+        return prefix+"WriterPresent=true\n"+prefix+"WriterCopyNs="+t.handoffCopyNs()+"\n"+prefix+"WriterQueueWaitNs="+t.queueWaitNs()+"\n"
+                +prefix+"WriterPrevalidationNs="+t.prevalidationNs()+"\n"+prefix+"WriterInputHashNs="+t.inputHashNs()+"\n"
+                +prefix+"WriterWriteNs="+t.writeNs()+"\n"+prefix+"WriterForceNs="+t.forceNs()+"\n"+prefix+"WriterReadbackNs="+t.readbackNs()+"\n"
+                +prefix+"WriterReceiptWriteNs="+t.receiptWriteNs()+"\n"+prefix+"WriterReceiptForceNs="+t.receiptForceNs()+"\n"+prefix+"WriterElapsedNs="+t.writerElapsedNs()+"\n";
     }
     public Map<String,Object> snapshot(){affinity();var result=new LinkedHashMap<String,Object>(budget.snapshot());if(commonReadWindow32Envelope)result.put("commonReadWindow32Envelope",true);if(commonReadWindow128Envelope)result.put("commonReadWindow128Envelope",true);result.put("archiveChunkBytes",archiveChunkBytes);result.put("eventFetchCount",eventFetchCount);result.put("readWindow",readWindow);result.put("logicalRpcCount",rpcCount);result.put("maximumLogicalRpcs",maximumLogicalRpcs);var kinds=new LinkedHashMap<String,Object>();for(var entry:rpcKinds.entrySet()){long[] v=entry.getValue();kinds.put(entry.getKey(),Map.of("count",v[0],"totalElapsedNs",v[1],"maxElapsedNs",v[2],"failed",v[3]));}result.put("rpcKinds",kinds);result.put("completedCycles",cycleCount);result.put("failed",failed);return Collections.unmodifiableMap(result);}
     @Override public void close()throws IOException{affinity();closed=true;try{requests.close();}finally{try{replies.close();}finally{timings.close();}}}
