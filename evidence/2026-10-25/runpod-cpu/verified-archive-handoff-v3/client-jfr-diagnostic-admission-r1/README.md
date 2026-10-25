@@ -1,0 +1,5 @@
+# Parent/client JFR diagnostic admission
+
+Fresh150000@7500/s synthetic diagnostic only. Original failed7500 capacity point is unchanged;8000 remains unexecuted,no escalation is permitted. Exact application,JDK,leader,durability,workload/window/readiness/sampler bodies are retained. Only parent JFR/GC flags and an additional128MiB diagnostic allocation reserve change;three node JVM arguments do not. This cannot establish node GC,pure network or an optimization gain.
+
+Whole original admission scopes include every actual controller/helper/frozen-source byte,strict guard review,actual Linux JDK argument/JFR smoke,private original-curve proof and read-only reply-callback/CPU telemetry diagnosis. The previous telemetry parser failure is retained. Original large reply inputs remain in the three sibling private assets with complete SHA/member proofs;the derived timestamp results pin those exact bodies. Registration restoration from actual private Git blobs is required before stage/launch. No new workload or capacity result is claimed by this package.
