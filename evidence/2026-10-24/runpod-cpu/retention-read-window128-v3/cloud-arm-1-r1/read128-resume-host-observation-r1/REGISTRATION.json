@@ -1,0 +1,5 @@
+{
+  "atUTC": "2026-10-25T09:07:19.546271+00:00",
+  "readOnly": true,
+  "command": "import socket,pathlib,os,json,shutil; print(json.dumps(dict(host=socket.gethostname(),bootId=pathlib.Path('/proc/sys/kernel/random/boot_id').read_text().strip(),affinity=sorted(os.sched_getaffinity(0)),cpuMax=pathlib.Path('/sys/fs/cgroup/cpu.max').read_text(),memoryMax=pathlib.Path('/sys/fs/cgroup/memory.max').read_text(),freeBytes=shutil.disk_usage('/opt/vectormatch-cpu').free,foreign=[dict(pid=int(p.name),exe=os.fsdecode((p/'cmdline').read_bytes().split(b'\\0')[0])) for p in pathlib.Path('/proc').iterdir() if p.name.isdigit() and (p/'cmdline').exists() and pathlib.Path(os.fsdecode((p/'cmdline').read_bytes().split(b'\\0')[0])).name in ['java','javaw','postgres','postmaster']])))"
+}
