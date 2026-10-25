@@ -36,3 +36,15 @@ python3 scripts/check-new-git-blobs.py --base HEAD^ --head HEAD
 The guard refuses changed blob paths over10MiB and fails closed if the revisions or object sizes cannot be read. Larger raw archives belong in immutable attachments to this same private repository,with committed SHA-256 and complete member inventories plus authenticated download verification. It leaves existing history unchanged;it does not claim that a large historical repository has become small.
 
 Actual read-only repository checks reproduce the accidental97885962-byte admission duplicate,accept the subsequent native manifests and small report,and refuse a missing base. The exact original admission archive is now a fully verified private attachment;its original Git commit and all frozen benchmark inputs remain available. See [the guard records](../evidence/2026-10-26/runpod-cpu/async-capacity-v4/git-publication-size-guard-r1/README.md).
+
+
+## Download the verified source-only bundle
+
+The private source bundle at publication9b8ea0be is1,285,135 bytes and contains391 tracked build/source/test/doc/index files (4,193,667 original bytes). Its isolated forced compilation executes ten main/test tasks;all265 core/cluster class bodies match actual Linux CI19. Dependency and tool caches are shared;the separate Linux run supplies functional-test evidence.
+
+```bash
+gh api repos/yinli-systems/vectormatch/releases/assets/676403866 -H "Accept: application/octet-stream" > vectormatch-source-review-9b8ea0be.zip
+shasum -a256 vectormatch-source-review-9b8ea0be.zip
+```
+
+Expected SHA-256:`8a3fffdfcddb5550f7eb82eec7b40ba46832631196d0d1987c34f108c1d6d9ac`. The[complete validation and member manifest](../evidence/2026-10-26/runpod-cpu/async-capacity-v4/source-review-bundle-r1/README.md)bind the original Git blobs. This is a private draft attachment;repository visibility and history are unchanged. Raw experiments remain separately available through their authenticated attachment manifests.

@@ -49,3 +49,25 @@ The next preregistered rate is 2000 only after this review is privately publishe
 
 
 [Read-only queue-wait diagnosis at500/s](EXACT_CUT_QUEUE_DIAGNOSTIC_V4.md) separates recorded phase overlap from a causal or higher-rate bottleneck claim.
+
+
+## 2000 scheduled arrivals/s
+
+All four arms use the same compiled artifact and fixed leader/configuration. These are separate20-second fresh lineages on one physical CPU.
+
+| Arm | Policy | Accepted/planned | In-window goodput/s | End-to-end p50 ms | End-to-end p99 ms | Post-offer p99 ms | notSent | UNKNOWN final |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| C1 | PAUSE | 40000/40000 | 1996.65 | 7.626 | 202.138 | 12.420 | 0 | 0 |
+| D1 | CONTINUE | 40000/40000 | 1996.65 | 7.598 | 76.332 | 12.466 | 0 | 0 |
+| C2 | PAUSE | 40000/40000 | 1996.65 | 7.593 | 198.853 | 11.925 | 0 | 0 |
+| D2 | CONTINUE | 40000/40000 | 1996.65 | 7.292 | 76.039 | 12.783 | 0 | 0 |
+
+All four prospective finite gates passed:True. Both registered paired direction criteria passed:False. Both candidates meet the10ms p99 target:False. No default performance promotion follows from these two pairs.
+
+C1/D1:global p99 change -62.23789771615296%;post-offer p99 change 0.3710068295562641%;in-window goodput difference 0.0/s.
+C2/D2:global p99 change -61.761096372612045%;post-offer p99 change 7.190311263742055%;in-window goodput difference 0.0/s.
+Each original command/result,trade/event prefix,deadline,read credit and forced/readback receipt passed independent audit. The same adapter replays the actual positive physical-offer order and checks every received reply. All three snapshots and actual cold restores agree in every arm. Each full raw asset was authenticated,re-downloaded and every member byte/mode/owner/directory verified before progression.
+
+Two pairs of finite20-second fresh lineages on one physical host;direction criterion is not statistical significance,endurance,SLA,independent-host durability,100M continuity or funded trading.
+
+The next preregistered rate is 4000 only after this review is privately published. A failed finite gate stops upward escalation;conditional percentiles never replace undefined all-arrival p99.
