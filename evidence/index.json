@@ -1591,6 +1591,86 @@
         "221 observed parent GC pause events total291.944368ms;404/789 execution samples belong to network owner. Sampling/thresholds are incomplete;not isolated costs.",
         "No progression to8000,sustained capacity,independent physical-node isolation,millisecond SLA,production certification or100M claim."
       ]
+    },
+    {
+      "id": "cpu-batch-wire-c1",
+      "label": "Batch encoding · C1 · baseline",
+      "scope": "120,000 planned;120000 accepted;20s",
+      "model": "One CPU host · three JVMs · loopback UDP · one physical session",
+      "commands": 120000,
+      "throughput": 5990.25,
+      "p50Millis": 47.989534,
+      "p99Millis": 305.786289,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "timestamp": "2026-10-25T19:25:39.459157512Z",
+      "durability": "sync2;canonical full force/readback and payload/receipt completion before both ACKs",
+      "artifactPath": "evidence/2026-10-25/runpod-cpu/batch-wire-validation-v3/arm-c1-native-r1/README.md",
+      "limitations": [
+        "NOT_SENT=0;server rejection/observed UNKNOWN/final UNKNOWN=0/0/0. Every accepted original linked to one unique synthetic trade.",
+        "After-offer p99=27.358936ms;comparable intervals clearing waiting=33/36. Conditional accepted p99=305.786289ms;global accepted-arrival p99 undefined on any loss.",
+        "Registered two-pair descriptive comparison. GC is unrecorded;no exact allocation/cause,physical-host isolation,sustained ceiling,millisecond SLA or100M claim."
+      ]
+    },
+    {
+      "id": "cpu-batch-wire-d1",
+      "label": "Batch encoding · D1 · immutable batch encoding",
+      "scope": "120,000 planned;120000 accepted;20s",
+      "model": "One CPU host · three JVMs · loopback UDP · one physical session",
+      "commands": 120000,
+      "throughput": 5990.25,
+      "p50Millis": 28.723977,
+      "p99Millis": 205.089068,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "timestamp": "2026-10-25T19:36:01.863494537Z",
+      "durability": "sync2;canonical full force/readback and payload/receipt completion before both ACKs",
+      "artifactPath": "evidence/2026-10-25/runpod-cpu/batch-wire-validation-v3/arm-d1-native-r1/README.md",
+      "limitations": [
+        "NOT_SENT=0;server rejection/observed UNKNOWN/final UNKNOWN=0/0/0. Every accepted original linked to one unique synthetic trade.",
+        "After-offer p99=13.198048ms;comparable intervals clearing waiting=36/36. Conditional accepted p99=205.089068ms;global accepted-arrival p99 undefined on any loss.",
+        "Registered two-pair descriptive comparison. GC is unrecorded;no exact allocation/cause,physical-host isolation,sustained ceiling,millisecond SLA or100M claim."
+      ]
+    },
+    {
+      "id": "cpu-batch-wire-c2",
+      "label": "Batch encoding · C2 · baseline",
+      "scope": "120,000 planned;120000 accepted;20s",
+      "model": "One CPU host · three JVMs · loopback UDP · one physical session",
+      "commands": 120000,
+      "throughput": 5990.25,
+      "p50Millis": 41.17686,
+      "p99Millis": 220.220761,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "timestamp": "2026-10-25T19:43:35.903489020Z",
+      "durability": "sync2;canonical full force/readback and payload/receipt completion before both ACKs",
+      "artifactPath": "evidence/2026-10-25/runpod-cpu/batch-wire-validation-v3/arm-c2-native-r1/README.md",
+      "limitations": [
+        "NOT_SENT=0;server rejection/observed UNKNOWN/final UNKNOWN=0/0/0. Every accepted original linked to one unique synthetic trade.",
+        "After-offer p99=12.602945ms;comparable intervals clearing waiting=36/36. Conditional accepted p99=220.220761ms;global accepted-arrival p99 undefined on any loss.",
+        "Registered two-pair descriptive comparison. GC is unrecorded;no exact allocation/cause,physical-host isolation,sustained ceiling,millisecond SLA or100M claim."
+      ]
+    },
+    {
+      "id": "cpu-batch-wire-d2",
+      "label": "Batch encoding · D2 · immutable batch encoding",
+      "scope": "120,000 planned;120000 accepted;20s",
+      "model": "One CPU host · three JVMs · loopback UDP · one physical session",
+      "commands": 120000,
+      "throughput": 5990.25,
+      "p50Millis": 34.594415,
+      "p99Millis": 235.339934,
+      "unknown": 0,
+      "correctnessPassed": true,
+      "timestamp": "2026-10-25T19:52:08.612464254Z",
+      "durability": "sync2;canonical full force/readback and payload/receipt completion before both ACKs",
+      "artifactPath": "evidence/2026-10-25/runpod-cpu/batch-wire-validation-v3/arm-d2-native-r1/README.md",
+      "limitations": [
+        "NOT_SENT=0;server rejection/observed UNKNOWN/final UNKNOWN=0/0/0. Every accepted original linked to one unique synthetic trade.",
+        "After-offer p99=15.693471ms;comparable intervals clearing waiting=36/36. Conditional accepted p99=235.339934ms;global accepted-arrival p99 undefined on any loss.",
+        "Registered two-pair descriptive comparison. GC is unrecorded;no exact allocation/cause,physical-host isolation,sustained ceiling,millisecond SLA or100M claim."
+      ]
     }
   ],
   "capacityCohorts": [
@@ -3931,6 +4011,102 @@
           "drainSeconds": 1.089789565,
           "classification": "VALID_INSTRUMENTED_OVERLOAD",
           "peakBacklog": 7991,
+          "valid": true,
+          "stable": null,
+          "windowSeconds": 20
+        }
+      ]
+    },
+    {
+      "id": "cpu-batch-wire-c-6000",
+      "title": "Batch encoding · baseline · 6,000/s",
+      "updatedAt": "2026-10-25T19:43:35.903489020Z",
+      "reportPath": "docs/BATCH_WIRE_VALIDATION_RESULTS_V3.md",
+      "configurationFingerprint": "79e5a932a4c22a3abe3cf9199938975478aff6c49bccf74b8e729b29dd228e2f",
+      "scope": "Fixed C1/D1/C2/D2 at6000 scheduled arrivals/s20s,120,000 per fresh lineage. Same qualified sampler/host/JDK,cgroups,leader0,sync2,W128/Q64,read128/page32/batch4/chunk6144,owner1ms/driver100us,256MiB heaps,readiness and cache preconditioning;no JFR. Both artifacts verified archive handoff;only RetentionWireV3.class changes. A finite comparison,not significance,capacity escalation,an SLA or100M.",
+      "points": [
+        {
+          "id": "cpu-batch-wire-c1",
+          "rate": 6000,
+          "workers": 128,
+          "goodput": 5990.25,
+          "p99Millis": 305.786289,
+          "clientNotSent": 0,
+          "rejected": 0,
+          "serverErrors": 0,
+          "unknown": 0,
+          "unresolved": 0,
+          "allOfferedAcceptedP99Millis": 305.786289,
+          "drainSeconds": 0.162959872,
+          "classification": "FINITE_ENCODER_COMPARISON",
+          "peakBacklog": 1542,
+          "valid": true,
+          "stable": null,
+          "windowSeconds": 20
+        },
+        {
+          "id": "cpu-batch-wire-c2",
+          "rate": 6000,
+          "workers": 128,
+          "goodput": 5990.25,
+          "p99Millis": 220.220761,
+          "clientNotSent": 0,
+          "rejected": 0,
+          "serverErrors": 0,
+          "unknown": 0,
+          "unresolved": 0,
+          "allOfferedAcceptedP99Millis": 220.220761,
+          "drainSeconds": 0.191082269,
+          "classification": "FINITE_ENCODER_COMPARISON",
+          "peakBacklog": 694,
+          "valid": true,
+          "stable": null,
+          "windowSeconds": 20
+        }
+      ]
+    },
+    {
+      "id": "cpu-batch-wire-d-6000",
+      "title": "Batch encoding · immutable batch encoding · 6,000/s",
+      "updatedAt": "2026-10-25T19:52:08.612464254Z",
+      "reportPath": "docs/BATCH_WIRE_VALIDATION_RESULTS_V3.md",
+      "configurationFingerprint": "337dcfcd0a2373a5cfa394583669f3dcf7e53c9d6437bd17f0b78c96a54c50df",
+      "scope": "Fixed C1/D1/C2/D2 at6000 scheduled arrivals/s20s,120,000 per fresh lineage. Same qualified sampler/host/JDK,cgroups,leader0,sync2,W128/Q64,read128/page32/batch4/chunk6144,owner1ms/driver100us,256MiB heaps,readiness and cache preconditioning;no JFR. Both artifacts verified archive handoff;only RetentionWireV3.class changes. A finite comparison,not significance,capacity escalation,an SLA or100M.",
+      "points": [
+        {
+          "id": "cpu-batch-wire-d1",
+          "rate": 6000,
+          "workers": 128,
+          "goodput": 5990.25,
+          "p99Millis": 205.089068,
+          "clientNotSent": 0,
+          "rejected": 0,
+          "serverErrors": 0,
+          "unknown": 0,
+          "unresolved": 0,
+          "allOfferedAcceptedP99Millis": 205.089068,
+          "drainSeconds": 0.17896584,
+          "classification": "FINITE_ENCODER_COMPARISON",
+          "peakBacklog": 572,
+          "valid": true,
+          "stable": null,
+          "windowSeconds": 20
+        },
+        {
+          "id": "cpu-batch-wire-d2",
+          "rate": 6000,
+          "workers": 128,
+          "goodput": 5990.25,
+          "p99Millis": 235.339934,
+          "clientNotSent": 0,
+          "rejected": 0,
+          "serverErrors": 0,
+          "unknown": 0,
+          "unresolved": 0,
+          "allOfferedAcceptedP99Millis": 235.339934,
+          "drainSeconds": 0.1884273,
+          "classification": "FINITE_ENCODER_COMPARISON",
+          "peakBacklog": 668,
           "valid": true,
           "stable": null,
           "windowSeconds": 20
