@@ -1,6 +1,6 @@
 # Anchored V4 continuity campaign — in progress
 
-The native campaign has passed full business replay through **35,000,000 cumulative accepted orders** on one business lineage. Raw evidence through that point has been retained in the private draft release and checked by complete authenticated download. The 100M target is still running; it is not a completed result.
+The native campaign has passed full business replay through **60,000,000 cumulative accepted orders** on one business lineage. Raw evidence through that point has been retained in the private draft release and checked by complete authenticated download. The 100M target is still running; it is not a completed result.
 
 This is an in-process, closed-loop endurance experiment on the existing Runpod CPU. Each continuation restores the previous verified canonical snapshot and preserves accounts, balances, original request identities and cumulative counters. It is **not** uninterrupted process uptime, Aeron replication, an open-loop capacity curve or proof of low end-to-end latency. Archive verification and process restart intervals are excluded from individual service-call samples.
 
@@ -10,4 +10,4 @@ The [protocol](ANCHORED_CONTINUITY_PROTOCOL_V4.md) describes the bounded raw fra
 
 `scripts/audit-anchored-chain.py` verifies the genesis, exact parent pack SHA-256, snapshot transition, original command sequence and cumulative accepted count across all supplied cohorts. It refuses a missing target, reset lineage, gap, duplicate asset or mismatched histogram. Its report explicitly depends on the recorded full native replay and full-download receipts; it does not pretend to repeat those operations from a small index. Eight Python tests qualify the raw-sample and chain auditors.
 
-The requested 7k/8k replicated ABAB and 30–60 minute high-rate V4 test remain separate, incomplete requirements. Their existing resource refusals and prospective controls are documented in [overload controls](OVERLOAD_CONTROLS_V4.md). A separate Azure managed-VM campaign is testing provider fault-domain placement, low-rate sustained trading and recovery; it must not be merged into this in-process performance series.
+The requested 7k/8k replicated ABAB and 30–60 minute high-rate V4 test remain separate, incomplete requirements. Their existing resource refusals and prospective controls are documented in [overload controls](OVERLOAD_CONTROLS_V4.md). The separate [Azure managed-VM campaign](PHYSICAL_SOAK_RESULTS_20261027.md) completed its 30-minute correctness window and failed its latency gates; it must not be merged into this in-process performance series.

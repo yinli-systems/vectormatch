@@ -1,6 +1,6 @@
 # Three fault domains, independent generator and recovery
 
-This campaign is separate from the anchored in-process V4 endurance run and the finite V4 PAUSE/CONTINUE capacity comparisons. Results are pending. Its predeclared workload is 100 scheduled IOC orders/s for 1,800 seconds, with 128 logical clients, one multiplexed Aeron client session, fixed observed leader, sync level 2 and the unchanged `capacity-190k-v1` state profile. No setting changes during the arrival window. Every original intent, reply/unknown outcome and terminal checkpoint is retained.
+This campaign is separate from the anchored in-process V4 endurance run and the finite V4 PAUSE/CONTINUE capacity comparisons. The completed observations, failed gates and resource closure are in [the results report](PHYSICAL_SOAK_RESULTS_20261027.md). Its predeclared workload is 100 scheduled IOC orders/s for 1,800 seconds, with 128 logical clients, one multiplexed Aeron client session, fixed observed leader, sync level 2 and the unchanged `capacity-190k-v1` state profile. No setting changes during the arrival window. Every original intent, reply/unknown outcome and terminal checkpoint is retained.
 
 ## Placement and measurement
 
