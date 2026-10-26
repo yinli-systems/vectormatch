@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /** V4 primitive arrivals with128 allocated Q64 queues;worker0 stays bound to the bootstrap maker;127 workers carry load. */
 public final class RetentionCapacityLedgerV4 {
-    public static final int WORKERS=128,LOAD_WORKERS=127,QUEUE_CAPACITY=64,MAX_ARRIVALS=120_000;
+    public static final int WORKERS=128,LOAD_WORKERS=127,QUEUE_CAPACITY=64,MAX_ARRIVALS=RetentionCapacityPlanV4.MAX_ARRIVALS;
     public static final byte UNRELEASED=0,QUEUED=1,PENDING=2,APPLIED=3,NOT_SENT=4,UNKNOWN_FINAL=5;
     public static final byte NO_REASON=0,QUEUE_FULL=1,EXPIRED_BEFORE_DISPATCH=2,HARD_DRAIN=3,RUN_ABORTED=4;
     public static final long MISSING=Long.MIN_VALUE;
@@ -20,7 +20,7 @@ public final class RetentionCapacityLedgerV4 {
     long maxSchedulerLateness;
     int lateOver20ms,queueHighWater;
     @SuppressWarnings("unchecked") public RetentionCapacityLedgerV4(int arrivals){
-        if(arrivals<1||arrivals>MAX_ARRIVALS)throw new IllegalArgumentException("finite arrival limit1..120000 required");this.arrivals=arrivals;
+        if(arrivals<1||arrivals>MAX_ARRIVALS)throw new IllegalArgumentException("finite arrival limit1.."+MAX_ARRIVALS+" required");this.arrivals=arrivals;
         scheduled=missing(arrivals);arrival=missing(arrivals);dispatch=missing(arrivals);submit=missing(arrivals);firstOffer=missing(arrivals);firstPhysicalAdmission=missing(arrivals);end=missing(arrivals);unknownObserved=missing(arrivals);correlation=missing(arrivals);
         commandSeq=missing(arrivals);orderId=missing(arrivals);remaining=missing(arrivals);tradeCount=missing(arrivals);admittedPhysicalOffers=new long[arrivals];batchIndex=new int[arrivals];Arrays.fill(batchIndex,-1);
         status=new byte[arrivals];reason=new byte[arrivals];resultCode=new byte[arrivals];Arrays.fill(resultCode,(byte)-1);replayed=new byte[arrivals];serverAdmission=new byte[arrivals];Arrays.fill(serverAdmission,(byte)-1);

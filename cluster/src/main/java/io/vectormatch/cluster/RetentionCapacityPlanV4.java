@@ -7,6 +7,7 @@ import static io.vectormatch.cluster.RetentionReplyV3.*;
 
 /** Admission for one fixed V4 workload. Bounds are not a capacity measurement. */
 public final class RetentionCapacityPlanV4 {
+    public static final int MAX_RATE=8000,WINDOW_SECONDS=20,MAX_ARRIVALS=MAX_RATE*WINDOW_SECONDS;
     public static final int CUT=1536,READ_WINDOW=32,EVENT_PAGE=32,CHUNK=6144,WARMUP_RPC_LIMIT=1024;
     public static final long RAW_LIMIT=2L*1024*1024*1024,WRITER_LIMIT=1024L*1024*1024;
     public static final long FREE_FLOOR=1024L*1024*1024,NATIVE_RESERVE=512L*1024*1024;
@@ -24,8 +25,8 @@ public final class RetentionCapacityPlanV4 {
     }
     public record Config(int rate,boolean continueDuringFileWork){
         public Config{if(rate!=500&&rate!=1000&&rate!=2000&&rate!=4000&&rate!=6000&&rate!=7000&&rate!=8000)throw new IllegalArgumentException("V4 fixed20s rate500|1000|2000|4000|6000|7000|8000 required");}
-        public int arrivals(){return Math.multiplyExact(rate,20);}
-        public long windowNs(){return 20_000_000_000L;}
+        public int arrivals(){return Math.multiplyExact(rate,WINDOW_SECONDS);}
+        public long windowNs(){return WINDOW_SECONDS*1_000_000_000L;}
         public long offsetNs(int index){if(index<0||index>=arrivals())throw new IllegalArgumentException("finite arrival index");return 1_000_000_000L*index/rate;}
         public String policy(){return continueDuringFileWork?"CONTINUE":"PAUSE";}
     }

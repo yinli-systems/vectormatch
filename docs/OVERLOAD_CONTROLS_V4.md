@@ -34,3 +34,10 @@ The collector computes an exact deterministic compressed size and SHA before adm
 
 
 Before any native overload work, the retention selection was tightened using an actual closed 6k inventory: it left 78.5MB below the previous 1MiB large-file cutoff, including 76.9MB of writer payloads. Eight arms would unnecessarily accumulate those duplicate bytes. Revision 3 additionally retires the exactly manifested, fully archived `native/load/writer/*.bin` payload copies after full private closure, while retaining receipt text, small diagnostics and canonical snapshots. Every selected byte hash is rechecked before unlink. A fixture executes the actual selection expression and verifies protected paths; the previously qualified compressed-size/stream code is unchanged. The measured candidate and disk-admission guards are unchanged.
+
+
+## Preserved first native refusal and corrected ledger contract
+
+The candidate `96105d8f` passed its 25 targeted Linux tests, but its first 7k PAUSE point refused before scheduled arrivals: `RetentionCapacityLedgerV4` still capped arrival columns at 120,000 while the explicit plan required 140,000. The complete failure is private asset 679836958 and all owned JVMs stopped. No throughput/latency result exists for that attempt. Its Linux qualification is private asset 679835851; passing those tests did not cover the newly discovered plan/ledger mismatch.
+
+The planner now owns the 8,000/s × 20s maximum, and the ledger derives its maximum from it. New tests allocate and release every original row for both 140k/160k plans under both dispatch policies, verify producer sequencing through 160k and refuse 160,001. Default high-rate storage admission remains refused. Nineteen relevant local tests pass. A fresh artifact and fresh experiment root will qualify 27 Linux tests and restart the entire ABAB order; no old arm is carried forward into the new performance comparison.
