@@ -46,6 +46,13 @@ The earlier read-bank and agent-idle experiments use [CI21-qualified source and 
 
 ## Verified evidence
 
+The [native private-UDP cross-Pod round](docs/PRIVATE_CROSS_NODE_RESULTS.md) uses
+three real replica Pods and an independent fourth-Pod generator. It retains 490,000
+planned synthetic requests and actual leader-fault/cold-recovery continuation.
+4,000/s passes both finite 100ms-p99 gates; 8,000/s has inconsistent tails. The
+single-factor idle comparison does not pass its paired promotion criterion. All
+new instances are stopped; estimated incremental cost is $2.062 of the $3 cap.
+
 The [CPU Pod UDP/storage diagnosis](docs/CPU_UDP_PATH_RESULTS.md) adds bounded
 per-packet server receipts and independently attributes 29 incomplete UDP round
 trips to 17 missing server receipts and 12 missing client replies. The preceding
@@ -56,7 +63,7 @@ throughput. Eleven targeted tests pass on Linux; original data is privately arch
 | --- | --- | --- |
 | Linux correctness |556 Java tests and209 Python tests;zero failure/error/skip;11 real PostgreSQL tests included |Source `97db58e2`;CI28 on the existing one-job CPU runner;hosted billing still blocked |
 | V4 replicated execution |1003 commands,1000 unique trades,2003 events;three exact archive cuts;128 extra confirmations during a held original file |Three JVMs sharing one CPU host;functional fixture |
-| Snapshot/cold restore |All three snapshots and all three restarted services match the complete state hash |No new orders/client continuation after cold restore |
+| Earlier V4 snapshot/cold restore |All three snapshots and all three restarted services match the complete state hash |Earlier same-host V4 fixture; no new orders/client continuation in that fixture |
 | Original-artifact V4 paired capacity at500/s |Four 20-second arms each confirm all 10,000 trades; p99 PAUSE 286.78/175.01 ms vs CONTINUE 65.65/59.93 ms |Both registered direction checks pass; 10 ms target remains unmet; separate fresh lineages |
 | Previous V3 maintained capacity |6000/s and7000/s accept all planned arrivals;p99208.34/317.32ms in finite20s observations |7500/s loses74531/150000 arrivals;global accepted-arrival p99 is undefined;escalation stops |
 

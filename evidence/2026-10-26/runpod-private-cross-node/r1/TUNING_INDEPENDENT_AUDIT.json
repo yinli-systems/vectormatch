@@ -1,0 +1,732 @@
+{
+  "passed": true,
+  "allFourOriginalArmsAudited": true,
+  "rows": [
+    {
+      "arm": "A1",
+      "case": "tune-6000-A1",
+      "rawCsvSha256": "18fd70a3063fb2929885a4be38c9dda768443fcde11f5d1031268a539b71b4c4",
+      "correctnessAndTimingVerified": true,
+      "registeredFiniteWindowGatePassed": false,
+      "derived": {
+        "rows": 60000,
+        "outcomes": {
+          "CLIENT_QUEUE_FULL_NOT_SENT": 3,
+          "CONFIRMED_ACCEPTED": 59997
+        },
+        "confirmedAccepted": 59997,
+        "businessRejected": 0,
+        "serverErrors": 0,
+        "clientQueueFullNotSent": 3,
+        "drainNotSent": 0,
+        "workerBlockedUnknownNotSent": 0,
+        "clientNotSent": 3,
+        "unknownAtInitialDeadline": 0,
+        "resolvedAfterInitialUnknown": 0,
+        "unknownUnresolved": 0,
+        "confirmedWithinArrivalWindow": 51981,
+        "arrivalWindowGoodputPerSecond": 5198.1,
+        "completionWindowSeconds": 11.450403767,
+        "confirmedIncludingDrainPerSecond": 5239.727892645238,
+        "drainSeconds": 1.4504037669999992,
+        "allOfferedAcceptedFinite": false,
+        "allOfferedAcceptedP99Millis": null,
+        "latency": {
+          "conditionalReply": {
+            "count": 59997,
+            "minMillis": 5.707833,
+            "p50Millis": 354.258009,
+            "p95Millis": 1809.909158,
+            "p99Millis": 1966.332702,
+            "p999Millis": 2024.837796,
+            "maxMillis": 2075.165985
+          },
+          "conditionalAccepted": {
+            "count": 59997,
+            "minMillis": 5.707833,
+            "p50Millis": 354.258009,
+            "p95Millis": 1809.909158,
+            "p99Millis": 1966.332702,
+            "p999Millis": 2024.837796,
+            "maxMillis": 2075.165985
+          },
+          "initialExecute": {
+            "count": 59997,
+            "minMillis": 5.572711,
+            "p50Millis": 10.497957,
+            "p95Millis": 79.697001,
+            "p99Millis": 222.198646,
+            "p999Millis": 396.940182,
+            "maxMillis": 397.06302
+          },
+          "queue": {
+            "count": 59997,
+            "minMillis": 0.000241,
+            "p50Millis": 329.681055,
+            "p95Millis": 1788.544047,
+            "p99Millis": 1944.967467,
+            "p999Millis": 2003.472027,
+            "maxMillis": 2053.803131
+          },
+          "scheduler": {
+            "count": 60000,
+            "minMillis": 6.9e-05,
+            "p50Millis": 0.033116,
+            "p95Millis": 0.035844,
+            "p99Millis": 0.040971,
+            "p999Millis": 0.055542,
+            "maxMillis": 2.078567
+          }
+        },
+        "validationIssues": []
+      },
+      "backlog": {
+        "samples": 14,
+        "secondHalfWindowSamples": 5,
+        "secondHalfSpanSeconds": 4.0000023570000005,
+        "secondHalfOutstandingTrendCommandsPerSecond": 432.49907492784035,
+        "secondHalfFittedGrowthCommands": 1729.9973191116812,
+        "secondHalfEndpointGrowthCommands": 2071,
+        "peakQueueDepth": 7888,
+        "peakInFlight": 128,
+        "peakObservedOutstanding": 8016,
+        "validationIssues": [],
+        "scope": "Non-atomic queue_depth + in_flight observations; not exact queue conservation. Growth is positive OLS trend times observed span in the second half of the arrival window; drain samples excluded."
+      },
+      "cpu": [
+        {
+          "node": 0,
+          "wholeJvmCpuSeconds": 58.82,
+          "observedWallSeconds": 116.38483715057373,
+          "singleCoreCpuPercent": 50.539229542333935,
+          "scope": "Whole Java lifetime including setup, warmup, load and canonical validation; no cross-host clock subtraction or load-only CPU claim."
+        },
+        {
+          "node": 1,
+          "wholeJvmCpuSeconds": 32.33,
+          "observedWallSeconds": 115.41564393043518,
+          "singleCoreCpuPercent": 28.011800566209516,
+          "scope": "Whole Java lifetime including setup, warmup, load and canonical validation; no cross-host clock subtraction or load-only CPU claim."
+        },
+        {
+          "node": 2,
+          "wholeJvmCpuSeconds": 34.59,
+          "observedWallSeconds": 116.38709926605225,
+          "singleCoreCpuPercent": 29.71978872068101,
+          "scope": "Whole Java lifetime including setup, warmup, load and canonical validation; no cross-host clock subtraction or load-only CPU claim."
+        },
+        {
+          "node": 3,
+          "wholeJvmCpuSeconds": 17.93,
+          "observedWallSeconds": 99.19568037986755,
+          "singleCoreCpuPercent": 18.075383858790506,
+          "scope": "Whole Java lifetime including setup, warmup, load and canonical validation; no cross-host clock subtraction or load-only CPU claim."
+        }
+      ]
+    },
+    {
+      "arm": "B1",
+      "case": "tune-6000-B1",
+      "rawCsvSha256": "19c9f91411eced68ba04f15d65590c6508682f91689b70c3715310a4c0bfeadf",
+      "correctnessAndTimingVerified": true,
+      "registeredFiniteWindowGatePassed": false,
+      "derived": {
+        "rows": 60000,
+        "outcomes": {
+          "CONFIRMED_ACCEPTED": 60000
+        },
+        "confirmedAccepted": 60000,
+        "businessRejected": 0,
+        "serverErrors": 0,
+        "clientQueueFullNotSent": 0,
+        "drainNotSent": 0,
+        "workerBlockedUnknownNotSent": 0,
+        "clientNotSent": 0,
+        "unknownAtInitialDeadline": 0,
+        "resolvedAfterInitialUnknown": 0,
+        "unknownUnresolved": 0,
+        "confirmedWithinArrivalWindow": 59943,
+        "arrivalWindowGoodputPerSecond": 5994.3,
+        "completionWindowSeconds": 10.012264734,
+        "confirmedIncludingDrainPerSecond": 5992.650173966125,
+        "drainSeconds": 0.012264734000000388,
+        "allOfferedAcceptedFinite": true,
+        "allOfferedAcceptedP99Millis": 549.846401,
+        "latency": {
+          "conditionalReply": {
+            "count": 60000,
+            "minMillis": 5.642386,
+            "p50Millis": 12.364668,
+            "p95Millis": 408.271155,
+            "p99Millis": 549.846401,
+            "p999Millis": 579.196943,
+            "maxMillis": 585.942075
+          },
+          "conditionalAccepted": {
+            "count": 60000,
+            "minMillis": 5.642386,
+            "p50Millis": 12.364668,
+            "p95Millis": 408.271155,
+            "p99Millis": 549.846401,
+            "p999Millis": 579.196943,
+            "maxMillis": 585.942075
+          },
+          "initialExecute": {
+            "count": 60000,
+            "minMillis": 5.57256,
+            "p50Millis": 12.149798,
+            "p95Millis": 14.601797,
+            "p99Millis": 24.367033,
+            "p999Millis": 346.50297,
+            "maxMillis": 346.617953
+          },
+          "queue": {
+            "count": 60000,
+            "minMillis": 0.000241,
+            "p50Millis": 0.099515,
+            "p95Millis": 386.912258,
+            "p99Millis": 528.480478,
+            "p999Millis": 557.830816,
+            "maxMillis": 564.576226
+          },
+          "scheduler": {
+            "count": 60000,
+            "minMillis": 5.9e-05,
+            "p50Millis": 0.033181,
+            "p95Millis": 0.035232,
+            "p99Millis": 0.039447,
+            "p999Millis": 0.399561,
+            "maxMillis": 2.096386
+          }
+        },
+        "validationIssues": []
+      },
+      "backlog": {
+        "samples": 13,
+        "secondHalfWindowSamples": 5,
+        "secondHalfSpanSeconds": 4.0000214220000005,
+        "secondHalfOutstandingTrendCommandsPerSecond": -1.1010516390840588,
+        "secondHalfFittedGrowthCommands": 0,
+        "secondHalfEndpointGrowthCommands": -8,
+        "peakQueueDepth": 2929,
+        "peakInFlight": 128,
+        "peakObservedOutstanding": 3057,
+        "validationIssues": [],
+        "scope": "Non-atomic queue_depth + in_flight observations; not exact queue conservation. Growth is positive OLS trend times observed span in the second half of the arrival window; drain samples excluded."
+      },
+      "cpu": [
+        {
+          "node": 0,
+          "wholeJvmCpuSeconds": 77.45,
+          "observedWallSeconds": 101.32632231712341,
+          "singleCoreCpuPercent": 76.43620949510324,
+          "scope": "Whole Java lifetime including setup, warmup, load and canonical validation; no cross-host clock subtraction or load-only CPU claim."
+        },
+        {
+          "node": 1,
+          "wholeJvmCpuSeconds": 56.94,
+          "observedWallSeconds": 101.3755099773407,
+          "singleCoreCpuPercent": 56.16741164875732,
+          "scope": "Whole Java lifetime including setup, warmup, load and canonical validation; no cross-host clock subtraction or load-only CPU claim."
+        },
+        {
+          "node": 2,
+          "wholeJvmCpuSeconds": 55.17,
+          "observedWallSeconds": 101.30541944503784,
+          "singleCoreCpuPercent": 54.459080572616244,
+          "scope": "Whole Java lifetime including setup, warmup, load and canonical validation; no cross-host clock subtraction or load-only CPU claim."
+        },
+        {
+          "node": 3,
+          "wholeJvmCpuSeconds": 27.05,
+          "observedWallSeconds": 88.19769835472107,
+          "singleCoreCpuPercent": 30.669734590134077,
+          "scope": "Whole Java lifetime including setup, warmup, load and canonical validation; no cross-host clock subtraction or load-only CPU claim."
+        }
+      ]
+    },
+    {
+      "arm": "A2",
+      "case": "tune-6000-A2",
+      "rawCsvSha256": "85510383fe0c143c8b4b8e91f80b3da44edaf97a706e406d43b5d7f81b8b1321",
+      "correctnessAndTimingVerified": true,
+      "registeredFiniteWindowGatePassed": true,
+      "derived": {
+        "rows": 60000,
+        "outcomes": {
+          "CONFIRMED_ACCEPTED": 60000
+        },
+        "confirmedAccepted": 60000,
+        "businessRejected": 0,
+        "serverErrors": 0,
+        "clientQueueFullNotSent": 0,
+        "drainNotSent": 0,
+        "workerBlockedUnknownNotSent": 0,
+        "clientNotSent": 0,
+        "unknownAtInitialDeadline": 0,
+        "resolvedAfterInitialUnknown": 0,
+        "unknownUnresolved": 0,
+        "confirmedWithinArrivalWindow": 59935,
+        "arrivalWindowGoodputPerSecond": 5993.5,
+        "completionWindowSeconds": 10.013142165,
+        "confirmedIncludingDrainPerSecond": 5992.125050388716,
+        "drainSeconds": 0.01314216499999965,
+        "allOfferedAcceptedFinite": true,
+        "allOfferedAcceptedP99Millis": 19.816077,
+        "latency": {
+          "conditionalReply": {
+            "count": 60000,
+            "minMillis": 5.760068,
+            "p50Millis": 11.271347,
+            "p95Millis": 14.948051,
+            "p99Millis": 19.816077,
+            "p999Millis": 37.535549,
+            "maxMillis": 45.402321
+          },
+          "conditionalAccepted": {
+            "count": 60000,
+            "minMillis": 5.760068,
+            "p50Millis": 11.271347,
+            "p95Millis": 14.948051,
+            "p99Millis": 19.816077,
+            "p999Millis": 37.535549,
+            "maxMillis": 45.402321
+          },
+          "initialExecute": {
+            "count": 60000,
+            "minMillis": 5.712721,
+            "p50Millis": 11.170067,
+            "p95Millis": 14.760783,
+            "p99Millis": 16.067623,
+            "p999Millis": 37.4741,
+            "maxMillis": 45.252171
+          },
+          "queue": {
+            "count": 60000,
+            "minMillis": 0.000241,
+            "p50Millis": 0.078756,
+            "p95Millis": 0.149328,
+            "p99Millis": 0.186056,
+            "p999Millis": 16.168971,
+            "maxMillis": 24.036668
+          },
+          "scheduler": {
+            "count": 60000,
+            "minMillis": 6e-05,
+            "p50Millis": 0.033464,
+            "p95Millis": 0.035771,
+            "p99Millis": 0.040873,
+            "p999Millis": 0.443283,
+            "maxMillis": 2.510206
+          }
+        },
+        "validationIssues": []
+      },
+      "backlog": {
+        "samples": 13,
+        "secondHalfWindowSamples": 5,
+        "secondHalfSpanSeconds": 4.000002697999999,
+        "secondHalfOutstandingTrendCommandsPerSecond": 1.3000269147491528,
+        "secondHalfFittedGrowthCommands": 5.2001111664692266,
+        "secondHalfEndpointGrowthCommands": 18,
+        "peakQueueDepth": 1,
+        "peakInFlight": 91,
+        "peakObservedOutstanding": 92,
+        "validationIssues": [],
+        "scope": "Non-atomic queue_depth + in_flight observations; not exact queue conservation. Growth is positive OLS trend times observed span in the second half of the arrival window; drain samples excluded."
+      },
+      "cpu": [
+        {
+          "node": 0,
+          "wholeJvmCpuSeconds": 64.81,
+          "observedWallSeconds": 113.369295835495,
+          "singleCoreCpuPercent": 57.167154053812624,
+          "scope": "Whole Java lifetime including setup, warmup, load and canonical validation; no cross-host clock subtraction or load-only CPU claim."
+        },
+        {
+          "node": 1,
+          "wholeJvmCpuSeconds": 41.99,
+          "observedWallSeconds": 113.42818975448608,
+          "singleCoreCpuPercent": 37.01901625238562,
+          "scope": "Whole Java lifetime including setup, warmup, load and canonical validation; no cross-host clock subtraction or load-only CPU claim."
+        },
+        {
+          "node": 2,
+          "wholeJvmCpuSeconds": 39.48,
+          "observedWallSeconds": 113.38732981681824,
+          "singleCoreCpuPercent": 34.818705109099504,
+          "scope": "Whole Java lifetime including setup, warmup, load and canonical validation; no cross-host clock subtraction or load-only CPU claim."
+        },
+        {
+          "node": 3,
+          "wholeJvmCpuSeconds": 34.08,
+          "observedWallSeconds": 99.24609375,
+          "singleCoreCpuPercent": 34.33888298500413,
+          "scope": "Whole Java lifetime including setup, warmup, load and canonical validation; no cross-host clock subtraction or load-only CPU claim."
+        }
+      ]
+    },
+    {
+      "arm": "B2",
+      "case": "tune-6000-B2",
+      "rawCsvSha256": "a247652c0030770a044705bcdb97b5fd4891ad9210997c9043d075bcb4ecf918",
+      "correctnessAndTimingVerified": true,
+      "registeredFiniteWindowGatePassed": true,
+      "derived": {
+        "rows": 60000,
+        "outcomes": {
+          "CONFIRMED_ACCEPTED": 60000
+        },
+        "confirmedAccepted": 60000,
+        "businessRejected": 0,
+        "serverErrors": 0,
+        "clientQueueFullNotSent": 0,
+        "drainNotSent": 0,
+        "workerBlockedUnknownNotSent": 0,
+        "clientNotSent": 0,
+        "unknownAtInitialDeadline": 0,
+        "resolvedAfterInitialUnknown": 0,
+        "unknownUnresolved": 0,
+        "confirmedWithinArrivalWindow": 59945,
+        "arrivalWindowGoodputPerSecond": 5994.5,
+        "completionWindowSeconds": 10.013235948,
+        "confirmedIncludingDrainPerSecond": 5992.068928724699,
+        "drainSeconds": 0.013235948000000164,
+        "allOfferedAcceptedFinite": true,
+        "allOfferedAcceptedP99Millis": 16.845073,
+        "latency": {
+          "conditionalReply": {
+            "count": 60000,
+            "minMillis": 5.766969,
+            "p50Millis": 10.808766,
+            "p95Millis": 14.264269,
+            "p99Millis": 16.845073,
+            "p999Millis": 34.555468,
+            "maxMillis": 42.734745
+          },
+          "conditionalAccepted": {
+            "count": 60000,
+            "minMillis": 5.766969,
+            "p50Millis": 10.808766,
+            "p95Millis": 14.264269,
+            "p99Millis": 16.845073,
+            "p999Millis": 34.555468,
+            "maxMillis": 42.734745
+          },
+          "initialExecute": {
+            "count": 60000,
+            "minMillis": 5.639806,
+            "p50Millis": 10.705906,
+            "p95Millis": 14.093765,
+            "p99Millis": 14.8007,
+            "p999Millis": 34.297011,
+            "maxMillis": 39.515664
+          },
+          "queue": {
+            "count": 60000,
+            "minMillis": 0.000261,
+            "p50Millis": 0.074388,
+            "p95Millis": 0.149929,
+            "p99Millis": 0.181167,
+            "p999Millis": 13.189414,
+            "maxMillis": 21.36745
+          },
+          "scheduler": {
+            "count": 60000,
+            "minMillis": 4e-05,
+            "p50Millis": 0.033434,
+            "p95Millis": 0.035948,
+            "p99Millis": 0.045164,
+            "p999Millis": 0.464549,
+            "maxMillis": 3.391829
+          }
+        },
+        "validationIssues": []
+      },
+      "backlog": {
+        "samples": 13,
+        "secondHalfWindowSamples": 5,
+        "secondHalfSpanSeconds": 4.0000143779999995,
+        "secondHalfOutstandingTrendCommandsPerSecond": 5.899955286603932,
+        "secondHalfFittedGrowthCommands": 23.599905975972835,
+        "secondHalfEndpointGrowthCommands": 30,
+        "peakQueueDepth": 1,
+        "peakInFlight": 87,
+        "peakObservedOutstanding": 87,
+        "validationIssues": [],
+        "scope": "Non-atomic queue_depth + in_flight observations; not exact queue conservation. Growth is positive OLS trend times observed span in the second half of the arrival window; drain samples excluded."
+      },
+      "cpu": [
+        {
+          "node": 0,
+          "wholeJvmCpuSeconds": 79.37,
+          "observedWallSeconds": 101.36250805854797,
+          "singleCoreCpuPercent": 78.3031137648598,
+          "scope": "Whole Java lifetime including setup, warmup, load and canonical validation; no cross-host clock subtraction or load-only CPU claim."
+        },
+        {
+          "node": 1,
+          "wholeJvmCpuSeconds": 61.47,
+          "observedWallSeconds": 101.38271474838257,
+          "singleCoreCpuPercent": 60.631637407382286,
+          "scope": "Whole Java lifetime including setup, warmup, load and canonical validation; no cross-host clock subtraction or load-only CPU claim."
+        },
+        {
+          "node": 2,
+          "wholeJvmCpuSeconds": 58.78,
+          "observedWallSeconds": 101.3364667892456,
+          "singleCoreCpuPercent": 58.004785308182925,
+          "scope": "Whole Java lifetime including setup, warmup, load and canonical validation; no cross-host clock subtraction or load-only CPU claim."
+        },
+        {
+          "node": 3,
+          "wholeJvmCpuSeconds": 34.75,
+          "observedWallSeconds": 87.20792818069458,
+          "singleCoreCpuPercent": 39.84729453496258,
+          "scope": "Whole Java lifetime including setup, warmup, load and canonical validation; no cross-host clock subtraction or load-only CPU claim."
+        }
+      ]
+    }
+  ],
+  "pairs": [
+    {
+      "A": "A1",
+      "B": "B1",
+      "allOfferedP99Ratio": null,
+      "numericalImprovementVerified": false,
+      "BFiniteWindowGatePassed": false
+    },
+    {
+      "A": "A2",
+      "B": "B2",
+      "allOfferedP99Ratio": 0.8500710307090551,
+      "numericalImprovementVerified": false,
+      "BFiniteWindowGatePassed": true
+    }
+  ],
+  "promoteCandidate": false,
+  "decision": "Do not promote: first A has not-sent originals and undefined all-offered p99; first B exceeds100ms; second pair alone is insufficient.",
+  "networkWholeCampaign": [
+    {
+      "node": 0,
+      "cpuMax": "1020000 100000\n",
+      "clockTicksPerSecond": 100,
+      "privateShaperRateBytesPerSecond": 12500000,
+      "campaignDelta": {
+        "bytes": 498330332,
+        "packets": 1422118,
+        "drops": 0,
+        "overlimits": 0,
+        "requeues": 0
+      },
+      "scope": "Whole campaign, including preflights/setup/snapshots/validation. TBF overlimits indicate shaping and are not packet loss; drops are a separate counter."
+    },
+    {
+      "node": 1,
+      "cpuMax": "510000 100000\n",
+      "clockTicksPerSecond": 100,
+      "privateShaperRateBytesPerSecond": 12500000,
+      "campaignDelta": {
+        "bytes": 38059376,
+        "packets": 423201,
+        "drops": 0,
+        "overlimits": 0,
+        "requeues": 0
+      },
+      "scope": "Whole campaign, including preflights/setup/snapshots/validation. TBF overlimits indicate shaping and are not packet loss; drops are a separate counter."
+    },
+    {
+      "node": 2,
+      "cpuMax": "2380000 100000\n",
+      "clockTicksPerSecond": 100,
+      "privateShaperRateBytesPerSecond": 12500000,
+      "campaignDelta": {
+        "bytes": 13327668,
+        "packets": 145653,
+        "drops": 0,
+        "overlimits": 0,
+        "requeues": 0
+      },
+      "scope": "Whole campaign, including preflights/setup/snapshots/validation. TBF overlimits indicate shaping and are not packet loss; drops are a separate counter."
+    },
+    {
+      "node": 3,
+      "cpuMax": "1360000 100000\n",
+      "clockTicksPerSecond": 100,
+      "privateShaperRateBytesPerSecond": 12500000,
+      "campaignDelta": {
+        "bytes": 117543728,
+        "packets": 503084,
+        "drops": 0,
+        "overlimits": 0,
+        "requeues": 0
+      },
+      "scope": "Whole campaign, including preflights/setup/snapshots/validation. TBF overlimits indicate shaping and are not packet loss; drops are a separate counter."
+    }
+  ],
+  "offlineFixedTermReports": [
+    {
+      "node": 0,
+      "file": "offline-proofs/capacity-4000-r1-node-0-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005384822, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    },
+    {
+      "node": 0,
+      "file": "offline-proofs/capacity-4000-r2-node-0-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005491304, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    },
+    {
+      "node": 0,
+      "file": "offline-proofs/capacity-500-r1-node-0-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005250834, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    },
+    {
+      "node": 0,
+      "file": "offline-proofs/capacity-500-r2-node-0-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005318379, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    },
+    {
+      "node": 0,
+      "file": "offline-proofs/capacity-8000-r1-node-0-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005594672, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    },
+    {
+      "node": 0,
+      "file": "offline-proofs/capacity-8000-r2-node-0-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005736710, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    },
+    {
+      "node": 1,
+      "file": "offline-proofs/capacity-4000-r1-node-1-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005384932, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    },
+    {
+      "node": 1,
+      "file": "offline-proofs/capacity-4000-r2-node-1-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005491412, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    },
+    {
+      "node": 1,
+      "file": "offline-proofs/capacity-500-r1-node-1-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005250953, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    },
+    {
+      "node": 1,
+      "file": "offline-proofs/capacity-500-r2-node-1-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005318491, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    },
+    {
+      "node": 1,
+      "file": "offline-proofs/capacity-8000-r1-node-1-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005594784, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    },
+    {
+      "node": 1,
+      "file": "offline-proofs/capacity-8000-r2-node-1-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005736829, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    },
+    {
+      "node": 2,
+      "file": "offline-proofs/capacity-4000-r1-node-2-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005384937, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    },
+    {
+      "node": 2,
+      "file": "offline-proofs/capacity-4000-r2-node-2-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005491417, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    },
+    {
+      "node": 2,
+      "file": "offline-proofs/capacity-500-r1-node-2-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005250950, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    },
+    {
+      "node": 2,
+      "file": "offline-proofs/capacity-500-r2-node-2-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005318494, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    },
+    {
+      "node": 2,
+      "file": "offline-proofs/capacity-8000-r1-node-2-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005594788, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    },
+    {
+      "node": 2,
+      "file": "offline-proofs/capacity-8000-r2-node-2-recording-log.json",
+      "returncode": 0,
+      "leadershipTerms": [
+        0
+      ],
+      "raw": "RecordingLog{entries=[Entry{recordingId=0, leadershipTermId=0, termBaseLogPosition=0, logPosition=-1, timestamp=1793005736827, serviceId=-1, type=TERM, isValid=true, entryIndex=0}], cacheIndex={0=0}}\n"
+    }
+  ],
+  "referenceAnalyzerSha256": "5fba16bbdbb5e90318c65f945991f2eb4ddb256fb36f93e28e26133b9e65c80b"
+}
