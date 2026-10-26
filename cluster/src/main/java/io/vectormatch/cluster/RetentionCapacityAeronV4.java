@@ -24,6 +24,7 @@ public final class RetentionCapacityAeronV4 {
     private boolean allOwnedStopped=true;
     private int generation;
     private final RetentionCapacityExperimentV4.Config config;
+    private final RetentionIdlePolicyV3.Selection idleSelection=RetentionIdlePolicyV3.systemSelection();
     private final RetentionCapacityPlanV4.Plan plan;
     private final RetentionCapacityDiskGuardV4 disk;
     private RetentionCapacityAeronV4(Path newRoot,int rate,boolean proceed)throws Exception{
@@ -39,7 +40,7 @@ public final class RetentionCapacityAeronV4 {
         registration.put("fileWorkDispatchPolicy",proceed?"CONTINUE":"PAUSE");registration.put("profile",profile.fingerprint());registration.put("lineage",lineage);
         registration.put("code",code);registration.put("ports",ports);registration.put("appointedLeader",0);registration.put("syncLevel",2);
         registration.put("activeLoadWorkers",127);registration.put("allocatedLogicalWorkers",128);registration.put("independentHosts",false);
-        registration.put("readBankDispatchSelection",readYieldSelection.observation());registration.put("fundedExternalOrders",false);writeJson("registration.json",registration);
+        registration.put("readBankDispatchSelection",readYieldSelection.observation());if(idleSelection.explicit())registration.put("retentionIdleSelection",idleSelection.observation());registration.put("fundedExternalOrders",false);writeJson("registration.json",registration);
     }
     public static void main(String[] args)throws Exception{
         if(args.length!=3||!Set.of("PAUSE","CONTINUE").contains(args[2]))throw new IllegalArgumentException("RetentionCapacityAeronV4 <new-root> <500|1000|2000|4000|6000> <PAUSE|CONTINUE>");
@@ -121,10 +122,10 @@ public final class RetentionCapacityAeronV4 {
         for (Class<?> type : List.of(RetentionNodeMainV3.class, MatchingEngine.class, MediaDriver.class, DirectBuffer.class))
             classpath.add(Path.of(type.getProtectionDomain().getCodeSource().getLocation().toURI()).toString());
         for (int member = 0; member < 3; member++) {
-            List<String> argv = List.of(Path.of(System.getProperty("java.home"), "bin", "java").toString(),
+            List<String> argv = idleSelection.childArguments(List.of(Path.of(System.getProperty("java.home"), "bin", "java").toString(),
                     "--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED", "--add-opens=java.base/java.util.zip=ALL-UNNAMED", "-Xmx256m",
                     "-Daeron.cluster.appointed.leader.id=0", "-cp", String.join(File.pathSeparator, classpath), RetentionNodeMainV3.class.getName(),
-                    Integer.toString(member), root.toString(), Integer.toString(ports), "2", RetentionBatchProfilesV3.PROFILE_ID, lineage, profile.fingerprint(), code, "bounded-maintenance-v1");
+                    Integer.toString(member), root.toString(), Integer.toString(ports), "2", RetentionBatchProfilesV3.PROFILE_ID, lineage, profile.fingerprint(), code, "bounded-maintenance-v1"));
             ProcessBuilder builder = new ProcessBuilder(argv).redirectErrorStream(true).redirectOutput(log(member).toFile());
             for (String name : List.of("JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS", "_JAVA_OPTIONS")) builder.environment().remove(name);
             Process process = builder.start();
