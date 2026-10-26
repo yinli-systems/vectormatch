@@ -3,6 +3,7 @@ import java.util.zip.ZipFile
 plugins { application }
 dependencies {
     implementation(project(":core"))
+    implementation(project(":cluster"))
     implementation("org.hdrhistogram:HdrHistogram:2.2.2")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.22.4")
 }
