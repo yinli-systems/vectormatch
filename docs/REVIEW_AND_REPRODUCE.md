@@ -48,3 +48,18 @@ shasum -a256 vectormatch-source-review-9b8ea0be.zip
 ```
 
 Expected SHA-256:`8a3fffdfcddb5550f7eb82eec7b40ba46832631196d0d1987c34f108c1d6d9ac`. The[complete validation and member manifest](../evidence/2026-10-26/runpod-cpu/async-capacity-v4/source-review-bundle-r1/README.md)bind the original Git blobs. This is a private draft attachment;repository visibility and history are unchanged. Raw experiments remain separately available through their authenticated attachment manifests.
+
+
+## Current overload-candidate source bundle
+
+The frozen `96105d8f443af5a25e2331af4c060fad17717b95` source is also available as a **1,787,457-byte** private bundle: 510 tracked source/build/test/doc/index files, 5,319,649 original bytes. It excludes bulk evidence and Git history. Independent-directory forced compilation succeeds; all 364 application class bodies and all included dependency class bodies exactly match the overload candidate. Tool/dependency caches were shared. No functional tests or performance measurements were executed by this source-export check; the candidate's Linux qualification is a separate gate.
+
+```sh
+gh api repos/yinli-systems/vectormatch/releases/assets/679804671 \
+  -H 'Accept: application/octet-stream' > vectormatch-source-96105d8f.zip
+shasum -a256 vectormatch-source-96105d8f.zip
+```
+
+Expected SHA-256: `39999d94e0c7830e0a5e1c3ca2a18b70953c81c5a44e83218a65c8935775cbe0`. [Member-by-member Git object bindings, isolated compile log, class equivalence and authenticated full-download receipt](../evidence/2026-10-27/source-review-r1/) are retained. The archive includes `SOURCE_MANIFEST.json`; original modes, sizes and SHA-256 values can be checked without the repository history.
+
+`python3 scripts/create-review-bundle.py REVISION NEW_OUTPUT` exports a pinned revision. It reads immutable Git objects, preserves executable modes, ignores dirty/untracked working files, omits bulk evidence/runtime files, rejects symlinks and enforces 10MiB/member and 64MiB total bounds. Existing output is refused. Four regression tests cover these boundaries, missing revisions and reproducible bytes. An export is not evidence that its source passed functional tests.

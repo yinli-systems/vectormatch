@@ -1,6 +1,6 @@
 # Anchored V4 continuity campaign — in progress
 
-The native campaign has passed full business replay through **60,000,000 cumulative accepted orders** on one business lineage. Raw evidence through that point has been retained in the private draft release and checked by complete authenticated download. The 100M target is still running; it is not a completed result.
+The native campaign has passed full business replay through **90,000,000 cumulative accepted orders** on one business lineage. Raw evidence through that point has been retained in the private draft release and checked by complete authenticated download. The 100M target is still running; it is not a completed result.
 
 This is an in-process, closed-loop endurance experiment on the existing Runpod CPU. Each continuation restores the previous verified canonical snapshot and preserves accounts, balances, original request identities and cumulative counters. It is **not** uninterrupted process uptime, Aeron replication, an open-loop capacity curve or proof of low end-to-end latency. Archive verification and process restart intervals are excluded from individual service-call samples.
 
