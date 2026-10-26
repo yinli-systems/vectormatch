@@ -1,0 +1,5187 @@
+[
+  {
+    "case": "capacity-500-r1",
+    "rate": 500,
+    "repeat": 1,
+    "checks": {
+      "clientExitedSuccessfully": true,
+      "allAccepted": true,
+      "noClientNotSent": true,
+      "noBusinessRejection": true,
+      "noServerError": true,
+      "noInitialUnknown": true,
+      "noFinalUnknown": true,
+      "validGenerator": true,
+      "inWindowGoodput": true,
+      "p99": true
+    },
+    "passed": true,
+    "summary": {
+      "test": "external-replicated-matching-fixed-arrival-capacity",
+      "profile": "extended-190k-128",
+      "clientDriverMode": "shared",
+      "clientDriverCount": 1,
+      "clientNakUnicastDelayNs": 1000,
+      "clientNakUnicastRetryDelayRatio": 100,
+      "clientTransportMode": "multiplexed",
+      "clientSessionCount": 1,
+      "clientAeronMode": "one-session-one-network-owner",
+      "declaredOutboxCapacity": 524288,
+      "expectedStateProfile": "capacity-190k-v1",
+      "fullCheckpointMaximumBytes": 536870912,
+      "scheduledArrivals": 5000,
+      "scheduledOriginUtcApproximate": "2026-10-26T09:01:13.524922734Z",
+      "targetArrivalRatePerSecond": 500,
+      "workers": 128,
+      "queueCapacityPerWorker": 64,
+      "arrivalWindowSeconds": 10.0,
+      "completionWindowSeconds": 10.009719617,
+      "enqueuedCommands": 5000,
+      "startedCommands": 5000,
+      "confirmedAcceptedCommands": 5000,
+      "businessRejectedCommands": 0,
+      "serverErrors": 0,
+      "clientNotSentCommands": 0,
+      "clientQueueFullNotSent": 0,
+      "drainNotSent": 0,
+      "workerBlockedUnknownNotSent": 0,
+      "unknownAtInitialDeadline": 0,
+      "resolvedAfterInitialUnknown": 0,
+      "unresolvedFinal": 0,
+      "latencySamplesOmittedAsNotConfirmed": 0,
+      "confirmedWithinArrivalWindow": 4993,
+      "confirmedWithinArrivalWindowPerSecond": 499.3,
+      "confirmedIncludingDrainPerSecond": 499.51449104610816,
+      "drainSeconds": 0.009719617,
+      "schedulerLatenessAboveLimitCount": 0,
+      "generatorTimingInvalid": false,
+      "executeStartAfterPlannedDeadlineCount": 0,
+      "executeStartDeadlineLimitMs": 20,
+      "latencyScope": "Conditional on returned response; accepted-only distribution is separate. All offered accepted-command p99 is null if any arrival is dropped, rejected, errored or unresolved.",
+      "acceptedScheduledToConfirmedMicroseconds": {
+        "count": 5000,
+        "min": 6092.071,
+        "p50": 12704.319,
+        "p95": 17132.517,
+        "p99": 20071.229,
+        "p999": 23738.772,
+        "max": 26683.413
+      },
+      "allOfferedAcceptedP99Microseconds": 20071.229,
+      "scheduledToConfirmedMicroseconds": {
+        "count": 5000,
+        "min": 6092.071,
+        "p50": 12704.319,
+        "p95": 17132.517,
+        "p99": 20071.229,
+        "p999": 23738.772,
+        "max": 26683.413
+      },
+      "executeInitialAttemptMicroseconds": {
+        "count": 5000,
+        "min": 6010.266,
+        "p50": 12604.037,
+        "p95": 17015.44,
+        "p99": 19924.57,
+        "p999": 23616.074,
+        "max": 26621.513
+      },
+      "executeThroughResolutionMicroseconds": {
+        "count": 5000,
+        "min": 6010.266,
+        "p50": 12604.037,
+        "p95": 17015.44,
+        "p99": 19924.57,
+        "p999": 23616.074,
+        "max": 26621.513
+      },
+      "queueDelayMicroseconds": {
+        "count": 5000,
+        "min": 0.871,
+        "p50": 81.111,
+        "p95": 148.637,
+        "p99": 158.154,
+        "p999": 181.347,
+        "max": 271.876
+      },
+      "schedulerLatenessMicroseconds": {
+        "count": 5000,
+        "min": 0.152,
+        "p50": 34.18,
+        "p95": 36.328,
+        "p99": 39.703,
+        "p999": 48.052,
+        "max": 165.118
+      },
+      "transportCountersByWorker": [
+        {
+          "worker": 0,
+          "acceptedOffers": 40,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 1,
+          "acceptedOffers": 40,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 2,
+          "acceptedOffers": 40,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 3,
+          "acceptedOffers": 40,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 4,
+          "acceptedOffers": 40,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 5,
+          "acceptedOffers": 40,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 6,
+          "acceptedOffers": 40,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 7,
+          "acceptedOffers": 40,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 8,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 9,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 10,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 11,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 12,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 13,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 14,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 15,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 16,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 17,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 18,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 19,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 20,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 21,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 22,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 23,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 24,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 25,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 26,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 27,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 28,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 29,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 30,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 31,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 32,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 33,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 34,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 35,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 36,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 37,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 38,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 39,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 40,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 41,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 42,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 43,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 44,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 45,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 46,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 47,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 48,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 49,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 50,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 51,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 52,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 53,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 54,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 55,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 56,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 57,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 58,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 59,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 60,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 61,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 62,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 63,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 64,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 65,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 66,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 67,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 68,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 69,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 70,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 71,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 72,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 73,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 74,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 75,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 76,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 77,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 78,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 79,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 80,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 81,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 82,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 83,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 84,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 85,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 86,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 87,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 88,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 89,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 90,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 91,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 92,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 93,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 94,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 95,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 96,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 97,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 98,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 99,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 100,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 101,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 102,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 103,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 104,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 105,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 106,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 107,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 108,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 109,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 110,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 111,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 112,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 113,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 114,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 115,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 116,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 117,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 118,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 119,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 120,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 121,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 122,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 123,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 124,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 125,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 126,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 127,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        }
+      ],
+      "percentileMethod": "nearest rank; all returned replies retained including responses after timeout/drain; not-sent and unresolved are counted separately, not given invented latency",
+      "limitations": [
+        "Fixed finite window and bounded queues; queue-full is client admission loss, not server rejection",
+        "Each worker has one in-flight synchronous client; this measures this deployed client+cluster path, not an unconstrained engine limit",
+        "No synchronized-clock one-way latency and no production capacity SLA",
+        "Execute-start is an API timestamp, not first wire offer; scheduler delay and FIFO delay are included in end-to-end latency",
+        "Backlog counters are observational non-atomic snapshots, not exact queue conservation at an instant",
+        "Pause gateway/projector writers and use isolated trial state; shared-member load generation must be disclosed"
+      ],
+      "clientPendingCapacity": 128
+    },
+    "availableJsonFiles": [
+      "configuration.json",
+      "session-reap-after-setup.json",
+      "load-result.json",
+      "session-reap-before-validation.json",
+      "validation-start.json",
+      "validation-timing.json",
+      "result.json"
+    ]
+  },
+  {
+    "case": "capacity-500-r2",
+    "rate": 500,
+    "repeat": 2,
+    "checks": {
+      "clientExitedSuccessfully": true,
+      "allAccepted": true,
+      "noClientNotSent": true,
+      "noBusinessRejection": true,
+      "noServerError": true,
+      "noInitialUnknown": true,
+      "noFinalUnknown": true,
+      "validGenerator": true,
+      "inWindowGoodput": true,
+      "p99": true
+    },
+    "passed": true,
+    "summary": {
+      "test": "external-replicated-matching-fixed-arrival-capacity",
+      "profile": "extended-190k-128",
+      "clientDriverMode": "shared",
+      "clientDriverCount": 1,
+      "clientNakUnicastDelayNs": 1000,
+      "clientNakUnicastRetryDelayRatio": 100,
+      "clientTransportMode": "multiplexed",
+      "clientSessionCount": 1,
+      "clientAeronMode": "one-session-one-network-owner",
+      "declaredOutboxCapacity": 524288,
+      "expectedStateProfile": "capacity-190k-v1",
+      "fullCheckpointMaximumBytes": 536870912,
+      "scheduledArrivals": 5000,
+      "scheduledOriginUtcApproximate": "2026-10-26T09:02:20.400903888Z",
+      "targetArrivalRatePerSecond": 500,
+      "workers": 128,
+      "queueCapacityPerWorker": 64,
+      "arrivalWindowSeconds": 10.0,
+      "completionWindowSeconds": 10.011197085,
+      "enqueuedCommands": 5000,
+      "startedCommands": 5000,
+      "confirmedAcceptedCommands": 5000,
+      "businessRejectedCommands": 0,
+      "serverErrors": 0,
+      "clientNotSentCommands": 0,
+      "clientQueueFullNotSent": 0,
+      "drainNotSent": 0,
+      "workerBlockedUnknownNotSent": 0,
+      "unknownAtInitialDeadline": 0,
+      "resolvedAfterInitialUnknown": 0,
+      "unresolvedFinal": 0,
+      "latencySamplesOmittedAsNotConfirmed": 0,
+      "confirmedWithinArrivalWindow": 4994,
+      "confirmedWithinArrivalWindowPerSecond": 499.4,
+      "confirmedIncludingDrainPerSecond": 499.4407719224319,
+      "drainSeconds": 0.011197085,
+      "schedulerLatenessAboveLimitCount": 0,
+      "generatorTimingInvalid": false,
+      "executeStartAfterPlannedDeadlineCount": 0,
+      "executeStartDeadlineLimitMs": 20,
+      "latencyScope": "Conditional on returned response; accepted-only distribution is separate. All offered accepted-command p99 is null if any arrival is dropped, rejected, errored or unresolved.",
+      "acceptedScheduledToConfirmedMicroseconds": {
+        "count": 5000,
+        "min": 6105.415,
+        "p50": 12105.408,
+        "p95": 18560.776,
+        "p99": 23158.883,
+        "p999": 31678.779,
+        "max": 37152.323
+      },
+      "allOfferedAcceptedP99Microseconds": 23158.883,
+      "scheduledToConfirmedMicroseconds": {
+        "count": 5000,
+        "min": 6105.415,
+        "p50": 12105.408,
+        "p95": 18560.776,
+        "p99": 23158.883,
+        "p999": 31678.779,
+        "max": 37152.323
+      },
+      "executeInitialAttemptMicroseconds": {
+        "count": 5000,
+        "min": 5979.769,
+        "p50": 11985.136,
+        "p95": 18426.645,
+        "p99": 23115.343,
+        "p999": 31660.733,
+        "max": 37044.934
+      },
+      "executeThroughResolutionMicroseconds": {
+        "count": 5000,
+        "min": 5979.769,
+        "p50": 11985.136,
+        "p95": 18426.645,
+        "p99": 23115.343,
+        "p999": 31660.733,
+        "max": 37044.934
+      },
+      "queueDelayMicroseconds": {
+        "count": 5000,
+        "min": 1.052,
+        "p50": 89.857,
+        "p95": 152.914,
+        "p99": 160.208,
+        "p999": 176.097,
+        "max": 273.328
+      },
+      "schedulerLatenessMicroseconds": {
+        "count": 5000,
+        "min": 0.105,
+        "p50": 20.353,
+        "p95": 35.59,
+        "p99": 37.317,
+        "p999": 43.261,
+        "max": 118.127
+      },
+      "transportCountersByWorker": [
+        {
+          "worker": 0,
+          "acceptedOffers": 40,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 1,
+          "acceptedOffers": 40,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 2,
+          "acceptedOffers": 40,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 3,
+          "acceptedOffers": 40,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 4,
+          "acceptedOffers": 40,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 5,
+          "acceptedOffers": 40,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 6,
+          "acceptedOffers": 40,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 7,
+          "acceptedOffers": 40,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 8,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 9,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 10,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 11,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 12,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 13,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 14,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 15,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 16,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 17,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 18,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 19,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 20,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 21,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 22,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 23,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 24,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 25,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 26,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 27,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 28,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 29,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 30,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 31,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 32,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 33,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 34,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 35,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 36,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 37,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 38,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 39,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 40,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 41,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 42,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 43,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 44,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 45,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 46,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 47,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 48,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 49,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 50,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 51,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 52,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 53,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 54,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 55,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 56,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 57,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 58,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 59,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 60,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 61,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 62,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 63,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 64,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 65,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 66,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 67,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 68,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 69,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 70,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 71,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 72,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 73,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 74,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 75,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 76,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 77,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 78,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 79,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 80,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 81,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 82,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 83,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 84,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 85,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 86,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 87,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 88,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 89,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 90,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 91,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 92,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 93,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 94,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 95,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 96,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 97,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 98,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 99,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 100,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 101,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 102,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 103,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 104,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 105,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 106,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 107,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 108,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 109,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 110,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 111,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 112,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 113,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 114,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 115,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 116,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 117,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 118,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 119,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 120,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 121,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 122,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 123,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 124,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 125,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 126,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 127,
+          "acceptedOffers": 39,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        }
+      ],
+      "percentileMethod": "nearest rank; all returned replies retained including responses after timeout/drain; not-sent and unresolved are counted separately, not given invented latency",
+      "limitations": [
+        "Fixed finite window and bounded queues; queue-full is client admission loss, not server rejection",
+        "Each worker has one in-flight synchronous client; this measures this deployed client+cluster path, not an unconstrained engine limit",
+        "No synchronized-clock one-way latency and no production capacity SLA",
+        "Execute-start is an API timestamp, not first wire offer; scheduler delay and FIFO delay are included in end-to-end latency",
+        "Backlog counters are observational non-atomic snapshots, not exact queue conservation at an instant",
+        "Pause gateway/projector writers and use isolated trial state; shared-member load generation must be disclosed"
+      ],
+      "clientPendingCapacity": 128
+    },
+    "availableJsonFiles": [
+      "configuration.json",
+      "session-reap-after-setup.json",
+      "load-result.json",
+      "session-reap-before-validation.json",
+      "validation-start.json",
+      "validation-timing.json",
+      "result.json"
+    ]
+  },
+  {
+    "case": "capacity-4000-r1",
+    "rate": 4000,
+    "repeat": 1,
+    "checks": {
+      "clientExitedSuccessfully": true,
+      "allAccepted": true,
+      "noClientNotSent": true,
+      "noBusinessRejection": true,
+      "noServerError": true,
+      "noInitialUnknown": true,
+      "noFinalUnknown": true,
+      "validGenerator": true,
+      "inWindowGoodput": true,
+      "p99": true
+    },
+    "passed": true,
+    "summary": {
+      "test": "external-replicated-matching-fixed-arrival-capacity",
+      "profile": "extended-190k-128",
+      "clientDriverMode": "shared",
+      "clientDriverCount": 1,
+      "clientNakUnicastDelayNs": 1000,
+      "clientNakUnicastRetryDelayRatio": 100,
+      "clientTransportMode": "multiplexed",
+      "clientSessionCount": 1,
+      "clientAeronMode": "one-session-one-network-owner",
+      "declaredOutboxCapacity": 524288,
+      "expectedStateProfile": "capacity-190k-v1",
+      "fullCheckpointMaximumBytes": 536870912,
+      "scheduledArrivals": 40000,
+      "scheduledOriginUtcApproximate": "2026-10-26T09:03:26.884273073Z",
+      "targetArrivalRatePerSecond": 4000,
+      "workers": 128,
+      "queueCapacityPerWorker": 64,
+      "arrivalWindowSeconds": 10.0,
+      "completionWindowSeconds": 10.018182855,
+      "enqueuedCommands": 40000,
+      "startedCommands": 40000,
+      "confirmedAcceptedCommands": 40000,
+      "businessRejectedCommands": 0,
+      "serverErrors": 0,
+      "clientNotSentCommands": 0,
+      "clientQueueFullNotSent": 0,
+      "drainNotSent": 0,
+      "workerBlockedUnknownNotSent": 0,
+      "unknownAtInitialDeadline": 0,
+      "resolvedAfterInitialUnknown": 0,
+      "unresolvedFinal": 0,
+      "latencySamplesOmittedAsNotConfirmed": 0,
+      "confirmedWithinArrivalWindow": 39935,
+      "confirmedWithinArrivalWindowPerSecond": 3993.5,
+      "confirmedIncludingDrainPerSecond": 3992.7400586460944,
+      "drainSeconds": 0.018182855,
+      "schedulerLatenessAboveLimitCount": 0,
+      "generatorTimingInvalid": false,
+      "executeStartAfterPlannedDeadlineCount": 0,
+      "executeStartDeadlineLimitMs": 20,
+      "latencyScope": "Conditional on returned response; accepted-only distribution is separate. All offered accepted-command p99 is null if any arrival is dropped, rejected, errored or unresolved.",
+      "acceptedScheduledToConfirmedMicroseconds": {
+        "count": 40000,
+        "min": 5801.707,
+        "p50": 12582.005,
+        "p95": 17996.749,
+        "p99": 19840.801,
+        "p999": 23841.385,
+        "max": 28851.319
+      },
+      "allOfferedAcceptedP99Microseconds": 19840.801,
+      "scheduledToConfirmedMicroseconds": {
+        "count": 40000,
+        "min": 5801.707,
+        "p50": 12582.005,
+        "p95": 17996.749,
+        "p99": 19840.801,
+        "p999": 23841.385,
+        "max": 28851.319
+      },
+      "executeInitialAttemptMicroseconds": {
+        "count": 40000,
+        "min": 5698.296,
+        "p50": 12482.461,
+        "p95": 17896.057,
+        "p99": 19746.458,
+        "p999": 23748.069,
+        "max": 28689.258
+      },
+      "executeThroughResolutionMicroseconds": {
+        "count": 40000,
+        "min": 5698.296,
+        "p50": 12482.461,
+        "p95": 17896.057,
+        "p99": 19746.458,
+        "p999": 23748.069,
+        "max": 28689.258
+      },
+      "queueDelayMicroseconds": {
+        "count": 40000,
+        "min": 0.25,
+        "p50": 71.553,
+        "p95": 148.796,
+        "p99": 155.6,
+        "p999": 252.72,
+        "max": 2764.57
+      },
+      "schedulerLatenessMicroseconds": {
+        "count": 40000,
+        "min": 0.07,
+        "p50": 31.106,
+        "p95": 36.834,
+        "p99": 49.762,
+        "p999": 211.812,
+        "max": 2628.103
+      },
+      "transportCountersByWorker": [
+        {
+          "worker": 0,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 1,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 2,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 3,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 4,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 5,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 6,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 7,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 8,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 9,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 10,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 11,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 12,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 13,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 14,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 15,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 16,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 17,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 18,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 19,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 20,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 21,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 22,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 23,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 24,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 25,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 26,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 27,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 28,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 29,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 30,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 31,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 32,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 33,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 34,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 35,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 36,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 37,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 38,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 39,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 40,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 41,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 42,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 43,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 44,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 45,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 46,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 47,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 48,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 49,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 50,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 51,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 52,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 53,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 54,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 55,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 56,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 57,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 58,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 59,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 60,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 61,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 62,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 63,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 64,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 65,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 66,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 67,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 68,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 69,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 70,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 71,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 72,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 73,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 74,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 75,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 76,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 77,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 78,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 79,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 80,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 81,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 82,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 83,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 84,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 85,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 86,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 87,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 88,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 89,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 90,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 91,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 92,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 93,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 94,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 95,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 96,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 97,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 98,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 99,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 100,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 101,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 102,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 103,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 104,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 105,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 106,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 107,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 108,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 109,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 110,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 111,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 112,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 113,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 114,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 115,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 116,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 117,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 118,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 119,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 120,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 121,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 122,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 123,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 124,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 125,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 126,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 127,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        }
+      ],
+      "percentileMethod": "nearest rank; all returned replies retained including responses after timeout/drain; not-sent and unresolved are counted separately, not given invented latency",
+      "limitations": [
+        "Fixed finite window and bounded queues; queue-full is client admission loss, not server rejection",
+        "Each worker has one in-flight synchronous client; this measures this deployed client+cluster path, not an unconstrained engine limit",
+        "No synchronized-clock one-way latency and no production capacity SLA",
+        "Execute-start is an API timestamp, not first wire offer; scheduler delay and FIFO delay are included in end-to-end latency",
+        "Backlog counters are observational non-atomic snapshots, not exact queue conservation at an instant",
+        "Pause gateway/projector writers and use isolated trial state; shared-member load generation must be disclosed"
+      ],
+      "clientPendingCapacity": 128
+    },
+    "availableJsonFiles": [
+      "configuration.json",
+      "session-reap-after-setup.json",
+      "load-result.json",
+      "session-reap-before-validation.json",
+      "validation-start.json",
+      "validation-timing.json",
+      "result.json"
+    ]
+  },
+  {
+    "case": "capacity-4000-r2",
+    "rate": 4000,
+    "repeat": 2,
+    "checks": {
+      "clientExitedSuccessfully": true,
+      "allAccepted": true,
+      "noClientNotSent": true,
+      "noBusinessRejection": true,
+      "noServerError": true,
+      "noInitialUnknown": true,
+      "noFinalUnknown": true,
+      "validGenerator": true,
+      "inWindowGoodput": true,
+      "p99": true
+    },
+    "passed": true,
+    "summary": {
+      "test": "external-replicated-matching-fixed-arrival-capacity",
+      "profile": "extended-190k-128",
+      "clientDriverMode": "shared",
+      "clientDriverCount": 1,
+      "clientNakUnicastDelayNs": 1000,
+      "clientNakUnicastRetryDelayRatio": 100,
+      "clientTransportMode": "multiplexed",
+      "clientSessionCount": 1,
+      "clientAeronMode": "one-session-one-network-owner",
+      "declaredOutboxCapacity": 524288,
+      "expectedStateProfile": "capacity-190k-v1",
+      "fullCheckpointMaximumBytes": 536870912,
+      "scheduledArrivals": 40000,
+      "scheduledOriginUtcApproximate": "2026-10-26T09:05:13.518207589Z",
+      "targetArrivalRatePerSecond": 4000,
+      "workers": 128,
+      "queueCapacityPerWorker": 64,
+      "arrivalWindowSeconds": 10.0,
+      "completionWindowSeconds": 10.011566325,
+      "enqueuedCommands": 40000,
+      "startedCommands": 40000,
+      "confirmedAcceptedCommands": 40000,
+      "businessRejectedCommands": 0,
+      "serverErrors": 0,
+      "clientNotSentCommands": 0,
+      "clientQueueFullNotSent": 0,
+      "drainNotSent": 0,
+      "workerBlockedUnknownNotSent": 0,
+      "unknownAtInitialDeadline": 0,
+      "resolvedAfterInitialUnknown": 0,
+      "unresolvedFinal": 0,
+      "latencySamplesOmittedAsNotConfirmed": 0,
+      "confirmedWithinArrivalWindow": 39969,
+      "confirmedWithinArrivalWindowPerSecond": 3996.9,
+      "confirmedIncludingDrainPerSecond": 3995.378815012745,
+      "drainSeconds": 0.011566325,
+      "schedulerLatenessAboveLimitCount": 0,
+      "generatorTimingInvalid": false,
+      "executeStartAfterPlannedDeadlineCount": 0,
+      "executeStartDeadlineLimitMs": 20,
+      "latencyScope": "Conditional on returned response; accepted-only distribution is separate. All offered accepted-command p99 is null if any arrival is dropped, rejected, errored or unresolved.",
+      "acceptedScheduledToConfirmedMicroseconds": {
+        "count": 40000,
+        "min": 5821.428,
+        "p50": 11541.993,
+        "p95": 14847.884,
+        "p99": 15508.657,
+        "p999": 23158.617,
+        "max": 27114.869
+      },
+      "allOfferedAcceptedP99Microseconds": 15508.657,
+      "scheduledToConfirmedMicroseconds": {
+        "count": 40000,
+        "min": 5821.428,
+        "p50": 11541.993,
+        "p95": 14847.884,
+        "p99": 15508.657,
+        "p999": 23158.617,
+        "max": 27114.869
+      },
+      "executeInitialAttemptMicroseconds": {
+        "count": 40000,
+        "min": 5671.975,
+        "p50": 11437.675,
+        "p95": 14737.499,
+        "p99": 15411.553,
+        "p999": 23078.487,
+        "max": 27077.682
+      },
+      "executeThroughResolutionMicroseconds": {
+        "count": 40000,
+        "min": 5671.975,
+        "p50": 11437.675,
+        "p95": 14737.499,
+        "p99": 15411.553,
+        "p999": 23078.487,
+        "max": 27077.682
+      },
+      "queueDelayMicroseconds": {
+        "count": 40000,
+        "min": 0.291,
+        "p50": 80.189,
+        "p95": 150.781,
+        "p99": 159.977,
+        "p999": 634.239,
+        "max": 1972.557
+      },
+      "schedulerLatenessMicroseconds": {
+        "count": 40000,
+        "min": 0.062,
+        "p50": 18.016,
+        "p95": 37.935,
+        "p99": 59.931,
+        "p999": 527.87,
+        "max": 2851.682
+      },
+      "transportCountersByWorker": [
+        {
+          "worker": 0,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 1,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 2,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 3,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 4,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 5,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 6,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 7,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 8,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 9,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 10,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 11,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 12,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 13,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 14,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 15,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 16,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 17,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 18,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 19,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 20,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 21,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 22,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 23,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 24,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 25,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 26,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 27,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 28,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 29,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 30,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 31,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 32,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 33,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 34,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 35,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 36,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 37,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 38,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 39,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 40,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 41,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 42,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 43,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 44,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 45,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 46,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 47,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 48,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 49,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 50,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 51,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 52,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 53,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 54,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 55,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 56,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 57,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 58,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 59,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 60,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 61,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 62,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 63,
+          "acceptedOffers": 313,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 64,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 65,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 66,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 67,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 68,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 69,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 70,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 71,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 72,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 73,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 74,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 75,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 76,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 77,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 78,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 79,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 80,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 81,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 82,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 83,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 84,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 85,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 86,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 87,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 88,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 89,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 90,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 91,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 92,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 93,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 94,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 95,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 96,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 97,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 98,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 99,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 100,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 101,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 102,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 103,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 104,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 105,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 106,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 107,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 108,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 109,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 110,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 111,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 112,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 113,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 114,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 115,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 116,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 117,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 118,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 119,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 120,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 121,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 122,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 123,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 124,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 125,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 126,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 127,
+          "acceptedOffers": 312,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        }
+      ],
+      "percentileMethod": "nearest rank; all returned replies retained including responses after timeout/drain; not-sent and unresolved are counted separately, not given invented latency",
+      "limitations": [
+        "Fixed finite window and bounded queues; queue-full is client admission loss, not server rejection",
+        "Each worker has one in-flight synchronous client; this measures this deployed client+cluster path, not an unconstrained engine limit",
+        "No synchronized-clock one-way latency and no production capacity SLA",
+        "Execute-start is an API timestamp, not first wire offer; scheduler delay and FIFO delay are included in end-to-end latency",
+        "Backlog counters are observational non-atomic snapshots, not exact queue conservation at an instant",
+        "Pause gateway/projector writers and use isolated trial state; shared-member load generation must be disclosed"
+      ],
+      "clientPendingCapacity": 128
+    },
+    "availableJsonFiles": [
+      "configuration.json",
+      "session-reap-after-setup.json",
+      "load-result.json",
+      "session-reap-before-validation.json",
+      "validation-start.json",
+      "validation-timing.json",
+      "result.json"
+    ]
+  },
+  {
+    "case": "capacity-8000-r1",
+    "rate": 8000,
+    "repeat": 1,
+    "checks": {
+      "clientExitedSuccessfully": true,
+      "allAccepted": true,
+      "noClientNotSent": true,
+      "noBusinessRejection": true,
+      "noServerError": true,
+      "noInitialUnknown": true,
+      "noFinalUnknown": true,
+      "validGenerator": true,
+      "inWindowGoodput": true,
+      "p99": false
+    },
+    "passed": false,
+    "summary": {
+      "test": "external-replicated-matching-fixed-arrival-capacity",
+      "profile": "extended-190k-128",
+      "clientDriverMode": "shared",
+      "clientDriverCount": 1,
+      "clientNakUnicastDelayNs": 1000,
+      "clientNakUnicastRetryDelayRatio": 100,
+      "clientTransportMode": "multiplexed",
+      "clientSessionCount": 1,
+      "clientAeronMode": "one-session-one-network-owner",
+      "declaredOutboxCapacity": 524288,
+      "expectedStateProfile": "capacity-190k-v1",
+      "fullCheckpointMaximumBytes": 536870912,
+      "scheduledArrivals": 80000,
+      "scheduledOriginUtcApproximate": "2026-10-26T09:06:56.470102097Z",
+      "targetArrivalRatePerSecond": 8000,
+      "workers": 128,
+      "queueCapacityPerWorker": 64,
+      "arrivalWindowSeconds": 10.0,
+      "completionWindowSeconds": 10.011541379,
+      "enqueuedCommands": 80000,
+      "startedCommands": 80000,
+      "confirmedAcceptedCommands": 80000,
+      "businessRejectedCommands": 0,
+      "serverErrors": 0,
+      "clientNotSentCommands": 0,
+      "clientQueueFullNotSent": 0,
+      "drainNotSent": 0,
+      "workerBlockedUnknownNotSent": 0,
+      "unknownAtInitialDeadline": 0,
+      "resolvedAfterInitialUnknown": 0,
+      "unresolvedFinal": 0,
+      "latencySamplesOmittedAsNotConfirmed": 0,
+      "confirmedWithinArrivalWindow": 79942,
+      "confirmedWithinArrivalWindowPerSecond": 7994.2,
+      "confirmedIncludingDrainPerSecond": 7990.777540789706,
+      "drainSeconds": 0.011541379,
+      "schedulerLatenessAboveLimitCount": 0,
+      "generatorTimingInvalid": false,
+      "executeStartAfterPlannedDeadlineCount": 11509,
+      "executeStartDeadlineLimitMs": 20,
+      "latencyScope": "Conditional on returned response; accepted-only distribution is separate. All offered accepted-command p99 is null if any arrival is dropped, rejected, errored or unresolved.",
+      "acceptedScheduledToConfirmedMicroseconds": {
+        "count": 80000,
+        "min": 5106.489,
+        "p50": 11000.38,
+        "p95": 152586.056,
+        "p99": 204532.58,
+        "p999": 216490.945,
+        "max": 223585.947
+      },
+      "allOfferedAcceptedP99Microseconds": 204532.58,
+      "scheduledToConfirmedMicroseconds": {
+        "count": 80000,
+        "min": 5106.489,
+        "p50": 11000.38,
+        "p95": 152586.056,
+        "p99": 204532.58,
+        "p999": 216490.945,
+        "max": 223585.947
+      },
+      "executeInitialAttemptMicroseconds": {
+        "count": 80000,
+        "min": 5053.465,
+        "p50": 10871.422,
+        "p95": 14899.12,
+        "p99": 17473.115,
+        "p999": 213629.996,
+        "max": 223487.202
+      },
+      "executeThroughResolutionMicroseconds": {
+        "count": 80000,
+        "min": 5053.465,
+        "p50": 10871.422,
+        "p95": 14899.12,
+        "p99": 17473.115,
+        "p999": 213629.996,
+        "max": 223487.202
+      },
+      "queueDelayMicroseconds": {
+        "count": 80000,
+        "min": 0.191,
+        "p50": 90.899,
+        "p95": 136553.577,
+        "p99": 188499.854,
+        "p999": 200458.458,
+        "max": 207552.777
+      },
+      "schedulerLatenessMicroseconds": {
+        "count": 80000,
+        "min": 0.02,
+        "p50": 33.231,
+        "p95": 34.727,
+        "p99": 37.057,
+        "p999": 782.822,
+        "max": 3581.376
+      },
+      "transportCountersByWorker": [
+        {
+          "worker": 0,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 1,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 2,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 3,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 4,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 5,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 6,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 7,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 8,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 9,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 10,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 11,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 12,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 13,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 14,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 15,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 16,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 17,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 18,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 19,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 20,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 21,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 22,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 23,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 24,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 25,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 26,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 27,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 28,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 29,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 30,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 31,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 32,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 33,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 34,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 35,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 36,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 4,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 37,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 38,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 39,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 40,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 41,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 42,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 43,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 44,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 45,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 46,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 47,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 48,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 49,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 50,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 51,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 52,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 53,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 54,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 55,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 56,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 57,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 58,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 59,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 60,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 0,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 61,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 62,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 63,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 64,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 65,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 66,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 67,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 68,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 69,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 70,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 71,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 72,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 73,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 74,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 75,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 76,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 77,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 78,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 79,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 5,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 80,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 81,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 82,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 83,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 84,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 85,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 86,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 87,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 88,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 89,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 90,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 91,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 92,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 93,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 94,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 95,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 96,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 97,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 98,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 99,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 100,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 101,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 102,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 103,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 104,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 105,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 106,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 107,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 108,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 109,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 110,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 111,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 112,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 113,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 114,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 115,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 116,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 117,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 118,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 119,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 120,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 2,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 121,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 122,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 123,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 124,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 3,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 125,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 126,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        },
+        {
+          "worker": 127,
+          "acceptedOffers": 625,
+          "acceptedResends": 0,
+          "unacceptedOffers": 1,
+          "unknownRequestTimeouts": 0
+        }
+      ],
+      "percentileMethod": "nearest rank; all returned replies retained including responses after timeout/drain; not-sent and unresolved are counted separately, not given invented latency",
+      "limitations": [
+        "Fixed finite window and bounded queues; queue-full is client admission loss, not server rejection",
+        "Each worker has one in-flight synchronous client; this measures this deployed client+cluster path, not an unconstrained engine limit",
+        "No synchronized-clock one-way latency and no production capacity SLA",
+        "Execute-start is an API timestamp, not first wire offer; scheduler delay and FIFO delay are included in end-to-end latency",
+        "Backlog counters are observational non-atomic snapshots, not exact queue conservation at an instant",
+        "Pause gateway/projector writers and use isolated trial state; shared-member load generation must be disclosed"
+      ],
+      "clientPendingCapacity": 128
+    },
+    "availableJsonFiles": [
+      "configuration.json",
+      "session-reap-after-setup.json",
+      "load-result.json",
+      "session-reap-before-validation.json",
+      "validation-start.json",
+      "validation-timing.json",
+      "result.json"
+    ]
+  },
+  {
+    "case": "capacity-8000-r2",
+    "rate": 8000,
+    "repeat": 2,
+    "checks": {
+      "clientExitedSuccessfully": false,
+      "allAccepted": false,
+      "noClientNotSent": false,
+      "noBusinessRejection": false,
+      "noServerError": false,
+      "noInitialUnknown": false,
+      "noFinalUnknown": false,
+      "validGenerator": false,
+      "inWindowGoodput": false,
+      "p99": false
+    },
+    "passed": false,
+    "summary": {},
+    "availableJsonFiles": []
+  }
+]

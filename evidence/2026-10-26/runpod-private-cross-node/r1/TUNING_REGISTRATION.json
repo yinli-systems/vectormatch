@@ -1,0 +1,21 @@
+{
+  "atUTC": "2026-10-26T09:14:00.159230+00:00",
+  "test": "separate cross-Pod ABAB node idle-policy comparison",
+  "arms": [
+    "A1",
+    "B1",
+    "A2",
+    "B2"
+  ],
+  "rate": 6000,
+  "arrivals": 60000,
+  "arrivalSeconds": 10,
+  "baseConfiguration": "CAPACITY_REGISTRATION.json",
+  "A": "default qualified 1ms maximum park",
+  "B": "only replicas set vectormatch.node.dataPathMaxParkNs=100000; client unchanged",
+  "qualifiedJarUnchanged": true,
+  "scope": "Both A trials also refine the lower baseline rate; separate from original predeclared curve. No inference of100M, sustained production capacity or physical fault-domain independence.",
+  "promotion": "Both B trials must be correctness/timing valid, all requests accepted, no initial/final unknown, no not-sent, >=99% in-window goodput; paired all-offered p99 <=80% of A. Record process CPU cost. Otherwise no optimization success claim.",
+  "stopNewTrialBeforeUtc": "2026-10-26T09:20:00Z",
+  "hardResourceStopUtc": "2026-10-26T09:30:00Z"
+}

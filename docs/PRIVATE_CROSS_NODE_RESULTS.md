@@ -27,3 +27,24 @@ capacity measurement. No throughput or latency result is claimed yet.
 Small original event/registration records are in
 [`evidence/2026-10-26/runpod-private-cross-node/r1`](../evidence/2026-10-26/runpod-private-cross-node/r1/).
 Full raw evidence and terminal resource status will follow after collection.
+
+## Preliminary capacity observations
+
+All six original Java capacity runs completed full canonical validation. An SSH
+controller interruption initially lost observation of the last run; reconnecting
+collected its original successful result, without rerunning or changing state. The
+controller failure and recovery record are both retained. At 500/s, all-offered
+p99 is20.071/23.159ms; at4,000/s it is19.841/15.509ms; at8,000/s it is
+204.533/26.429ms. Each arm has a ten-second arrival window and two repetitions.
+All arrivals were accepted with zero initial/final unknown and no not-sent.
+4,000/s is the highest rate passing both registered100ms-p99/99%-goodput gates.
+8,000/s has inconsistent tails; this is not a proven hard server throughput limit.
+
+A separate6,000/s A/B/A/B comparison changes only the replicas' maximum data-path
+idle park from1ms to100us. All other settings, workloads and artifact bytes stay
+fixed. It is not yet complete. An immutable-archive auditor now independently
+hashes every member, verifies deployed identities/configuration, and recomputes
+all original capacity outcomes, p99 and backlog with the existing tested analyzer.
+Seven new archive-boundary tests and38 existing analyzer tests pass locally;
+the seven new tests also pass on the actual prepaid Linux CPU Pod. These targeted
+tests do not constitute a new full Java/PostgreSQL/Web or hosted-CI pass.
