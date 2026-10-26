@@ -37,6 +37,12 @@ GitHub Actions run [40197642613](https://github.com/yinli-systems/vectormatch/ac
 
 ## Execution order
 
+The [CPU UDP/storage diagnostic](CPU_UDP_PATH_RESULTS.md) confirms NAT-mapped UDP
+reachability but fails its finite zero-loss gate and cannot provide the directly
+bindable private topology required by the current Aeron launcher. Its receipt-ledger
+improvement and OS force timings narrow investigation; they do not qualify a new
+trading cluster or change the acceptance thresholds above.
+
 1. Close both already registered boundary repeats and retain every original outcome; repair reproducible CI and record the hosted account blocker.
 2. Instrument maintenance phases before optimizing. Compare each change with the control on the same newly qualified artifact. Never weaken fsync, canonical readback, acknowledgement ordering or evidence bounds to improve a number.
 3. Build a separate authenticated trading gateway and deterministic risk controls with recovery tests; maintain local workbench compatibility. Choose the first venue through supported sandbox capabilities and user account availability.

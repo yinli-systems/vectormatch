@@ -46,6 +46,12 @@ The earlier read-bank and agent-idle experiments use [CI21-qualified source and 
 
 ## Verified evidence
 
+The [CPU Pod UDP/storage diagnosis](docs/CPU_UDP_PATH_RESULTS.md) adds bounded
+per-packet server receipts and independently attributes 29 incomplete UDP round
+trips to 17 missing server receipts and 12 missing client replies. The preceding
+policy comparison fails its zero-loss gate; its packet rates are not trading
+throughput. Eleven targeted tests pass on Linux; original data is privately archived.
+
 | Path | Actual evidence | Limit |
 | --- | --- | --- |
 | Linux correctness |556 Java tests and209 Python tests;zero failure/error/skip;11 real PostgreSQL tests included |Source `97db58e2`;CI28 on the existing one-job CPU runner;hosted billing still blocked |
