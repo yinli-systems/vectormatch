@@ -21,6 +21,7 @@ public final class RetentionClusteredServiceV3 implements ClusteredService {
     private Cluster cluster;
     private boolean batchReplyTextChecked;
     private final boolean preparedArchiveCacheEnabled;
+    private final RetentionSealedReadBankV4 sealedReadBank;
     private PreparedArchive preparedArchive;
     private long preparedArchiveEncodingCount;
     /** Only this service writer owns the private byte array; chunks always copy their slice. */
@@ -34,11 +35,19 @@ public final class RetentionClusteredServiceV3 implements ClusteredService {
      * bounded ArchiveBatch source payload before its defensive copy; the original constructor stays uncached.
      */
     public RetentionClusteredServiceV3(RetentionServiceV3.Profile profile, String lineage, boolean preparedArchiveCacheEnabled) {
+        this(profile,lineage,preparedArchiveCacheEnabled,null);
+    }
+    RetentionClusteredServiceV3(RetentionServiceV3.Profile profile,String lineage,boolean preparedArchiveCacheEnabled,
+                               RetentionSealedReadBankV4 sealedReadBank) {
         this.profile = Objects.requireNonNull(profile); this.lineage = new Scope(profile.fingerprint(), lineage).lineageId();
         this.preparedArchiveCacheEnabled = preparedArchiveCacheEnabled;
+        if(sealedReadBank!=null&&(!preparedArchiveCacheEnabled||!sealedReadBank.scope().equals(new Scope(profile.fingerprint(),lineage))))
+            throw new IllegalArgumentException("sealed export requires the exact cached service scope");
+        this.sealedReadBank=sealedReadBank;
     }
     @Override public void onStart(Cluster cluster, Image snapshotImage) {
         this.cluster = cluster; batchReplyTextChecked = false;
+        if(sealedReadBank!=null)sealedReadBank.invalidate();
         preparedArchive = null; preparedArchiveEncodingCount = 0;
         state = snapshotImage == null ? new RetentionServiceV3(profile, lineage)
                 : RetentionServiceV3.restore(RetentionSnapshotTransportV3.read(snapshotImage, cluster.idleStrategy(), profile.maxCombinedSnapshotBytes()), profile, lineage);
@@ -50,10 +59,13 @@ public final class RetentionClusteredServiceV3 implements ClusteredService {
         byte[] bytes = new byte[length]; buffer.getBytes(offset, bytes);
         Request request;
         try { request = RetentionWireV3.decode(bytes); } catch (IllegalArgumentException malformed) { return; }
-        respond(session, dispatch(request));
+        respond(session, dispatch(request,session==null?0:session.id()));
     }
     /** Package-visible deterministic seam for local adapter tests, never a second writer. */
     byte[] dispatch(Request request) {
+        return dispatch(request,0);
+    }
+    byte[] dispatch(Request request,long sessionId) {
         if (!state.scope().equals(request.scope())) return error(request.correlationId(), "SCOPE_MISMATCH");
         try {
             Payload payload;
@@ -74,6 +86,7 @@ public final class RetentionClusteredServiceV3 implements ClusteredService {
                 payload = new Events(state.fetchEvents(fetch.fromEventSeq(), fetch.count()));
             } else if (request.operation() instanceof PrepareArchive prepare) {
                 var prefix = prepareArchive(prepare.throughCommandSeq());
+                if(sealedReadBank!=null)publishSealedExport(sessionId,prefix);
                 payload = new Descriptor(prefix.acknowledgement(), prefix.bytes().length);
             } else if (request.operation() instanceof ArchiveChunk chunk) {
                 var ack = chunk.acknowledgement();
@@ -86,9 +99,12 @@ public final class RetentionClusteredServiceV3 implements ClusteredService {
                         Math.min(full.length, chunk.offset() + chunk.count())));
             } else {
                 long archivedBefore = state.archivedThroughCommandSeq();
+                long exportedBefore = state.exportedEventSeq();
                 var reply = state.handle(request);
                 if (preparedArchiveCacheEnabled && state.archivedThroughCommandSeq() != archivedBefore)
                     preparedArchive = null;
+                if(sealedReadBank!=null&&(state.archivedThroughCommandSeq()!=archivedBefore||state.exportedEventSeq()!=exportedBefore))
+                    sealedReadBank.invalidate();
                 payload = new State(reply.execution() == null ? null : reply.execution().result(),
                         reply.execution() != null && reply.execution().replayed(), reply.maintenance());
             }
@@ -117,6 +133,19 @@ public final class RetentionClusteredServiceV3 implements ClusteredService {
         var prefix = new PreparedArchive(batch.acknowledgementAfterExternalVerification(), bytes);
         if (preparedArchiveCacheEnabled) preparedArchive = prefix;
         return prefix;
+    }
+    private void publishSealedExport(long sessionId,PreparedArchive prefix) {
+        long exported=state.exportedEventSeq(),last=state.eventSeq();int count=state.outboxSize();
+        if(last-exported!=count)throw new IllegalStateException("sealed outbox frontier differs");
+        var events=new ArrayList<io.vectormatch.core.MatchingEngine.Event>(count);
+        for(int offset=0;offset<count;){
+            int requested=Math.min(MAX_SUPPORTED_EVENT_FETCH_COUNT,count-offset);
+            var page=state.fetchEvents(Math.addExact(exported,offset+1L),requested);
+            if(page.exportedSeq()!=exported||page.lastEventSeq()!=last||page.events().size()!=requested)
+                throw new IllegalStateException("sealed outbox page differs");
+            events.addAll(page.events());offset+=requested;
+        }
+        sealedReadBank.publish(sessionId,counters(false),prefix.acknowledgement(),prefix.bytes(),events);
     }
     /** Completed adapter read-prefix encodings; excludes the core's existing ArchiveCommit ACK verification. */
     long preparedArchiveEncodingCount() { return preparedArchiveEncodingCount; }
@@ -166,8 +195,13 @@ public final class RetentionClusteredServiceV3 implements ClusteredService {
         // No successful offer is not a business rollback: caller retains UNKNOWN and retries the same logical identity.
     }
     @Override public void onSessionOpen(ClientSession session, long timestamp) {}
-    @Override public void onSessionClose(ClientSession session, long timestamp, CloseReason reason) {}
+    @Override public void onSessionClose(ClientSession session, long timestamp, CloseReason reason) {
+        if(sealedReadBank!=null&&session!=null)sealedReadBank.invalidateSession(session.id());
+    }
     @Override public void onTimerEvent(long correlationId, long timestamp) {}
-    @Override public void onRoleChange(Cluster.Role role) { System.out.println("VECTOR_V3_ROLE role=" + role); }
-    @Override public void onTerminate(Cluster cluster) {}
+    @Override public void onRoleChange(Cluster.Role role) {
+        if(sealedReadBank!=null)sealedReadBank.invalidate();
+        System.out.println("VECTOR_V3_ROLE role=" + role);
+    }
+    @Override public void onTerminate(Cluster cluster) {if(sealedReadBank!=null)sealedReadBank.invalidate();}
 }
