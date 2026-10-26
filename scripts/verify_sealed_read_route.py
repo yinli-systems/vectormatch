@@ -170,13 +170,20 @@ def verify_junit(path):
 
 def verify_capacity_junit(path):
     path=Path(path);require(path.is_file()and not path.is_symlink()and path.stat().st_size<=8*1024*1024,"bounded original capacity JUnit required")
-    suite=ET.parse(path).getroot();require(int(suite.get("tests",0))==1 and all(int(suite.get(k,0))==0 for k in ("failures","errors","skipped")),"actual capacity correctness test must pass without skips")
-    roots=[Path(p.strip())for p in re.findall(r"VECTOR_SEALED_CAPACITY_TEST_EVIDENCE ([^\n]+)","".join(suite.itertext()))];require(len(roots)==1,"one original capacity correctness attempt required")
-    root=roots[0];require(root.is_absolute()and root.parent==path.resolve().parents[2]/"sealed-capacity-native-attempts"and root.is_dir(),"capacity root must be this JUnit build's owned attempt")
-    for parent in [root,*root.parents]:require(not parent.is_symlink(),"capacity root symlink")
-    require(json.loads((root/"completion.json").read_text())["passed"]is True,"full capacity protocol did not complete")
-    registration=json.loads((root/"registration.json").read_text());require(registration["ratePerSecond"]==500 and registration["sealedReads"]["readRoute"]=="DIRECT_UDP","exact direct500 correctness fixture required")
-    return dict(passed=True,actualCapacityProtocolComplete=True,originalByteRouteAudit=verify(root,"DIRECT_UDP"),performanceClaim=False)
+    suite=ET.parse(path).getroot();require(int(suite.get("tests",0))==2 and all(int(suite.get(k,0))==0 for k in ("failures","errors","skipped")),"both capacity correctness tests must pass without skips")
+    roots=[Path(p.strip())for p in re.findall(r"VECTOR_SEALED_CAPACITY_TEST_EVIDENCE ([^\n]+)","".join(suite.itertext()))];require(len(roots)==len(set(roots))==2,"two distinct original capacity correctness attempts required")
+    results={}
+    for root in roots:
+        require(root.is_absolute()and root.parent==path.resolve().parents[2]/"sealed-capacity-native-attempts"and root.is_dir(),"capacity root must be this JUnit build's owned attempt")
+        for parent in [root,*root.parents]:require(not parent.is_symlink(),"capacity root symlink")
+        completion=json.loads((root/"completion.json").read_text());require(completion["passed"]is True and completion["allOwnedStopped"]is True,"full capacity protocol did not complete and stop")
+        registration=json.loads((root/"registration.json").read_text());require(registration["ratePerSecond"]==500 and registration["sealedReads"]["readRoute"]=="DIRECT_UDP","exact direct500 correctness fixture required")
+        policy=registration["readBankDispatchSelection"]["policy"];require(policy in ("CLOSED","BOUNDED_TURN")and policy not in results,"both distinct dispatch modes required")
+        correct=json.loads((root/"capacity-correctness-result.json").read_text());require(all(correct[k]is True for k in ["passed","allThreeSnapshotHashesMatched","allThreeColdRestoreHashesMatched","sameAdapterPhysicalOrderReplay"]),"financial replay/snapshot/cold proof incomplete")
+        require(correct["actualEgressBounds"]["allOriginalReplyCallbacksCovered"]is True,"all original callbacks required")
+        results[policy]=dict(root=str(root),originalByteRouteAudit=verify(root,"DIRECT_UDP"))
+    require(set(results)=={"CLOSED","BOUNDED_TURN"},"both capacity dispatch modes required")
+    return dict(passed=True,actualCapacityProtocolComplete=True,bothDispatchModesVerified=True,results=results,performanceClaim=False)
 
 if __name__=="__main__":
     parser=argparse.ArgumentParser();source=parser.add_mutually_exclusive_group(required=True);source.add_argument("--root");source.add_argument("--junit");parser.add_argument("--route",choices=("CLUSTER","DIRECT_UDP"));parser.add_argument("--capacity-junit");args=parser.parse_args()

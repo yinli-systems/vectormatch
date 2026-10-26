@@ -35,7 +35,7 @@ public final class RetentionCapacityAeronV4 {
         config=new RetentionCapacityExperimentV4.Config(rate,proceed);
         var batchFlushSelection=RetentionBatchFlushPolicyV4.systemSelection();
         var readYieldSelection=RetentionReadYieldPolicyV4.systemSelection();if(readYieldSelection.enabled()&&!proceed)throw new IllegalArgumentException("inter-bank dispatch requires CONTINUE file-work policy");
-        if(sealedSelection.server()&&!sealedSelection.route().enabled()||sealedSelection.route().enabled()&&(!proceed||readYieldSelection.enabled()))throw new IllegalArgumentException("sealed experiment requires explicit route,CONTINUE and CLOSED read banks");
+        RetentionSealedReadPolicyV4.requireCapacityEligible(sealedSelection,proceed,readYieldSelection);
         if(sealedSelection.route().enabled())RetentionSealedReadPolicyV4.verifyFixedPorts(ports);
         plan=RetentionCapacityExperimentV4.boundedPlan(config,profile);plan.requireAdmitted();RetentionLoopbackPortsV4.verifyFixed(ports);
         root=newRoot.toAbsolutePath().normalize();

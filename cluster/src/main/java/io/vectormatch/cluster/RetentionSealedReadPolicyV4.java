@@ -22,6 +22,13 @@ final class RetentionSealedReadPolicyV4 {
     }
     static Selection systemSelection(){var values=new HashMap<String,String>();for(String p:List.of(SERVER_PROPERTY,ROUTE_PROPERTY)){String v=System.getProperty(p);if(v!=null)values.put(p,v);}return selection(values,System.getenv());}
     static void requireNodeEligible(Selection selection,String profile,int sync,boolean cache){if(selection.server()&&(!RetentionBatchProfilesV3.PROFILE_ID.equals(profile)||sync!=2||!cache))throw new IllegalArgumentException("sealed server requires finite profile,cached prefix and sync2");}
+    static void requireCapacityEligible(Selection selection,boolean proceed,RetentionReadYieldPolicyV4.Selection dispatch){
+        Objects.requireNonNull(selection);Objects.requireNonNull(dispatch);
+        if(selection.server()&&!selection.route().enabled()||selection.route().enabled()&&!proceed)
+            throw new IllegalArgumentException("sealed capacity requires an explicit route and CONTINUE file work");
+        if(selection.route().enabled()&&dispatch.enabled()&&selection.route()!=Route.DIRECT_UDP)
+            throw new IllegalArgumentException("sealed bounded dispatch requires DIRECT_UDP historical reads");
+    }
     static int port(int base,int node){if(base<1024||base>65325||node<0||node>2)throw new IllegalArgumentException("bounded sealed node port required");return base+node*100+10;}
     static void verifyFixedPorts(int base)throws java.io.IOException {
         RetentionLoopbackPortsV4.verifyFixed(base);var ephemeral=RetentionLoopbackPortsV4.hostRange();

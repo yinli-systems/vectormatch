@@ -1,0 +1,24 @@
+test_actual_metadata_cannot_claim_cluster_positions_for_the_ordinary_channel (test_verify_sealed_read_route.SealedRouteAuditTest) ... ok
+test_capacity_junit_cannot_skip_or_point_outside_its_build (test_verify_sealed_read_route.SealedRouteAuditTest) ... ok
+test_capacity_junit_requires_actual_replay_and_both_distinct_dispatch_modes (test_verify_sealed_read_route.SealedRouteAuditTest) ... ERROR
+test_checksum_and_outer_lengths_are_checked_before_embedded_payload (test_verify_sealed_read_route.SealedRouteAuditTest) ... ok
+test_ingress_and_direct_offer_positions_never_assert_consensus_commit (test_verify_sealed_read_route.SealedRouteAuditTest) ... ok
+test_junit_rejects_skips_and_roots_outside_its_own_build (test_verify_sealed_read_route.SealedRouteAuditTest) ... ok
+test_ledger_rejects_gaps_truncation_and_symlinks (test_verify_sealed_read_route.SealedRouteAuditTest) ... ok
+
+======================================================================
+ERROR: test_capacity_junit_requires_actual_replay_and_both_distinct_dispatch_modes (test_verify_sealed_read_route.SealedRouteAuditTest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/scripts/tests/test_verify_sealed_read_route.py", line 78, in test_capacity_junit_requires_actual_replay_and_both_distinct_dispatch_modes
+    result=audit.verify_capacity_junit(path);self.assertTrue(result["bothDispatchModesVerified"]);self.assertEqual(2,verify.call_count)
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/scripts/verify_sealed_read_route.py", line 177, in verify_capacity_junit
+    require(root.is_absolute()and root.parent==path.resolve().parents[2]/"sealed-capacity-native-attempts"and root.is_dir(),"capacity root must be this JUnit build's owned attempt")
+  File "/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/scripts/verify_sealed_read_route.py", line 18, in require
+    raise ValueError(message)
+ValueError: capacity root must be this JUnit build's owned attempt
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.008s
+
+FAILED (errors=1)

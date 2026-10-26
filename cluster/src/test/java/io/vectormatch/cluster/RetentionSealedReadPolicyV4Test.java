@@ -25,4 +25,21 @@ class RetentionSealedReadPolicyV4Test {
         for(int node=0;node<3;node++){assertEquals(19010+node*100,RetentionSealedReadPolicyV4.port(19000,node));for(int offset=1;offset<=5;offset++)assertNotEquals(ClusterTopology.local(19000).port(node,offset),RetentionSealedReadPolicyV4.port(19000,node));}
         assertEquals(65535,RetentionSealedReadPolicyV4.port(65325,2));assertThrows(IllegalArgumentException.class,()->RetentionSealedReadPolicyV4.port(65326,2));
     }
+    @Test void capacityRetainsExplicitRouteAndContinueRequirements(){
+        var disabled=new RetentionSealedReadPolicyV4.Selection(false,RetentionSealedReadPolicyV4.Route.DISABLED);
+        var unselected=new RetentionSealedReadPolicyV4.Selection(true,RetentionSealedReadPolicyV4.Route.DISABLED);
+        assertDoesNotThrow(()->RetentionSealedReadPolicyV4.requireCapacityEligible(disabled,false,RetentionReadYieldPolicyV4.Selection.CLOSED));
+        for(var dispatch:RetentionReadYieldPolicyV4.Selection.values()){
+            assertThrows(IllegalArgumentException.class,()->RetentionSealedReadPolicyV4.requireCapacityEligible(unselected,true,dispatch));
+            for(var route:List.of(RetentionSealedReadPolicyV4.Route.CLUSTER,RetentionSealedReadPolicyV4.Route.DIRECT_UDP))
+                assertThrows(IllegalArgumentException.class,()->RetentionSealedReadPolicyV4.requireCapacityEligible(new RetentionSealedReadPolicyV4.Selection(true,route),false,dispatch));
+        }
+    }
+    @Test void boundedCapacityRequiresDirectImmutableReadsWhileClosedControlsRemainValid(){
+        var direct=new RetentionSealedReadPolicyV4.Selection(true,RetentionSealedReadPolicyV4.Route.DIRECT_UDP);
+        var control=new RetentionSealedReadPolicyV4.Selection(true,RetentionSealedReadPolicyV4.Route.CLUSTER);
+        for(var dispatch:RetentionReadYieldPolicyV4.Selection.values())assertDoesNotThrow(()->RetentionSealedReadPolicyV4.requireCapacityEligible(direct,true,dispatch));
+        assertDoesNotThrow(()->RetentionSealedReadPolicyV4.requireCapacityEligible(control,true,RetentionReadYieldPolicyV4.Selection.CLOSED));
+        assertThrows(IllegalArgumentException.class,()->RetentionSealedReadPolicyV4.requireCapacityEligible(control,true,RetentionReadYieldPolicyV4.Selection.BOUNDED_TURN));
+    }
 }
