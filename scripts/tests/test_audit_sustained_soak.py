@@ -30,6 +30,10 @@ class AuditEvidenceTest(unittest.TestCase):
  def test_network_addresses_alone_do_not_prove_host_placement(self):
   result=a.deployment_scope({'memberHosts':['a','b','c'],'clientEgressHost':'d'})
   self.assertFalse(result['providerFaultDomainsVerified'])
+ def test_partial_qualification_window_is_not_a_complete_minute(self):
+  self.assertEqual((1,0),a.window_counts(20))
+  self.assertEqual((30,30),a.window_counts(1800))
+  self.assertEqual((31,30),a.window_counts(1801))
  def test_provider_fault_domain_claim_requires_full_distinct_assignment(self):
   config={'memberHosts':['a','b','c'],'clientEgressHost':'d'}
   rows=[{'id':str(i),'name':'n'+str(i),'privateIps':ip,'availabilitySet':{'id':'set'},'location':'replica'if i<3 else'load'}for i,ip in enumerate('abcd')]

@@ -238,6 +238,7 @@ public final class RemoteCapacityExperiment {
         String clientDriverMode = "test-transport", clientTransportMode = "direct", clientAeronMode = "one-independent-Aeron-per-client";
         Integer clientDriverCount, clientSessionCount, clientPendingCapacity;
         Long clientNakUnicastDelayNs, clientNakUnicastRetryDelayRatio;
+        CapacityWorkerWaitPolicy workerWaitPolicy = CapacityWorkerWaitPolicy.POLL;
         LoadResult(Options options, Sample[] samples) { this.options = options; this.samples = samples; }
     }
 
@@ -257,6 +258,8 @@ public final class RemoteCapacityExperiment {
         validateOutboxProfile(options.profile(), System.getenv());
         ClientDriverMode driverMode = ClientDriverMode.parse(System.getProperty(CLIENT_DRIVER_PROPERTY));
         ClientTransportMode.parse(System.getProperty(CLIENT_TRANSPORT_PROPERTY)).validate(driverMode, options.workers()); // Reject invalid opt-ins before evidence/funding.
+        CapacityWorkerWaitPolicy.select(System.getProperty(CapacityWorkerWaitPolicy.PROPERTY),
+                ClientTransportMode.parse(System.getProperty(CLIENT_TRANSPORT_PROPERTY)).label);
         ClusterTopology topology = ClusterTopology.fromEnvironment(options.portBase());
         require(topology.memberCount() == 3, "Three configured members required");
         Files.createDirectories(options.directory().getParent());
@@ -270,6 +273,7 @@ public final class RemoteCapacityExperiment {
         ClientDriverMode clientDriverMode = ClientDriverMode.parse(System.getProperty(CLIENT_DRIVER_PROPERTY));
         ClientTransportMode clientTransportMode = ClientTransportMode.parse(System.getProperty(CLIENT_TRANSPORT_PROPERTY));
         clientTransportMode.validate(clientDriverMode, options.workers());
+        CapacityWorkerWaitPolicy workerWaitPolicy = CapacityWorkerWaitPolicy.select(System.getProperty(CapacityWorkerWaitPolicy.PROPERTY), clientTransportMode.label);
         ClientEndpoint loadEndpoint = ClientEndpoint.fromEnvironment(topology);
         NetworkTransport loadTransport = NetworkTransport.fromEnvironment();
         if (clientDriverMode == ClientDriverMode.SHARED) ClusterClient.validateSharedEndpoint(topology, loadEndpoint);
@@ -285,6 +289,7 @@ public final class RemoteCapacityExperiment {
                 "clientConnectionConcurrencyLimit", profile.connectionConcurrency == 0 ? "unbounded" : profile.connectionConcurrency,
                 "clientDriverMode", clientDriverMode.label, "clientDriverCount", null,
                 "clientTransportMode", clientTransportMode.label, "clientSessionCount", null,
+                "clientWorkerWaitPolicy", workerWaitPolicy.label,
                 "clientAeronMode", clientTransportMode.aeronMode, "clientDriverCountScope", "load phase only; count recorded after every worker connects; setup/validation excluded",
                 "validationTimeoutSeconds", CHECK_TIMEOUT.toSeconds(), "setupTimeoutSeconds", SETUP_TIMEOUT.toSeconds(),
                 "ratePerSecond", options.rate(), "scheduledArrivals", options.arrivals(), "workers", options.workers(),
@@ -470,6 +475,7 @@ public final class RemoteCapacityExperiment {
 
     static LoadResult runLoad(Options options, Sample[] samples, TransportFactory factory) throws Exception {
         LoadResult load = new LoadResult(options, samples);
+        load.workerWaitPolicy = CapacityWorkerWaitPolicy.select(System.getProperty(CapacityWorkerWaitPolicy.PROPERTY), factory.transportMode());
         SoakRecorder soak = options.windowMode() == WindowMode.FINITE ? null : new SoakRecorder(options, samples);
         List<ArrayBlockingQueue<Sample>> queues = new ArrayList<>();
         for (int i = 0; i < options.workers(); i++) queues.add(new ArrayBlockingQueue<>(options.queueCapacity()));
@@ -491,8 +497,8 @@ public final class RemoteCapacityExperiment {
                     if (startupFailure.get() != null) return;
                     ArrayBlockingQueue<Sample> queue = queues.get(worker);
                     while (!load.schedulingDone.get() || !queue.isEmpty()) {
-                        Sample sample = queue.poll();
-                        if (sample == null) { transport.idle(); LockSupport.parkNanos(100_000); continue; }
+                        Sample sample = load.workerWaitPolicy.poll(queue);
+                        if (sample == null) { transport.idle(); if (load.workerWaitPolicy == CapacityWorkerWaitPolicy.POLL) LockSupport.parkNanos(100_000); continue; }
                         if (System.nanoTime() >= load.drainDeadline) { sample.outcome = "DRAIN_NOT_SENT"; sample.ended = System.nanoTime(); load.dropped.incrementAndGet(); continue; }
                         sample.started = System.nanoTime(); sample.initialLeader = transport.leader();
                         load.started.incrementAndGet(); load.inFlight.incrementAndGet();
@@ -680,6 +686,7 @@ public final class RemoteCapacityExperiment {
         long elapsed = Math.max(load.windowEnd, maxConfirmation) - load.origin;
         Map<String, Object> summary = fields("test", "external-replicated-matching-fixed-arrival-capacity", "profile", load.options.profile().label,
                 "clientDriverMode", load.clientDriverMode, "clientDriverCount", load.clientDriverCount,
+                "clientWorkerWaitPolicy", load.workerWaitPolicy.label,
                 "clientNakUnicastDelayNs", load.clientNakUnicastDelayNs,
                 "clientNakUnicastRetryDelayRatio", load.clientNakUnicastRetryDelayRatio,
                 "clientTransportMode", load.clientTransportMode, "clientSessionCount", load.clientSessionCount,

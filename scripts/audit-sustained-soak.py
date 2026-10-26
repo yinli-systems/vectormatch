@@ -27,6 +27,10 @@ def instant(s):return datetime.datetime.fromisoformat(re.sub(r'(\.\d{6})\d+',r'\
 def event_key(e):
     return (e['type'],e['start'],e['durationNs'],max(-1,e['threadId']) if e['threadId']>0 else -1,e.get('path',''))
 
+def window_counts(seconds):
+    assert 0 < seconds <= 3600
+    return math.ceil(seconds/60),math.floor(seconds/60)
+
 def deployment_scope(configuration,inventory=None,fault_domains=None):
     hosts=configuration['memberHosts'];egress=configuration['clientEgressHost']
     observed=dict(memberHosts=hosts,clientEgressHost=egress,providerFaultDomainsVerified=False,
@@ -86,7 +90,8 @@ def audit(root,jfr):
     assert {int(r['index'])for r in intents}==set(originals)
     for r in intents:
         for key in ['worker','account_id','producer_id','request_seq','client_order_id','planned_offset_ns']:assert r[key]==originals[int(r['index'])][key]
-    windows=list(csv.DictReader((evidence/'soak-minute-windows.csv').open()));assert len(windows)==int(result['arrivalWindowSeconds']/60)
+    windows=list(csv.DictReader((evidence/'soak-minute-windows.csv').open()))
+    total_windows,complete_windows=window_counts(result['arrivalWindowSeconds']);assert len(windows)==total_windows
     window_failures=[]
     for minute,w in enumerate(windows):
         group=[r for r in rows if int(r['planned_offset_ns'])//60_000_000_000==minute]
@@ -133,7 +138,8 @@ def audit(root,jfr):
     canonical=all(result.get(k)is True for k in ['canonicalSnapshotBytesVerified','stateHashVerified','invariantsVerified','assetConservationVerified','perReplyDeterministicResultVerified','fixedLeaderVerified'])
     canonical=canonical and digest(evidence/'final-snapshot.bin')==digest(evidence/'expected-snapshot.bin')
     gates={'allOriginalsAccepted':all_accepted,'noInitialUnknown':result['unknownAtInitialDeadline']==0,'noFinalUnknown':result['unresolvedFinal']==0,'noNotSent':result['clientNotSentCommands']==0,'generatorTimingValid':not result['generatorTimingInvalid'],'globalP99AtMost25ms':all_accepted and q['p99']<=25000,'globalP999AtMost100ms':all_accepted and q['p999']<=100000,'canonicalReplay':canonical,'fullTelemetryCaptured':len(telemetry)==4 and all(t['maxMetricGapSeconds']<=5 and t['maxCpuEventGapSeconds']<=5 for t in telemetry)}
-    return dict(case=root.name,scope=topology['description'],topology=topology,originals=expected,accepted=len(accepted),p50Us=q['p50'],p99Us=q['p99'],p999Us=q['p999'],schedulerLateAbove20ms=timing_late,completeMinuteWindows=len(windows),minuteP99Above25ms=window_failures,originalTerminalCheckpointRows=len(checkpoints),telemetry=telemetry,registeredGates=gates,registeredAcceptancePassed=all(gates.values()),applicationCorrectnessPassed=result['passed'],measurementValid=result['measurementValid'])
+    gates['sustainedWindow30To60Minutes']=1800<=result['arrivalWindowSeconds']<=3600
+    return dict(case=root.name,scope=topology['description'],topology=topology,originals=expected,accepted=len(accepted),p50Us=q['p50'],p99Us=q['p99'],p999Us=q['p999'],schedulerLateAbove20ms=timing_late,completeMinuteWindows=complete_windows,partialMinuteWindows=total_windows-complete_windows,minuteP99Above25ms=window_failures,originalTerminalCheckpointRows=len(checkpoints),telemetry=telemetry,registeredGates=gates,registeredAcceptancePassed=all(gates.values()),applicationCorrectnessPassed=result['passed'],measurementValid=result['measurementValid'])
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('root',type=Path);parser.add_argument('--jfr',required=True,type=Path);parser.add_argument('--output',required=True,type=Path);args=parser.parse_args()
