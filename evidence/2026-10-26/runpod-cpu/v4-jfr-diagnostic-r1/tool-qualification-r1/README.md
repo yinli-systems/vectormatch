@@ -1,0 +1,5 @@
+# Selected-event JFR tool qualification
+
+The Linux owned synthetic helper verifies four FileForce events,four FileWrite events,32bytes,the actual PID,zero data loss,an explicit event allowlist,and startup recording configuration/PID filename expansion. No driver,cluster,business or unrelated JVM is started or attached. Full source/JFC,compiled helper,local prototypes and all Linux originals are preserved. R1 local prototype predates startup-check support;R2 and Linux qualify the current source. No live trading latency or force-operation distribution follows from this self-test.
+
+[JDK21 startup recording and PID expansion](https://docs.oracle.com/en/java/javase/21/docs/specs/man/java.html) and [pinned21.0.13 FileChannel force implementation](https://raw.githubusercontent.com/openjdk/jdk21u/jdk-21.0.13%2B9/src/java.base/share/classes/sun/nio/ch/FileChannelImpl.java). The native launcher deliberately clears Java option environment variables for children;live diagnostics will require an explicit,registered child-argument path and fresh correctness qualification.
