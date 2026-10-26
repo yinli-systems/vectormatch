@@ -1,0 +1,3 @@
+# Local generated JAR copy preservation
+
+116 generated preparation JAR copies were replaced atomically with APFS clone copies of byte-identical retained preparation JARs. Source and target size,SHA-256,mode,UID,GID and modification time were preserved. COPIES records every canonical source and target. No source code,raw request/order/reply/state body or remote runtime file was changed. Observed local free space increased by about173MB. The immutable private qualification archive still contains the original matching member bodies and metadata. This is workspace storage maintenance,not a latency benchmark.
