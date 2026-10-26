@@ -75,8 +75,15 @@ public final class RemoteCapacityExperiment {
             throw new IllegalArgumentException("Capacity profile " + profile.label + " requires VECTOR_OUTBOX_CAPACITY=" + profile.outboxCapacity);
     }
 
+    enum WindowMode { FINITE, SOAK, SOAK_QUALIFICATION }
+
     record Options(Path directory, int portBase, int rate, int arrivals, int workers, int queueCapacity,
-                   int requestTimeoutMs, int drainTimeoutMs, int expectedLeader, int schedulerLatenessLimitMs, Profile profile) {
+                   int requestTimeoutMs, int drainTimeoutMs, int expectedLeader, int schedulerLatenessLimitMs, Profile profile, WindowMode windowMode) {
+        Options(Path directory, int portBase, int rate, int arrivals, int workers, int queueCapacity,
+                int requestTimeoutMs, int drainTimeoutMs, int expectedLeader, int schedulerLatenessLimitMs, Profile profile) {
+            this(directory, portBase, rate, arrivals, workers, queueCapacity, requestTimeoutMs, drainTimeoutMs,
+                    expectedLeader, schedulerLatenessLimitMs, profile, WindowMode.FINITE);
+        }
         Options(Path directory, int portBase, int rate, int arrivals, int workers, int queueCapacity,
                 int requestTimeoutMs, int drainTimeoutMs, int expectedLeader, int schedulerLatenessLimitMs) {
             this(directory, portBase, rate, arrivals, workers, queueCapacity, requestTimeoutMs, drainTimeoutMs,
@@ -84,13 +91,17 @@ public final class RemoteCapacityExperiment {
         }
         Options {
             Objects.requireNonNull(profile, "profile");
+            Objects.requireNonNull(windowMode, "windowMode");
             if (rate < 1 || rate > 1_000_000 || arrivals < 1 || arrivals > profile.maximumArrivals
                     || workers < 1 || workers > profile.maximumWorkers || queueCapacity < 1 || queueCapacity > profile.maximumArrivals
                     || (profile == Profile.EXTENDED_350K_256 && workers != 128 && workers != 256)
                     || requestTimeoutMs < 10 || requestTimeoutMs > 30_000 || drainTimeoutMs < requestTimeoutMs
                     || drainTimeoutMs > 120_000 || expectedLeader < 0 || expectedLeader > 2
                     || schedulerLatenessLimitMs < 1 || schedulerLatenessLimitMs > 1000
-                    || offsetNanos(arrivals, rate) > TimeUnit.MINUTES.toNanos(5))
+                    || (windowMode == WindowMode.FINITE && offsetNanos(arrivals, rate) > TimeUnit.MINUTES.toNanos(5))
+                    || (windowMode == WindowMode.SOAK && (offsetNanos(arrivals, rate) < TimeUnit.MINUTES.toNanos(30)
+                        || offsetNanos(arrivals, rate) > TimeUnit.MINUTES.toNanos(60)))
+                    || (windowMode == WindowMode.SOAK_QUALIFICATION && offsetNanos(arrivals, rate) > TimeUnit.SECONDS.toNanos(60)))
                 throw new IllegalArgumentException("Invalid bounds: rate 1..1000000, arrivals/queue within selected profile limit, workers within selected profile limit, timeout 10..30000ms, drain timeout..120000ms, leader 0..2; arrival window <=300s");
         }
     }
@@ -239,6 +250,10 @@ public final class RemoteCapacityExperiment {
                 Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4]), Integer.parseInt(args[5]),
                 Integer.parseInt(args[6]), Integer.parseInt(args[7]), Integer.parseInt(args[8]),
                 args.length >= 10 ? Integer.parseInt(args[9]) : 20, args.length == 11 ? Profile.parse(args[10]) : Profile.BASELINE);
+        execute(options);
+    }
+
+    static void execute(Options options) throws Exception {
         validateOutboxProfile(options.profile(), System.getenv());
         ClientDriverMode driverMode = ClientDriverMode.parse(System.getProperty(CLIENT_DRIVER_PROPERTY));
         ClientTransportMode.parse(System.getProperty(CLIENT_TRANSPORT_PROPERTY)).validate(driverMode, options.workers()); // Reject invalid opt-ins before evidence/funding.
@@ -260,6 +275,7 @@ public final class RemoteCapacityExperiment {
         if (clientDriverMode == ClientDriverMode.SHARED) ClusterClient.validateSharedEndpoint(topology, loadEndpoint);
         String producer = "capacity-fixed-v1"; // Isolated fresh trial state is required; deterministic preparation permits byte-for-byte baseline comparisons.
         Map<String, Object> configuration = fields("startedAt", Instant.now().toString(), "producerPrefix", producer,
+                "windowMode", options.windowMode().name(), "stateScope", "bounded fresh lineage; no continuous100M claim",
                 "profile", profile.label, "profileMaximumArrivals", profile.maximumArrivals, "declaredOutboxCapacity", profile.outboxCapacity,
                 "expectedStateProfile", profile.stateProfile().id(), "expectedCoreLimits", fields("maxAccounts", profile.expectedLimits().maxAccounts(),
                         "maxProducers", profile.expectedLimits().maxProducers(), "maxRetainedOrders", profile.expectedLimits().maxRetainedOrders(),
@@ -454,6 +470,7 @@ public final class RemoteCapacityExperiment {
 
     static LoadResult runLoad(Options options, Sample[] samples, TransportFactory factory) throws Exception {
         LoadResult load = new LoadResult(options, samples);
+        SoakRecorder soak = options.windowMode() == WindowMode.FINITE ? null : new SoakRecorder(options, samples);
         List<ArrayBlockingQueue<Sample>> queues = new ArrayList<>();
         for (int i = 0; i < options.workers(); i++) queues.add(new ArrayBlockingQueue<>(options.queueCapacity()));
         CountDownLatch ready = new CountDownLatch(options.workers());
@@ -529,15 +546,21 @@ public final class RemoteCapacityExperiment {
             while (!load.workersDone.get()) {
                 waitUntil(next);
                 recordBacklog(load, queues);
+                if (soak != null) {
+                    try { soak.checkpoint(load); }
+                    catch (IOException failure) { startupFailure.compareAndSet(null, failure); return; }
+                }
                 next += TimeUnit.SECONDS.toNanos(1);
             }
         }, "capacity-backlog-sampler");
         monitor.start();
         for (Sample sample : samples) {
+            if (soak != null && startupFailure.get() != null) throw new IOException("Soak ledger/worker failed", startupFailure.get());
             sample.planned = load.origin + offsetNanos(sample.index, options.rate());
             waitUntil(sample.planned);
             load.due.incrementAndGet();
             sample.enqueued = System.nanoTime();
+            if (soak != null) soak.intent(sample, load.origin);
             sample.outcome = "QUEUED";
             if (queues.get(sample.worker).offer(sample)) { load.admitted.incrementAndGet(); }
             else { sample.outcome = "CLIENT_QUEUE_FULL_NOT_SENT"; sample.ended = System.nanoTime(); load.dropped.incrementAndGet(); }
@@ -546,10 +569,12 @@ public final class RemoteCapacityExperiment {
         for (Thread worker : workers) worker.join(Math.max(1, TimeUnit.NANOSECONDS.toMillis(load.drainDeadline - System.nanoTime())) + 10_000);
         load.finished = System.nanoTime();
         load.workersDone.set(true);
-        monitor.interrupt(); monitor.join(2000);
+        if (soak == null) monitor.interrupt();
+        monitor.join(2000);
         recordBacklog(load, queues);
         require(workers.stream().noneMatch(Thread::isAlive), "Worker did not terminate after bounded drain");
         load.workerFailure = startupFailure.get();
+        if (soak != null) soak.checkpoint(load);
         return load;
         } finally {
             // Exceptions/interruption must not close a borrowed driver under surviving worker clients.
@@ -566,13 +591,14 @@ public final class RemoteCapacityExperiment {
             }
             load.workersDone.set(true);
             if (monitor != null) {
-                monitor.interrupt();
+                if (soak == null) monitor.interrupt();
                 while (monitor.isAlive()) {
                     try { monitor.join(100); } catch (InterruptedException ignored) { interrupted = true; }
                 }
             }
-            if (interrupted) Thread.currentThread().interrupt();
             require(workers.stream().noneMatch(Thread::isAlive), "Worker survived load cleanup; borrowed owner must not close active clients");
+            try { if (soak != null) soak.close(); }
+            finally { if (interrupted) Thread.currentThread().interrupt(); }
         }
     }
 
@@ -742,6 +768,11 @@ public final class RemoteCapacityExperiment {
         try (BufferedWriter out = Files.newBufferedWriter(path)) {
             out.write("index,worker,account_id,producer_id,request_seq,client_order_id,planned_offset_ns,enqueued_offset_ns,execute_started_offset_ns,initial_attempt_end_offset_ns,confirmed_offset_ns,ended_offset_ns,scheduler_lateness_ns,queue_delay_ns,initial_execute_rtt_ns,execute_through_resolution_ns,scheduled_to_confirmed_ns,missed_dispatch_deadline,outcome,attempts,unknown_at_initial_deadline,initial_leader,final_leader,result_code,result_reason,order_id,trade_count,replayed,result_command_seq,reply_command_seq,event_seq,market_seq,error\n");
             for (Sample s : load.samples) {
+                out.write(sampleCsv(s, load)); out.newLine();
+            }
+        }
+    }
+    static String sampleCsv(Sample s, LoadResult load) {
                 Result r = s.reply == null ? null : s.reply.result();
                 List<Object> row = Arrays.asList(s.index, s.worker, s.command.accountId(), s.command.producerId(), s.command.requestSeq(), s.command.clientOrderId(),
                         relative(s.planned, load.origin), relative(s.enqueued, load.origin), relative(s.started, load.origin), relative(s.initialEnd, load.origin),
@@ -753,9 +784,7 @@ public final class RemoteCapacityExperiment {
                         r == null ? "" : r.code(), r == null ? "" : r.reason(), r == null ? "" : r.orderId(), r == null ? "" : r.tradeCount(),
                         s.reply == null ? "" : s.reply.replayed(), r == null ? "" : r.commandSeq(), s.reply == null ? "" : s.reply.commandSeq(),
                         s.reply == null ? "" : s.reply.eventSeq(), s.reply == null ? "" : s.reply.marketSeq(), s.error.isEmpty() && s.reply != null ? s.reply.error() : s.error);
-                out.write(row.stream().map(RemoteCapacityExperiment::csv).reduce((a, b) -> a + ',' + b).orElse("")); out.newLine();
-            }
-        }
+                return row.stream().map(RemoteCapacityExperiment::csv).reduce((a, b) -> a + ',' + b).orElse("");
     }
     private static void writeBacklog(Path path, LoadResult load) throws IOException {
         try (BufferedWriter out = Files.newBufferedWriter(path)) {

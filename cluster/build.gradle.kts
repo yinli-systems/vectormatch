@@ -67,3 +67,13 @@ tasks.register<JavaExec>("capacityAeronV4") {
     }
 }
 
+
+val soakAgentSources = sourceSets.create("soakAgent") {
+    java.srcDir(rootProject.file("tools/soak-agent"))
+}
+tasks.register<Jar>("soakAgentJar") {
+    dependsOn(tasks.named(soakAgentSources.classesTaskName))
+    archiveBaseName.set("vectormatch-soak-agent")
+    from(soakAgentSources.output)
+    manifest { attributes("Premain-Class" to "io.vectormatch.soak.SoakAgent") }
+}
