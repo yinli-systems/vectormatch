@@ -57,3 +57,24 @@ Host load, cgroup CPU throttling, child CPU/I/O and GC must be retained.
 Build with `./gradlew :bench:installDist`; invoke Java21 with
 `--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED` for CLUSTER and classpath
 `bench/build/install/bench/lib/*`. Use a new output directory for every run.
+
+## Registered replicated polling comparison
+
+The cache-index comparison did not pass both registered pairs; retain the original
+core for this next experiment. Compare the existing explicit node data-path idle
+policy at1000000ns (A) and100000ns (B), in A1/B1/A2/B2 order. Both arms explicitly
+select the same policy version; only its maximum park changes. All three nodes
+use separate idle-strategy instances, fixed leader0, sync2, SHARED driver,
+MTU1248,128KiB socket buffer,2GiB G1 heap and the same baseline JARs.
+Each arm runs500 synthetic cycles (8000 attempts), one outstanding RPC, with a
+fresh bounded lineage and16384-event outbox. This is a low-load response-time
+experiment, not an open-loop capacity result or a continuous lineage.
+
+Preserve all3 replica JFR event streams, native JFR dumps, GC, process CPU/I/O and
+cgroup statistics. Dump JFR before stopping owned replicas; observer cost applies
+equally to both arms. Both pairs must have identical canonical/command/event
+semantics, no unresolved commands, at least10% lower RPC P99 and no worse P99.9.
+Record CPU-seconds per command and all observed pauses; higher CPU cost is an
+explicit tradeoff. No default or HFT/SLA promotion follows from this short test.
+The controller owns its processes, has a15-minute deadline and512MiB disk floor;
+this smaller campaign has a768MB initial free-space admission requirement.
