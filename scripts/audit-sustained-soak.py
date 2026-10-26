@@ -27,6 +27,27 @@ def instant(s):return datetime.datetime.fromisoformat(re.sub(r'(\.\d{6})\d+',r'\
 def event_key(e):
     return (e['type'],e['start'],e['durationNs'],max(-1,e['threadId']) if e['threadId']>0 else -1,e.get('path',''))
 
+def deployment_scope(configuration,inventory=None,fault_domains=None):
+    hosts=configuration['memberHosts'];egress=configuration['clientEgressHost']
+    observed=dict(memberHosts=hosts,clientEgressHost=egress,providerFaultDomainsVerified=False,
+                  bareMetalHostIdentityProven=False,physicalMediaFailureProven=False)
+    if inventory is None or fault_domains is None:
+        observed['description']='recorded network endpoints only; physical placement not attested by this audit'
+        return observed
+    by_ip={row['privateIps']:row for row in inventory}
+    assert len(by_ip)==len(inventory)==4 and len(set(hosts))==3 and egress not in hosts
+    members=[by_ip[host]for host in hosts];load=by_ip[egress]
+    assert len({row['id']for row in inventory})==4
+    sets={row['availabilitySet']['id'].lower()for row in members}
+    assert len(sets)==1
+    domains={row['name']:row['faultDomain']for row in fault_domains}
+    assert len(domains)==4 and {domains[row['name']]for row in members}=={0,1,2}
+    assert len({row['location']for row in members})==1 and load['location']!=members[0]['location']
+    observed.update(providerFaultDomainsVerified=True,replicaFaultDomains=[domains[row['name']]for row in members],
+                    replicaRegion=members[0]['location'],loadRegion=load['location'],
+                    description='Azure managed VMs: three distinct provider-reported fault domains; independent generator in another region; low-rate sustained workload')
+    return observed
+
 def audit(root,jfr):
     root=Path(root).resolve();manifest=json.loads((root/'MEMBER_MANIFEST.json').read_text())['files']
     for name,v in manifest.items():
@@ -34,6 +55,14 @@ def audit(root,jfr):
         if not within(p,root)or p.is_symlink()or not p.is_file():raise ValueError('unsafe/missing archive member')
         if p.stat().st_size!=v['bytes']or digest(p)!=v['sha256']:raise ValueError('archive member hash mismatch: '+name)
     evidence=root/'evidence';result=json.loads((evidence/'result.json').read_text())
+    configuration=json.loads((evidence/'configuration.json').read_text())
+    provider_names=['deployment/inventory.json','deployment/fault-domains.json']
+    provider=[]
+    if any((root/name).exists()for name in provider_names):
+        for name in provider_names:
+            assert name in manifest,'deployment evidence must be hash-bound to archive manifest'
+            provider.append(json.loads((root/name).read_text()))
+    topology=deployment_scope(configuration,*provider)
     rows=list(csv.DictReader((evidence/'arrivals.csv').open()));expected=result['scheduledArrivals']
     assert len(rows)==expected and [int(r['index'])for r in rows]==list(range(expected))
     originals={int(r['index']):r for r in rows}
@@ -104,7 +133,7 @@ def audit(root,jfr):
     canonical=all(result.get(k)is True for k in ['canonicalSnapshotBytesVerified','stateHashVerified','invariantsVerified','assetConservationVerified','perReplyDeterministicResultVerified','fixedLeaderVerified'])
     canonical=canonical and digest(evidence/'final-snapshot.bin')==digest(evidence/'expected-snapshot.bin')
     gates={'allOriginalsAccepted':all_accepted,'noInitialUnknown':result['unknownAtInitialDeadline']==0,'noFinalUnknown':result['unresolvedFinal']==0,'noNotSent':result['clientNotSentCommands']==0,'generatorTimingValid':not result['generatorTimingInvalid'],'globalP99AtMost25ms':all_accepted and q['p99']<=25000,'globalP999AtMost100ms':all_accepted and q['p999']<=100000,'canonicalReplay':canonical,'fullTelemetryCaptured':len(telemetry)==4 and all(t['maxMetricGapSeconds']<=5 and t['maxCpuEventGapSeconds']<=5 for t in telemetry)}
-    return dict(case=root.name,scope='same-container loopback UDP; low-rate bounded baseline, not physical host or sustained high-rate proof',originals=expected,accepted=len(accepted),p50Us=q['p50'],p99Us=q['p99'],p999Us=q['p999'],schedulerLateAbove20ms=timing_late,completeMinuteWindows=len(windows),minuteP99Above25ms=window_failures,originalTerminalCheckpointRows=len(checkpoints),telemetry=telemetry,registeredGates=gates,registeredAcceptancePassed=all(gates.values()),applicationCorrectnessPassed=result['passed'],measurementValid=result['measurementValid'])
+    return dict(case=root.name,scope=topology['description'],topology=topology,originals=expected,accepted=len(accepted),p50Us=q['p50'],p99Us=q['p99'],p999Us=q['p999'],schedulerLateAbove20ms=timing_late,completeMinuteWindows=len(windows),minuteP99Above25ms=window_failures,originalTerminalCheckpointRows=len(checkpoints),telemetry=telemetry,registeredGates=gates,registeredAcceptancePassed=all(gates.values()),applicationCorrectnessPassed=result['passed'],measurementValid=result['measurementValid'])
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('root',type=Path);parser.add_argument('--jfr',required=True,type=Path);parser.add_argument('--output',required=True,type=Path);args=parser.parse_args()

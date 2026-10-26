@@ -27,4 +27,15 @@ class AuditEvidenceTest(unittest.TestCase):
   self.assertEqual(a.instant('2026-10-26T10:00:00.123456Z'),a.instant('2026-10-26T10:00:00.123456789Z'))
  def test_nearest_rank_preserves_tail(self):
   self.assertEqual(100,a.quantile(list(range(1,101)),.999));self.assertEqual(99,a.quantile(list(range(1,101)),.99))
+ def test_network_addresses_alone_do_not_prove_host_placement(self):
+  result=a.deployment_scope({'memberHosts':['a','b','c'],'clientEgressHost':'d'})
+  self.assertFalse(result['providerFaultDomainsVerified'])
+ def test_provider_fault_domain_claim_requires_full_distinct_assignment(self):
+  config={'memberHosts':['a','b','c'],'clientEgressHost':'d'}
+  rows=[{'id':str(i),'name':'n'+str(i),'privateIps':ip,'availabilitySet':{'id':'set'},'location':'replica'if i<3 else'load'}for i,ip in enumerate('abcd')]
+  domains=[{'name':'n'+str(i),'faultDomain':i if i<3 else None}for i in range(4)]
+  result=a.deployment_scope(config,rows,domains)
+  self.assertTrue(result['providerFaultDomainsVerified']);self.assertFalse(result['physicalMediaFailureProven'])
+  domains[1]['faultDomain']=0
+  with self.assertRaises(AssertionError):a.deployment_scope(config,rows,domains)
 if __name__=='__main__':unittest.main()
