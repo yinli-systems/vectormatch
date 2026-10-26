@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="io.vectormatch.cluster.AnchoredRetentionServiceV4Test" tests="7" skipped="0" failures="1" errors="0" timestamp="2026-10-26T20:01:35.335Z" hostname="Mac" time="0.394">
+  <properties/>
+  <testcase name="anchorBytesDoNotExposeMutableProjectionAndTokenIsSingleUse()" classname="io.vectormatch.cluster.AnchoredRetentionServiceV4Test" time="0.045"/>
+  <testcase name="archiveAndEventFrontiersMustBothBeClosedBeforeRoll()" classname="io.vectormatch.cluster.AnchoredRetentionServiceV4Test" time="0.003"/>
+  <testcase name="oldOriginalsReplayConflictOrStayStaleWithoutRenewingCounters()" classname="io.vectormatch.cluster.AnchoredRetentionServiceV4Test" time="0.016"/>
+  <testcase name="oneReservedSlotStillAllowsRollButRejectsOtherAndInvalidControl()" classname="io.vectormatch.cluster.AnchoredRetentionServiceV4Test" time="0.005">
+    <failure message="java.lang.IllegalArgumentException: invalid journal roll frontier" type="java.lang.IllegalArgumentException">java.lang.IllegalArgumentException: invalid journal roll frontier
+	at io.vectormatch.cluster.AnchoredRetentionWireV4$JournalRoll.&lt;init&gt;(AnchoredRetentionWireV4.java:44)
+	at io.vectormatch.cluster.AnchoredRetentionServiceV4Test.oneReservedSlotStillAllowsRollButRejectsOtherAndInvalidControl(AnchoredRetentionServiceV4Test.java:67)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+</failure>
+  </testcase>
+  <testcase name="hundredsOfRollsMatchUnanchoredBusinessStateAcrossColdRestores()" classname="io.vectormatch.cluster.AnchoredRetentionServiceV4Test" time="0.317"/>
+  <testcase name="checksumTruncationScopeAndLegacyEncodingAreRejected()" classname="io.vectormatch.cluster.AnchoredRetentionServiceV4Test" time="0.003"/>
+  <testcase name="preparedRollCannotEraseInterveningBusiness()" classname="io.vectormatch.cluster.AnchoredRetentionServiceV4Test" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
