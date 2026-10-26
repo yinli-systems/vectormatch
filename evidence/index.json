@@ -3078,6 +3078,102 @@
       "scope": "Two repeated20-second points at fixed4000/s;fresh lineage each;actual artifact65c41d519ea7;CONTINUE;leader0;sync2;three JVMs on one physical host;127 active producers;Q64;batch4;cut1536;read32/page32/chunk6144. Requested owner park cap only;server arguments unchanged. No long-run SLA or hard realtime guarantee.",
       "title": "V4 owner polling · 100 us",
       "updatedAt": "2026-10-26T00:03:46.549479+00:00"
+    },
+    {
+      "configurationFingerprint": "7551c4828690a41405a4e1aa5c4f4fa35ac6990a01a902c1c8895759f87f4129",
+      "id": "cpu-v4-latency-agent-idle-1000000",
+      "points": [
+        {
+          "allOfferedAcceptedP99Millis": 105.711868,
+          "classification": "FINITE_V4_AGENT_IDLE_COMPARISON",
+          "clientNotSent": 0,
+          "drainSeconds": 0.212235905,
+          "goodput": 3993.45,
+          "id": "cpu-v4-latency-agent-idle-4000-c1",
+          "p99Millis": 105.711868,
+          "peakBacklog": 325,
+          "rate": 4000,
+          "rejected": 0,
+          "serverErrors": 0,
+          "stable": null,
+          "unknown": 0,
+          "unresolved": 0,
+          "valid": true,
+          "windowSeconds": 20,
+          "workers": 127
+        },
+        {
+          "allOfferedAcceptedP99Millis": 89.606682,
+          "classification": "FINITE_V4_AGENT_IDLE_COMPARISON",
+          "clientNotSent": 0,
+          "drainSeconds": 0.198665122,
+          "goodput": 3993.45,
+          "id": "cpu-v4-latency-agent-idle-4000-c2",
+          "p99Millis": 89.606682,
+          "peakBacklog": 263,
+          "rate": 4000,
+          "rejected": 0,
+          "serverErrors": 0,
+          "stable": null,
+          "unknown": 0,
+          "unresolved": 0,
+          "valid": true,
+          "windowSeconds": 20,
+          "workers": 127
+        }
+      ],
+      "reportPath": "docs/V4_AGENT_IDLE_RESULTS.md",
+      "scope": "Two separate20-second repeats at4000/s;fresh lineage each;actual artifactdcfeeb81,one physical host,three UDP JVMs;owner1ms,Q64,batch4,cut1536,read32/page32/chunk6144. agent 1000000ns. Requested park is not an OS bound;no sustained SLA or100M claim.",
+      "title": "V4 agent 1000000ns",
+      "updatedAt": "2026-10-26T00:47:27.229807+00:00"
+    },
+    {
+      "configurationFingerprint": "489baaa1f4005d3913f5ccf8c52b2fa0c48693f6866d3f005f10eb3a9fe10320",
+      "id": "cpu-v4-latency-agent-idle-100000",
+      "points": [
+        {
+          "allOfferedAcceptedP99Millis": 59.384675,
+          "classification": "FINITE_V4_AGENT_IDLE_COMPARISON",
+          "clientNotSent": 0,
+          "drainSeconds": 0.164766562,
+          "goodput": 3993.45,
+          "id": "cpu-v4-latency-agent-idle-4000-d1",
+          "p99Millis": 59.384675,
+          "peakBacklog": 166,
+          "rate": 4000,
+          "rejected": 0,
+          "serverErrors": 0,
+          "stable": null,
+          "unknown": 0,
+          "unresolved": 0,
+          "valid": true,
+          "windowSeconds": 20,
+          "workers": 127
+        },
+        {
+          "allOfferedAcceptedP99Millis": 63.068933,
+          "classification": "FINITE_V4_AGENT_IDLE_COMPARISON",
+          "clientNotSent": 0,
+          "drainSeconds": 0.141304979,
+          "goodput": 3993.45,
+          "id": "cpu-v4-latency-agent-idle-4000-d2",
+          "p99Millis": 63.068933,
+          "peakBacklog": 176,
+          "rate": 4000,
+          "rejected": 0,
+          "serverErrors": 0,
+          "stable": null,
+          "unknown": 0,
+          "unresolved": 0,
+          "valid": true,
+          "windowSeconds": 20,
+          "workers": 127
+        }
+      ],
+      "reportPath": "docs/V4_AGENT_IDLE_RESULTS.md",
+      "scope": "Two separate20-second repeats at4000/s;fresh lineage each;actual artifactdcfeeb81,one physical host,three UDP JVMs;owner1ms,Q64,batch4,cut1536,read32/page32/chunk6144. agent 100000ns. Requested park is not an OS bound;no sustained SLA or100M claim.",
+      "title": "V4 agent 100000ns",
+      "updatedAt": "2026-10-26T00:47:27.229807+00:00"
     }
   ],
   "runs": [
@@ -5414,6 +5510,111 @@
       "scope": "80000 unique one-unit IOC trades;4000/s independent arrivals for20seconds;CONTINUE maintenance",
       "throughput": 3993.45,
       "timestamp": "2026-10-26T00:01:22.244511982Z",
+      "trades": 80000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-latency-r1/qualification-500-q1-native-r1/README.md",
+      "commands": 10000,
+      "correctnessPassed": true,
+      "durability": "Sync2;both prefixes and original control intents forced/full-readback before ACK;all three snapshots/cold restores agree",
+      "id": "cpu-v4-latency-qualification-500",
+      "label": "V4 native qualification · 500/s",
+      "limitations": [
+        "Finite20-second fresh lineage;no sustained SLA,independent-host isolation,100M,HFT or funded external trading.",
+        "Actual artifact dcfeeb81/source c6445604;owner1ms,127 active producers,Q64,batch4,cut1536,read32/page32/chunk6144.",
+        "Configured object/factory evidence does not measure OS sleeps. Backlog snapshots can miss queues."
+      ],
+      "model": "One prepaid CPU host;three actual UDP JVMs;leader0/sync2;127 active producers",
+      "p50Millis": 6.192753,
+      "p99Millis": 27.213919,
+      "scope": "Functional qualification:10000 unique trades and32 audited bounded read-yield turns;not a capacity ceiling or optimization comparison",
+      "throughput": 499.85,
+      "timestamp": "2026-10-26T00:35:52.570581690Z",
+      "trades": 10000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-latency-r1/agent-idle-4000-c1-native-r1/README.md",
+      "commands": 80000,
+      "correctnessPassed": true,
+      "durability": "Sync2;both prefixes and original control intents forced/full-readback before ACK;all three snapshots/cold restores agree",
+      "id": "cpu-v4-latency-agent-idle-4000-c1",
+      "label": "V4 agent 1000000ns · C1",
+      "limitations": [
+        "Finite20-second fresh lineage;no sustained SLA,independent-host isolation,100M,HFT or funded external trading.",
+        "Actual artifact dcfeeb81/source c6445604;owner1ms,127 active producers,Q64,batch4,cut1536,read32/page32/chunk6144.",
+        "Configured object/factory evidence does not measure OS sleeps. Backlog snapshots can miss queues."
+      ],
+      "model": "One prepaid CPU host;three actual UDP JVMs;leader0/sync2;127 active producers",
+      "p50Millis": 17.656742,
+      "p99Millis": 105.711868,
+      "scope": "80000 independent scheduled IOC orders at4000/s for20seconds;single-factor finite comparison",
+      "throughput": 3993.45,
+      "timestamp": "2026-10-26T00:39:48.968130759Z",
+      "trades": 80000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-latency-r1/agent-idle-4000-c2-native-r1/README.md",
+      "commands": 80000,
+      "correctnessPassed": true,
+      "durability": "Sync2;both prefixes and original control intents forced/full-readback before ACK;all three snapshots/cold restores agree",
+      "id": "cpu-v4-latency-agent-idle-4000-c2",
+      "label": "V4 agent 1000000ns · C2",
+      "limitations": [
+        "Finite20-second fresh lineage;no sustained SLA,independent-host isolation,100M,HFT or funded external trading.",
+        "Actual artifact dcfeeb81/source c6445604;owner1ms,127 active producers,Q64,batch4,cut1536,read32/page32/chunk6144.",
+        "Configured object/factory evidence does not measure OS sleeps. Backlog snapshots can miss queues."
+      ],
+      "model": "One prepaid CPU host;three actual UDP JVMs;leader0/sync2;127 active producers",
+      "p50Millis": 16.698429,
+      "p99Millis": 89.606682,
+      "scope": "80000 independent scheduled IOC orders at4000/s for20seconds;single-factor finite comparison",
+      "throughput": 3993.45,
+      "timestamp": "2026-10-26T00:43:09.465457611Z",
+      "trades": 80000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-latency-r1/agent-idle-4000-d1-native-r1/README.md",
+      "commands": 80000,
+      "correctnessPassed": true,
+      "durability": "Sync2;both prefixes and original control intents forced/full-readback before ACK;all three snapshots/cold restores agree",
+      "id": "cpu-v4-latency-agent-idle-4000-d1",
+      "label": "V4 agent 100000ns · D1",
+      "limitations": [
+        "Finite20-second fresh lineage;no sustained SLA,independent-host isolation,100M,HFT or funded external trading.",
+        "Actual artifact dcfeeb81/source c6445604;owner1ms,127 active producers,Q64,batch4,cut1536,read32/page32/chunk6144.",
+        "Configured object/factory evidence does not measure OS sleeps. Backlog snapshots can miss queues."
+      ],
+      "model": "One prepaid CPU host;three actual UDP JVMs;leader0/sync2;127 active producers",
+      "p50Millis": 7.895575,
+      "p99Millis": 59.384675,
+      "scope": "80000 independent scheduled IOC orders at4000/s for20seconds;single-factor finite comparison",
+      "throughput": 3993.45,
+      "timestamp": "2026-10-26T00:41:30.197027705Z",
+      "trades": 80000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-latency-r1/agent-idle-4000-d2-native-r1/README.md",
+      "commands": 80000,
+      "correctnessPassed": true,
+      "durability": "Sync2;both prefixes and original control intents forced/full-readback before ACK;all three snapshots/cold restores agree",
+      "id": "cpu-v4-latency-agent-idle-4000-d2",
+      "label": "V4 agent 100000ns · D2",
+      "limitations": [
+        "Finite20-second fresh lineage;no sustained SLA,independent-host isolation,100M,HFT or funded external trading.",
+        "Actual artifact dcfeeb81/source c6445604;owner1ms,127 active producers,Q64,batch4,cut1536,read32/page32/chunk6144.",
+        "Configured object/factory evidence does not measure OS sleeps. Backlog snapshots can miss queues."
+      ],
+      "model": "One prepaid CPU host;three actual UDP JVMs;leader0/sync2;127 active producers",
+      "p50Millis": 7.938398,
+      "p99Millis": 63.068933,
+      "scope": "80000 independent scheduled IOC orders at4000/s for20seconds;single-factor finite comparison",
+      "throughput": 3993.45,
+      "timestamp": "2026-10-26T00:44:48.787879397Z",
       "trades": 80000,
       "unknown": 0
     }
