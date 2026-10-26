@@ -168,8 +168,20 @@ def verify_junit(path):
     require(set(results)=={"CLUSTER","DIRECT_UDP"},"both actual routes required")
     return dict(passed=True,bothActualThreeJvmRoutesVerified=True,results=results)
 
+def verify_capacity_junit(path):
+    path=Path(path);require(path.is_file()and not path.is_symlink()and path.stat().st_size<=8*1024*1024,"bounded original capacity JUnit required")
+    suite=ET.parse(path).getroot();require(int(suite.get("tests",0))==1 and all(int(suite.get(k,0))==0 for k in ("failures","errors","skipped")),"actual capacity correctness test must pass without skips")
+    roots=[Path(p.strip())for p in re.findall(r"VECTOR_SEALED_CAPACITY_TEST_EVIDENCE ([^\n]+)","".join(suite.itertext()))];require(len(roots)==1,"one original capacity correctness attempt required")
+    root=roots[0];require(root.is_absolute()and root.parent==path.resolve().parents[2]/"sealed-capacity-native-attempts"and root.is_dir(),"capacity root must be this JUnit build's owned attempt")
+    for parent in [root,*root.parents]:require(not parent.is_symlink(),"capacity root symlink")
+    require(json.loads((root/"completion.json").read_text())["passed"]is True,"full capacity protocol did not complete")
+    registration=json.loads((root/"registration.json").read_text());require(registration["ratePerSecond"]==500 and registration["sealedReads"]["readRoute"]=="DIRECT_UDP","exact direct500 correctness fixture required")
+    return dict(passed=True,actualCapacityProtocolComplete=True,originalByteRouteAudit=verify(root,"DIRECT_UDP"),performanceClaim=False)
+
 if __name__=="__main__":
-    parser=argparse.ArgumentParser();source=parser.add_mutually_exclusive_group(required=True);source.add_argument("--root");source.add_argument("--junit");parser.add_argument("--route",choices=("CLUSTER","DIRECT_UDP"));args=parser.parse_args()
-    if args.root:require(args.route is not None,"explicit route required for original root")
+    parser=argparse.ArgumentParser();source=parser.add_mutually_exclusive_group(required=True);source.add_argument("--root");source.add_argument("--junit");parser.add_argument("--route",choices=("CLUSTER","DIRECT_UDP"));parser.add_argument("--capacity-junit");args=parser.parse_args()
+    if args.root:require(args.route is not None and args.capacity_junit is None,"explicit route required for original root;capacity JUnit accompanies JUnit mode")
     else:require(args.route is None,"JUnit determines both original routes")
-    print(json.dumps(verify_junit(args.junit)if args.junit else verify(args.root,args.route),sort_keys=True))
+    result=verify_junit(args.junit)if args.junit else verify(args.root,args.route)
+    if args.capacity_junit:result["capacityProtocol"]=verify_capacity_junit(args.capacity_junit)
+    print(json.dumps(result,sort_keys=True))

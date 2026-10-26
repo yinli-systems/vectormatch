@@ -370,8 +370,13 @@ public final class RetentionCapacityAeronPilotV3 {
         if(notSent>0||rejected>0)require(summary.get("allArrivalP99Ns")==null,"all-arrival accepted p99 must remain null on loss or rejection");
     }
     static Map<String,Object> verifiedEgress(Map<String,Object> summary){
+        if(!(summary.get("physicalOfferTape") instanceof Map<?,?> tape)||!(tape.get("recordedReplies") instanceof Number replies))throw new IllegalStateException("terminal proof lacks recorded replies");
+        return verifiedEgress(summary,replies.longValue());
+    }
+    /** Explicit Cluster share of a separately verified multi-route reply partition;never rewrites the original tape. */
+    static Map<String,Object> verifiedEgress(Map<String,Object> summary,long expectedClusterReplies){
         if(!(summary.get("physicalOfferTape") instanceof Map<?,?> tape)||!(tape.get("lastActualTransportObservation") instanceof Map<?,?> actual)||!(actual.get("actualEgressBounds") instanceof Map<?,?> bounds))throw new IllegalStateException("terminal proof lacks actual egress evidence");
-        if(!(bounds.get("replyHeaderImageAssociations") instanceof Number associations)||!(tape.get("recordedReplies") instanceof Number replies)||associations.longValue()!=replies.longValue()||replies.longValue()<1
+        if(!(bounds.get("replyHeaderImageAssociations") instanceof Number associations)||!(tape.get("recordedReplies") instanceof Number replies)||associations.longValue()!=expectedClusterReplies||expectedClusterReplies<1||expectedClusterReplies>replies.longValue()||replies.longValue()<1
                 ||!(bounds.get("actualImageObservations") instanceof Number samples)||samples.longValue()<2
                 ||!(bounds.get("requiredApplicationReplyBytes") instanceof Number app)||app.intValue()!=RetentionReplyV3.maxEncodedArchiveChunkReplyBytes(MAX_SUPPORTED_ARCHIVE_CHUNK)
                 ||!(bounds.get("requiredCompleteMessageBytes") instanceof Number complete)||complete.intValue()!=app.intValue()+32

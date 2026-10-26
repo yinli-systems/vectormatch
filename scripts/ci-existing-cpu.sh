@@ -26,7 +26,7 @@ export VM_TEST_PG_URL="jdbc:postgresql://127.0.0.1:$VM_CI_PGPORT/postgres"
 export VM_TEST_PG_USER=vectormatch
 export VM_TEST_PG_PASSWORD=local-ci-only
 gradle --no-daemon --no-build-cache --rerun-tasks check 2>&1 | tee runtime/ci/gradle-check.log
-"$VM_CI_PYTHON" -B scripts/verify_sealed_read_route.py --junit cluster/build/test-results/test/TEST-io.vectormatch.cluster.RetentionSealedThreeJvmV4Test.xml | tee runtime/ci/sealed-read-route-audit.json
+"$VM_CI_PYTHON" -B scripts/verify_sealed_read_route.py --junit cluster/build/test-results/test/TEST-io.vectormatch.cluster.RetentionSealedThreeJvmV4Test.xml --capacity-junit cluster/build/test-results/test/TEST-io.vectormatch.cluster.RetentionSealedCapacityThreeJvmV4Test.xml | tee runtime/ci/sealed-read-route-audit.json
 gradle --no-daemon :cluster:failoverSmoke 2>&1 | tee runtime/ci/failover.log
 "$VM_CI_PYTHON" -B -m unittest discover -s scripts/tests -v 2>&1 | tee runtime/ci/python-tests.log
 bash -n scripts/run-replicated.sh deploy/cluster.sh deploy/postgres.sh scripts/ci-existing-cpu.sh

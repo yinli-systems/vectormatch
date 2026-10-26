@@ -72,7 +72,7 @@ public final class RetentionCapacityAeronV4 {
                     qualifyReadiness("preload-readiness");disk.check();
                 });
         var summary=result.summary();RetentionCapacityAeronPilotV3.validateCapacityOutcomes(summary,config.arrivals());
-        var egress=RetentionCapacityAeronPilotV3.verifiedEgress(summary);
+        var egress=sealedSelection.route().enabled()?RetentionSealedEgressV4.verify(summary,sealedSelection.route()):RetentionCapacityAeronPilotV3.verifiedEgress(summary);
         var reference=reconcilePhysicalTape();Field field=RetentionClusteredServiceV3.class.getDeclaredField("state");field.setAccessible(true);var state=(RetentionServiceV3)field.get(reference);
         byte[] canonical=state.snapshot();String hash=sha(canonical);
         Reply barrier=RetentionReplyV3.decode(Files.readAllBytes(root.resolve("load/final-source-position.bin")));

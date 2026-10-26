@@ -55,4 +55,12 @@ class SealedRouteAuditTest(unittest.TestCase):
             path.write_text('<testsuite tests="2" failures="0" errors="0" skipped="0"><system-out>VECTOR_SEALED_THREE_JVM_TEST_EVIDENCE /outside/first\nVECTOR_SEALED_THREE_JVM_TEST_EVIDENCE /outside/second\n</system-out></testsuite>')
             with self.assertRaisesRegex(ValueError,"owned attempt"):audit.verify_junit(path)
 
+    def test_capacity_junit_cannot_skip_or_point_outside_its_build(self):
+        with tempfile.TemporaryDirectory()as directory:
+            path=Path(directory)/"build/test-results/test/results.xml";path.parent.mkdir(parents=True)
+            path.write_text('<testsuite tests="1" failures="0" errors="0" skipped="1"/>')
+            with self.assertRaisesRegex(ValueError,"without skips"):audit.verify_capacity_junit(path)
+            path.write_text('<testsuite tests="1" failures="0" errors="0" skipped="0"><system-out>VECTOR_SEALED_CAPACITY_TEST_EVIDENCE /outside/first\n</system-out></testsuite>')
+            with self.assertRaisesRegex(ValueError,"owned attempt"):audit.verify_capacity_junit(path)
+
 if __name__=="__main__":unittest.main()
