@@ -22,7 +22,7 @@ class NativeUdpProtocolTest(unittest.TestCase):
             for index,cap in enumerate([1000000,100000]):
                 with socket.socket(socket.AF_INET,socket.SOCK_DGRAM)as s:s.bind(('127.0.0.1',0));port=s.getsockname()[1]
                 server=p/('server'+str(index));client=p/('client'+str(index));run='660000000000000'+str(index)
-                process=subprocess.Popen([java,'-cp',str(p),'UdpPathBench','server',str(server),str(port),str(cap),'5',run],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+                process=subprocess.Popen([java,'-cp',str(p),'UdpPathBench','server',str(server),str(port),str(cap),'5',run,'200'],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
                 try:
                     end=time.monotonic()+5
                     while not (server/'ready.json').exists()and time.monotonic()<end:
@@ -32,6 +32,7 @@ class NativeUdpProtocolTest(unittest.TestCase):
                     out,err=process.communicate(timeout=7);self.assertEqual(0,process.returncode,out+err)
                     result=audit.audit(client);summary=json.loads((server/'summary.json').read_text())
                     self.assertTrue(result['allPlannedReplied']);self.assertEqual(200,result['replied']);self.assertEqual(200,summary['replied']);self.assertEqual(0,summary['invalid'])
+                    attributed=audit.audit_server(client,server);self.assertEqual(0,attributed['ingressUnobserved']);self.assertEqual(0,attributed['egressUnobserved'])
                 finally:
                     if process.poll()is None:process.terminate();process.communicate(timeout=3)
 

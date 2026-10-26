@@ -17,11 +17,11 @@ public final class UdpPathBench {
     static final int BYTES = 64, MAX_ARRIVALS = 500_000;
     private UdpPathBench() {}
     public static void main(String[] a) throws Exception {
-        if (a.length == 6 && a[0].equals("server"))
-            server(Path.of(a[1]), Integer.parseInt(a[2]), Long.parseLong(a[3]), Integer.parseInt(a[4]), Long.parseUnsignedLong(a[5], 16));
+        if (a.length == 7 && a[0].equals("server"))
+            server(Path.of(a[1]), Integer.parseInt(a[2]), Long.parseLong(a[3]), Integer.parseInt(a[4]), Long.parseUnsignedLong(a[5], 16), Integer.parseInt(a[6]));
         else if (a.length == 9 && a[0].equals("client"))
             client(Path.of(a[1]), a[2], Integer.parseInt(a[3]), Integer.parseInt(a[4]), Integer.parseInt(a[5]), Long.parseLong(a[6]), Long.parseUnsignedLong(a[7],16), Integer.parseInt(a[8]));
-        else throw new IllegalArgumentException("server root port maxParkNs seconds runHex | client root host port rate seconds maxParkNs runHex receiveBufferBytes");
+        else throw new IllegalArgumentException("server root port maxParkNs seconds runHex planned | client root host port rate seconds maxParkNs runHex receiveBufferBytes");
     }
     static void require(boolean p, String message) { if (!p) throw new IllegalArgumentException(message); }
     static long cpu() { return ((com.sun.management.OperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean()).getProcessCpuTime(); }
@@ -34,23 +34,36 @@ public final class UdpPathBench {
         } catch (Throwable t) { c.close(); throw t; }
     }
     static void policy(long park) { require(park==100_000 || park==1_000_000,"only registered 100us/1ms park caps"); }
-    static void server(Path root,int port,long park,int seconds,long run) throws Exception {
-        policy(park);require(port>=1024&&port<=65535&&seconds>=5&&seconds<=120,"server bounds");Files.createDirectory(root);
-        long received=0,replied=0,invalid=0,notSent=0,started=System.nanoTime(),initialCpu=cpu();
+    static void server(Path root,int port,long park,int seconds,long run,int planned) throws Exception {
+        policy(park);require(port>=1024&&port<=65535&&seconds>=5&&seconds<=120&&planned>=1&&planned<=MAX_ARRIVALS,"server bounds");Files.createDirectory(root);
+        long[] firstReceive=new long[planned],firstSend=new long[planned];int[] attempts=new int[planned],echoes=new int[planned];
+        Arrays.fill(firstReceive,-1);Arrays.fill(firstSend,-1);
+        long received=0,replied=0,invalid=0,notSent=0,duplicates=0,started=System.nanoTime(),initialCpu=cpu();
         try(var c=channel(port,131072)) {
-            write(root.resolve("ready.json"),"{\"ready\":true,\"runHex\":"+q(Long.toUnsignedString(run,16))+",\"port\":"+port+",\"maxParkNs\":"+park+",\"receiveBufferActual\":"+c.getOption(StandardSocketOptions.SO_RCVBUF)+"}");
+            write(root.resolve("ready.json"),"{\"ready\":true,\"ledgerVersion\":2,\"planned\":"+planned+",\"runHex\":"+q(Long.toUnsignedString(run,16))+",\"port\":"+port+",\"maxParkNs\":"+park+",\"receiveBufferActual\":"+c.getOption(StandardSocketOptions.SO_RCVBUF)+"}");
             var b=ByteBuffer.allocateDirect(2048);long until=started+seconds*1_000_000_000L;
             while(System.nanoTime()-until<0) {
                 int work=0;
                 for(int n=0;n<64;n++) {
                     b.clear();var peer=c.receive(b);if(peer==null)break;
                     if(b.position()!=BYTES||b.getLong(0)!=MAGIC||b.getLong(8)!=run) {invalid++;continue;}
-                    received++;b.flip();int sent=c.send(b,peer);if(sent==BYTES)replied++;else notSent++;work++;
+                    int sequence=b.getInt(16);
+                    if(sequence<0||sequence>=planned||b.getLong(56)!=(run^sequence)) {invalid++;continue;}
+                    long observed=System.nanoTime();
+                    if(firstReceive[sequence]<0)firstReceive[sequence]=observed-started;else duplicates++;
+                    received++;attempts[sequence]=Math.incrementExact(attempts[sequence]);b.flip();
+                    if(firstSend[sequence]<0)firstSend[sequence]=System.nanoTime()-started;
+                    int sent=c.send(b,peer);if(sent==BYTES) {replied++;echoes[sequence]=Math.incrementExact(echoes[sequence]);}else notSent++;work++;
                 }
                 if(work==0)LockSupport.parkNanos(park);
             }
         }
-        write(root.resolve("summary.json"),"{\"received\":"+received+",\"replied\":"+replied+",\"invalid\":"+invalid+",\"sendBackpressure\":"+notSent+",\"processCpuNs\":"+(cpu()-initialCpu)+",\"elapsedNs\":"+(System.nanoTime()-started)+"}");
+        long usedCpu=cpu()-initialCpu,elapsed=System.nanoTime()-started;
+        try(BufferedWriter out=Files.newBufferedWriter(root.resolve("receipts.csv"),StandardOpenOption.CREATE_NEW)) {
+            out.write("index,first_receive_offset_ns,first_echo_call_offset_ns,echo_attempts,echoes_sent\n");
+            for(int i=0;i<planned;i++)out.write(i+","+firstReceive[i]+","+firstSend[i]+","+attempts[i]+","+echoes[i]+"\n");
+        }
+        write(root.resolve("summary.json"),"{\"ledgerVersion\":2,\"planned\":"+planned+",\"received\":"+received+",\"replied\":"+replied+",\"duplicates\":"+duplicates+",\"invalid\":"+invalid+",\"sendBackpressure\":"+notSent+",\"processCpuNs\":"+usedCpu+",\"elapsedNs\":"+elapsed+"}");
     }
     static void client(Path root,String host,int port,int rate,int seconds,long park,long run,int rcvbuf) throws Exception {
         policy(park);long total=(long)rate*seconds;

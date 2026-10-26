@@ -18,12 +18,17 @@ does not amplify packet size. Run only on disposable, explicitly authorized test
 nodes. A run ID distinguishes experiments; it is not production authentication.
 
 ```sh
-java -cp /tmp/vm-udp-classes UdpPathBench server /tmp/server-new 22999 1000000 25 12ab345678901234
+java -cp /tmp/vm-udp-classes UdpPathBench server /tmp/server-new 22999 1000000 25 12ab345678901234 10000
 java -cp /tmp/vm-udp-classes UdpPathBench client /tmp/client-new 127.0.0.1 22999 1000 10 1000000 12ab345678901234 131072
 python3 -B scripts/analyze_udp_path.py /tmp/client-new
 ```
 
 Cloud comparison registration, 2026-10-26:
+
+The original comparison used commit `37ec26cd` and its original aggregate-only
+server protocol. The current protocol adds a bounded V2 receipt ledger and an
+explicit planned-packet argument. Its results are a separate diagnostic cohort;
+older raw records are preserved and never backfilled with invented receipts.
 
 - Server `ohlwuyb375oeva`, client `tw2o4n649kjk6z`, EUR-IS-1, CPU5c,
   4 vCPU/8GB each; NAT-mapped UDP. Different boot IDs do not prove different
@@ -51,6 +56,14 @@ The Python audit recalculates quantiles and outcomes independently from the orig
 CSV and refuses missing or duplicated identities, incoherent send/reply timelines,
 truncated records and inconsistent summaries. Its tests include actual loopback
 datagrams under both policies; loopback timings are correctness evidence only.
+
+V2 keeps one primitive receipt slot per planned packet (at most 500,000), validates
+sequence/payload identity before echoing and records first receipt, first echo
+attempt and duplicate/send counts. `--server /path/to/server` pairs these identities
+with the client's original CSV. It partitions unknown outcomes into ingress
+unobserved, server echo not sent and egress unobserved without combining clocks.
+These categories identify missing observations, not a specific physical switch,
+provider component or one-way delay. The ledger is written after the window.
 
 `ForceProbe.java` is a separate filesystem diagnostic: 2,048 deterministic,
 noncompressible 4KiB records, each followed by `FileChannel.force(true)`. It retains

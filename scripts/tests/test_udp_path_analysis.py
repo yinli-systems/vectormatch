@@ -12,7 +12,7 @@ udp=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(udp)
 class IndependentUdpAuditTest(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
-        self.config=dict(schema='vm-udp-path-1',rate=4,seconds=1,planned=4,packetBytes=64,arrivalClockPauses=False,retries=0,financialCommands=0)
+        self.config=dict(schema='vm-udp-path-1',rate=4,seconds=1,planned=4,packetBytes=64,arrivalClockPauses=False,retries=0,financialCommands=0,runHex='abcd',maxParkNs=1000000)
         self.rows=[[i,i*250000000,i*250000000+10,i*250000000+20,i*250000000+(i+1)*100,64,'REPLIED']for i in range(4)]
         self.summary=dict(planned=4,replied=4,notSent=0,unknown=0,acceptedInWindow=4,goodputPerSecond=4.0,
             allArrivalP99Ns=400,conditionalReplyP99Ns=400,conditionalPostSendP99Ns=380)
@@ -44,5 +44,30 @@ class IndependentUdpAuditTest(unittest.TestCase):
             self.config[key]=value;self.save()
             with self.assertRaises(ValueError):udp.audit(self.root)
             self.config[key]=False if key=='arrivalClockPauses' else 0
+    def save_server(self, rows):
+        server=self.root/'server';server.mkdir()
+        (server/'ready.json').write_text(json.dumps(dict(ledgerVersion=2,planned=4,runHex='abcd',maxParkNs=1000000)))
+        summary=dict(ledgerVersion=2,planned=4,received=sum(r[3]for r in rows),replied=sum(r[4]for r in rows),
+            duplicates=sum(max(0,r[3]-1)for r in rows),sendBackpressure=sum(r[3]-r[4]for r in rows))
+        (server/'summary.json').write_text(json.dumps(summary))
+        (server/'receipts.csv').write_text('index,first_receive_offset_ns,first_echo_call_offset_ns,echo_attempts,echoes_sent\n'+''.join(','.join(map(str,r))+'\n'for r in rows))
+        return server
+    def test_unknown_partitions_by_original_server_receipt_without_clock_sync(self):
+        self.rows[3][4]=-1;self.rows[3][-1]='UNKNOWN';self.summary.update(replied=3,unknown=1,acceptedInWindow=3,goodputPerSecond=3.0,
+            allArrivalP99Ns=None,conditionalReplyP99Ns=300,conditionalPostSendP99Ns=280);self.save()
+        server=self.save_server([[i,i+1,i+2,1,1]for i in range(3)]+[[3,-1,-1,0,0]])
+        result=udp.audit_server(self.root,server);self.assertEqual(1,result['ingressUnobserved']);self.assertFalse(result['clocksCombined'])
+        rows='index,first_receive_offset_ns,first_echo_call_offset_ns,echo_attempts,echoes_sent\n'+''.join(f'{i},{i+1},{i+2},1,1\n'for i in range(4))
+        (server/'receipts.csv').write_text(rows);summary=json.loads((server/'summary.json').read_text());summary.update(received=4,replied=4);(server/'summary.json').write_text(json.dumps(summary))
+        result=udp.audit_server(self.root,server);self.assertEqual(0,result['ingressUnobserved']);self.assertEqual(1,result['egressUnobserved'])
+    def test_client_reply_without_original_server_echo_refused(self):
+        self.save();server=self.save_server([[i,i+1,i+2,1,1]for i in range(3)]+[[3,-1,-1,0,0]])
+        with self.assertRaises(ValueError):udp.audit_server(self.root,server)
+    def test_server_aggregate_forgery_and_wrong_run_refused(self):
+        self.save();server=self.save_server([[i,i+1,i+2,1,1]for i in range(4)])
+        summary=json.loads((server/'summary.json').read_text());summary['received']=3;(server/'summary.json').write_text(json.dumps(summary))
+        with self.assertRaises(ValueError):udp.audit_server(self.root,server)
+        summary['received']=4;(server/'summary.json').write_text(json.dumps(summary));ready=json.loads((server/'ready.json').read_text());ready['runHex']='abce';(server/'ready.json').write_text(json.dumps(ready))
+        with self.assertRaises(ValueError):udp.audit_server(self.root,server)
 
 if __name__=='__main__':unittest.main()

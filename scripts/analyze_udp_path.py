@@ -59,6 +59,50 @@ def audit(root):
         noTradingOrSustainedSlaClaim=True)
     return result
 
+def audit_server(client_root, server_root):
+    """Pair original packet identities; server and client clocks are never subtracted."""
+    from itertools import zip_longest
+    client_root=Path(client_root);server_root=Path(server_root)
+    client=audit(client_root)
+    config=json.loads((client_root/'configuration.json').read_text())
+    ready=json.loads((server_root/'ready.json').read_text());source=json.loads((server_root/'summary.json').read_text())
+    planned=client['planned']
+    if ready.get('ledgerVersion')!=2 or source.get('ledgerVersion')!=2 or ready.get('planned')!=planned or source.get('planned')!=planned:
+        raise ValueError('exact server ledger plan required')
+    if ready['runHex']!=config['runHex'] or ready['maxParkNs']!=config['maxParkNs']:
+        raise ValueError('server/client experiment selection differs')
+    ingress=egress=echo_not_sent=attempts_total=echoes_total=duplicates=observed=0
+    header=['index','first_receive_offset_ns','first_echo_call_offset_ns','echo_attempts','echoes_sent']
+    with (client_root/'arrivals.csv').open(newline='')as cf,(server_root/'receipts.csv').open(newline='')as sf:
+        clients=csv.DictReader(cf);servers=csv.DictReader(sf)
+        if servers.fieldnames!=header:raise ValueError('server ledger header differs')
+        for i,(c,s)in enumerate(zip_longest(clients,servers)):
+            if c is None or s is None or i>=planned or None in s or any(v is None for v in s.values()):
+                raise ValueError('server ledger incomplete or unbounded')
+            if int(s['index'])!=i or int(c['index'])!=i:raise ValueError('server/client identity differs')
+            received=int(s['first_receive_offset_ns']);called=int(s['first_echo_call_offset_ns']);attempts=int(s['echo_attempts']);echoes=int(s['echoes_sent'])
+            if not 0<=echoes<=attempts:raise ValueError('invalid echo counts')
+            if attempts==0:
+                if received!=-1 or called!=-1:raise ValueError('unobserved server timeline differs')
+            elif received<0 or called<received:raise ValueError('server echo precedes original receipt')
+            sent=int(c['sent_bytes'])==64;replied=c['status']=='REPLIED'
+            if not sent and attempts:raise ValueError('server received an unsent original')
+            if replied and echoes==0:raise ValueError('client reply lacks server echo')
+            if sent and attempts==0:ingress+=1
+            elif sent and not replied:
+                if echoes==0:echo_not_sent+=1
+                else:egress+=1
+            observed+=attempts>0;attempts_total+=attempts;echoes_total+=echoes;duplicates+=max(0,attempts-1)
+    expected=dict(received=attempts_total,replied=echoes_total,duplicates=duplicates,sendBackpressure=attempts_total-echoes_total)
+    if any(source.get(k)!=v for k,v in expected.items()):raise ValueError('server aggregate differs from original receipts')
+    if ingress+egress+echo_not_sent!=client['unknown']:raise ValueError('unknown partition differs')
+    return dict(passed=True,planned=planned,uniqueServerReceipts=observed,ingressUnobserved=ingress,
+        serverEchoNotSent=echo_not_sent,egressUnobserved=egress,serverDuplicateReceipts=duplicates,
+        serverReceiptCsvSha256=hashlib.sha256((server_root/'receipts.csv').read_bytes()).hexdigest(),
+        clocksCombined=False,physicalLossLocationProven=False)
+
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('root');args=p.parse_args()
-    print(json.dumps(audit(args.root),indent=2,sort_keys=True))
+    p=argparse.ArgumentParser();p.add_argument('root');p.add_argument('--server');args=p.parse_args()
+    result=audit(args.root)
+    if args.server:result['serverAttribution']=audit_server(args.root,args.server)
+    print(json.dumps(result,indent=2,sort_keys=True))
