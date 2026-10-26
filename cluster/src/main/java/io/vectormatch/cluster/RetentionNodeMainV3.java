@@ -71,6 +71,9 @@ public final class RetentionNodeMainV3 {
         int node = Integer.parseInt(args[0]), portBase = Integer.parseInt(args[2]), sync = Integer.parseInt(args[3]);
         if (sync != 0 && sync != 2) throw new IllegalArgumentException("invalid V3 sync level");
         var idleSelection = RetentionIdlePolicyV3.systemSelection();
+        var sealedSelection=RetentionSealedReadPolicyV4.systemSelection();
+        RetentionSealedReadPolicyV4.requireNodeEligible(sealedSelection,args[4],sync,preparedCache);
+        if(sealedSelection.server())RetentionSealedReadPolicyV4.port(portBase,node);
         var segmentSelection = RetentionSegmentPreparationV4.systemSelection();
         RetentionSegmentPreparationV4.requireEligible(segmentSelection,args[4],sync,Archive.Configuration.segmentFileLength());
         var idlePolicy = RetentionIdlePolicyV3.node(idleSelection, node);
@@ -83,7 +86,7 @@ public final class RetentionNodeMainV3 {
         if (Files.isSymbolicLink(base) || (Files.exists(base) && !Files.isDirectory(base))) throw new IllegalArgumentException("unsafe V3 node path");
         boolean freshNode = !Files.exists(base);
         String identity = "V3_LOCAL_NODE_1\nnode=" + node + "\nprofile=" + scope.profileHash() + "\nlineage=" + scope.lineageId()
-                + "\ncode=" + code + "\nmembers=" + topology.members() + "\nsync=" + sync + "\n" + idleSelection.identitySuffix() + segmentSelection.identitySuffix();
+                + "\ncode=" + code + "\nmembers=" + topology.members() + "\nsync=" + sync + "\n" + idleSelection.identitySuffix() + segmentSelection.identitySuffix() + sealedSelection.identitySuffix();
         if (Files.exists(base)) {
             Path marker = base.resolve("V3_IDENTITY.txt");
             if (Files.isSymbolicLink(marker) || !Files.readString(marker).equals(identity)) throw new IllegalArgumentException("existing state is not this exact V3 node lineage/code/profile");
@@ -116,13 +119,17 @@ public final class RetentionNodeMainV3 {
                 .logChannel(transport.withMtu(ConsensusModule.Configuration.logChannel()))
                 .snapshotChannel(transport.withRecordingMtu(ConsensusModule.Configuration.snapshotChannel()))
                 .replicationChannel(transport.withMtu(topology.responseChannel(node))).archiveContext(localArchive.clone()).errorHandler(errors);
+        var sealedBank=sealedSelection.server()?new RetentionSealedReadBankV4(profile,scope.lineageId()):null;
         var service = new ClusteredServiceContainer.Context().aeronDirectoryName(driverDir).archiveContext(localArchive.clone()).clusterDir(clusterDir)
                 .snapshotChannel(transport.withRecordingMtu(ClusteredServiceContainer.Configuration.snapshotChannel()))
-                .clusteredService(new RetentionClusteredServiceV3(profile, scope.lineageId(), preparedCache)).errorHandler(errors);
+                .clusteredService(new RetentionClusteredServiceV3(profile, scope.lineageId(), preparedCache,sealedBank)).errorHandler(errors);
         RetentionIdlePolicyV3.applyAgents(idlePolicy, archive, consensus, service);
         try (ShutdownSignalBarrier barrier = new ShutdownSignalBarrier();
              ClusteredMediaDriver driver = ClusteredMediaDriver.launch(media.terminationHook(barrier::signalAll), archive, consensus.terminationHook(barrier::signalAll));
-             ClusteredServiceContainer container = ClusteredServiceContainer.launch(service.terminationHook(barrier::signalAll))) {
+             ClusteredServiceContainer container = ClusteredServiceContainer.launch(service.terminationHook(barrier::signalAll));
+             RetentionSealedServerLoopV4 sealed=sealedBank==null?null:new RetentionSealedServerLoopV4(driverDir,node,RetentionSealedReadPolicyV4.port(portBase,node),sealedBank,
+                     base.resolve("sealed-read-"+ProcessHandle.current().pid()+"-"+java.util.UUID.randomUUID()+".bin"),barrier::signalAll)) {
+            if(sealed!=null){sealed.start();System.out.println("VECTOR_SEALED_READ_READY "+RetentionCapacityJsonV3.json(sealed.observation()));}
             if (idlePolicy != null) {
                 var actualIdle = idlePolicy.nodeAttestation(driver.mediaDriver().context(),driver.archive().context(),
                         driver.consensusModule().context(),container.context());
@@ -132,6 +139,7 @@ public final class RetentionNodeMainV3 {
             System.out.printf("VECTOR_V3_NODE_READY node=%d pid=%d profile=%s lineage=%s code=%s members=%s sync=%d mtu=1248 preparedArchiveCacheEnabled=%s%n",
                     node, ProcessHandle.current().pid(), scope.profileHash(), scope.lineageId(), code, topology.members(), sync, preparedCache);
             barrier.await();
+            if(sealed!=null)sealed.requireHealthy();
         }
     }
 }

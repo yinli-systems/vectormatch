@@ -32,7 +32,8 @@ public final class RetentionCapacityPlanV4 {
                            int maintenanceRequest,int maintenanceReply,int archiveOperation,int eventOperation){}
     private RetentionCapacityPlanV4(){}
     private static long ceil(long n,long d){return Math.floorDiv(Math.addExact(n,d-1),d);}
-    public static Plan plan(Config config,RetentionServiceV3.Profile profile){
+    public static Plan plan(Config config,RetentionServiceV3.Profile profile){return plan(config,profile,false);}
+    static Plan plan(Config config,RetentionServiceV3.Profile profile,boolean sealedLedgers){
         Objects.requireNonNull(config);Objects.requireNonNull(profile);var w=witness(profile);int n=config.arrivals(),cycles=Math.toIntExact(ceil(n+3L,CUT));
         long archives=Math.addExact((long)n*w.maximumEntry+w.setupBytes,(long)cycles*w.header);
         long totalEvents=2L*n+3;
@@ -54,6 +55,7 @@ public final class RetentionCapacityPlanV4 {
         long logical=rpcs*(48L+w.maintenanceRequest+w.maintenanceReply+3L*(24+2048))
                 +(long)cycles*(24L*(24+2048)+4L*(24+8192))+3L*readYieldTurns*(24+2048)+1024L*1024;
         long raw=network+logical+frames*(128L+5L*128)+(long)n*640+4L*1024*1024;
+        if(sealedLedgers)raw=Math.addExact(raw,4L*RetentionSealedAuditV4.MAXIMUM_BYTES);
         long allocation=raw+writerBytes+jobs*1024L+2048L*4096+NATIVE_RESERVE;
         var failures=new ArrayList<String>();
         if(cycles>128||jobs>512||journalRecords>Math.min(1024,profile.maxMaintenanceJournalRecords())||journalBytes>profile.maxMaintenanceJournalBytes())failures.add("finite cut/file/four-offer journal bound");

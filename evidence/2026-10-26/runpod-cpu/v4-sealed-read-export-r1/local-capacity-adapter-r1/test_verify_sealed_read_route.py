@@ -1,0 +1,37 @@
+import hashlib
+import json
+from pathlib import Path
+import struct
+import tempfile
+import unittest
+import verify_sealed_read_route as audit
+
+class SealedRouteAuditTest(unittest.TestCase):
+    def test_checksum_and_outer_lengths_are_checked_before_embedded_payload(self):
+        body=bytes([0]);prefix=struct.pack(">IHBBqqi",0x56585234,1,5,0,11,7,len(body))+body
+        data=prefix+hashlib.sha256(prefix).digest();self.assertEqual(0,audit.frame(data)["code"])
+        for damaged in [data[:-1],data+b"x",data[:-1]+bytes([data[-1]^1])]:
+            with self.assertRaises(ValueError):audit.frame(damaged)
+        prefix=struct.pack(">IHBBqqi",0x56585234,1,5,0,11,7,2)+body
+        with self.assertRaisesRegex(ValueError,"body length"):audit.frame(prefix+hashlib.sha256(prefix).digest())
+
+    def test_ledger_rejects_gaps_truncation_and_symlinks(self):
+        with tempfile.TemporaryDirectory()as directory:
+            path=Path(directory)/"ledger";body=json.dumps(dict(kind="IMAGE",value={})).encode()
+            good=struct.pack(">II",0x56584134,1)+struct.pack(">Bqqi",1,1,1,len(body))+body
+            path.write_bytes(good);self.assertEqual(1,len(audit.ledger(path)))
+            for bad in [good[:-1],good+b"x",good[:8]+struct.pack(">Bqqi",1,2,1,len(body))+body]:
+                path.write_bytes(bad)
+                with self.assertRaises(ValueError):audit.ledger(path)
+            link=Path(directory)/"link";link.symlink_to(path)
+            with self.assertRaises(ValueError):audit.ledger(link)
+
+    def test_actual_metadata_cannot_claim_cluster_positions_for_the_ordinary_channel(self):
+        metadata=dict(registrationId=1,streamId=47201,termBytes=1048576,maxPayloadBytes=1216,maxMessageBytes=131072,clusterLogPosition=False,peerPort=45001)
+        row=dict(type=1,value=dict(kind="PUBLICATION",value=metadata))
+        self.assertEqual(1,len(audit.check_endpoint([row],True)["publications"]))
+        for key,value in [("clusterLogPosition",True),("maxPayloadBytes",1408),("termBytes",65536),("streamId",47202)]:
+            changed=dict(metadata);changed[key]=value
+            with self.assertRaises(ValueError):audit.check_endpoint([dict(type=1,value=dict(kind="PUBLICATION",value=changed))],True)
+
+if __name__=="__main__":unittest.main()

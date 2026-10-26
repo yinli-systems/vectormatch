@@ -24,6 +24,8 @@ public final class RetentionCapacityAeronV4 {
     private boolean allOwnedStopped=true;
     private int generation;
     private final RetentionCapacityExperimentV4.Config config;
+    private final RetentionSealedReadPolicyV4.Selection sealedSelection=RetentionSealedReadPolicyV4.systemSelection();
+    private volatile long sealedClientSession=-1;
     private final RetentionIdlePolicyV3.Selection idleSelection=RetentionIdlePolicyV3.systemSelection();
     private final RetentionCapacityPlanV4.Plan plan;
     private final RetentionJfrPolicyV4.Selection jfrSelection;
@@ -33,6 +35,8 @@ public final class RetentionCapacityAeronV4 {
         config=new RetentionCapacityExperimentV4.Config(rate,proceed);
         var batchFlushSelection=RetentionBatchFlushPolicyV4.systemSelection();
         var readYieldSelection=RetentionReadYieldPolicyV4.systemSelection();if(readYieldSelection.enabled()&&!proceed)throw new IllegalArgumentException("inter-bank dispatch requires CONTINUE file-work policy");
+        if(sealedSelection.server()&&!sealedSelection.route().enabled()||sealedSelection.route().enabled()&&(!proceed||readYieldSelection.enabled()))throw new IllegalArgumentException("sealed experiment requires explicit route,CONTINUE and CLOSED read banks");
+        if(sealedSelection.route().enabled())RetentionSealedReadPolicyV4.verifyFixedPorts(ports);
         plan=RetentionCapacityExperimentV4.boundedPlan(config,profile);plan.requireAdmitted();RetentionLoopbackPortsV4.verifyFixed(ports);
         root=newRoot.toAbsolutePath().normalize();
         jfrSelection=RetentionJfrPolicyV4.systemSelection(root);
@@ -45,6 +49,7 @@ public final class RetentionCapacityAeronV4 {
         registration.put("fileWorkDispatchPolicy",proceed?"CONTINUE":"PAUSE");registration.put("profile",profile.fingerprint());registration.put("lineage",lineage);
         registration.put("code",code);registration.put("ports",ports);registration.put("appointedLeader",0);registration.put("syncLevel",2);
         registration.put("activeLoadWorkers",127);registration.put("allocatedLogicalWorkers",128);registration.put("independentHosts",false);
+        if(sealedSelection.route().enabled())registration.put("sealedReads",sealedSelection.observation());
         if(segmentSelection.enabled())registration.put("segmentPreparation",segmentSelection.observation());
         if(batchFlushSelection.explicit())registration.put("batchFlushSelection",batchFlushSelection.observation());if(jfrSelection.enabled())registration.put("jfrDiagnostics",jfrSelection.observation());registration.put("readBankDispatchSelection",readYieldSelection.observation());if(idleSelection.explicit())registration.put("retentionIdleSelection",idleSelection.observation());registration.put("fundedExternalOrders",false);writeJson("registration.json",registration);
     }
@@ -60,7 +65,7 @@ public final class RetentionCapacityAeronV4 {
     private void exercise()throws Exception{
         startOwned();qualifyReadiness("startup-readiness");disk.check();
         var result=RetentionCapacityExperimentV4.run(root.resolve("load"),root,config,profile,lineage,
-                ()->new RetentionBatchAeronTransportV3(root.resolve("owner-driver"),ports,profile,lineage,true,6144),plan,disk,owner->{
+                this::openTransport,plan,disk,owner->{
                     Reply setup=owner.exchangeMaintenance(new Position(),TIMEOUT);require(setup.error().isEmpty()&&setup.counters().businessSeq()==3,"exact bootstrap readiness differs");
                     long begin=System.nanoTime();Thread.sleep(5000);
                     writeJson("preload-warmup.json",Map.of("requestedMillis",5000,"startedMonotonicNs",begin,"endedMonotonicNs",System.nanoTime(),"outsideArrivalWindow",true,"noSyntheticOrdersDuringWarmup",true));
@@ -92,8 +97,17 @@ public final class RetentionCapacityAeronV4 {
         verified.put("actualSourceSummary",summary);verified.put("actualEgressBounds",egress);verified.put("sameAdapterPhysicalOrderReplay",true);verified.put("independentAlgorithm",false);
         verified.put("clientNewOrdersAfterColdRestore",false);verified.put("independentStorageDurabilityProven",false);verified.put("allRestorationOutsideArrivalWindow",true);writeJson("capacity-correctness-result.json",verified);
     }
+    private RetentionBatchOwnerIOV3 openTransport(){
+        var transport=new RetentionBatchAeronTransportV3(root.resolve("owner-driver"),ports,profile,lineage,true,6144);
+        if(!sealedSelection.route().enabled())return transport;
+        try{sealedClientSession=transport.sealedReadSessionId();writeNew("sealed-client-session.txt",Long.toString(sealedClientSession)+"\n");
+            return new RetentionSealedOwnerTransportV4(transport,ports,new Scope(profile.fingerprint(),lineage),sealedSelection.route(),root.resolve("sealed-client-ledger.bin"));}
+        catch(IOException error){try{transport.close();}catch(RuntimeException|Error cleanup){error.addSuppressed(cleanup);}throw new UncheckedIOException(error);}
+        catch(RuntimeException|Error error){try{transport.close();}catch(RuntimeException|Error cleanup){error.addSuppressed(cleanup);}throw error;}
+    }
     private RetentionClusteredServiceV3 reconcilePhysicalTape()throws Exception{
         var reference=new RetentionClusteredServiceV3(profile,lineage,true);reference.onStart(null,null);
+        var sealedReference=sealedSelection.route().enabled()?new RetentionSealedReplayV4(profile,lineage,sealedClientSession,sealedSelection.route()):null;
         long offers=0,missing=0,compared=0,attempts=0,previousReturned=-1;Map<Long,ArrayDeque<byte[]>> replies=new HashMap<>();
         Path load=root.resolve("load");
         try(var wires=new RandomAccessFile(load.resolve("physical-requests.bin").toFile(),"r");var codes=Files.newBufferedReader(load.resolve("physical-offer-codes.csv"))){
@@ -103,7 +117,7 @@ public final class RetentionCapacityAeronV4 {
                 long correlation=Long.parseLong(col[1]),offset=Long.parseLong(col[2]);require(offset>=0&&offset+12<=wires.length(),"wire offset outside tape");
                 wires.seek(offset);require(wires.readLong()<=called,"original request timestamp after offer");int length=wires.readInt();require(length>0&&length<=MAX_REQUEST_BYTES&&length<=wires.length()-wires.getFilePointer(),"wire length outside bounds");
                 byte[] bytes=new byte[length];wires.readFully(bytes);Request request=RetentionWireV3.decode(bytes);require(request.correlationId()==correlation,"original correlation differs");
-                if(Long.parseLong(col[5])<0)continue;offers++;replies.computeIfAbsent(correlation,x->new ArrayDeque<>()).add(reference.dispatch(request));
+                if(Long.parseLong(col[5])<0)continue;offers++;replies.computeIfAbsent(correlation,x->new ArrayDeque<>()).add(sealedReference==null?reference.dispatch(request):sealedReference.dispatch(request));
             }
         }
         try(var input=new DataInputStream(Files.newInputStream(load.resolve("physical-replies.bin")))){
@@ -113,7 +127,7 @@ public final class RetentionCapacityAeronV4 {
             }
         }
         long remaining=replies.values().stream().mapToLong(ArrayDeque::size).sum();
-        writeJson("physical-reference-reconciliation.json",Map.of("passed",true,"successfulPublicationAdmissions",offers,"actualRepliesCompared",compared,"earlierAdmittedRepliesNotObserved",missing,"remainingAdmittedRepliesNotObserved",remaining,"independentAlgorithm",false,"performedOutsideArrivalWindow",true));return reference;
+        writeJson("physical-reference-reconciliation.json",Map.of("passed",true,"successfulPublicationAdmissions",offers,"actualRepliesCompared",compared,"earlierAdmittedRepliesNotObserved",missing,"remainingAdmittedRepliesNotObserved",remaining,"independentAlgorithm",false,"performedOutsideArrivalWindow",true));return sealedReference==null?reference:sealedReference.service();
     }
     private void qualifyReadiness(String observation)throws Exception{
         var nodes=new ArrayList<RetentionStartupReadinessV3.Node>();
@@ -128,10 +142,10 @@ public final class RetentionCapacityAeronV4 {
         for (Class<?> type : List.of(RetentionNodeMainV3.class, MatchingEngine.class, MediaDriver.class, DirectBuffer.class))
             classpath.add(Path.of(type.getProtectionDomain().getCodeSource().getLocation().toURI()).toString());
         for (int member = 0; member < 3; member++) {
-            List<String> argv = segmentSelection.childArguments(jfrSelection.childArguments(idleSelection.childArguments(List.of(Path.of(System.getProperty("java.home"), "bin", "java").toString(),
+            List<String> argv = sealedSelection.childArguments(segmentSelection.childArguments(jfrSelection.childArguments(idleSelection.childArguments(List.of(Path.of(System.getProperty("java.home"), "bin", "java").toString(),
                     "--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED", "--add-opens=java.base/java.util.zip=ALL-UNNAMED", "-Xmx256m",
                     "-Daeron.cluster.appointed.leader.id=0", "-cp", String.join(File.pathSeparator, classpath), RetentionNodeMainV3.class.getName(),
-                    Integer.toString(member), root.toString(), Integer.toString(ports), "2", RetentionBatchProfilesV3.PROFILE_ID, lineage, profile.fingerprint(), code, "bounded-maintenance-v1"))));
+                    Integer.toString(member), root.toString(), Integer.toString(ports), "2", RetentionBatchProfilesV3.PROFILE_ID, lineage, profile.fingerprint(), code, "bounded-maintenance-v1")))));
             ProcessBuilder builder = new ProcessBuilder(argv).redirectErrorStream(true).redirectOutput(log(member).toFile());
             for (String name : List.of("JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS", "_JAVA_OPTIONS")) builder.environment().remove(name);
             Process process = builder.start();
@@ -152,7 +166,7 @@ public final class RetentionCapacityAeronV4 {
                 String expected = "VECTOR_V3_NODE_READY node=" + record.member + " pid=" + record.process.pid() + " profile=" + profile.fingerprint()
                         + " lineage=" + lineage + " code=" + code;
                 ready &= logs.contains(expected) && logs.contains("VECTOR_V3_SERVICE_READY profile=" + profile.fingerprint() + " lineage=" + lineage)
-                        && logs.contains("preparedArchiveCacheEnabled=true");
+                        && logs.contains("preparedArchiveCacheEnabled=true") && (!sealedSelection.server()||logs.contains("VECTOR_SEALED_READ_READY"));
             }
             if (ready) break;
             require(System.nanoTime() < deadline, "all three actual profile/lineage/code readiness deadline exceeded"); Thread.sleep(20);

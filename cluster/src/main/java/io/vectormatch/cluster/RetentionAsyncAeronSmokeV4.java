@@ -31,17 +31,29 @@ public final class RetentionAsyncAeronSmokeV4 {
     private boolean allOwnedStopped=true;
     private int generation;
     private final long[] sequences=new long[128];
+    private final RetentionSealedReadPolicyV4.Selection sealedSelection;
+    private volatile long sealedSession=-1;
     private int orders;
     private long business;
-    private RetentionAsyncAeronSmokeV4(Path newRoot)throws Exception{
+    private RetentionAsyncAeronSmokeV4(Path newRoot)throws Exception{this(newRoot,new RetentionSealedReadPolicyV4.Selection(false,RetentionSealedReadPolicyV4.Route.DISABLED));}
+    private RetentionAsyncAeronSmokeV4(Path newRoot,RetentionSealedReadPolicyV4.Selection sealed)throws Exception{
+        sealedSelection=sealed;
         root=newRoot.toAbsolutePath().normalize();for(Path path=root;path!=null;path=path.getParent())require(!Files.isSymbolicLink(path),"symlink smoke root refused");
         Files.createDirectory(root);require(Files.getFileStore(root).getUsableSpace()>=768L*1024*1024,"768MiB free guard");ports=ports();writeArtifactInventory();
+        if(sealedSelection.route().enabled())writeJson("sealed-read-selection.json",sealedSelection.observation());
         writeJson("registration.json",Map.of("schema","async-v4-udp-functional-1","profile",profile.fingerprint(),"lineage",lineage,"code",code,
                 "loadOrders",LOAD_ORDERS,"ports",ports,"syncLevel",2,"appointedLeader",0,"independentHosts",false,"capacityClaim",false));
     }
+    static void runSealed(Path root,RetentionSealedReadPolicyV4.Route route)throws Exception{
+        if(!route.enabled())throw new IllegalArgumentException("enabled correctness route required");
+        execute(new RetentionAsyncAeronSmokeV4(root,new RetentionSealedReadPolicyV4.Selection(true,route)));
+    }
     public static void main(String[] args)throws Exception{
         if(args.length!=1)throw new IllegalArgumentException("RetentionAsyncAeronSmokeV4 <new-state-directory>");
-        var smoke=new RetentionAsyncAeronSmokeV4(Path.of(args[0]));Throwable failure=null;boolean passed=false;
+        execute(new RetentionAsyncAeronSmokeV4(Path.of(args[0])));
+    }
+    private static void execute(RetentionAsyncAeronSmokeV4 smoke)throws Exception{
+        Throwable failure=null;boolean passed=false;
         try{smoke.exercise();passed=true;}
         catch(Throwable error){failure=error;
             if(error instanceof RetentionAsyncMaintenanceV4.Failure unresolved)try(var out=smoke.stream("failure-original-wires.bin")){for(byte[] wire:unresolved.originalWires())frame(out,wire);}
@@ -56,7 +68,11 @@ public final class RetentionAsyncAeronSmokeV4 {
         startOwned();var recording=new AtomicReference<RecordingIO>();var blocked=new CountDownLatch(1);var release=new CountDownLatch(1);
         var owner=new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(profile,lineage,4),()->{
             var transport=new RetentionBatchAeronTransportV3(root.resolve("owner-driver"),ports,profile,lineage,true,6144);
-            try{var io=new RecordingIO(transport);recording.set(io);return io;}catch(IOException error){transport.close();throw new UncheckedIOException(error);}
+            try{RetentionBatchOwnerIOV3 selected=transport;
+                if(sealedSelection.route().enabled()){sealedSession=transport.sealedReadSessionId();writeNew("sealed-client-session.txt",Long.toString(sealedSession)+"\n");selected=new RetentionSealedOwnerTransportV4(transport,ports,new Scope(profile.fingerprint(),lineage),sealedSelection.route(),root.resolve("sealed-client-ledger.bin"));}
+                var io=new RecordingIO(selected);recording.set(io);return io;
+            }catch(IOException error){try{transport.close();}catch(RuntimeException|Error cleanup){error.addSuppressed(cleanup);}throw new UncheckedIOException(error);}
+            catch(RuntimeException|Error error){try{transport.close();}catch(RuntimeException|Error cleanup){error.addSuppressed(cleanup);}throw error;}
         });
         String finalHash;byte[] canonical;
         try(var preparation=new RetentionArchivePreparationV4(Math.toIntExact(profile.core().maxPendingSerializedBytes()+1024),64L*1024*1024,4);
@@ -85,14 +101,15 @@ public final class RetentionAsyncAeronSmokeV4 {
                 require(((Number)coordinator.snapshot().get("reservedCommands")).intValue()==0,"all credits must clear after exact final ACK pair");
                 Reply barrier=owner.exchangeMaintenance(new Position(),TIMEOUT);require(barrier.error().isEmpty(),"same-session final barrier failed");
                 var reference=new RetentionClusteredServiceV3(profile,lineage,true);reference.onStart(null,null);
+                var sealedReference=sealedSelection.route().enabled()?new RetentionSealedReplayV4(profile,lineage,sealedSession,sealedSelection.route()):null;
                 var expected=new HashMap<Long,ArrayDeque<byte[]>>();
-                for(var request:recording.get().acceptedSnapshot())expected.computeIfAbsent(request.correlationId(),key->new ArrayDeque<>()).add(reference.dispatch(request));
+                for(var request:recording.get().acceptedSnapshot())expected.computeIfAbsent(request.correlationId(),key->new ArrayDeque<>()).add((sealedReference==null?reference.dispatch(request):sealedReference.dispatch(request)));
                 for(var reply:recording.get().replySnapshot()){
                     var queue=expected.get(reply.correlationId());require(queue!=null&&!queue.isEmpty(),"reply lacks positive original offer");
                     require(Arrays.equals(queue.removeFirst(),RetentionReplyV3.encode(reply)),"actual network reply differs from canonical physical-order replay");
                 }
                 require(expected.values().stream().allMatch(ArrayDeque::isEmpty),"positive original offers lack complete replies");
-                Field field=RetentionClusteredServiceV3.class.getDeclaredField("state");field.setAccessible(true);var state=(RetentionServiceV3)field.get(reference);
+                Field field=RetentionClusteredServiceV3.class.getDeclaredField("state");field.setAccessible(true);var state=(RetentionServiceV3)field.get(sealedReference==null?reference:sealedReference.service());
                 canonical=state.snapshot();finalHash=sha(canonical);require(finalHash.equals(barrier.counters().stateHash()),"full combined final state differs");
                 require(state.businessSeq()==1003&&state.eventSeq()==2003&&state.marketSeq()==2001&&state.acceptedPlaceCount()==1001,"exact command/trade fixture counters differ");
                 require(state.pendingHistoryCount()==0&&state.outboxSize()==0&&state.exportedEventSeq()==2003,"exact final history/outbox release differs");
@@ -167,10 +184,10 @@ public final class RetentionAsyncAeronSmokeV4 {
         for (Class<?> type : List.of(RetentionNodeMainV3.class, MatchingEngine.class, MediaDriver.class, DirectBuffer.class))
             classpath.add(Path.of(type.getProtectionDomain().getCodeSource().getLocation().toURI()).toString());
         for (int member = 0; member < 3; member++) {
-            List<String> argv = List.of(Path.of(System.getProperty("java.home"), "bin", "java").toString(),
+            List<String> argv = sealedSelection.childArguments(List.of(Path.of(System.getProperty("java.home"), "bin", "java").toString(),
                     "--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED", "--add-opens=java.base/java.util.zip=ALL-UNNAMED", "-Xmx256m",
                     "-Daeron.cluster.appointed.leader.id=0", "-cp", String.join(File.pathSeparator, classpath), RetentionNodeMainV3.class.getName(),
-                    Integer.toString(member), root.toString(), Integer.toString(ports), "2", RetentionBatchProfilesV3.PROFILE_ID, lineage, profile.fingerprint(), code, "bounded-maintenance-v1");
+                    Integer.toString(member), root.toString(), Integer.toString(ports), "2", RetentionBatchProfilesV3.PROFILE_ID, lineage, profile.fingerprint(), code, "bounded-maintenance-v1"));
             ProcessBuilder builder = new ProcessBuilder(argv).redirectErrorStream(true).redirectOutput(log(member).toFile());
             for (String name : List.of("JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS", "_JAVA_OPTIONS")) builder.environment().remove(name);
             Process process = builder.start();
@@ -191,7 +208,7 @@ public final class RetentionAsyncAeronSmokeV4 {
                 String expected = "VECTOR_V3_NODE_READY node=" + record.member + " pid=" + record.process.pid() + " profile=" + profile.fingerprint()
                         + " lineage=" + lineage + " code=" + code;
                 ready &= logs.contains(expected) && logs.contains("VECTOR_V3_SERVICE_READY profile=" + profile.fingerprint() + " lineage=" + lineage)
-                        && logs.contains("preparedArchiveCacheEnabled=true");
+                        && logs.contains("preparedArchiveCacheEnabled=true") && (!sealedSelection.server()||logs.contains("VECTOR_SEALED_READ_READY"));
             }
             if (ready) break;
             require(System.nanoTime() < deadline, "all three actual profile/lineage/code readiness deadline exceeded"); Thread.sleep(20);

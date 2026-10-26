@@ -79,7 +79,7 @@ public final class RetentionCapacityExperimentV4 {
             RetentionBatchOwnerV3.IOFactory factory,RetentionCapacityPlanV4.Plan plan,RetentionCapacityDiskGuardV4 disk,BeforeArrivals gate)throws Exception{
         return new RetentionCapacityExperimentV4(newRoot,ownedStateRoot,config,profile,lineage,plan,disk,gate).execute(factory);
     }
-    public static RetentionCapacityPlanV4.Plan boundedPlan(Config config,RetentionServiceV3.Profile profile){return RetentionCapacityPlanV4.plan(new RetentionCapacityPlanV4.Config(config.rate(),config.continueDuringFileWork()),profile);}
+    public static RetentionCapacityPlanV4.Plan boundedPlan(Config config,RetentionServiceV3.Profile profile){return RetentionCapacityPlanV4.plan(new RetentionCapacityPlanV4.Config(config.rate(),config.continueDuringFileWork()),profile,RetentionSealedReadPolicyV4.systemSelection().route().enabled());}
     private Result execute(RetentionBatchOwnerV3.IOFactory factory)throws Exception{
         boolean arraysSaved=false;
         try{

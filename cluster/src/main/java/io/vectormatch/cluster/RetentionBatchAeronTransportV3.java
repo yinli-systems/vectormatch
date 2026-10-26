@@ -77,6 +77,10 @@ public final class RetentionBatchAeronTransportV3 implements RetentionBatchOwner
         driver = openedDriver; cluster = openedCluster;
     }
 
+    io.aeron.Aeron sealedReadAeron(){requireOpen();return cluster.context().aeron();}
+    long sealedReadSessionId(){requireOpen();return cluster.clusterSessionId();}
+    int sealedReadLeader(){requireOpen();return cluster.leaderMemberId();}
+
     @Override public long offer(byte[] completeRequestBytes) {
         requireOpen();
         byte[] bytes = validatedRequestBytes(completeRequestBytes, scope, maintenanceEnabled,archiveChunkBytes);
