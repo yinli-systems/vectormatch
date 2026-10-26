@@ -2,6 +2,10 @@
 
 This is an implementation and evidence contract, not a production certification. Each gate remains unverified until its linked results pass. No HFT firm endorsement, hard real-time guarantee, zero latency, 100M/s or 100M physical connections is established by this repository.
 
+## Latest evidence: 26 October 2026
+
+CI24 passes474 Java/202 Python tests with zero skips and11 actual PostgreSQL tests on the existing one-job CPU runner. All raw JAR/JDK/origin and900-file CI evidence is retained. The complete native first-segment comparison accepts80000 orders in each arm,with3993.45/s in-window goodput and globalp9955.03–59.09ms;both registered paired optimization criteria fail. See [correctness](PRODUCTION_CORRECTNESS_RESULTS.md) and [native comparison](V4_SEGMENT_PREPARATION_RESULTS.md). These finite tests do not close the continuous operation,physical-host failure,production latency,authentication or external-venue gates below.
+
 ## Starting point: 25 October 2026
 
 Delivery update:the latest [forced independent Linux run](PRODUCTION_CORRECTNESS_RESULTS.md) passes394 Java tests with0 skips,including11 real PostgreSQL tests,plus189 Linux Python tests,failover/snapshot/restart and web checks. Its observer revision is `4198aadd`;all test modules actually execute with a new Gradle home and build-result caching disabled. Application source remains `23f9c070`;the preceding timing artifact remains qualified by source `aed9430d`. The GitHub-hosted account billing blocker remains. This closes concrete correctness runs,not the other production gates below.
