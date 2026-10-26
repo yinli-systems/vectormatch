@@ -29,6 +29,7 @@ public final class RetentionCapacityAeronV4 {
     private final RetentionCapacityDiskGuardV4 disk;
     private RetentionCapacityAeronV4(Path newRoot,int rate,boolean proceed)throws Exception{
         config=new RetentionCapacityExperimentV4.Config(rate,proceed);
+        var batchFlushSelection=RetentionBatchFlushPolicyV4.systemSelection();
         var readYieldSelection=RetentionReadYieldPolicyV4.systemSelection();if(readYieldSelection.enabled()&&!proceed)throw new IllegalArgumentException("inter-bank dispatch requires CONTINUE file-work policy");
         plan=RetentionCapacityExperimentV4.boundedPlan(config,profile);plan.requireAdmitted();RetentionLoopbackPortsV4.verifyFixed(ports);
         root=newRoot.toAbsolutePath().normalize();
@@ -40,7 +41,7 @@ public final class RetentionCapacityAeronV4 {
         registration.put("fileWorkDispatchPolicy",proceed?"CONTINUE":"PAUSE");registration.put("profile",profile.fingerprint());registration.put("lineage",lineage);
         registration.put("code",code);registration.put("ports",ports);registration.put("appointedLeader",0);registration.put("syncLevel",2);
         registration.put("activeLoadWorkers",127);registration.put("allocatedLogicalWorkers",128);registration.put("independentHosts",false);
-        registration.put("readBankDispatchSelection",readYieldSelection.observation());if(idleSelection.explicit())registration.put("retentionIdleSelection",idleSelection.observation());registration.put("fundedExternalOrders",false);writeJson("registration.json",registration);
+        if(batchFlushSelection.explicit())registration.put("batchFlushSelection",batchFlushSelection.observation());registration.put("readBankDispatchSelection",readYieldSelection.observation());if(idleSelection.explicit())registration.put("retentionIdleSelection",idleSelection.observation());registration.put("fundedExternalOrders",false);writeJson("registration.json",registration);
     }
     public static void main(String[] args)throws Exception{
         if(args.length!=3||!Set.of("PAUSE","CONTINUE").contains(args[2]))throw new IllegalArgumentException("RetentionCapacityAeronV4 <new-root> <500|1000|2000|4000|6000> <PAUSE|CONTINUE>");

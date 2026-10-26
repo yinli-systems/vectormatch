@@ -1,0 +1,3 @@
+# Prospective bounded coalescing experiment
+
+Seven new selection/deadline/batch tests plus twelve existing owner tests passed. The initial local finite test was refused by its disk guard before business; after retiring only full-verified duplicate upload copies, its unchanged PAUSE and CONTINUE cases both completed20seconds and passed. No guard was lowered. Full fresh Linux CI and native candidate qualification remain pending. The complete maintenance archive preserves all source/config/body/asset checks before removing only reconstructible runtime/cache duplicates. Original compressed CPU/local archives and fully verified private assets remain.
