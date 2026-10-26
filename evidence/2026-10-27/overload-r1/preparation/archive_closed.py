@@ -117,7 +117,7 @@ def retire(name):
  d=P/('archive-'+name);proof=json.loads((d/'PRIVATE_ASSET_VERIFIED.json').read_text());manifest=json.loads((d/'MEMBER_MANIFEST.json').read_text())
  assert proof['privateDraftRelease']==RELEASE and proof['authenticatedFullDownloadVerified']and proof['allOriginalMembersVerified']
  # Retire large stopped duplicate files only. Preserve all metadata, snapshots and small diagnostics.
- selected={n:v for n,v in manifest['files'].items()if v['bytes']>=1024**2 and not n.endswith('.snapshot')and'canonical-final'not in n and not n.startswith('junit/')}
+ selected={n:v for n,v in manifest['files'].items()if (v['bytes']>=1024**2 or (n.startswith('native/load/writer/') and n.endswith('.bin'))) and not n.endswith('.snapshot')and'canonical-final'not in n and not n.startswith('junit/')}
  source=r'''from pathlib import Path
 import hashlib,json,shutil
 r=Path(ROOT)/NAME
