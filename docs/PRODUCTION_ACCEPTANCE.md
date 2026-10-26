@@ -4,7 +4,7 @@ This is an implementation and evidence contract, not a production certification.
 
 ## Latest evidence: 26 October 2026
 
-CI24 passes474 Java/202 Python tests with zero skips and11 actual PostgreSQL tests on the existing one-job CPU runner. All raw JAR/JDK/origin and900-file CI evidence is retained. The complete native first-segment comparison accepts80000 orders in each arm,with3993.45/s in-window goodput and globalp9955.03–59.09ms;both registered paired optimization criteria fail. See [correctness](PRODUCTION_CORRECTNESS_RESULTS.md) and [native comparison](V4_SEGMENT_PREPARATION_RESULTS.md). These finite tests do not close the continuous operation,physical-host failure,production latency,authentication or external-venue gates below.
+CI27 passes553 Java/208 Python tests with zero failures/errors/skips,including11 actual PostgreSQL tests,on the existing one-job CPU runner. All308 application class bodies,454 JDK files,59 observed Linux class origins and998-file CI evidence are verified. Its new full sealed-read capacity regression completes10000 synthetic orders,physical-order replay,three snapshots and cold restores;CI latency is not a benchmark. The earlier native sealed-read qualification remains failed/unqualified,and a new fixed-artifact native comparison is registered. The complete native first-segment comparison accepts80000 orders in each arm,with3993.45/s in-window goodput and globalp9955.03–59.09ms;both registered paired optimization criteria fail. See [correctness](PRODUCTION_CORRECTNESS_RESULTS.md) and [native comparison](V4_SEGMENT_PREPARATION_RESULTS.md). These finite tests do not close the continuous operation,physical-host failure,production latency,authentication or external-venue gates below.
 
 ## Starting point: 25 October 2026
 

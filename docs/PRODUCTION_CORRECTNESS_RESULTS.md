@@ -1,17 +1,22 @@
 # Independent Linux correctness results
 
-The latest [forced complete run40213694660](https://github.com/yinli-systems/vectormatch/actions/runs/40213694660) passes on process-sampler revision `4198aaddf02588429de207eef4d7b4a46e9f3282`. It uses a fresh filtered source checkout and a new Gradle user home on the existing prepaid CPU, with `--no-build-cache --rerun-tasks`. The actual core, cluster, server, projector and bench test tasks all execute; no test result is restored from cache. The immutable-handoff application source remains unchanged from `23f9c070`,qualified by CI6;timing source `aed9430d` remains qualified separately by CI5. Benchmark artifacts retain their original build/source identities.
+The latest [complete forced CPU run, CI27](https://github.com/yinli-systems/vectormatch/actions/runs/40272892462) passes on source `f99d3843dcf999c2b2bebe2ae67b25332b1b81bd`. A fresh sparse checkout and Gradle home use `--no-build-cache --rerun-tasks`; all five Java test modules execute. This is a one-job non-root self-hosted runner on the existing prepaid CPU. The separate GitHub-hosted account billing block remains unresolved.
 
 | Check | Result |
 | --- | --- |
-| Java/JUnit |394 tests,0 failures,0 errors,0 skips|
-| Real PostgreSQL integration |11 of those tests; dedicated temporary PostgreSQL18.6,fsync and synchronous commit enabled;0 skips|
-| Linux Python regression |189 tests,0 skips;includes18 process-identity tests|
-| Three-JVM failover/snapshot/restart |Passed,sync2,fresh lineage:57 commands/59 events/6 market events|
-| Web |`npm ci`,TypeScript/Vite production build and Prettier checks passed|
-| Frontend dependency audit |Separate current-lockfile `npm audit`:0 known vulnerabilities;not a security certification|
+| Java/JUnit |553 tests,0 failures,0 errors,0 skips|
+| Real PostgreSQL integration |11 of those tests; temporary PostgreSQL18.6 with fsync and synchronous commit enabled;0 skips|
+| Linux Python |208 tests,0 skips|
+| Three-JVM failover/snapshot/restart |Passed,sync2;57 commands/59 events/6 market events|
+| Full sealed-read capacity correctness protocol |10000 synthetic orders;split-channel callback coverage,physical-order replay,three snapshots and three cold restores passed;not a performance result|
+| Independent original-byte route audit |Both smoke routes plus full capacity DIRECT_UDP protocol passed|
+| Web |Dependency installation,TypeScript/Vite production build and formatting passed|
 
-The fresh failover smoke observes old leader1 -> new leader0 and11,465.454ms from leader kill to the next confirmed command. That duration includes client failure handling and reconnection; it is not isolated election latency. This is three local JVMs on one CPU host, not independent physical machines or a recovery-time SLA. Its final state hash `b064fc0f0e58768bcb2d0fd4ad34a4b0965d89ca29ecd4b5689e69f437e1fb5e` also matches the preceding successful smokes. Healthy trading latency and fault-affected requests require their own workload measurements.
+Failover observes leader1→0 and11,242.868ms from kill to the next confirmed command,including client failure handling/reconnection. Final state hash is `b064fc0f0e58768bcb2d0fd4ad34a4b0965d89ca29ecd4b5689e69f437e1fb5e`. This is not isolated election latency or a millisecond recovery SLA.
+
+All308 core/cluster JAR class bodies equal actual CI outputs;all core classes remain unchanged from CI26. All454 JDK file bodies and59 observed Linux class origins match the staged distribution. Artifact fingerprint: `0a6b1c8b51da763ec758cc7c65a4e07025ed180717d0d07951c2d36bce3e00f5`. The CI archive retains998 source/compiled/test/log files;separate complete native archives retain333 files across both sealed smoke routes and the capacity protocol. File hashes,owners,modes and empty directories are verified. No native sparse term files are extracted locally.
+
+The earlier source78a500/s qualification failed at terminal egress validation before financial replay/snapshot/cold recovery;it remains unqualified. CI27 fixes the post-load validation partition without changing matching or the send hot path. CI latency is not a benchmark. The [new registered qualification and comparison](../evidence/2026-10-26/runpod-cpu/v4-sealed-egress-export-r1/linux-admission-r1/README.md) must close separately before any performance claim. Neither this CI result nor the native regression certifies production readiness,physical-host isolation,continuous100M or funded trading.
 
 ## Latest forced execution
 
