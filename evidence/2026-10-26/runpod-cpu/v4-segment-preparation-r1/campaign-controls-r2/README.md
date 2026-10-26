@@ -1,0 +1,3 @@
+# Read-only metadata retry amendment before4000/s
+
+Qualification passed complete private authenticated download and every original member verification. Two transient GitHub metadata TCP refusals were retained;the original driver precondition refused before creating any4000/s point. R2 adds up to3 attempts only for transient read-only metadata GETs,with per-attempt records and bounded waits. Uploads,native business runs and raw bodies are never automatically repeated. The actual runtime26-input freezes,source/JAR fingerprints and pair criteria remain byte-identical. The serial driver now selects these R2 evidence helpers;the original controls remain in ../campaign-controls-r1.
