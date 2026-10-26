@@ -1,0 +1,7 @@
+# Prospective latency-factor campaign
+
+Source c6445604/actual artifact dcfeeb81 is qualified by complete Linux CI21:446 Java/202 Python,zero failure/error/skip,11 real PostgreSQL tests,three-JVM failover/snapshot/restart and web build/format. All879 original CI bodies,267 JAR/compiled classes,454 CI/runtime JDK file bodies and20 actual loaded origins are bound by the complete raw private attachment.
+
+All nine point/controller/config freezes were registered and fully verified by authenticated asset re-download before any native point. First qualify500/s with agent100us and bounded read-bank dispatch;then run separate fixed4000/s C1/D1/C2/D2 comparisons for agent1ms/100us with reads CLOSED,and CLOSED/BOUNDED reads with agent100us fixed. All controls retain leader0,sync2,owner1ms,127 active producers,Q64,batch4,cut1536,read32/page32/chunk6144,two readiness gates and full raw/cold-recovery audit. No native/performance/default promotion is claimed by this admission.
+
+The configured-object proof binds six actual startup/cold node processes and the owner driver;it does not measure OS sleeps or read private agent fields. The23 local controller guard tests include explicitly labelled synthetic second-generation fixtures. Original failures and unchanged cache-retirement records remain in the full attachment. Raw attachment is private and immutable;Git contains its complete member inventory and exact SHA. See docs/V4_AGENT_IDLE_PROTOCOL.md.
