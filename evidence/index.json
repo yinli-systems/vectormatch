@@ -3558,6 +3558,102 @@
       "scope": "Two separate20-second repeats at4000/s;fresh lineage each;artifact0a6b1c8b;one physical CPU/three UDP JVMs;sole factor historical-read route.No sustained capacity or100M claim.",
       "title": "V4 DIRECT_UDP",
       "updatedAt": "2026-10-26T05:44:29.298236+00:00"
+    },
+    {
+      "configurationFingerprint": "f8482f4da7f3a6a799890908d97c8535cc40b1273ddd0ef2982cc215cb3c081f",
+      "id": "cpu-v4-sealed-bounded-dispatch-CLOSED",
+      "points": [
+        {
+          "allOfferedAcceptedP99Millis": 53.609842,
+          "classification": "FINITE_V4_SEALED_BOUNDED_DISPATCH_COMPARISON",
+          "clientNotSent": 0,
+          "drainSeconds": 0.15455477,
+          "goodput": 3993.45,
+          "id": "cpu-v4-sealed-bounded-dispatch-4000-c1",
+          "p99Millis": 53.609842,
+          "peakBacklog": 135,
+          "rate": 4000,
+          "rejected": 0,
+          "serverErrors": 0,
+          "stable": null,
+          "unknown": 0,
+          "unresolved": 0,
+          "valid": true,
+          "windowSeconds": 20,
+          "workers": 127
+        },
+        {
+          "allOfferedAcceptedP99Millis": 87.793868,
+          "classification": "FINITE_V4_SEALED_BOUNDED_DISPATCH_COMPARISON",
+          "clientNotSent": 0,
+          "drainSeconds": 0.09786521,
+          "goodput": 3993.45,
+          "id": "cpu-v4-sealed-bounded-dispatch-4000-c2",
+          "p99Millis": 87.793868,
+          "peakBacklog": 106,
+          "rate": 4000,
+          "rejected": 0,
+          "serverErrors": 0,
+          "stable": null,
+          "unknown": 0,
+          "unresolved": 0,
+          "valid": true,
+          "windowSeconds": 20,
+          "workers": 127
+        }
+      ],
+      "reportPath": "docs/V4_SEALED_BOUNDED_DISPATCH_RESULTS.md",
+      "scope": "Two separate20-second repeats at4000/s;fresh lineage each;artifacta21a720d;one physical CPU/three UDP JVMs;sole factor bounded inter-bank business dispatch.No sustained capacity or100M claim.",
+      "title": "V4 CLOSED",
+      "updatedAt": "2026-10-26T06:58:05.188020+00:00"
+    },
+    {
+      "configurationFingerprint": "8beb78e22743843544c89d9d6631d95258e95c18dfbdb9617395cb8bd58c4cf8",
+      "id": "cpu-v4-sealed-bounded-dispatch-BOUNDED_TURN",
+      "points": [
+        {
+          "allOfferedAcceptedP99Millis": 44.423232,
+          "classification": "FINITE_V4_SEALED_BOUNDED_DISPATCH_COMPARISON",
+          "clientNotSent": 0,
+          "drainSeconds": 0.155689248,
+          "goodput": 3993.65,
+          "id": "cpu-v4-sealed-bounded-dispatch-4000-d1",
+          "p99Millis": 44.423232,
+          "peakBacklog": 109,
+          "rate": 4000,
+          "rejected": 0,
+          "serverErrors": 0,
+          "stable": null,
+          "unknown": 0,
+          "unresolved": 0,
+          "valid": true,
+          "windowSeconds": 20,
+          "workers": 127
+        },
+        {
+          "allOfferedAcceptedP99Millis": 94.214128,
+          "classification": "FINITE_V4_SEALED_BOUNDED_DISPATCH_COMPARISON",
+          "clientNotSent": 0,
+          "drainSeconds": 0.16005824,
+          "goodput": 3993.9,
+          "id": "cpu-v4-sealed-bounded-dispatch-4000-d2",
+          "p99Millis": 94.214128,
+          "peakBacklog": 70,
+          "rate": 4000,
+          "rejected": 0,
+          "serverErrors": 0,
+          "stable": null,
+          "unknown": 0,
+          "unresolved": 0,
+          "valid": true,
+          "windowSeconds": 20,
+          "workers": 127
+        }
+      ],
+      "reportPath": "docs/V4_SEALED_BOUNDED_DISPATCH_RESULTS.md",
+      "scope": "Two separate20-second repeats at4000/s;fresh lineage each;artifacta21a720d;one physical CPU/three UDP JVMs;sole factor bounded inter-bank business dispatch.No sustained capacity or100M claim.",
+      "title": "V4 BOUNDED_TURN",
+      "updatedAt": "2026-10-26T06:58:05.188020+00:00"
     }
   ],
   "runs": [
@@ -6464,6 +6560,111 @@
       "scope": "80000 independent arrivals at4000/s for20seconds;fresh finite lineage",
       "throughput": 3993.45,
       "timestamp": "2026-10-26T05:38:34.437446646Z",
+      "trades": 80000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-sealed-bounded-dispatch-r1/qualification-500-q1-native-r1/README.md",
+      "commands": 10000,
+      "correctnessPassed": true,
+      "durability": "Sync2;complete forced/readback prefix and control-intent receipts;full canonical replay;three snapshots and cold restores agree",
+      "id": "cpu-v4-sealed-bounded-qualification-500-q1",
+      "label": "V4 BOUNDED_TURN · Q1",
+      "limitations": [
+        "Finite20-second observation;not a sustained SLA,independent-host isolation,100M,HFT endorsement or funded external trading.",
+        "Actual artifact a21a720d/source97db58e2;agent100us,owner1ms,batch4/50us,CLOSED reads,cut1536,read32/page32/chunk6144.",
+        "Both arms use the same DIRECT_UDP historical reads and enabled sidecars;only bounded inter-bank business dispatch changes."
+      ],
+      "model": "One prepaid CPU host;three UDP node JVMs;leader0/sync2;127 active producers;no JFR or observer JVM",
+      "p50Millis": 6.201074,
+      "p99Millis": 29.214346,
+      "scope": "10000 independent arrivals at500/s for20seconds;fresh finite lineage",
+      "throughput": 499.85,
+      "timestamp": "2026-10-26T06:21:34.469004828Z",
+      "trades": 10000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-sealed-bounded-dispatch-r1/dispatch-4000-c1-native-r1/README.md",
+      "commands": 80000,
+      "correctnessPassed": true,
+      "durability": "Sync2;complete forced/readback prefix and control-intent receipts;full canonical replay;three snapshots and cold restores agree",
+      "id": "cpu-v4-sealed-bounded-dispatch-4000-c1",
+      "label": "V4 CLOSED · C1",
+      "limitations": [
+        "Finite20-second observation;not a sustained SLA,independent-host isolation,100M,HFT endorsement or funded external trading.",
+        "Actual artifact a21a720d/source97db58e2;agent100us,owner1ms,batch4/50us,CLOSED reads,cut1536,read32/page32/chunk6144.",
+        "Both arms use the same DIRECT_UDP historical reads and enabled sidecars;only bounded inter-bank business dispatch changes."
+      ],
+      "model": "One prepaid CPU host;three UDP node JVMs;leader0/sync2;127 active producers;no JFR or observer JVM",
+      "p50Millis": 7.742532,
+      "p99Millis": 53.609842,
+      "scope": "80000 independent arrivals at4000/s for20seconds;fresh finite lineage",
+      "throughput": 3993.45,
+      "timestamp": "2026-10-26T06:27:24.813842725Z",
+      "trades": 80000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-sealed-bounded-dispatch-r1/dispatch-4000-d1-native-r1/README.md",
+      "commands": 80000,
+      "correctnessPassed": true,
+      "durability": "Sync2;complete forced/readback prefix and control-intent receipts;full canonical replay;three snapshots and cold restores agree",
+      "id": "cpu-v4-sealed-bounded-dispatch-4000-d1",
+      "label": "V4 BOUNDED_TURN · D1",
+      "limitations": [
+        "Finite20-second observation;not a sustained SLA,independent-host isolation,100M,HFT endorsement or funded external trading.",
+        "Actual artifact a21a720d/source97db58e2;agent100us,owner1ms,batch4/50us,CLOSED reads,cut1536,read32/page32/chunk6144.",
+        "Both arms use the same DIRECT_UDP historical reads and enabled sidecars;only bounded inter-bank business dispatch changes."
+      ],
+      "model": "One prepaid CPU host;three UDP node JVMs;leader0/sync2;127 active producers;no JFR or observer JVM",
+      "p50Millis": 8.330246,
+      "p99Millis": 44.423232,
+      "scope": "80000 independent arrivals at4000/s for20seconds;fresh finite lineage",
+      "throughput": 3993.65,
+      "timestamp": "2026-10-26T06:32:44.332090830Z",
+      "trades": 80000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-sealed-bounded-dispatch-r1/dispatch-4000-c2-native-r1/README.md",
+      "commands": 80000,
+      "correctnessPassed": true,
+      "durability": "Sync2;complete forced/readback prefix and control-intent receipts;full canonical replay;three snapshots and cold restores agree",
+      "id": "cpu-v4-sealed-bounded-dispatch-4000-c2",
+      "label": "V4 CLOSED · C2",
+      "limitations": [
+        "Finite20-second observation;not a sustained SLA,independent-host isolation,100M,HFT endorsement or funded external trading.",
+        "Actual artifact a21a720d/source97db58e2;agent100us,owner1ms,batch4/50us,CLOSED reads,cut1536,read32/page32/chunk6144.",
+        "Both arms use the same DIRECT_UDP historical reads and enabled sidecars;only bounded inter-bank business dispatch changes."
+      ],
+      "model": "One prepaid CPU host;three UDP node JVMs;leader0/sync2;127 active producers;no JFR or observer JVM",
+      "p50Millis": 7.402755,
+      "p99Millis": 87.793868,
+      "scope": "80000 independent arrivals at4000/s for20seconds;fresh finite lineage",
+      "throughput": 3993.45,
+      "timestamp": "2026-10-26T06:38:45.562623392Z",
+      "trades": 80000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-sealed-bounded-dispatch-r1/dispatch-4000-d2-native-r1/README.md",
+      "commands": 80000,
+      "correctnessPassed": true,
+      "durability": "Sync2;complete forced/readback prefix and control-intent receipts;full canonical replay;three snapshots and cold restores agree",
+      "id": "cpu-v4-sealed-bounded-dispatch-4000-d2",
+      "label": "V4 BOUNDED_TURN · D2",
+      "limitations": [
+        "Finite20-second observation;not a sustained SLA,independent-host isolation,100M,HFT endorsement or funded external trading.",
+        "Actual artifact a21a720d/source97db58e2;agent100us,owner1ms,batch4/50us,CLOSED reads,cut1536,read32/page32/chunk6144.",
+        "Both arms use the same DIRECT_UDP historical reads and enabled sidecars;only bounded inter-bank business dispatch changes."
+      ],
+      "model": "One prepaid CPU host;three UDP node JVMs;leader0/sync2;127 active producers;no JFR or observer JVM",
+      "p50Millis": 8.526738,
+      "p99Millis": 94.214128,
+      "scope": "80000 independent arrivals at4000/s for20seconds;fresh finite lineage",
+      "throughput": 3993.9,
+      "timestamp": "2026-10-26T06:46:45.266411558Z",
       "trades": 80000,
       "unknown": 0
     }
