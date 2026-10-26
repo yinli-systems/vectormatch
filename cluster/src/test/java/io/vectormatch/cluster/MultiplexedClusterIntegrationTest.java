@@ -197,6 +197,14 @@ class MultiplexedClusterIntegrationTest {
                 assertArrayEquals(reference.snapshot(), validation.readSnapshot(TIMEOUT, 32));
                 assertEquals(reference.lastCommandSeq(), validation.position(TIMEOUT).commandSeq(),
                         "Read-only pipeline must not apply any business command");
+                Path expected = run.resolve("expected-read-comparison.bin");
+                Files.write(expected, reference.snapshot());
+                Path comparison = run.resolve("read-comparison");
+                SnapshotReadComparison.main(new String[]{comparison.toString(), Integer.toString(topology.portBase()), expected.toString()});
+                assertTrue(Files.readString(comparison.resolve("result.json")).contains("\"allFourTransfersQualified\":true"));
+                for (int arm = 1; arm <= 4; arm++)
+                    assertArrayEquals(reference.snapshot(), Files.readAllBytes(comparison.resolve("arm-" + arm + "-snapshot.bin")));
+                assertEquals(reference.lastCommandSeq(), validation.position(TIMEOUT).commandSeq());
             }
         } finally {
             pool.shutdownNow(); assertTrue(pool.awaitTermination(5, TimeUnit.SECONDS));

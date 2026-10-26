@@ -15,9 +15,14 @@ public final class ColdRestoreProbe {
     private static String sha(byte[] value) throws Exception {
         return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value));
     }
+    private static byte[] snapshot(ClusterClient client, int window) {
+        return window == 0 ? client.readSnapshot(Duration.ofSeconds(120)) : client.readSnapshot(Duration.ofSeconds(120), window);
+    }
     public static void main(String[] args) throws Exception {
         if (args.length != 8) throw new IllegalArgumentException(
                 "NEW_OUTPUT_DIR PORT_BASE EXPECTED_CORE_SNAPSHOT LAST_ORIGINAL_INDEX WORKERS PRODUCER_PREFIX ORIGINAL_RESULT_SEQ FRESH_INDEX");
+        int readWindow = Integer.parseInt(System.getProperty("vectormatch.snapshot.read.window", "0"));
+        require(readWindow >= 0 && readWindow <= 32, "snapshot read window must be 0 (serial) or 1..32");
         Path output = Path.of(args[0]);
         require(!Files.exists(output), "fresh proof directory required");
         int port = Integer.parseInt(args[1]), index = Integer.parseInt(args[3]);
@@ -35,14 +40,14 @@ public final class ColdRestoreProbe {
                 && !expectedFresh.replayed(), "fresh fixture must execute exactly one trade");
         Files.createDirectories(output);
         try (ClusterClient client = new ClusterClient(output.resolve("driver"), port)) {
-            byte[] restored = client.readSnapshot(Duration.ofSeconds(120));
+            byte[] restored = snapshot(client, readWindow);
             Files.write(output.resolve("restored-before.bin"), restored);
             require(Arrays.equals(expected, restored), "restored canonical core differs from backed-up final bytes");
             var replay = client.execute(original, Duration.ofSeconds(10));
             require(replay.error().isEmpty() && replay.result() != null && replay.result().accepted()
                     && replay.replayed() && replay.result().commandSeq() == originalResultSeq,
                     "original identity did not return its exact cached command sequence");
-            require(Arrays.equals(expected, client.readSnapshot(Duration.ofSeconds(120))),
+            require(Arrays.equals(expected, snapshot(client, readWindow)),
                     "cached retry mutated restored state");
             long start = System.nanoTime();
             var accepted = client.execute(fresh, Duration.ofSeconds(10));
@@ -54,11 +59,11 @@ public final class ColdRestoreProbe {
             Files.writeString(output.resolve("first-fresh-accepted.json"), marker + '\n');
             System.out.println(marker);
             System.out.flush(); // Controller stops its clock here; final proof must still succeed.
-            byte[] after = client.readSnapshot(Duration.ofSeconds(120));
+            byte[] after = snapshot(client, readWindow);
             Files.write(output.resolve("restored-after.bin"), after);
             require(Arrays.equals(reference.snapshot(), after), "post-trade canonical bytes differ");
             MatchingEngine.restore(after).checkInvariants();
-            String proof = "{\"passed\":true,\"expectedBeforeSha256\":\"" + sha(expected)
+            String proof = "{\"passed\":true,\"snapshotReadWindow\":" + readWindow + ",\"expectedBeforeSha256\":\"" + sha(expected)
                     + "\",\"restoredBeforeSha256\":\"" + sha(restored) + "\",\"restoredAfterSha256\":\""
                     + sha(after) + "\",\"cachedOriginalResultSeq\":" + originalResultSeq
                     + ",\"freshCommandSeq\":" + accepted.result().commandSeq()
