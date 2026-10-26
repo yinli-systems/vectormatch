@@ -3270,6 +3270,102 @@
       "scope": "Two separate20-second repeats at4000/s;fresh lineage each;actual artifactdcfeeb81,one physical host,three UDP JVMs;owner1ms,Q64,batch4,cut1536,read32/page32/chunk6144. read bank BOUNDED_TURN. Requested park is not an OS bound;no sustained SLA or100M claim.",
       "title": "V4 read bank BOUNDED_TURN",
       "updatedAt": "2026-10-26T00:55:58.684868+00:00"
+    },
+    {
+      "configurationFingerprint": "6cc32ad821b193721292a5a923677d4d4b9b3ec0855030f3c5c330ff0a970c65",
+      "id": "cpu-v4-batch-coalescing-50000",
+      "points": [
+        {
+          "allOfferedAcceptedP99Millis": 61.066958,
+          "classification": "FINITE_V4_BATCH_COALESCING_COMPARISON",
+          "clientNotSent": 0,
+          "drainSeconds": 0.137614919,
+          "goodput": 3993.45,
+          "id": "cpu-v4-batch-coalescing-4000-c1",
+          "p99Millis": 61.066958,
+          "peakBacklog": 219,
+          "rate": 4000,
+          "rejected": 0,
+          "serverErrors": 0,
+          "stable": null,
+          "unknown": 0,
+          "unresolved": 0,
+          "valid": true,
+          "windowSeconds": 20,
+          "workers": 127
+        },
+        {
+          "allOfferedAcceptedP99Millis": 58.148345,
+          "classification": "FINITE_V4_BATCH_COALESCING_COMPARISON",
+          "clientNotSent": 0,
+          "drainSeconds": 0.15788796,
+          "goodput": 3993.45,
+          "id": "cpu-v4-batch-coalescing-4000-c2",
+          "p99Millis": 58.148345,
+          "peakBacklog": 182,
+          "rate": 4000,
+          "rejected": 0,
+          "serverErrors": 0,
+          "stable": null,
+          "unknown": 0,
+          "unresolved": 0,
+          "valid": true,
+          "windowSeconds": 20,
+          "workers": 127
+        }
+      ],
+      "reportPath": "docs/BATCH_COALESCING_RESULTS_V4.md",
+      "scope": "Two separate20-second repeats at4000/s;fresh lineage each;actual artifactfb1068dd;one physical CPU,three UDP JVMs. Sole factor:partial-batch eligibility delay. No sustained SLA or100M claim.",
+      "title": "V4 batch50us coalescing",
+      "updatedAt": "2026-10-26T01:29:49.581634+00:00"
+    },
+    {
+      "configurationFingerprint": "d176188d937ddd3ee0f2b2ef4c0cae65b2e03a39073c1a058fe26a94f2cb8d8b",
+      "id": "cpu-v4-batch-coalescing-500000",
+      "points": [
+        {
+          "allOfferedAcceptedP99Millis": 69.362351,
+          "classification": "FINITE_V4_BATCH_COALESCING_COMPARISON",
+          "clientNotSent": 0,
+          "drainSeconds": 0.156690952,
+          "goodput": 3993.45,
+          "id": "cpu-v4-batch-coalescing-4000-d1",
+          "p99Millis": 69.362351,
+          "peakBacklog": 181,
+          "rate": 4000,
+          "rejected": 0,
+          "serverErrors": 0,
+          "stable": null,
+          "unknown": 0,
+          "unresolved": 0,
+          "valid": true,
+          "windowSeconds": 20,
+          "workers": 127
+        },
+        {
+          "allOfferedAcceptedP99Millis": 58.033456,
+          "classification": "FINITE_V4_BATCH_COALESCING_COMPARISON",
+          "clientNotSent": 0,
+          "drainSeconds": 0.155275129,
+          "goodput": 3993.45,
+          "id": "cpu-v4-batch-coalescing-4000-d2",
+          "p99Millis": 58.033456,
+          "peakBacklog": 196,
+          "rate": 4000,
+          "rejected": 0,
+          "serverErrors": 0,
+          "stable": null,
+          "unknown": 0,
+          "unresolved": 0,
+          "valid": true,
+          "windowSeconds": 20,
+          "workers": 127
+        }
+      ],
+      "reportPath": "docs/BATCH_COALESCING_RESULTS_V4.md",
+      "scope": "Two separate20-second repeats at4000/s;fresh lineage each;actual artifactfb1068dd;one physical CPU,three UDP JVMs. Sole factor:partial-batch eligibility delay. No sustained SLA or100M claim.",
+      "title": "V4 batch500us coalescing",
+      "updatedAt": "2026-10-26T01:29:49.581634+00:00"
     }
   ],
   "runs": [
@@ -5817,6 +5913,111 @@
       "scope": "Instrumented 20-second finite point;extra read-only observer JVM;not pooled with baseline capacity cohorts",
       "throughput": 3993.45,
       "timestamp": "2026-10-26T01:04:35.199611409Z",
+      "trades": 80000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-batch-coalescing-r1/qualification-500-q1-native-r1/README.md",
+      "commands": 10000,
+      "correctnessPassed": true,
+      "durability": "Sync2;full forced/readback prefixes and original control intents before ACK;three snapshots and cold restores match",
+      "id": "cpu-v4-batch-qualification-500-q1",
+      "label": "V4 batch500us native qualification · 500/s",
+      "limitations": [
+        "Finite20-second fresh lineage;no sustained SLA,independent-host isolation,100M,HFT or funded external trading.",
+        "Actual artifact fb1068dd/source b6c850c6;agent100us,owner1ms,CLOSED read banks,127 active producers,Q64,batch4,cut1536,read32/page32/chunk6144.",
+        "Flush delay is an eligibility threshold,not an OS scheduling bound. Recorded original batch requests are not force-call counts."
+      ],
+      "model": "One prepaid CPU host;three actual UDP JVMs;leader0/sync2;127 active producers;no observer JVM",
+      "p50Millis": 7.086245,
+      "p99Millis": 45.992853,
+      "scope": "Functional qualification:10000 unique synthetic IOC trades;actual owner batch500us and all six node process bindings;not a performance comparison",
+      "throughput": 499.85,
+      "timestamp": "2026-10-26T01:20:02.045565770Z",
+      "trades": 10000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-batch-coalescing-r1/coalescing-4000-c1-native-r1/README.md",
+      "commands": 80000,
+      "correctnessPassed": true,
+      "durability": "Sync2;full forced/readback prefixes and original control intents before ACK;three snapshots and cold restores match",
+      "id": "cpu-v4-batch-coalescing-4000-c1",
+      "label": "V4 batch50us · C1",
+      "limitations": [
+        "Finite20-second fresh lineage;no sustained SLA,independent-host isolation,100M,HFT or funded external trading.",
+        "Actual artifact fb1068dd/source b6c850c6;agent100us,owner1ms,CLOSED read banks,127 active producers,Q64,batch4,cut1536,read32/page32/chunk6144.",
+        "Flush delay is an eligibility threshold,not an OS scheduling bound. Recorded original batch requests are not force-call counts."
+      ],
+      "model": "One prepaid CPU host;three actual UDP JVMs;leader0/sync2;127 active producers;no observer JVM",
+      "p50Millis": 8.234705,
+      "p99Millis": 61.066958,
+      "scope": "80000 independent arrivals at4000/s for20seconds;one registered batch-coalescing factor",
+      "throughput": 3993.45,
+      "timestamp": "2026-10-26T01:22:08.096072279Z",
+      "trades": 80000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-batch-coalescing-r1/coalescing-4000-c2-native-r1/README.md",
+      "commands": 80000,
+      "correctnessPassed": true,
+      "durability": "Sync2;full forced/readback prefixes and original control intents before ACK;three snapshots and cold restores match",
+      "id": "cpu-v4-batch-coalescing-4000-c2",
+      "label": "V4 batch50us · C2",
+      "limitations": [
+        "Finite20-second fresh lineage;no sustained SLA,independent-host isolation,100M,HFT or funded external trading.",
+        "Actual artifact fb1068dd/source b6c850c6;agent100us,owner1ms,CLOSED read banks,127 active producers,Q64,batch4,cut1536,read32/page32/chunk6144.",
+        "Flush delay is an eligibility threshold,not an OS scheduling bound. Recorded original batch requests are not force-call counts."
+      ],
+      "model": "One prepaid CPU host;three actual UDP JVMs;leader0/sync2;127 active producers;no observer JVM",
+      "p50Millis": 7.776125,
+      "p99Millis": 58.148345,
+      "scope": "80000 independent arrivals at4000/s for20seconds;one registered batch-coalescing factor",
+      "throughput": 3993.45,
+      "timestamp": "2026-10-26T01:25:44.200582462Z",
+      "trades": 80000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-batch-coalescing-r1/coalescing-4000-d1-native-r1/README.md",
+      "commands": 80000,
+      "correctnessPassed": true,
+      "durability": "Sync2;full forced/readback prefixes and original control intents before ACK;three snapshots and cold restores match",
+      "id": "cpu-v4-batch-coalescing-4000-d1",
+      "label": "V4 batch500us · D1",
+      "limitations": [
+        "Finite20-second fresh lineage;no sustained SLA,independent-host isolation,100M,HFT or funded external trading.",
+        "Actual artifact fb1068dd/source b6c850c6;agent100us,owner1ms,CLOSED read banks,127 active producers,Q64,batch4,cut1536,read32/page32/chunk6144.",
+        "Flush delay is an eligibility threshold,not an OS scheduling bound. Recorded original batch requests are not force-call counts."
+      ],
+      "model": "One prepaid CPU host;three actual UDP JVMs;leader0/sync2;127 active producers;no observer JVM",
+      "p50Millis": 8.445008,
+      "p99Millis": 69.362351,
+      "scope": "80000 independent arrivals at4000/s for20seconds;one registered batch-coalescing factor",
+      "throughput": 3993.45,
+      "timestamp": "2026-10-26T01:24:03.871066461Z",
+      "trades": 80000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-batch-coalescing-r1/coalescing-4000-d2-native-r1/README.md",
+      "commands": 80000,
+      "correctnessPassed": true,
+      "durability": "Sync2;full forced/readback prefixes and original control intents before ACK;three snapshots and cold restores match",
+      "id": "cpu-v4-batch-coalescing-4000-d2",
+      "label": "V4 batch500us · D2",
+      "limitations": [
+        "Finite20-second fresh lineage;no sustained SLA,independent-host isolation,100M,HFT or funded external trading.",
+        "Actual artifact fb1068dd/source b6c850c6;agent100us,owner1ms,CLOSED read banks,127 active producers,Q64,batch4,cut1536,read32/page32/chunk6144.",
+        "Flush delay is an eligibility threshold,not an OS scheduling bound. Recorded original batch requests are not force-call counts."
+      ],
+      "model": "One prepaid CPU host;three actual UDP JVMs;leader0/sync2;127 active producers;no observer JVM",
+      "p50Millis": 7.942798,
+      "p99Millis": 58.033456,
+      "scope": "80000 independent arrivals at4000/s for20seconds;one registered batch-coalescing factor",
+      "throughput": 3993.45,
+      "timestamp": "2026-10-26T01:27:39.575183842Z",
       "trades": 80000,
       "unknown": 0
     }
