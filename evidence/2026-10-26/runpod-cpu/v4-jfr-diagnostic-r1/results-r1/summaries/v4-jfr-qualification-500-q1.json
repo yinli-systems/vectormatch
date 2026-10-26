@@ -1,0 +1,1320 @@
+{
+  "accepted": 10000,
+  "allArrivalAcceptedP99Ns": 45375859,
+  "artifact": "c38e86a6a74b0fe1eed8fae540c2c8e7b171fd74e4ebc9f4b0c9051358c3cd27",
+  "atUTC": "2026-10-26T02:02:49.483769+00:00",
+  "clockAnchorReadSpansNs": [
+    920,
+    2180
+  ],
+  "clockMidpointOffsetDriftNs": 550.0,
+  "factor": "qualification",
+  "finiteGate": true,
+  "goodput": 499.85,
+  "instrumentedDiagnosticOnly": true,
+  "limitations": [
+    "No percentile pooling across paths or JVMs;per-path distributions remain explicit.",
+    "Force API wall time is not CPU time or proof of physical media persistence;other persistence APIs may not emit this event.",
+    "GC cycle duration can be concurrent;GC pause-event statistics remain separate.",
+    "UTC/monotonic alignment is externally bounded;no nanosecond per-request causality or subtraction of percentiles is claimed.",
+    "File events crossing boundaries are retained in the full JFR analysis but not counted as fully contained window events.",
+    "JFR adds overhead;not pooled with uninstrumented capacity comparisons."
+  ],
+  "notSent": 0,
+  "passed": true,
+  "postPositiveOfferToReplyP99Ns": 9980306,
+  "profiles": [
+    {
+      "allInsideWindowForceApiTotalNs": 122597731,
+      "allInsideWindowWriteApiTotalNs": 37847775,
+      "archiveSegmentForceCalls": 0,
+      "archiveSegmentForceTotalNs": 0,
+      "archiveSegmentForceWallTimeFractionOfSourceWindow": 0.0,
+      "archiveSegmentPerPathForceDistributions": [],
+      "archiveSegmentPerPathWriteDistributions": [],
+      "archiveSegmentWriteCalls": 0,
+      "archiveSegmentWriteTotalNs": 0,
+      "archiveSegmentWrittenBytes": 0,
+      "gcCycleEvents": {
+        "count": 3,
+        "maximumNs": 5244750,
+        "p50Ns": 4453379,
+        "p99Ns": 5244750,
+        "totalNs": 12996752
+      },
+      "gcPauseEvents": {
+        "count": 3,
+        "maximumNs": 5244750,
+        "p50Ns": 4453379,
+        "p99Ns": 5244750,
+        "totalNs": 12996752
+      },
+      "pid": 214529,
+      "role": "parent",
+      "sampledProcessCpu": {
+        "averageCpuCores": 0.5632917944337403,
+        "coveredSeconds": 19.918628517,
+        "maximumSampledResidentBytes": 772993024,
+        "member": null,
+        "role": "parent",
+        "samples": 372,
+        "startTicks": 18834577
+      },
+      "topAllocationSampleWeights": [
+        {
+          "key": "java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionNode|io.vectormatch.cluster.RetentionDurableWriterV3.writeLoop",
+          "observedValue": 68549328
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.CommandCodec.write",
+          "observedValue": 50883680
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionReplyV3.text",
+          "observedValue": 48926408
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.CommandCodec.string",
+          "observedValue": 45308072
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionReplyV3.encode",
+          "observedValue": 44476440
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.requireUtf8",
+          "observedValue": 40964856
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.writeOperation",
+          "observedValue": 37339720
+        },
+        {
+          "key": "java.nio.HeapByteBuffer|io.vectormatch.cluster.RetentionWireV3.requireUtf8",
+          "observedValue": 27290376
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.writeString",
+          "observedValue": 26111552
+        },
+        {
+          "key": "java.nio.StringCharBuffer|io.vectormatch.cluster.RetentionWireV3.requireUtf8",
+          "observedValue": 24759224
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.CommandCodec.lambda$request$0",
+          "observedValue": 22771872
+        },
+        {
+          "key": "[I|io.vectormatch.cluster.RetentionWireV3$BusinessIdentity.<init>",
+          "observedValue": 21655528
+        },
+        {
+          "key": "[B|io.vectormatch.core.RetentionCodecV3.writeResult",
+          "observedValue": 20558096
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionDurableWriterV3.captureAndVerifyArchive",
+          "observedValue": 19999976
+        },
+        {
+          "key": "sun.nio.cs.UTF_8$Encoder|io.vectormatch.cluster.RetentionReplyV3.text",
+          "observedValue": 19000120
+        },
+        {
+          "key": "java.util.ArrayList$Itr|io.vectormatch.cluster.RetentionAsyncMaintenanceV4.observeBusiness",
+          "observedValue": 17514904
+        },
+        {
+          "key": "sun.nio.cs.UTF_8$Encoder|io.vectormatch.cluster.RetentionWireV3.requireUtf8",
+          "observedValue": 13775152
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.write",
+          "observedValue": 13757928
+        },
+        {
+          "key": "java.util.regex.Matcher|io.vectormatch.cluster.RetentionWireV3$BusinessIdentity.<init>",
+          "observedValue": 12817992
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionReplyV3$Chunk.data",
+          "observedValue": 12461696
+        }
+      ],
+      "topExecutionSamples": [
+        {
+          "key": "io.vectormatch.core.RetentionCodecV3.readString",
+          "observedValue": 6
+        },
+        {
+          "key": "io.vectormatch.cluster.CommandCodec.string",
+          "observedValue": 4
+        },
+        {
+          "key": "io.vectormatch.cluster.CommandCodec.lambda$request$0",
+          "observedValue": 4
+        },
+        {
+          "key": "io.vectormatch.core.RetentionEngineV3.requireHash",
+          "observedValue": 3
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionWireV3.requireUtf8",
+          "observedValue": 3
+        },
+        {
+          "key": "io.vectormatch.core.RetentionCodecV3.verifyArchive",
+          "observedValue": 2
+        },
+        {
+          "key": "io.vectormatch.core.RetentionCodecV3.writeString",
+          "observedValue": 2
+        },
+        {
+          "key": "io.vectormatch.cluster.CommandCodec.envelope",
+          "observedValue": 2
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionCapacityExperimentV4$Tape.offer",
+          "observedValue": 2
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionDurableWriterV3.writeLoop",
+          "observedValue": 2
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionWireV3.writeOperation",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.core.RetentionCodecV3.readEvent",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.core.RetentionCodecV3.writeEvent",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionCapacityExperimentV4$Tape.lambda$poll$3",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionWireV3$Scope.<init>",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionCapacityExperimentV4$RawBudget$1.write",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.ClusterStateSnapshot.digest",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.core.RetentionCodecV3.readHash",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.CommandCodec.readEvent",
+          "observedValue": 1
+        },
+        {
+          "key": "org.agrona.concurrent.status.AtomicCounter.incrementRelease",
+          "observedValue": 1
+        }
+      ],
+      "topInsideWindowFileEventGroups": [
+        {
+          "bytesWritten": 9060552,
+          "duration": {
+            "count": 6595,
+            "maximumNs": 77999,
+            "p50Ns": 2330,
+            "p99Ns": 13880,
+            "totalNs": 19702870
+          },
+          "event": "jdk.FileWrite",
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/load/maintenance-v4.bin",
+          "thread": "main"
+        },
+        {
+          "bytesWritten": 10054076,
+          "duration": {
+            "count": 160,
+            "maximumNs": 391646,
+            "p50Ns": 48260,
+            "p99Ns": 165338,
+            "totalNs": 9258171
+          },
+          "event": "jdk.FileWrite",
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/load/physical-replies.bin",
+          "thread": "retention-v3-batch-network-owner"
+        },
+        {
+          "duration": {
+            "count": 1,
+            "maximumNs": 6670234,
+            "p50Ns": 6670234,
+            "p99Ns": 6670234,
+            "totalNs": 6670234
+          },
+          "event": "jdk.FileForce",
+          "metadataFalseCalls": 0,
+          "metadataTrueCalls": 1,
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/load/writer/0014-events.bin",
+          "thread": "retention-v3-prefix-file-writer"
+        },
+        {
+          "duration": {
+            "count": 1,
+            "maximumNs": 6642384,
+            "p50Ns": 6642384,
+            "p99Ns": 6642384,
+            "totalNs": 6642384
+          },
+          "event": "jdk.FileForce",
+          "metadataFalseCalls": 0,
+          "metadataTrueCalls": 1,
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/load/writer/0017-archive.bin",
+          "thread": "retention-v3-prefix-file-writer"
+        },
+        {
+          "duration": {
+            "count": 1,
+            "maximumNs": 5093022,
+            "p50Ns": 5093022,
+            "p99Ns": 5093022,
+            "totalNs": 5093022
+          },
+          "event": "jdk.FileForce",
+          "metadataFalseCalls": 0,
+          "metadataTrueCalls": 1,
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/load/writer/0018-events.bin",
+          "thread": "retention-v3-prefix-file-writer"
+        },
+        {
+          "duration": {
+            "count": 1,
+            "maximumNs": 4726626,
+            "p50Ns": 4726626,
+            "p99Ns": 4726626,
+            "totalNs": 4726626
+          },
+          "event": "jdk.FileForce",
+          "metadataFalseCalls": 0,
+          "metadataTrueCalls": 1,
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/load/writer/0018-events.bin.verified.txt",
+          "thread": "retention-v3-prefix-file-writer"
+        },
+        {
+          "duration": {
+            "count": 1,
+            "maximumNs": 4557678,
+            "p50Ns": 4557678,
+            "p99Ns": 4557678,
+            "totalNs": 4557678
+          },
+          "event": "jdk.FileForce",
+          "metadataFalseCalls": 0,
+          "metadataTrueCalls": 1,
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/load/writer/0013-archive.bin",
+          "thread": "retention-v3-prefix-file-writer"
+        },
+        {
+          "duration": {
+            "count": 1,
+            "maximumNs": 4390539,
+            "p50Ns": 4390539,
+            "p99Ns": 4390539,
+            "totalNs": 4390539
+          },
+          "event": "jdk.FileForce",
+          "metadataFalseCalls": 0,
+          "metadataTrueCalls": 1,
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/load/writer/0002-events.bin.verified.txt",
+          "thread": "retention-v3-prefix-file-writer"
+        },
+        {
+          "duration": {
+            "count": 1,
+            "maximumNs": 4057964,
+            "p50Ns": 4057964,
+            "p99Ns": 4057964,
+            "totalNs": 4057964
+          },
+          "event": "jdk.FileForce",
+          "metadataFalseCalls": 0,
+          "metadataTrueCalls": 1,
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/load/writer/0013-archive.bin.verified.txt",
+          "thread": "retention-v3-prefix-file-writer"
+        },
+        {
+          "duration": {
+            "count": 1,
+            "maximumNs": 4054244,
+            "p50Ns": 4054244,
+            "p99Ns": 4054244,
+            "totalNs": 4054244
+          },
+          "event": "jdk.FileForce",
+          "metadataFalseCalls": 0,
+          "metadataTrueCalls": 1,
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/load/writer/0022-events.bin.verified.txt",
+          "thread": "retention-v3-prefix-file-writer"
+        },
+        {
+          "duration": {
+            "count": 1,
+            "maximumNs": 4051633,
+            "p50Ns": 4051633,
+            "p99Ns": 4051633,
+            "totalNs": 4051633
+          },
+          "event": "jdk.FileForce",
+          "metadataFalseCalls": 0,
+          "metadataTrueCalls": 1,
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/load/writer/0010-events.bin",
+          "thread": "retention-v3-prefix-file-writer"
+        },
+        {
+          "duration": {
+            "count": 1,
+            "maximumNs": 3788957,
+            "p50Ns": 3788957,
+            "p99Ns": 3788957,
+            "totalNs": 3788957
+          },
+          "event": "jdk.FileForce",
+          "metadataFalseCalls": 0,
+          "metadataTrueCalls": 1,
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/load/writer/0021-archive.bin.verified.txt",
+          "thread": "retention-v3-prefix-file-writer"
+        }
+      ],
+      "windowCovered": true
+    },
+    {
+      "allInsideWindowForceApiTotalNs": 19346880790,
+      "allInsideWindowWriteApiTotalNs": 46366288,
+      "archiveSegmentForceCalls": 6529,
+      "archiveSegmentForceTotalNs": 19346880790,
+      "archiveSegmentForceWallTimeFractionOfSourceWindow": 0.9673440395,
+      "archiveSegmentPerPathForceDistributions": [
+        {
+          "duration": {
+            "count": 6529,
+            "maximumNs": 46709498,
+            "p50Ns": 2719949,
+            "p99Ns": 5043142,
+            "totalNs": 19346880790
+          },
+          "event": "jdk.FileForce",
+          "metadataFalseCalls": 0,
+          "metadataTrueCalls": 6529,
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/node-0/archive/0-0.rec",
+          "thread": "archive-conductor"
+        }
+      ],
+      "archiveSegmentPerPathWriteDistributions": [
+        {
+          "bytesWritten": 3429280,
+          "duration": {
+            "count": 6530,
+            "maximumNs": 133539,
+            "p50Ns": 5420,
+            "p99Ns": 31649,
+            "totalNs": 46366288
+          },
+          "event": "jdk.FileWrite",
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/node-0/archive/0-0.rec",
+          "thread": "archive-conductor"
+        }
+      ],
+      "archiveSegmentWriteCalls": 6530,
+      "archiveSegmentWriteTotalNs": 46366288,
+      "archiveSegmentWrittenBytes": 3429280,
+      "gcCycleEvents": {
+        "count": 3,
+        "maximumNs": 4688306,
+        "p50Ns": 4122603,
+        "p99Ns": 4688306,
+        "totalNs": 12776723
+      },
+      "gcPauseEvents": {
+        "count": 3,
+        "maximumNs": 4688306,
+        "p50Ns": 4122603,
+        "p99Ns": 4688306,
+        "totalNs": 12776723
+      },
+      "pid": 214565,
+      "role": "original-0",
+      "sampledProcessCpu": {
+        "averageCpuCores": 0.711394360706426,
+        "coveredSeconds": 19.918628517,
+        "maximumSampledResidentBytes": 457949184,
+        "member": "0",
+        "role": "node",
+        "samples": 372,
+        "startTicks": 18834608
+      },
+      "topAllocationSampleWeights": [
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionReplyV3.text",
+          "observedValue": 22873624
+        },
+        {
+          "key": "[B|io.vectormatch.core.RetentionCodecV3.writeBlob",
+          "observedValue": 22643584
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.writeOperation",
+          "observedValue": 21607152
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.writeString",
+          "observedValue": 20451168
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.write",
+          "observedValue": 20062192
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.CommandCodec.string",
+          "observedValue": 18472168
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionReplyV3.encode",
+          "observedValue": 17917912
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.requireUtf8",
+          "observedValue": 17624008
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.CommandCodec.write",
+          "observedValue": 17464744
+        },
+        {
+          "key": "[B|io.vectormatch.core.RetentionCodecV3.encode",
+          "observedValue": 16334984
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.CommandCodec.lambda$request$0",
+          "observedValue": 12919176
+        },
+        {
+          "key": "java.nio.HeapByteBuffer|io.vectormatch.cluster.RetentionWireV3.requireUtf8",
+          "observedValue": 11804256
+        },
+        {
+          "key": "java.nio.StringCharBuffer|io.vectormatch.cluster.RetentionWireV3.requireUtf8",
+          "observedValue": 11297792
+        },
+        {
+          "key": "sun.nio.cs.UTF_8$Encoder|io.vectormatch.cluster.RetentionWireV3.requireUtf8",
+          "observedValue": 8991824
+        },
+        {
+          "key": "[I|io.vectormatch.cluster.RetentionWireV3$BusinessIdentity.<init>",
+          "observedValue": 6641440
+        },
+        {
+          "key": "java.util.regex.Matcher|io.vectormatch.cluster.RetentionWireV3$BusinessIdentity.<init>",
+          "observedValue": 6420448
+        },
+        {
+          "key": "[B|io.vectormatch.core.RetentionCodecV3.writeEvent",
+          "observedValue": 6288616
+        },
+        {
+          "key": "[C|io.vectormatch.cluster.RetentionWireV3.readString",
+          "observedValue": 6164840
+        },
+        {
+          "key": "java.nio.HeapByteBuffer|io.vectormatch.cluster.RetentionReplyV3.text",
+          "observedValue": 6009000
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.businessCanonicalSha256",
+          "observedValue": 5835632
+        }
+      ],
+      "topExecutionSamples": [
+        {
+          "key": "io.vectormatch.core.RetentionEngineV3.requireHash",
+          "observedValue": 4
+        },
+        {
+          "key": "io.vectormatch.core.RetentionCodecV3.writeString",
+          "observedValue": 4
+        },
+        {
+          "key": "io.vectormatch.core.RetentionEngineV3.archiveThrough",
+          "observedValue": 3
+        },
+        {
+          "key": "io.vectormatch.cluster.CommandCodec.lambda$request$0",
+          "observedValue": 3
+        },
+        {
+          "key": "io.vectormatch.core.MatchingEngine.compactRetentionTerminalOrders",
+          "observedValue": 2
+        },
+        {
+          "key": "io.vectormatch.core.MatchingEngine.place",
+          "observedValue": 2
+        },
+        {
+          "key": "io.vectormatch.core.RetentionEngineV3.structuredClientOrderId",
+          "observedValue": 1
+        },
+        {
+          "key": "io.aeron.cluster.Election.canvass",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionReplyV3$BatchEntry.<init>",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.core.MatchingEngine$Execution.<init>",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.CommandCodec.string",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionServiceV3.reply",
+          "observedValue": 1
+        },
+        {
+          "key": "io.aeron.cluster.ConsensusModuleAgent.consensusWork",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionWireV3.writeString",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionWireV3$BusinessIdentity.<init>",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionReplyV3.encode",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionWireV3$Scope.equals",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionReplyV3$Events.<init>",
+          "observedValue": 1
+        },
+        {
+          "key": "io.aeron.Image.poll",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionReplyV3.text",
+          "observedValue": 1
+        }
+      ],
+      "topInsideWindowFileEventGroups": [
+        {
+          "duration": {
+            "count": 6529,
+            "maximumNs": 46709498,
+            "p50Ns": 2719949,
+            "p99Ns": 5043142,
+            "totalNs": 19346880790
+          },
+          "event": "jdk.FileForce",
+          "metadataFalseCalls": 0,
+          "metadataTrueCalls": 6529,
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/node-0/archive/0-0.rec",
+          "thread": "archive-conductor"
+        },
+        {
+          "bytesWritten": 3429280,
+          "duration": {
+            "count": 6530,
+            "maximumNs": 133539,
+            "p50Ns": 5420,
+            "p99Ns": 31649,
+            "totalNs": 46366288
+          },
+          "event": "jdk.FileWrite",
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/node-0/archive/0-0.rec",
+          "thread": "archive-conductor"
+        }
+      ],
+      "windowCovered": true
+    },
+    {
+      "allInsideWindowForceApiTotalNs": 0,
+      "allInsideWindowWriteApiTotalNs": 0,
+      "archiveSegmentForceCalls": 0,
+      "archiveSegmentForceTotalNs": 0,
+      "archiveSegmentForceWallTimeFractionOfSourceWindow": 0.0,
+      "archiveSegmentPerPathForceDistributions": [],
+      "archiveSegmentPerPathWriteDistributions": [],
+      "archiveSegmentWriteCalls": 0,
+      "archiveSegmentWriteTotalNs": 0,
+      "archiveSegmentWrittenBytes": 0,
+      "gcCycleEvents": {
+        "count": 0,
+        "maximumNs": null,
+        "p50Ns": null,
+        "p99Ns": null,
+        "totalNs": 0
+      },
+      "gcPauseEvents": {
+        "count": 0,
+        "maximumNs": null,
+        "p50Ns": null,
+        "p99Ns": null,
+        "totalNs": 0
+      },
+      "pid": 214883,
+      "role": "cold-0",
+      "sampledProcessCpu": null,
+      "topAllocationSampleWeights": [],
+      "topExecutionSamples": [],
+      "topInsideWindowFileEventGroups": [],
+      "windowCovered": false
+    },
+    {
+      "allInsideWindowForceApiTotalNs": 19378479611,
+      "allInsideWindowWriteApiTotalNs": 47555920,
+      "archiveSegmentForceCalls": 6484,
+      "archiveSegmentForceTotalNs": 19378479611,
+      "archiveSegmentForceWallTimeFractionOfSourceWindow": 0.96892398055,
+      "archiveSegmentPerPathForceDistributions": [
+        {
+          "duration": {
+            "count": 6484,
+            "maximumNs": 46077605,
+            "p50Ns": 2726199,
+            "p99Ns": 5011863,
+            "totalNs": 19378479611
+          },
+          "event": "jdk.FileForce",
+          "metadataFalseCalls": 0,
+          "metadataTrueCalls": 6484,
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/node-1/archive/0-0.rec",
+          "thread": "archive-conductor"
+        }
+      ],
+      "archiveSegmentPerPathWriteDistributions": [
+        {
+          "bytesWritten": 3429568,
+          "duration": {
+            "count": 6485,
+            "maximumNs": 213488,
+            "p50Ns": 5700,
+            "p99Ns": 28309,
+            "totalNs": 47555920
+          },
+          "event": "jdk.FileWrite",
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/node-1/archive/0-0.rec",
+          "thread": "archive-conductor"
+        }
+      ],
+      "archiveSegmentWriteCalls": 6485,
+      "archiveSegmentWriteTotalNs": 47555920,
+      "archiveSegmentWrittenBytes": 3429568,
+      "gcCycleEvents": {
+        "count": 3,
+        "maximumNs": 5173691,
+        "p50Ns": 4722466,
+        "p99Ns": 5173691,
+        "totalNs": 14302217
+      },
+      "gcPauseEvents": {
+        "count": 3,
+        "maximumNs": 5173691,
+        "p50Ns": 4722466,
+        "p99Ns": 5173691,
+        "totalNs": 14302217
+      },
+      "pid": 214572,
+      "role": "original-1",
+      "sampledProcessCpu": {
+        "averageCpuCores": 0.5693163056041546,
+        "coveredSeconds": 19.918628517,
+        "maximumSampledResidentBytes": 433889280,
+        "member": "1",
+        "role": "node",
+        "samples": 372,
+        "startTicks": 18834609
+      },
+      "topAllocationSampleWeights": [
+        {
+          "key": "[B|io.vectormatch.cluster.CommandCodec.write",
+          "observedValue": 22840632
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.CommandCodec.string",
+          "observedValue": 21947848
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.writeString",
+          "observedValue": 21233928
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionReplyV3.encode",
+          "observedValue": 20486344
+        },
+        {
+          "key": "[B|io.vectormatch.core.RetentionCodecV3.writeBlob",
+          "observedValue": 19267440
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionReplyV3.text",
+          "observedValue": 17901808
+        },
+        {
+          "key": "[B|io.vectormatch.core.RetentionCodecV3.encode",
+          "observedValue": 17348440
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.requireUtf8",
+          "observedValue": 16042184
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.write",
+          "observedValue": 15915896
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.writeOperation",
+          "observedValue": 15218704
+        },
+        {
+          "key": "[Z|io.vectormatch.cluster.RetentionReplyV3$BatchEntry.<init>",
+          "observedValue": 13160704
+        },
+        {
+          "key": "java.nio.StringCharBuffer|io.vectormatch.cluster.RetentionWireV3.requireUtf8",
+          "observedValue": 12747568
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.CommandCodec.lambda$request$0",
+          "observedValue": 10888744
+        },
+        {
+          "key": "sun.nio.cs.UTF_8$Encoder|io.vectormatch.cluster.RetentionWireV3.requireUtf8",
+          "observedValue": 9736816
+        },
+        {
+          "key": "[I|io.vectormatch.cluster.RetentionWireV3$BusinessIdentity.<init>",
+          "observedValue": 9071304
+        },
+        {
+          "key": "java.nio.HeapByteBuffer|io.vectormatch.cluster.RetentionWireV3.requireUtf8",
+          "observedValue": 7809544
+        },
+        {
+          "key": "[B|io.vectormatch.core.RetentionCodecV3.writeEvent",
+          "observedValue": 6877744
+        },
+        {
+          "key": "java.util.regex.Matcher|io.vectormatch.cluster.RetentionWireV3$BusinessIdentity.<init>",
+          "observedValue": 6458016
+        },
+        {
+          "key": "[C|io.vectormatch.cluster.RetentionWireV3.readString",
+          "observedValue": 6145824
+        },
+        {
+          "key": "java.io.ByteArrayOutputStream|io.vectormatch.cluster.CommandCodec.write",
+          "observedValue": 5197816
+        }
+      ],
+      "topExecutionSamples": [
+        {
+          "key": "io.vectormatch.core.RetentionEngineV3.requireHash",
+          "observedValue": 6
+        },
+        {
+          "key": "io.vectormatch.core.RetentionCodecV3.writeEvent",
+          "observedValue": 2
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionWireV3$BusinessIdentity.<init>",
+          "observedValue": 2
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionReplyV3.encode",
+          "observedValue": 2
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionReplyV3$Events.<init>",
+          "observedValue": 2
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionReplyV3.text",
+          "observedValue": 2
+        },
+        {
+          "key": "io.vectormatch.core.RetentionEngineV3.compactThrough",
+          "observedValue": 2
+        },
+        {
+          "key": "io.vectormatch.core.MatchingEngine.compactRetentionTerminalOrders",
+          "observedValue": 2
+        },
+        {
+          "key": "io.vectormatch.core.RetentionEngineV3.archiveThrough",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionReplyV3$BatchProducer.hashCode",
+          "observedValue": 1
+        },
+        {
+          "key": "org.agrona.AbstractMutableDirectBuffer.putShort",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionWireV3$Scope.<init>",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.core.RetentionCodecV3.writeBlob",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.CommandCodec.string",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.CommandCodec.lambda$request$0",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.core.MatchingEngine.settle",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionReplyV3$Reply.<init>",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionWireV3$BusinessBatch.<init>",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.core.RetentionCodecV3.writeOrder",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.ReplicatedOutbox.acknowledge",
+          "observedValue": 1
+        }
+      ],
+      "topInsideWindowFileEventGroups": [
+        {
+          "duration": {
+            "count": 6484,
+            "maximumNs": 46077605,
+            "p50Ns": 2726199,
+            "p99Ns": 5011863,
+            "totalNs": 19378479611
+          },
+          "event": "jdk.FileForce",
+          "metadataFalseCalls": 0,
+          "metadataTrueCalls": 6484,
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/node-1/archive/0-0.rec",
+          "thread": "archive-conductor"
+        },
+        {
+          "bytesWritten": 3429568,
+          "duration": {
+            "count": 6485,
+            "maximumNs": 213488,
+            "p50Ns": 5700,
+            "p99Ns": 28309,
+            "totalNs": 47555920
+          },
+          "event": "jdk.FileWrite",
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/node-1/archive/0-0.rec",
+          "thread": "archive-conductor"
+        }
+      ],
+      "windowCovered": true
+    },
+    {
+      "allInsideWindowForceApiTotalNs": 0,
+      "allInsideWindowWriteApiTotalNs": 0,
+      "archiveSegmentForceCalls": 0,
+      "archiveSegmentForceTotalNs": 0,
+      "archiveSegmentForceWallTimeFractionOfSourceWindow": 0.0,
+      "archiveSegmentPerPathForceDistributions": [],
+      "archiveSegmentPerPathWriteDistributions": [],
+      "archiveSegmentWriteCalls": 0,
+      "archiveSegmentWriteTotalNs": 0,
+      "archiveSegmentWrittenBytes": 0,
+      "gcCycleEvents": {
+        "count": 0,
+        "maximumNs": null,
+        "p50Ns": null,
+        "p99Ns": null,
+        "totalNs": 0
+      },
+      "gcPauseEvents": {
+        "count": 0,
+        "maximumNs": null,
+        "p50Ns": null,
+        "p99Ns": null,
+        "totalNs": 0
+      },
+      "pid": 214884,
+      "role": "cold-1",
+      "sampledProcessCpu": null,
+      "topAllocationSampleWeights": [],
+      "topExecutionSamples": [],
+      "topInsideWindowFileEventGroups": [],
+      "windowCovered": false
+    },
+    {
+      "allInsideWindowForceApiTotalNs": 19392539230,
+      "allInsideWindowWriteApiTotalNs": 49597183,
+      "archiveSegmentForceCalls": 6530,
+      "archiveSegmentForceTotalNs": 19392539230,
+      "archiveSegmentForceWallTimeFractionOfSourceWindow": 0.9696269615,
+      "archiveSegmentPerPathForceDistributions": [
+        {
+          "duration": {
+            "count": 6530,
+            "maximumNs": 46600319,
+            "p50Ns": 2714720,
+            "p99Ns": 5014513,
+            "totalNs": 19392539230
+          },
+          "event": "jdk.FileForce",
+          "metadataFalseCalls": 0,
+          "metadataTrueCalls": 6530,
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/node-2/archive/0-0.rec",
+          "thread": "archive-conductor"
+        }
+      ],
+      "archiveSegmentPerPathWriteDistributions": [
+        {
+          "bytesWritten": 3429568,
+          "duration": {
+            "count": 6531,
+            "maximumNs": 89529,
+            "p50Ns": 5660,
+            "p99Ns": 32350,
+            "totalNs": 49597183
+          },
+          "event": "jdk.FileWrite",
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/node-2/archive/0-0.rec",
+          "thread": "archive-conductor"
+        }
+      ],
+      "archiveSegmentWriteCalls": 6531,
+      "archiveSegmentWriteTotalNs": 49597183,
+      "archiveSegmentWrittenBytes": 3429568,
+      "gcCycleEvents": {
+        "count": 4,
+        "maximumNs": 5537087,
+        "p50Ns": 3400291,
+        "p99Ns": 5537087,
+        "totalNs": 15971768
+      },
+      "gcPauseEvents": {
+        "count": 4,
+        "maximumNs": 5537087,
+        "p50Ns": 3400291,
+        "p99Ns": 5537087,
+        "totalNs": 15971768
+      },
+      "pid": 214574,
+      "role": "original-2",
+      "sampledProcessCpu": {
+        "averageCpuCores": 0.5597774962509986,
+        "coveredSeconds": 19.918628517,
+        "maximumSampledResidentBytes": 417705984,
+        "member": "2",
+        "role": "node",
+        "samples": 372,
+        "startTicks": 18834609
+      },
+      "topAllocationSampleWeights": [
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionReplyV3.text",
+          "observedValue": 21596680
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.CommandCodec.string",
+          "observedValue": 20516208
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.writeOperation",
+          "observedValue": 19867840
+        },
+        {
+          "key": "[B|io.vectormatch.core.RetentionCodecV3.writeBlob",
+          "observedValue": 18481584
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionReplyV3.encode",
+          "observedValue": 18410312
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.CommandCodec.write",
+          "observedValue": 17881160
+        },
+        {
+          "key": "[B|io.vectormatch.core.RetentionCodecV3.encode",
+          "observedValue": 17546328
+        },
+        {
+          "key": "java.nio.HeapByteBuffer|io.vectormatch.cluster.RetentionWireV3.requireUtf8",
+          "observedValue": 16780464
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.CommandCodec.lambda$request$0",
+          "observedValue": 16156992
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.requireUtf8",
+          "observedValue": 15109352
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.write",
+          "observedValue": 14757816
+        },
+        {
+          "key": "java.nio.StringCharBuffer|io.vectormatch.cluster.RetentionWireV3.requireUtf8",
+          "observedValue": 13878448
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.writeString",
+          "observedValue": 12981880
+        },
+        {
+          "key": "java.io.DataOutputStream|io.vectormatch.cluster.RetentionWireV3.write",
+          "observedValue": 10129912
+        },
+        {
+          "key": "[B|io.vectormatch.cluster.RetentionWireV3.readString",
+          "observedValue": 9569128
+        },
+        {
+          "key": "sun.nio.cs.UTF_8$Encoder|io.vectormatch.cluster.RetentionWireV3.requireUtf8",
+          "observedValue": 8695792
+        },
+        {
+          "key": "[I|io.vectormatch.core.RetentionEngineV3.requireHash",
+          "observedValue": 8297112
+        },
+        {
+          "key": "[I|io.vectormatch.cluster.RetentionWireV3$BusinessIdentity.<init>",
+          "observedValue": 7330040
+        },
+        {
+          "key": "java.util.regex.Matcher|io.vectormatch.core.RetentionEngineV3.validProducer",
+          "observedValue": 7324536
+        },
+        {
+          "key": "[Z|io.vectormatch.cluster.RetentionReplyV3$Reply.<init>",
+          "observedValue": 5412568
+        }
+      ],
+      "topExecutionSamples": [
+        {
+          "key": "io.vectormatch.core.RetentionEngineV3.requireHash",
+          "observedValue": 4
+        },
+        {
+          "key": "io.vectormatch.core.MatchingEngine.compactRetentionTerminalOrders",
+          "observedValue": 3
+        },
+        {
+          "key": "io.vectormatch.core.RetentionCodecV3.lambda$entryBytes$3",
+          "observedValue": 3
+        },
+        {
+          "key": "io.vectormatch.core.MatchingEngine$ClientOrderKey.equals",
+          "observedValue": 2
+        },
+        {
+          "key": "io.vectormatch.cluster.ReplicatedOutbox.fetchPrefix",
+          "observedValue": 2
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionWireV3.businessCanonicalSha256",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionClusteredServiceV3.executeBatch",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionReplyV3.encode",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.core.RetentionEngineV3.archiveThrough",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionWireV3.lambda$encode$0",
+          "observedValue": 1
+        },
+        {
+          "key": "io.aeron.driver.media.ReceiveChannelEndpoint.sendTo",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.core.RetentionEngineV3$$Lambda.0x00007b8c50194cf8.apply",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.core.MatchingEngine.place",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.CommandCodec.writeEvent",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.CommandCodec.envelope",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.core.RetentionCodecV3.writeBlob",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.core.RetentionCodecV3.writeResult",
+          "observedValue": 1
+        },
+        {
+          "key": "jdk.jfr.internal.consumer.EventLog.shouldLog",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.CommandCodec.string",
+          "observedValue": 1
+        },
+        {
+          "key": "io.vectormatch.cluster.RetentionWireV3.lambda$decode$1",
+          "observedValue": 1
+        }
+      ],
+      "topInsideWindowFileEventGroups": [
+        {
+          "duration": {
+            "count": 6530,
+            "maximumNs": 46600319,
+            "p50Ns": 2714720,
+            "p99Ns": 5014513,
+            "totalNs": 19392539230
+          },
+          "event": "jdk.FileForce",
+          "metadataFalseCalls": 0,
+          "metadataTrueCalls": 6530,
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/node-2/archive/0-0.rec",
+          "thread": "archive-conductor"
+        },
+        {
+          "bytesWritten": 3429568,
+          "duration": {
+            "count": 6531,
+            "maximumNs": 89529,
+            "p50Ns": 5660,
+            "p99Ns": 32350,
+            "totalNs": 49597183
+          },
+          "event": "jdk.FileWrite",
+          "path": "/opt/vectormatch-cpu/experiments/v4-jfr-qualification-500-q1-r1/state/node-2/archive/0-0.rec",
+          "thread": "archive-conductor"
+        }
+      ],
+      "windowCovered": true
+    },
+    {
+      "allInsideWindowForceApiTotalNs": 0,
+      "allInsideWindowWriteApiTotalNs": 0,
+      "archiveSegmentForceCalls": 0,
+      "archiveSegmentForceTotalNs": 0,
+      "archiveSegmentForceWallTimeFractionOfSourceWindow": 0.0,
+      "archiveSegmentPerPathForceDistributions": [],
+      "archiveSegmentPerPathWriteDistributions": [],
+      "archiveSegmentWriteCalls": 0,
+      "archiveSegmentWriteTotalNs": 0,
+      "archiveSegmentWrittenBytes": 0,
+      "gcCycleEvents": {
+        "count": 0,
+        "maximumNs": null,
+        "p50Ns": null,
+        "p99Ns": null,
+        "totalNs": 0
+      },
+      "gcPauseEvents": {
+        "count": 0,
+        "maximumNs": null,
+        "p50Ns": null,
+        "p99Ns": null,
+        "totalNs": 0
+      },
+      "pid": 214886,
+      "role": "cold-2",
+      "sampledProcessCpu": null,
+      "topAllocationSampleWeights": [],
+      "topExecutionSamples": [],
+      "topInsideWindowFileEventGroups": [],
+      "windowCovered": false
+    }
+  ],
+  "ratePerSecond": 500,
+  "rawPrivateProof": {
+    "allArrivalP99Ns": 45375859,
+    "allEvidenceGitBlobsVerified": 30,
+    "allFrozenRuntimeInputBodiesVerified": true,
+    "allOriginalCompressedScopeMembersVerified": {
+      "everyMemberShaSizeModeOwnerAndEmptyDirectoryVerified": true,
+      "logicalBytes": 1263093352,
+      "noLinksOrSpecialFiles": true,
+      "originalDirectories": 28,
+      "originalFiles": 216,
+      "passed": true,
+      "scopes": 2
+    },
+    "arm": "q1",
+    "arrivalWindowGoodputPerSecond": 499.85,
+    "artifactFingerprint": "c38e86a6a74b0fe1eed8fae540c2c8e7b171fd74e4ebc9f4b0c9051358c3cd27",
+    "assetBytes": 14914570,
+    "assetId": 676702728,
+    "assetSha256": "d862625db5bfeb04ab5a8cd0efc49d6b59b5121dc0774bd1f7b1f24f06aa8ad0",
+    "atUTC": "2026-10-26T02:01:34.469462+00:00",
+    "branch": "codex/v4-owned-jfr-profile",
+    "commit": "ab1b09ab543b25ab94fed5aaa1da1a80a4343180",
+    "completeAuthenticatedAssetDownloadVerified": true,
+    "factor": "qualification",
+    "finiteAcceptanceGate": true,
+    "higherLoadPermitted": false,
+    "nextDiagnosticRequiresQualifiedNativeProfileAndPrivateReview": true,
+    "nextWithinRateArm": null,
+    "onlyGeneratedVerifiedDownloadRemoved": true,
+    "passed": true,
+    "private": true,
+    "qualifiedNativeJfrAndAllActualBindings": true,
+    "qualifiedSource": "35dd60457b17e55f420bb1b97b4deeb0c1f2726f",
+    "rate": 500,
+    "repository": "yinli-systems/vectormatch"
+  },
+  "rejected": 0,
+  "scheduled": 10000,
+  "source": "35dd60457b17e55f420bb1b97b4deeb0c1f2726f",
+  "sourceJfrAnalysisSha256": "2b4223150391aecf1aacd52063803a321b627f61df10645210c30e96d3353590",
+  "unknownFinal": 0,
+  "unknownObserved": 0
+}
