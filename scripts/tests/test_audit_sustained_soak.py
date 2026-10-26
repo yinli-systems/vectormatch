@@ -1,6 +1,6 @@
 import collections,importlib.util,unittest
 from pathlib import Path
-spec=importlib.util.spec_from_file_location('audit_soak',Path(__file__).with_name('audit-sustained-soak.py'));a=importlib.util.module_from_spec(spec);spec.loader.exec_module(a)
+spec=importlib.util.spec_from_file_location('audit_soak',Path(__file__).resolve().parents[1]/'audit-sustained-soak.py');a=importlib.util.module_from_spec(spec);spec.loader.exec_module(a)
 class AuditEvidenceTest(unittest.TestCase):
  def test_native_jfr_thread_zero_matches_stream_absent_thread(self):
   e={'type':'jdk.GCPhasePause','start':'2026-10-26T10:00:00.123456789Z','durationNs':1200,'threadId':-1,'path':''};f=dict(e,threadId=0)
