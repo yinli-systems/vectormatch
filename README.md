@@ -42,11 +42,13 @@ Latest [single-factor read-bank comparison](docs/INTERBANK_DISPATCH_RESULTS_V4.m
 
 <!-- v4-latency-factors:end -->
 
+The current opt-in paths use [CI21-qualified source and actual artifact dcfeeb81](evidence/2026-10-26/runpod-cpu/v4-latency-r1/linux-admission-r1/README.md). The500/s native qualification confirms10000 unique trades,32 audited bounded read-yield turns and all three cold restores. Both subsequent factor comparisons retain post-offer regressions and fail the full registered optimization criterion;defaults are unchanged.
+
 ## Verified evidence
 
 | Path | Actual evidence | Limit |
 | --- | --- | --- |
-| Linux correctness |442 Java tests and197 Python tests;zero failure/error/skip;11 real PostgreSQL tests included |Source `0c8303b2`;existing one-job CPU runner;hosted billing still blocked |
+| Linux correctness |446 Java tests and202 Python tests;zero failure/error/skip;11 real PostgreSQL tests included |Source `c6445604`;CI21 on the existing one-job CPU runner;hosted billing still blocked |
 | V4 replicated execution |1003 commands,1000 unique trades,2003 events;three exact archive cuts;128 extra confirmations during a held original file |Three JVMs sharing one CPU host;functional fixture |
 | Snapshot/cold restore |All three snapshots and all three restarted services match the complete state hash |No new orders/client continuation after cold restore |
 | Original-artifact V4 paired capacity at500/s |Four 20-second arms each confirm all 10,000 trades; p99 PAUSE 286.78/175.01 ms vs CONTINUE 65.65/59.93 ms |Both registered direction checks pass; 10 ms target remains unmet; separate fresh lineages |

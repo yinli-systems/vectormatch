@@ -1,0 +1,5 @@
+# Bounded read-only Aeron counter watcher
+
+Local and actual pinned Linux JDK/Aeron self-tests pass. Three bounded live samples on a temporary MediaDriver retain known synthetic counter values unchanged. Wrong PID,truncation and symlinks are refused. Linux process exit is strictly proven;all16 original Linux files and the complete local/Linux source/classes/logs are retained. No cluster/business orders or application-JAR mutation occurred. These synthetic fixture values are not measured Archive latency.
+
+The CLI accepts three distinct registered driver directories/PIDs,at most600 samples,50–1000ms requested period,1MiB per JSON line and32MiB total. Mappings are OS read-only. It stops on original CnC disappearance/file-key change without following a successor. Full startup/birth ownership and actual whole-arrival-window coverage still require a separately registered diagnostic controller. This qualification contains no live cluster profile or optimization claim. Cumulative maxima are not p99;time/bytes is not mean write-call latency;cross-counter samples are not atomic transactions.

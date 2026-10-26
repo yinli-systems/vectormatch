@@ -1,5 +1,7 @@
 # Closed versus bounded inter-bank dispatch,agent100us fixed
 
+![Separate measured percentiles](../evidence/2026-10-26/runpod-cpu/v4-latency-r1/factor-figures-r1/read-bank/read-bank.png)
+
 [Prospective protocol](V4_AGENT_IDLE_PROTOCOL.md) · [Complete Linux/source/loaded-origin qualification](../evidence/2026-10-26/runpod-cpu/v4-latency-r1/linux-admission-r1/README.md).
 
 All four safety/correctness gates passed. All finite gates passed: True. Both registered pair directions passed: False. Both candidates meet the10ms global p99 target: False. No default promotion.
