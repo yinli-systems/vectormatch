@@ -1,22 +1,23 @@
 # Independent Linux correctness results
 
-The latest [complete forced CPU run, CI27](https://github.com/yinli-systems/vectormatch/actions/runs/40272892462) passes on source `f99d3843dcf999c2b2bebe2ae67b25332b1b81bd`. A fresh sparse checkout and Gradle home use `--no-build-cache --rerun-tasks`; all five Java test modules execute. This is a one-job non-root self-hosted runner on the existing prepaid CPU. The separate GitHub-hosted account billing block remains unresolved.
+The latest [complete forced CPU run, CI28](https://github.com/yinli-systems/vectormatch/actions/runs/40277635260) passes on source `97db58e20f8dc52bde9be7b5ca7fe469b212da9a`. A fresh sparse checkout and Gradle home use `--no-build-cache --rerun-tasks`;all five Java test modules execute. This is a one-job non-root self-hosted runner on the existing prepaid CPU. The separate GitHub-hosted account billing block remains unresolved.
 
 | Check | Result |
 | --- | --- |
-| Java/JUnit |553 tests,0 failures,0 errors,0 skips|
+| Java/JUnit |556 tests,0 failures,0 errors,0 skips|
 | Real PostgreSQL integration |11 of those tests; temporary PostgreSQL18.6 with fsync and synchronous commit enabled;0 skips|
-| Linux Python |208 tests,0 skips|
+| Linux Python |209 tests,0 skips|
 | Three-JVM failover/snapshot/restart |Passed,sync2;57 commands/59 events/6 market events|
-| Full sealed-read capacity correctness protocol |10000 synthetic orders;split-channel callback coverage,physical-order replay,three snapshots and three cold restores passed;not a performance result|
-| Independent original-byte route audit |Both smoke routes plus full capacity DIRECT_UDP protocol passed|
+| Both sealed direct-read capacity modes |10000 synthetic orders each;callback coverage,physical-order replay,three snapshots and cold restores passed|
+| Independent original financial/phase/receipt audits |Both modes passed;BOUNDED_TURN actually admitted300 commands in32 drained read-yield turns;CLOSED admitted0|
+| Independent original-byte route audit |Both smoke routes and both full capacity modes passed|
 | Web |Dependency installation,TypeScript/Vite production build and formatting passed|
 
-Failover observes leader1→0 and11,242.868ms from kill to the next confirmed command,including client failure handling/reconnection. Final state hash is `b064fc0f0e58768bcb2d0fd4ad34a4b0965d89ca29ecd4b5689e69f437e1fb5e`. This is not isolated election latency or a millisecond recovery SLA.
+All308 core/cluster JAR classes equal actual CI outputs;core,matching,transport and coordinator bodies remain unchanged from CI27. All454 JDK file bodies and59 observed Linux class origins match the staged distribution. Artifact fingerprint: `a21a720ddfd479faf1129176bc2ff1adff2e34084874ca621999a4cdb4ffe3f3`. The CI archive retains1009 source/compiled/test/log files;four complete native scopes preserve the original smoke/capacity bytes. Every collected member's size,hash,owner,mode and directory is verified. The [bounded dispatch admission](../evidence/2026-10-26/runpod-cpu/v4-sealed-bounded-dispatch-r1/linux-admission-r1/README.md) freezes new native inputs;CI timing is not a performance result.
 
-All308 core/cluster JAR class bodies equal actual CI outputs;all core classes remain unchanged from CI26. All454 JDK file bodies and59 observed Linux class origins match the staged distribution. Artifact fingerprint: `0a6b1c8b51da763ec758cc7c65a4e07025ed180717d0d07951c2d36bce3e00f5`. The CI archive retains998 source/compiled/test/log files;separate complete native archives retain333 files across both sealed smoke routes and the capacity protocol. File hashes,owners,modes and empty directories are verified. No native sparse term files are extracted locally.
+Fresh failover observes leader2→0 and11479.464ms from kill to the next confirmed command,including client failure handling/reconnection. Final state hash is `b064fc0f0e58768bcb2d0fd4ad34a4b0965d89ca29ecd4b5689e69f437e1fb5e`. This is neither isolated election latency nor a millisecond recovery SLA.
 
-The earlier source78a500/s qualification failed at terminal egress validation before financial replay/snapshot/cold recovery;it remains unqualified. CI27 fixes the post-load validation partition without changing matching or the send hot path. CI latency is not a benchmark. The [new registered qualification and comparison](../evidence/2026-10-26/runpod-cpu/v4-sealed-egress-export-r1/linux-admission-r1/README.md) must close separately before any performance claim. Neither this CI result nor the native regression certifies production readiness,physical-host isolation,continuous100M or funded trading.
+The prior [CI27 sealed read-route comparison](V4_SEALED_READ_EXPORT_RESULTS.md) remains separately qualified by sourcef99 and artifact0a6b1c8b. Both direct-read candidates reduced globalp99,but the second regressed post-offerp99;the registered two-pair optimization criterion failed. Its complete failed source78a qualification and all successful sourcef99 raw comparisons remain visible. No default promotion,production certification,independent-host durability,continuous100M or funded trading follows from these finite results.
 
 ## Latest forced execution
 

@@ -48,7 +48,7 @@ The earlier read-bank and agent-idle experiments use [CI21-qualified source and 
 
 | Path | Actual evidence | Limit |
 | --- | --- | --- |
-| Linux correctness |553 Java tests and208 Python tests;zero failure/error/skip;11 real PostgreSQL tests included |Source `f99d3843`;CI27 on the existing one-job CPU runner;hosted billing still blocked |
+| Linux correctness |556 Java tests and209 Python tests;zero failure/error/skip;11 real PostgreSQL tests included |Source `97db58e2`;CI28 on the existing one-job CPU runner;hosted billing still blocked |
 | V4 replicated execution |1003 commands,1000 unique trades,2003 events;three exact archive cuts;128 extra confirmations during a held original file |Three JVMs sharing one CPU host;functional fixture |
 | Snapshot/cold restore |All three snapshots and all three restarted services match the complete state hash |No new orders/client continuation after cold restore |
 | Original-artifact V4 paired capacity at500/s |Four 20-second arms each confirm all 10,000 trades; p99 PAUSE 286.78/175.01 ms vs CONTINUE 65.65/59.93 ms |Both registered direction checks pass; 10 ms target remains unmet; separate fresh lineages |
