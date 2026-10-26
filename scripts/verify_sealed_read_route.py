@@ -7,6 +7,8 @@ import hashlib
 import json
 from pathlib import Path
 import struct
+import re
+import xml.etree.ElementTree as ET
 
 MAX_FRAME=16384
 MAX_LEDGER=128*1024*1024
@@ -148,6 +150,21 @@ def verify(root,route):
     require(not data if route=="CLUSTER"else Counter(d["inner"]["bytes"]for d in data)==Counter(r["bytes"]for r in replies if r["tag"]in (2,4)),"direct DATA differs from original observed callback replies")
     return dict(passed=True,schema="sealed-route-original-byte-audit-1",route=route,originalAttempts=len(physical),readAttempts=read_count,positiveOrdinaryReadAdmissions=len(direct),handshakes=len(hellos),serverLedgers=len(servers),actualSession=session,everyOriginalOfferRouteAndCodeMatched=True,actualImagePublicationEnvelopeMatched=True,allOrdinaryPositiveFramesMatchedEndToEnd=True,allDirectDataMatchedOriginalCallbacks=True,everyGrantBoundToOriginalLoggedDescriptor=True,matchingAlgorithmOrLatencyVerified=False)
 
+def verify_junit(path):
+    path=Path(path);require(path.is_file()and not path.is_symlink()and path.stat().st_size<=8*1024*1024,"bounded original JUnit required")
+    suite=ET.parse(path).getroot();require(int(suite.get("tests",0))==2 and all(int(suite.get(k,0))==0 for k in ("failures","errors","skipped")),"both actual route tests must pass without skips")
+    roots=[Path(p.strip())for p in re.findall(r"VECTOR_SEALED_THREE_JVM_TEST_EVIDENCE ([^\n]+)","".join(suite.itertext()))];require(len(roots)==2 and len(set(roots))==2,"two distinct original route roots")
+    expected=path.resolve().parents[2]/"sealed-read-native-attempts";results={}
+    for root in roots:
+        require(root.is_absolute()and root.parent==expected and root.is_dir(),"route root must be this JUnit build's owned attempt")
+        for parent in [root,*root.parents]:require(not parent.is_symlink(),"route root symlink")
+        mode=json.loads((root/"sealed-read-selection.json").read_text())["readRoute"];require(mode not in results,"duplicate route instead of both controls")
+        results[mode]=verify(root,mode)
+    require(set(results)=={"CLUSTER","DIRECT_UDP"},"both actual routes required")
+    return dict(passed=True,bothActualThreeJvmRoutesVerified=True,results=results)
+
 if __name__=="__main__":
-    parser=argparse.ArgumentParser();parser.add_argument("--root",required=True);parser.add_argument("--route",choices=("CLUSTER","DIRECT_UDP"),required=True);args=parser.parse_args()
-    print(json.dumps(verify(args.root,args.route),sort_keys=True))
+    parser=argparse.ArgumentParser();source=parser.add_mutually_exclusive_group(required=True);source.add_argument("--root");source.add_argument("--junit");parser.add_argument("--route",choices=("CLUSTER","DIRECT_UDP"));args=parser.parse_args()
+    if args.root:require(args.route is not None,"explicit route required for original root")
+    else:require(args.route is None,"JUnit determines both original routes")
+    print(json.dumps(verify_junit(args.junit)if args.junit else verify(args.root,args.route),sort_keys=True))

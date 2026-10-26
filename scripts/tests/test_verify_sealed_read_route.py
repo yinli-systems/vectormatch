@@ -4,6 +4,8 @@ from pathlib import Path
 import struct
 import tempfile
 import unittest
+import sys
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import verify_sealed_read_route as audit
 
 class SealedRouteAuditTest(unittest.TestCase):
@@ -33,5 +35,13 @@ class SealedRouteAuditTest(unittest.TestCase):
         for key,value in [("clusterLogPosition",True),("maxPayloadBytes",1408),("termBytes",65536),("streamId",47202)]:
             changed=dict(metadata);changed[key]=value
             with self.assertRaises(ValueError):audit.check_endpoint([dict(type=1,value=dict(kind="PUBLICATION",value=changed))],True)
+
+    def test_junit_rejects_skips_and_roots_outside_its_own_build(self):
+        with tempfile.TemporaryDirectory()as directory:
+            path=Path(directory)/"build/test-results/test/results.xml";path.parent.mkdir(parents=True)
+            path.write_text('<testsuite tests="2" failures="0" errors="0" skipped="1"/>')
+            with self.assertRaisesRegex(ValueError,"without skips"):audit.verify_junit(path)
+            path.write_text('<testsuite tests="2" failures="0" errors="0" skipped="0"><system-out>VECTOR_SEALED_THREE_JVM_TEST_EVIDENCE /outside/first\nVECTOR_SEALED_THREE_JVM_TEST_EVIDENCE /outside/second\n</system-out></testsuite>')
+            with self.assertRaisesRegex(ValueError,"owned attempt"):audit.verify_junit(path)
 
 if __name__=="__main__":unittest.main()
