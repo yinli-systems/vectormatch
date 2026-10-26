@@ -49,7 +49,7 @@ def deployment_scope(configuration,inventory=None,fault_domains=None):
     assert len({row['location']for row in members})==1 and load['location']!=members[0]['location']
     observed.update(providerFaultDomainsVerified=True,replicaFaultDomains=[domains[row['name']]for row in members],
                     replicaRegion=members[0]['location'],loadRegion=load['location'],
-                    description='Azure managed VMs: three distinct provider-reported fault domains; independent generator in another region; low-rate sustained workload')
+                    description='Azure managed VMs: three distinct provider-reported fault domains; independent generator in another region; duration is checked separately')
     return observed
 
 def audit(root,jfr):
