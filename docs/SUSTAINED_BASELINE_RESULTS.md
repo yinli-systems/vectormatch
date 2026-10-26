@@ -123,3 +123,11 @@ The restore archive is23789680 bytes, SHA-256
 private asset678063367. Full authenticated download and all71 members were
 verified. The original controller failure and separate functional attestation
 are preserved; no failed outcome was silently changed into a timing pass.
+
+## Complete controller archive
+
+The privately archived controller bundle is7370747 bytes, SHA-256
+4edf43cef45cd5266318b1cac665ab9ff5dde91553b45d8a396c255199053d22,
+asset678104322. A complete authenticated download verifies all86 outer and257
+nested members, including the original failed qualification/controller attempts.
+Cloud account credentials and financial UI are excluded.
