@@ -115,3 +115,5 @@ The repository also includes a bounded [HTTP arrival-rate generator](bench/HTTP_
 Latest [bounded coalescing comparison](docs/BATCH_COALESCING_RESULTS_V4.md) uses CI22-qualified artifact `fb1068dd`. Both finite pair criteria pass: False;both candidates meet10ms globalp99: False. Full raw,parameter binding and cold recovery are retained. Defaults remain unchanged.
 
 Latest [owned-node JFR diagnostic](docs/V4_OWNED_JFR_RESULTS.md) accepted all80000 planned orders at4000/s,with3993.45/s in-window goodput,67.905817ms all-arrival p99 and12.692245ms post-positive-offer p99. Instrumented archive-conductor force calls account for15.96–16.34s per node inside the20s window. This prioritizes a storage-path experiment;it is not an optimization promotion or physical persistence certificate. All prior curves remain separate.
+
+The [standalone file-materialization A/B/A/B](docs/V4_FORCE_MATERIALIZATION_RESULTS.md) lowers force p99 by11.8–21.2% in all six matched writer comparisons. All36000 samples are retained. This screens a candidate for native testing;no trading-capacity or latency improvement is claimed.
