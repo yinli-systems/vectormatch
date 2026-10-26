@@ -51,3 +51,10 @@ The Python audit recalculates quantiles and outcomes independently from the orig
 CSV and refuses missing or duplicated identities, incoherent send/reply timelines,
 truncated records and inconsistent summaries. Its tests include actual loopback
 datagrams under both policies; loopback timings are correctness evidence only.
+
+`ForceProbe.java` is a separate filesystem diagnostic: 2,048 deterministic,
+noncompressible 4KiB records, each followed by `FileChannel.force(true)`. It retains
+every write/force duration and the original 8MiB file. Use the same JDK and source
+on each host, run outside network arrival windows and independently rederive its
+percentiles. This measures OS-observed force completion, not physical media
+durability, matching latency or a comparison between durability levels.
