@@ -46,6 +46,16 @@ The earlier read-bank and agent-idle experiments use [CI21-qualified source and 
 
 ## Verified evidence
 
+The [two new30-minute baselines](docs/SUSTAINED_BASELINE_RESULTS.md) each confirm
+180000/180000 synthetic orders at100/s on the same CPU container and unchanged
+replica/client artifacts. P99 is24.892/11.130ms; both registered combined gates
+fail because37/3 scheduler delays exceed20ms. Full CSV/checkpoint/JFR audits and
+empty-directory backup restore with a cached retry and fresh trade are archived.
+The restore controller lost its final stdout line, so no recovery RTO is claimed.
+These are separate bounded lineages, not sustained high-rate or physical-host proof.
+The [new multi-market escrow core](docs/MARKET_ESCROW_PROTOCOL.md) has15 local
+functional tests; it is not connected to distributed market groups yet.
+
 The [native private-UDP cross-Pod round](docs/PRIVATE_CROSS_NODE_RESULTS.md) uses
 three real replica Pods and an independent fourth-Pod generator. It retains 490,000
 planned synthetic requests and actual leader-fault/cold-recovery continuation.

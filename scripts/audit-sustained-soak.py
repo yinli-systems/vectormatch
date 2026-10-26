@@ -7,6 +7,10 @@ def quantile(values,p):
     ordered=sorted(values)
     return ordered[max(0,math.ceil(len(ordered)*p)-1)] if ordered else None
 
+def within(path,root):
+    try:path.resolve().relative_to(root.resolve());return True
+    except ValueError:return False
+
 def digest(path):
     h=hashlib.sha256()
     with path.open('rb')as f:
@@ -27,7 +31,7 @@ def audit(root,jfr):
     root=Path(root).resolve();manifest=json.loads((root/'MEMBER_MANIFEST.json').read_text())['files']
     for name,v in manifest.items():
         p=root/name
-        if not p.resolve().is_relative_to(root)or p.is_symlink()or not p.is_file():raise ValueError('unsafe/missing archive member')
+        if not within(p,root)or p.is_symlink()or not p.is_file():raise ValueError('unsafe/missing archive member')
         if p.stat().st_size!=v['bytes']or digest(p)!=v['sha256']:raise ValueError('archive member hash mismatch: '+name)
     evidence=root/'evidence';result=json.loads((evidence/'result.json').read_text())
     rows=list(csv.DictReader((evidence/'arrivals.csv').open()));expected=result['scheduledArrivals']

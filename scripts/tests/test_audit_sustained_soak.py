@@ -2,6 +2,15 @@ import collections,importlib.util,unittest
 from pathlib import Path
 spec=importlib.util.spec_from_file_location('audit_soak',Path(__file__).resolve().parents[1]/'audit-sustained-soak.py');a=importlib.util.module_from_spec(spec);spec.loader.exec_module(a)
 class AuditEvidenceTest(unittest.TestCase):
+ def test_archive_members_cannot_escape_through_shared_prefixes(self):
+  self.assertTrue(a.within(Path("/case/a"),Path("/case")))
+  self.assertFalse(a.within(Path("/case-other/a"),Path("/case")))
+  self.assertFalse(a.within(Path("/case/../outside"),Path("/case")))
+ def test_symlink_escape_is_rejected_before_reading(self):
+  import tempfile
+  with tempfile.TemporaryDirectory()as tmp:
+   root=Path(tmp)/"case";root.mkdir();outside=Path(tmp)/"outside";outside.write_text("synthetic");link=root/"link";link.symlink_to(outside)
+   self.assertFalse(a.within(link,root))
  def test_native_jfr_thread_zero_matches_stream_absent_thread(self):
   e={'type':'jdk.GCPhasePause','start':'2026-10-26T10:00:00.123456789Z','durationNs':1200,'threadId':-1,'path':''};f=dict(e,threadId=0)
   self.assertEqual(a.event_key(e),a.event_key(f))
