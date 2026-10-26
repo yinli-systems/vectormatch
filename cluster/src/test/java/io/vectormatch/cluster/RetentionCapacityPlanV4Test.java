@@ -12,6 +12,18 @@ class RetentionCapacityPlanV4Test {
         }
     }
     @Test void unsupportedRatesCannotSilentlyCreateAnUnregisteredWorkload(){
-        for(int rate:new int[]{0,1,499,501,3000,7000,7500,8000,Integer.MAX_VALUE})assertThrows(IllegalArgumentException.class,()->new RetentionCapacityPlanV4.Config(rate,true));
+        for(int rate:new int[]{0,1,499,501,3000,7500,8001,Integer.MAX_VALUE})assertThrows(IllegalArgumentException.class,()->new RetentionCapacityPlanV4.Config(rate,true));
+    }
+    @Test void overloadPointsRemainRefusedWhenOriginalHardResourceCapsAreExceeded(){
+        for(int rate:new int[]{7000,8000}){
+            var p=RetentionCapacityPlanV4.plan(new RetentionCapacityPlanV4.Config(rate,true),RetentionBatchProfilesV3.finiteLoadProfile());
+            assertTrue(p.cycles()>90&&p.cycles()<=128);assertTrue(p.maximumMaintenanceRpcs()<250000);
+            assertTrue(p.journalBytes()<=RetentionBatchProfilesV3.finiteLoadProfile().maxMaintenanceJournalBytes());
+            assertEquals(p,RetentionCapacityPlanV4.plan(new RetentionCapacityPlanV4.Config(rate,false),RetentionBatchProfilesV3.finiteLoadProfile()));
+            assertFalse(p.admitted());assertThrows(IllegalArgumentException.class,p::requireAdmitted);
+            assertTrue(p.rejections().contains("finite payload/raw/trace/2.5GiB growth bound"));
+            assertTrue(p.allocatedGrowthBytes()>5L*1024*1024*1024/2);assertEquals(1024L*1024*1024,RetentionCapacityPlanV4.FREE_FLOOR);
+            if(rate==8000)assertTrue(p.allRawBytes()>RetentionCapacityPlanV4.RAW_LIMIT);
+        }
     }
 }

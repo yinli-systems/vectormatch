@@ -61,7 +61,7 @@ tasks.register<JavaExec>("capacityAeronV4") {
         args(providers.gradleProperty("capacityV4Root").orNull
             ?: throw GradleException("Pass -PcapacityV4Root=<new-state-directory>."),
             providers.gradleProperty("capacityV4Rate").orNull
-            ?: throw GradleException("Pass -PcapacityV4Rate=500|1000|2000|4000|6000."),
+            ?: throw GradleException("Pass -PcapacityV4Rate=500|1000|2000|4000|6000|7000|8000."),
             providers.gradleProperty("capacityV4Policy").orNull
             ?: throw GradleException("Pass -PcapacityV4Policy=PAUSE|CONTINUE."))
     }

@@ -54,7 +54,7 @@ public final class RetentionCapacityAeronV4 {
         if(batchFlushSelection.explicit())registration.put("batchFlushSelection",batchFlushSelection.observation());if(jfrSelection.enabled())registration.put("jfrDiagnostics",jfrSelection.observation());registration.put("readBankDispatchSelection",readYieldSelection.observation());if(idleSelection.explicit())registration.put("retentionIdleSelection",idleSelection.observation());registration.put("fundedExternalOrders",false);writeJson("registration.json",registration);
     }
     public static void main(String[] args)throws Exception{
-        if(args.length!=3||!Set.of("PAUSE","CONTINUE").contains(args[2]))throw new IllegalArgumentException("RetentionCapacityAeronV4 <new-root> <500|1000|2000|4000|6000> <PAUSE|CONTINUE>");
+        if(args.length!=3||!Set.of("PAUSE","CONTINUE").contains(args[2]))throw new IllegalArgumentException("RetentionCapacityAeronV4 <new-root> <500|1000|2000|4000|6000|7000|8000> <PAUSE|CONTINUE>");
         var run=new RetentionCapacityAeronV4(Path.of(args[0]),Integer.parseInt(args[1]),args[2].equals("CONTINUE"));
         Throwable failure=null;boolean passed=false;
         try{run.exercise();passed=true;}catch(Throwable error){failure=error;var text=new StringWriter();error.printStackTrace(new PrintWriter(text));run.writeNew("failure.txt",text.toString());throw error;}

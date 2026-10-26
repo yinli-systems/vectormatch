@@ -11,7 +11,7 @@ public final class RetentionCapacityPlanV4 {
     public static final long RAW_LIMIT=2L*1024*1024*1024,WRITER_LIMIT=1024L*1024*1024;
     public static final long FREE_FLOOR=1024L*1024*1024,NATIVE_RESERVE=512L*1024*1024;
     public record Config(int rate,boolean continueDuringFileWork){
-        public Config{if(rate!=500&&rate!=1000&&rate!=2000&&rate!=4000&&rate!=6000)throw new IllegalArgumentException("V4 fixed20s rate500|1000|2000|4000|6000 required");}
+        public Config{if(rate!=500&&rate!=1000&&rate!=2000&&rate!=4000&&rate!=6000&&rate!=7000&&rate!=8000)throw new IllegalArgumentException("V4 fixed20s rate500|1000|2000|4000|6000|7000|8000 required");}
         public int arrivals(){return Math.multiplyExact(rate,20);}
         public long windowNs(){return 20_000_000_000L;}
         public long offsetNs(int index){if(index<0||index>=arrivals())throw new IllegalArgumentException("finite arrival index");return 1_000_000_000L*index/rate;}
