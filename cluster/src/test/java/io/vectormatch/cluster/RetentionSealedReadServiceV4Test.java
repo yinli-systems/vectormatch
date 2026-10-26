@@ -58,6 +58,17 @@ class RetentionSealedReadServiceV4Test {
         java.util.function.LongFunction<ClientSession> session=id->(ClientSession)Proxy.newProxyInstance(ClientSession.class.getClassLoader(),new Class<?>[]{ClientSession.class},(p,m,a)->{if(m.getName().equals("id"))return id;throw new UnsupportedOperationException(m.getName());});
         f.service().onSessionClose(session.apply(12),0,CloseReason.values()[0]);assertTrue(f.bank().grant().isPresent());f.service().onSessionClose(session.apply(11),0,CloseReason.values()[0]);assertTrue(f.bank().grant().isEmpty());
     }
+    @Test void followerOrCandidateReplayCannotRepublishALeadershipGrant(){
+        var f=fixture();prepare(f,4);assertTrue(f.bank().grant().isPresent());
+        for(var role:List.of(Cluster.Role.FOLLOWER,Cluster.Role.CANDIDATE)){
+            f.service().onRoleChange(role);assertTrue(f.bank().grant().isEmpty());prepare(f,4);assertTrue(f.bank().grant().isEmpty());
+        }
+        f.service().onRoleChange(Cluster.Role.LEADER);assertTrue(f.bank().grant().isEmpty());prepare(f,4);assertTrue(f.bank().grant().isPresent());
+    }
+    @Test void legacyServiceDoesNotReadNewRoleDependencies(){
+        var cluster=(Cluster)Proxy.newProxyInstance(Cluster.class.getClassLoader(),new Class<?>[]{Cluster.class},(p,m,a)->{throw new AssertionError("legacy path accessed "+m.getName());});
+        var service=new RetentionClusteredServiceV3(PROFILE,LINEAGE,true);assertDoesNotThrow(()->service.onStart(cluster,null));assertEquals("",call(service,new Position()).error());
+    }
     @Test void mismatchedScopeOrUncachedServiceCannotInstallAnExportBank(){
         var b=new RetentionSealedReadBankV4(PROFILE,LINEAGE);assertThrows(IllegalArgumentException.class,()->new RetentionClusteredServiceV3(PROFILE,LINEAGE,false,b));assertThrows(IllegalArgumentException.class,()->new RetentionClusteredServiceV3(PROFILE,"other",true,b));
     }

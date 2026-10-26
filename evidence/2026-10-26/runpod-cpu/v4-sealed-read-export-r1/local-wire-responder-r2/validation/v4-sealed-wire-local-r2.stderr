@@ -1,0 +1,154 @@
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:22: error: reference to decode is ambiguous
+    @Test void everyFrameHasAnExactCanonicalRoundTrip(){for(Frame frame:frames()){byte[] bytes=encode(frame);assertTrue(bytes.length<=MAX_FRAME_BYTES);var decoded=decode(bytes);assertEquals(frame.getClass(),decoded.getClass());assertEquals(frame.node(),decoded.node());assertEquals(frame.sessionId(),decoded.sessionId());assertEquals(frame.correlationId(),decoded.correlationId());assertArrayEquals(bytes,encode(decoded));}}
+                                                                                                                                                                   ^
+  both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:22: error: cannot find symbol
+    @Test void everyFrameHasAnExactCanonicalRoundTrip(){for(Frame frame:frames()){byte[] bytes=encode(frame);assertTrue(bytes.length<=MAX_FRAME_BYTES);var decoded=decode(bytes);assertEquals(frame.getClass(),decoded.getClass());assertEquals(frame.node(),decoded.node());assertEquals(frame.sessionId(),decoded.sessionId());assertEquals(frame.correlationId(),decoded.correlationId());assertArrayEquals(bytes,encode(decoded));}}
+                                                                                                                                                                                                                                                                    ^
+  symbol:   method node()
+  location: variable decoded of type Reply
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:22: error: cannot find symbol
+    @Test void everyFrameHasAnExactCanonicalRoundTrip(){for(Frame frame:frames()){byte[] bytes=encode(frame);assertTrue(bytes.length<=MAX_FRAME_BYTES);var decoded=decode(bytes);assertEquals(frame.getClass(),decoded.getClass());assertEquals(frame.node(),decoded.node());assertEquals(frame.sessionId(),decoded.sessionId());assertEquals(frame.correlationId(),decoded.correlationId());assertArrayEquals(bytes,encode(decoded));}}
+                                                                                                                                                                                                                                                                                                                   ^
+  symbol:   method sessionId()
+  location: variable decoded of type Reply
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:23: error: reference to decode is ambiguous
+    @Test void allTruncationsAndTrailingBytesAreRefused(){for(Frame frame:frames()){byte[] bytes=encode(frame);for(int n=0;n<bytes.length;n++){byte[] truncated=Arrays.copyOf(bytes,n);assertThrows(IllegalArgumentException.class,()->decode(truncated));}assertThrows(IllegalArgumentException.class,()->decode(Arrays.copyOf(bytes,bytes.length+1)));}}
+                                                                                                                                                                                                                                       ^
+  both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:23: error: reference to decode is ambiguous
+    @Test void allTruncationsAndTrailingBytesAreRefused(){for(Frame frame:frames()){byte[] bytes=encode(frame);for(int n=0;n<bytes.length;n++){byte[] truncated=Arrays.copyOf(bytes,n);assertThrows(IllegalArgumentException.class,()->decode(truncated));}assertThrows(IllegalArgumentException.class,()->decode(Arrays.copyOf(bytes,bytes.length+1)));}}
+                                                                                                                                                                                                                                                                                                           ^
+  both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:24: error: reference to decode is ambiguous
+    @Test void payloadOrChecksumCorruptionIsRefused(){for(Frame frame:frames()){byte[] b=encode(frame);b[HEADER_BYTES]^=1;assertThrows(IllegalArgumentException.class,()->decode(b));b=encode(frame);b[b.length-1]^=1;byte[] changed=b;assertThrows(IllegalArgumentException.class,()->decode(changed));}}
+                                                                                                                                                                          ^
+  both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:24: error: reference to decode is ambiguous
+    @Test void payloadOrChecksumCorruptionIsRefused(){for(Frame frame:frames()){byte[] b=encode(frame);b[HEADER_BYTES]^=1;assertThrows(IllegalArgumentException.class,()->decode(b));b=encode(frame);b[b.length-1]^=1;byte[] changed=b;assertThrows(IllegalArgumentException.class,()->decode(changed));}}
+                                                                                                                                                                                                                                                                                       ^
+  both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:41: error: reference to decode is ambiguous
+        for(int offset:new int[]{0,4,6}){byte[] b=encode(frames().getFirst());b[offset]=(byte)127;resign(b);assertThrows(IllegalArgumentException.class,()->decode(b));}
+                                                                                                                                                            ^
+  both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:42: error: reference to decode is ambiguous
+        byte[] error=encode(new Failure(0,11,7,Code.NO_GRANT));error[HEADER_BYTES]=(byte)127;resign(error);assertThrows(IllegalArgumentException.class,()->decode(error));
+                                                                                                                                                           ^
+  both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:45: error: reference to decode is ambiguous
+        for(Frame frame:frames().subList(0,4)){byte[] b=encode(frame);ByteBuffer.wrap(b).putLong(16,8);resign(b);assertThrows(IllegalArgumentException.class,()->decode(b));}
+                                                                                                                                                                 ^
+  both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:48: error: reference to decode is ambiguous
+        byte[] b=encode(frames().getFirst());ByteBuffer.wrap(b).putInt(24,Integer.MAX_VALUE);resign(b);assertThrows(IllegalArgumentException.class,()->decode(b));
+                                                                                                                                                       ^
+  both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:49: error: reference to decode is ambiguous
+        byte[] inner=encode(frames().getFirst());ByteBuffer.wrap(inner).putInt(HEADER_BYTES+4,Integer.MAX_VALUE);resign(inner);assertThrows(IllegalArgumentException.class,()->decode(inner));
+                                                                                                                                                                               ^
+  both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:50: error: reference to decode is ambiguous
+        byte[] hash=encode(frames().get(1));hash[HEADER_BYTES]=(byte)255;hash[HEADER_BYTES+1]=(byte)255;resign(hash);assertThrows(IllegalArgumentException.class,()->decode(hash));
+                                                                                                                                                                     ^
+  both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:51: error: reference to decode is ambiguous
+        assertThrows(IllegalArgumentException.class,()->decode(new byte[MAX_FRAME_BYTES+1]));
+                                                        ^
+  both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:54: error: reference to decode is ambiguous
+        byte[] original=encode(frames().getFirst()),extended=new byte[original.length+1];System.arraycopy(original,0,extended,0,original.length-HASH_BYTES);extended[original.length-HASH_BYTES]=8;ByteBuffer.wrap(extended).putInt(24,original.length-HEADER_BYTES-HASH_BYTES+1);resign(extended);assertThrows(IllegalArgumentException.class,()->decode(extended));
+                                                                                                                                                                                                                                                                                                                                                   ^
+  both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:57: error: reference to decode is ambiguous
+        byte[] data=new byte[MAX_SUPPORTED_ARCHIVE_CHUNK];new Random(1).nextBytes(data);var chunk=new Chunk(input.ack(),data.length,0,data);byte[] frame=encode(new Data(0,11,grant.id(),new Reply(SCOPE,7,grant.counters(),chunk,"")));assertTrue(frame.length<MAX_FRAME_BYTES);assertArrayEquals(frame,encode(decode(frame)));
+                                                                                                                                                                                                                                                                                                                ^
+  both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:59: error: reference to decode is ambiguous
+        var c=new Counters(100,100,32,0,0,0,0,"");byte[] maximum=encode(new Data(0,11,grant.id(),new Reply(SCOPE,7,c,new Events(new EventBatch(0,32,events)),"")));assertTrue(maximum.length<MAX_FRAME_BYTES);assertArrayEquals(maximum,encode(decode(maximum)));
+                                                                                                                                                                                                                                               ^
+  both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+17 errors
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':cluster:compileTestJava'.
+> Compilation failed; see the compiler output below.
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:22: error: reference to decode is ambiguous
+      @Test void everyFrameHasAnExactCanonicalRoundTrip(){for(Frame frame:frames()){byte[] bytes=encode(frame);assertTrue(bytes.length<=MAX_FRAME_BYTES);var decoded=decode(bytes);assertEquals(frame.getClass(),decoded.getClass());assertEquals(frame.node(),decoded.node());assertEquals(frame.sessionId(),decoded.sessionId());assertEquals(frame.correlationId(),decoded.correlationId());assertArrayEquals(bytes,encode(decoded));}}
+                                                                                                                                                                     ^
+    both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:23: error: reference to decode is ambiguous
+      @Test void allTruncationsAndTrailingBytesAreRefused(){for(Frame frame:frames()){byte[] bytes=encode(frame);for(int n=0;n<bytes.length;n++){byte[] truncated=Arrays.copyOf(bytes,n);assertThrows(IllegalArgumentException.class,()->decode(truncated));}assertThrows(IllegalArgumentException.class,()->decode(Arrays.copyOf(bytes,bytes.length+1)));}}
+                                                                                                                                                                                                                                         ^
+    both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:23: error: reference to decode is ambiguous
+      @Test void allTruncationsAndTrailingBytesAreRefused(){for(Frame frame:frames()){byte[] bytes=encode(frame);for(int n=0;n<bytes.length;n++){byte[] truncated=Arrays.copyOf(bytes,n);assertThrows(IllegalArgumentException.class,()->decode(truncated));}assertThrows(IllegalArgumentException.class,()->decode(Arrays.copyOf(bytes,bytes.length+1)));}}
+                                                                                                                                                                                                                                                                                                             ^
+    both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:24: error: reference to decode is ambiguous
+      @Test void payloadOrChecksumCorruptionIsRefused(){for(Frame frame:frames()){byte[] b=encode(frame);b[HEADER_BYTES]^=1;assertThrows(IllegalArgumentException.class,()->decode(b));b=encode(frame);b[b.length-1]^=1;byte[] changed=b;assertThrows(IllegalArgumentException.class,()->decode(changed));}}
+                                                                                                                                                                            ^
+    both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:24: error: reference to decode is ambiguous
+      @Test void payloadOrChecksumCorruptionIsRefused(){for(Frame frame:frames()){byte[] b=encode(frame);b[HEADER_BYTES]^=1;assertThrows(IllegalArgumentException.class,()->decode(b));b=encode(frame);b[b.length-1]^=1;byte[] changed=b;assertThrows(IllegalArgumentException.class,()->decode(changed));}}
+                                                                                                                                                                                                                                                                                         ^
+    both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:41: error: reference to decode is ambiguous
+          for(int offset:new int[]{0,4,6}){byte[] b=encode(frames().getFirst());b[offset]=(byte)127;resign(b);assertThrows(IllegalArgumentException.class,()->decode(b));}
+                                                                                                                                                              ^
+    both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:42: error: reference to decode is ambiguous
+          byte[] error=encode(new Failure(0,11,7,Code.NO_GRANT));error[HEADER_BYTES]=(byte)127;resign(error);assertThrows(IllegalArgumentException.class,()->decode(error));
+                                                                                                                                                             ^
+    both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:45: error: reference to decode is ambiguous
+          for(Frame frame:frames().subList(0,4)){byte[] b=encode(frame);ByteBuffer.wrap(b).putLong(16,8);resign(b);assertThrows(IllegalArgumentException.class,()->decode(b));}
+                                                                                                                                                                   ^
+    both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:48: error: reference to decode is ambiguous
+          byte[] b=encode(frames().getFirst());ByteBuffer.wrap(b).putInt(24,Integer.MAX_VALUE);resign(b);assertThrows(IllegalArgumentException.class,()->decode(b));
+                                                                                                                                                         ^
+    both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:49: error: reference to decode is ambiguous
+          byte[] inner=encode(frames().getFirst());ByteBuffer.wrap(inner).putInt(HEADER_BYTES+4,Integer.MAX_VALUE);resign(inner);assertThrows(IllegalArgumentException.class,()->decode(inner));
+                                                                                                                                                                                 ^
+    both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:50: error: reference to decode is ambiguous
+          byte[] hash=encode(frames().get(1));hash[HEADER_BYTES]=(byte)255;hash[HEADER_BYTES+1]=(byte)255;resign(hash);assertThrows(IllegalArgumentException.class,()->decode(hash));
+                                                                                                                                                                       ^
+    both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:51: error: reference to decode is ambiguous
+          assertThrows(IllegalArgumentException.class,()->decode(new byte[MAX_FRAME_BYTES+1]));
+                                                          ^
+    both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:54: error: reference to decode is ambiguous
+          byte[] original=encode(frames().getFirst()),extended=new byte[original.length+1];System.arraycopy(original,0,extended,0,original.length-HASH_BYTES);extended[original.length-HASH_BYTES]=8;ByteBuffer.wrap(extended).putInt(24,original.length-HEADER_BYTES-HASH_BYTES+1);resign(extended);assertThrows(IllegalArgumentException.class,()->decode(extended));
+                                                                                                                                                                                                                                                                                                                                                     ^
+    both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:57: error: reference to decode is ambiguous
+          byte[] data=new byte[MAX_SUPPORTED_ARCHIVE_CHUNK];new Random(1).nextBytes(data);var chunk=new Chunk(input.ack(),data.length,0,data);byte[] frame=encode(new Data(0,11,grant.id(),new Reply(SCOPE,7,grant.counters(),chunk,"")));assertTrue(frame.length<MAX_FRAME_BYTES);assertArrayEquals(frame,encode(decode(frame)));
+                                                                                                                                                                                                                                                                                                                  ^
+    both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:59: error: reference to decode is ambiguous
+          var c=new Counters(100,100,32,0,0,0,0,"");byte[] maximum=encode(new Data(0,11,grant.id(),new Reply(SCOPE,7,c,new Events(new EventBatch(0,32,events)),"")));assertTrue(maximum.length<MAX_FRAME_BYTES);assertArrayEquals(maximum,encode(decode(maximum)));
+                                                                                                                                                                                                                                                 ^
+    both method decode(byte[]) in RetentionReplyV3 and method decode(byte[]) in RetentionSealedReadWireV4 match
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:22: error: cannot find symbol
+      @Test void everyFrameHasAnExactCanonicalRoundTrip(){for(Frame frame:frames()){byte[] bytes=encode(frame);assertTrue(bytes.length<=MAX_FRAME_BYTES);var decoded=decode(bytes);assertEquals(frame.getClass(),decoded.getClass());assertEquals(frame.node(),decoded.node());assertEquals(frame.sessionId(),decoded.sessionId());assertEquals(frame.correlationId(),decoded.correlationId());assertArrayEquals(bytes,encode(decoded));}}
+                                                                                                                                                                                                                                                                      ^
+    symbol:   method node()
+    location: variable decoded of type Reply
+  /Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionSealedReadWireV4Test.java:22: error: cannot find symbol
+      @Test void everyFrameHasAnExactCanonicalRoundTrip(){for(Frame frame:frames()){byte[] bytes=encode(frame);assertTrue(bytes.length<=MAX_FRAME_BYTES);var decoded=decode(bytes);assertEquals(frame.getClass(),decoded.getClass());assertEquals(frame.node(),decoded.node());assertEquals(frame.sessionId(),decoded.sessionId());assertEquals(frame.correlationId(),decoded.correlationId());assertArrayEquals(bytes,encode(decoded));}}
+                                                                                                                                                                                                                                                                                                                     ^
+    symbol:   method sessionId()
+    location: variable decoded of type Reply
+  17 errors
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights.
+
+BUILD FAILED in 2s

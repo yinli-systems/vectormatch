@@ -22,6 +22,7 @@ public final class RetentionClusteredServiceV3 implements ClusteredService {
     private boolean batchReplyTextChecked;
     private final boolean preparedArchiveCacheEnabled;
     private final RetentionSealedReadBankV4 sealedReadBank;
+    private Cluster.Role sealedReadRole=Cluster.Role.FOLLOWER;
     private PreparedArchive preparedArchive;
     private long preparedArchiveEncodingCount;
     /** Only this service writer owns the private byte array; chunks always copy their slice. */
@@ -47,6 +48,7 @@ public final class RetentionClusteredServiceV3 implements ClusteredService {
     }
     @Override public void onStart(Cluster cluster, Image snapshotImage) {
         this.cluster = cluster; batchReplyTextChecked = false;
+        sealedReadRole=sealedReadBank==null?Cluster.Role.FOLLOWER:(cluster==null?Cluster.Role.LEADER:cluster.role());
         if(sealedReadBank!=null)sealedReadBank.invalidate();
         preparedArchive = null; preparedArchiveEncodingCount = 0;
         state = snapshotImage == null ? new RetentionServiceV3(profile, lineage)
@@ -135,6 +137,7 @@ public final class RetentionClusteredServiceV3 implements ClusteredService {
         return prefix;
     }
     private void publishSealedExport(long sessionId,PreparedArchive prefix) {
+        if(sealedReadRole!=Cluster.Role.LEADER)return;
         long exported=state.exportedEventSeq(),last=state.eventSeq();int count=state.outboxSize();
         if(last-exported!=count)throw new IllegalStateException("sealed outbox frontier differs");
         var events=new ArrayList<io.vectormatch.core.MatchingEngine.Event>(count);
@@ -200,8 +203,9 @@ public final class RetentionClusteredServiceV3 implements ClusteredService {
     }
     @Override public void onTimerEvent(long correlationId, long timestamp) {}
     @Override public void onRoleChange(Cluster.Role role) {
+        sealedReadRole=role;
         if(sealedReadBank!=null)sealedReadBank.invalidate();
         System.out.println("VECTOR_V3_ROLE role=" + role);
     }
-    @Override public void onTerminate(Cluster cluster) {if(sealedReadBank!=null)sealedReadBank.invalidate();}
+    @Override public void onTerminate(Cluster cluster) {sealedReadRole=Cluster.Role.FOLLOWER;if(sealedReadBank!=null)sealedReadBank.invalidate();}
 }

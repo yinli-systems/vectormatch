@@ -1,0 +1,37 @@
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:51: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+    final class Fixture implements AutoCloseable {
+          ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:84: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture(RetentionBatchProfilesV3.finiteLoadProfile(),path->{},16L*1024*1024,true,true,32)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:118: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture(RetentionBatchProfilesV3.finiteLoadProfile(),path->{},16L*1024*1024,true,true,32)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:140: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+        try(var fixture=new Fixture(path->{try{
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:175: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture(p,path->{if(path.getFileName().toString().equals("0001-archive.bin")){entered.countDown();try{if(!release.await(5,TimeUnit.SECONDS))throw new IOException("gate");}catch(InterruptedException e){Thread.currentThread().interrupt();throw new IOException(e);}}},4L*1024*1024)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:211: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture(path->{})){f.deposit(1,0);f.coordinator.start(1);var result=f.finish();assertEquals(0,result.throughEventSeq());assertTrue(result.durablePrefix().events().isEmpty());assertEquals(1,f.io.offers(ArchiveCommit.class));assertEquals(0,f.io.offers(EventAck.class));assertEquals(2,f.writer.snapshot().get("submitted"));assertEquals(0,f.coordinator.snapshot().get("reservedCommands"));}
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:219: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture(path->{})){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:247: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture(path->{})){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:265: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture(path->{})){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:274: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture(path->{})){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:284: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture(RetentionBatchProfilesV3.finiteLoadProfile(),path->{if(path.getFileName().toString().equals("0001-archive.bin")){entered.countDown();try{if(!release.await(5,TimeUnit.SECONDS))throw new IOException("pause-control gate");}catch(InterruptedException e){Thread.currentThread().interrupt();throw new IOException(e);}}},4L*1024*1024,false)){
+                ^
+/Users/kevin/Documents/ChatGPT/App 2/runtime/cloud/cpu-20261024/interbank-v4-worktree/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:294: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+        try(var f=new Fixture(path->{if(path.getFileName().toString().equals("0001-archive.bin")){entered.countDown();try{if(!release.await(5,TimeUnit.SECONDS))throw new IOException("late trade gate");}catch(InterruptedException e){Thread.currentThread().interrupt();throw new IOException(e);}}})){
+                ^
+12 warnings
