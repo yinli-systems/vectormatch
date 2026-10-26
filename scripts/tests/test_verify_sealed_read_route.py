@@ -9,6 +9,17 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import verify_sealed_read_route as audit
 
 class SealedRouteAuditTest(unittest.TestCase):
+    def test_ingress_and_direct_offer_positions_never_assert_consensus_commit(self):
+        for operation,selected,expected,kind in [(8,"DIRECT_UDP","AERON_CLUSTER","CLUSTER_INGRESS"),(5,"CLUSTER","AERON_CLUSTER","CLUSTER_INGRESS"),(7,"DIRECT_UDP","DIRECT_UDP","ORDINARY_UDP")]:
+            original=dict(tag=operation,correlation=7,bytes=b"original synthetic request")
+            for code in [-2,64]:
+                record=dict(correlationId=7,requestSha256=hashlib.sha256(original["bytes"]).hexdigest(),route=expected,actualReturnCode=code,clusterLogPosition=False,publicationPositionKind=kind)
+                self.assertEqual(expected,audit.check_routed_offer(original,code,record,selected))
+                wrong=dict(record,clusterLogPosition=True)
+                with self.assertRaises(ValueError):audit.check_routed_offer(original,code,wrong,selected)
+                wrong=dict(record,publicationPositionKind="CONSENSUS_COMMIT")
+                with self.assertRaises(ValueError):audit.check_routed_offer(original,code,wrong,selected)
+
     def test_checksum_and_outer_lengths_are_checked_before_embedded_payload(self):
         body=bytes([0]);prefix=struct.pack(">IHBBqqi",0x56585234,1,5,0,11,7,len(body))+body
         data=prefix+hashlib.sha256(prefix).digest();self.assertEqual(0,audit.frame(data)["code"])

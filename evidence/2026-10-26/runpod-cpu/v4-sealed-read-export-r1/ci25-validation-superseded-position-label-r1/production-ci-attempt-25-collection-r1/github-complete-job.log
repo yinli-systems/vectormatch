@@ -1,0 +1,851 @@
+correctness	Set up job	﻿2026-10-26T04:07:10.7356426Z Current runner version: '2.338.1'
+correctness	Set up job	2026-10-26T04:07:10.7361439Z Runner name: 'vectormatch-cpu-once-20261026-r25'
+correctness	Set up job	2026-10-26T04:07:10.7361885Z Runner group name: 'Default'
+correctness	Set up job	2026-10-26T04:07:10.7362505Z Machine name: '33ace3d92505'
+correctness	Set up job	2026-10-26T04:07:10.7364118Z ##[group]GITHUB_TOKEN Permissions
+correctness	Set up job	2026-10-26T04:07:10.7365902Z Contents: read
+correctness	Set up job	2026-10-26T04:07:10.7366227Z Metadata: read
+correctness	Set up job	2026-10-26T04:07:10.7366509Z ##[endgroup]
+correctness	Set up job	2026-10-26T04:07:10.7367855Z Secret source: Actions
+correctness	Set up job	2026-10-26T04:07:10.7368331Z Cache mode: write
+correctness	Set up job	2026-10-26T04:07:10.7368735Z Prepare workflow directory
+correctness	Set up job	2026-10-26T04:07:10.7561794Z Prepare all required actions
+correctness	Set up job	2026-10-26T04:07:10.7589366Z Getting action download info
+correctness	Set up job	2026-10-26T04:07:11.2478562Z Download action repository 'actions/checkout@11d5960a326750d5838078e36cf38b85af677262' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+correctness	Set up job	2026-10-26T04:07:11.9627203Z Download action repository 'actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3' (SHA:cf277c60eb25467037889841efdb72551f06f6c3)
+correctness	Set up job	2026-10-26T04:07:12.7811938Z Download action repository 'gradle/actions@ed408507eac070d1f99cc633dbcf757c94c7933a' (SHA:ed408507eac070d1f99cc633dbcf757c94c7933a)
+correctness	Set up job	2026-10-26T04:07:14.9490498Z Download action repository 'actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+correctness	Set up job	2026-10-26T04:07:15.7755621Z Complete job name: correctness
+correctness	Require sparse-checkout-capable Git before any source download	﻿2026-10-26T04:07:15.8121756Z ##[group]Run "$VM_CI_PYTHON" - <<'PY'
+correctness	Require sparse-checkout-capable Git before any source download	2026-10-26T04:07:15.8122256Z ^[[36;1m"$VM_CI_PYTHON" - <<'PY'^[[0m
+correctness	Require sparse-checkout-capable Git before any source download	2026-10-26T04:07:15.8122455Z ^[[36;1mimport re, subprocess^[[0m
+correctness	Require sparse-checkout-capable Git before any source download	2026-10-26T04:07:15.8122709Z ^[[36;1mversion = subprocess.check_output(['git', '--version'], text=True).strip()^[[0m
+correctness	Require sparse-checkout-capable Git before any source download	2026-10-26T04:07:15.8123025Z ^[[36;1mmatch = re.search(r'git version (\d+)\.(\d+)', version)^[[0m
+correctness	Require sparse-checkout-capable Git before any source download	2026-10-26T04:07:15.8123402Z ^[[36;1massert match and tuple(map(int, match.groups())) >= (2, 28), version + ': sparse checkout requires Git >=2.28; refusing full-archive fallback'^[[0m
+correctness	Require sparse-checkout-capable Git before any source download	2026-10-26T04:07:15.8123736Z ^[[36;1mprint(version)^[[0m
+correctness	Require sparse-checkout-capable Git before any source download	2026-10-26T04:07:15.8123922Z ^[[36;1mPY^[[0m
+correctness	Require sparse-checkout-capable Git before any source download	2026-10-26T04:07:15.8132307Z shell: /usr/bin/bash -e {0}
+correctness	Require sparse-checkout-capable Git before any source download	2026-10-26T04:07:15.8132600Z ##[endgroup]
+correctness	Require sparse-checkout-capable Git before any source download	2026-10-26T04:07:15.8794001Z git version 2.56.0
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	﻿2026-10-26T04:07:15.9331355Z ##[group]Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9331985Z with:
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9332242Z   persist-credentials: false
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9332699Z   sparse-checkout: .github
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	gradle
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	core
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	cluster
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	server
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	projector
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	bench
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	scripts
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	deploy
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	web
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9333212Z   repository: yinli-systems/vectormatch
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9336221Z   token: ***
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9336478Z   ssh-strict: true
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9336698Z   ssh-user: git
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9336911Z   clean: true
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9337148Z   sparse-checkout-cone-mode: true
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9337423Z   fetch-depth: 1
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9337636Z   fetch-tags: false
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9337860Z   show-progress: true
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9338088Z   lfs: false
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9338356Z   submodules: false
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9338621Z   set-safe-directory: true
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9338963Z   allow-unsafe-pr-checkout: false
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9339238Z ##[endgroup]
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9953815Z Syncing repository: yinli-systems/vectormatch
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9955550Z ##[group]Getting Git version info
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9956116Z Working directory is '/opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch'
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9957160Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git version
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9957601Z git version 2.56.0
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9958426Z ##[endgroup]
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9962467Z Temporarily overriding HOME='/opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/_temp/62651db9-362d-41a7-940a-0a458da854e6' before making global git config changes
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9963344Z Adding repository directory to the temporary git global config as a safe directory
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9964361Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git config --global --add safe.directory /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9966194Z Deleting the contents of '/opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch'
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9966895Z ##[group]Initializing the repository
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9967609Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git init /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9968443Z hint: Using 'master' as the name for the initial branch. This default branch name
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9969006Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9969488Z hint: to use in all of your new repositories, which will suppress this warning,
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9969936Z hint: call:
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9970129Z hint:
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9970406Z hint: 	git config --global init.defaultBranch <name>
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9970716Z hint:
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9971005Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9971506Z hint: 'development'. The just-created branch can be renamed via this command:
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9971869Z hint:
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9972073Z hint: 	git branch -m <name>
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9972300Z hint:
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9972612Z hint: Disable this message with "git config set advice.defaultBranchName false"
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9973291Z Initialized empty Git repository in /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/.git/
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9974545Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git remote add origin https://github.com/yinli-systems/vectormatch
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9975577Z ##[endgroup]
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9975947Z ##[group]Disabling automatic garbage collection
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9976552Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git config --local gc.auto 0
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9977421Z ##[endgroup]
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9977753Z ##[group]Setting up auth
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9978516Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git config --local --name-only --get-regexp core\.sshCommand
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:15.9989964Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.0097061Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.0110180Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.0210482Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.0224130Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.0324367Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.0360377Z ##[endgroup]
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.0360958Z ##[group]Fetching the repository
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.0365655Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --filter=blob:none --depth=1 origin +d1b222bc58361071d131c7abcc5358b85b4d8c18:refs/remotes/origin/codex/v4-sealed-read-bank
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.9896268Z From https://github.com/yinli-systems/vectormatch
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.9896807Z  * [new ref]         d1b222bc58361071d131c7abcc5358b85b4d8c18 -> origin/codex/v4-sealed-read-bank
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.9898868Z ##[endgroup]
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.9899152Z ##[group]Determining the checkout info
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.9900637Z ##[endgroup]
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.9900894Z ##[group]Setting up sparse checkout
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.9905402Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git sparse-checkout set .github gradle core cluster server projector bench scripts deploy web
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.9933735Z ##[endgroup]
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.9933975Z ##[group]Checking out the ref
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:16.9937167Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git checkout --progress --force -B codex/v4-sealed-read-bank refs/remotes/origin/codex/v4-sealed-read-bank
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:18.0371418Z Switched to a new branch 'codex/v4-sealed-read-bank'
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:18.0372006Z branch 'codex/v4-sealed-read-bank' set up to track 'origin/codex/v4-sealed-read-bank'.
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:18.0384858Z ##[endgroup]
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:18.0429850Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git log -1 --format=%H
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:18.0444440Z d1b222bc58361071d131c7abcc5358b85b4d8c18
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:18.0456330Z ##[group]Removing auth
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:18.0462502Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git config --local --name-only --get-regexp core\.sshCommand
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:18.0523543Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:18.0733372Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:18.0753051Z http.https://github.com/.extraheader
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:18.0760843Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git config --local --unset-all http.https://github.com/.extraheader
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:18.0782282Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:18.0947634Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:18.0967478Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+correctness	Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:07:18.1121662Z ##[endgroup]
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	﻿2026-10-26T04:07:18.1355944Z ##[group]Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:18.1356395Z with:
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:18.1356603Z   distribution: temurin
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:18.1356840Z   java-version: 21.0.13+9.0.LTS
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:18.1357126Z   java-package: jdk
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:18.1357440Z   check-latest: false
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:18.1357680Z   server-id: github
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:18.1357984Z   server-username: GITHUB_ACTOR
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:18.1358246Z   server-password: GITHUB_TOKEN
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:18.1358498Z   overwrite-settings: true
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:18.1358803Z   job-status: success
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:18.1361449Z   token: ***
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:18.1361696Z ##[endgroup]
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:18.2420704Z ##[warning]setup-java v4 is deprecated and will no longer receive updates. Please migrate to actions/setup-java@v5.
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:18.2433208Z ##[group]Installed distributions
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:18.2433766Z Trying to resolve the latest version from remote
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:18.2463411Z (node:226072) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:18.2464632Z (Use `node --trace-deprecation ...` to show where the warning was created)
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:19.0742194Z Resolved latest version as 21.0.13+9.0.LTS
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:19.0742852Z Trying to download...
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:19.0744199Z Downloading Java 21.0.13+9.0.LTS (Temurin-Hotspot) from https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.13%2B9/OpenJDK21U-jdk_x64_linux_hotspot_21.0.13_9.tar.gz ...
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:21.4230304Z Extracting Java archive...
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:21.4405150Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/_temp/9cad32e4-2f7e-47c3-a2f0-e73614fa785a -f /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/_temp/c2c80fe0-cdde-465d-b57d-a725b1aa8214
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:23.2481542Z Java 21.0.13+9.0.LTS was downloaded
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:23.2482430Z Setting Java 21.0.13+9.0.LTS as the default
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:23.2495173Z Creating toolchains.xml for JDK version 21.0.13+9.0.LTS from temurin
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:23.2607701Z Writing to /opt/vectormatch-cpu/ci/production-correctness-r25/home/.m2/toolchains.xml
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:23.2609617Z 
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:23.2609867Z Java configuration:
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:23.2610455Z   Distribution: temurin
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:23.2611029Z   Version: 21.0.13+9.0.LTS
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:23.2618252Z   Path: /opt/vectormatch-cpu/ci/production-correctness-r25/toolcache/Java_Temurin-Hotspot_jdk/21.0.13-9.0.LTS/x64
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:23.2619150Z 
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:23.2619798Z ##[endgroup]
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:23.2648431Z Creating settings.xml with server-id: github
+correctness	Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:07:23.2649414Z Writing to /opt/vectormatch-cpu/ci/production-correctness-r25/home/.m2/settings.xml
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	﻿2026-10-26T04:07:23.3209025Z ##[group]Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3210127Z with:
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3210592Z   gradle-version: 8.14.3
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3211165Z   cache-disabled: true
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3211633Z   cache-read-only: true
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3212127Z   cache-write-only: false
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3212648Z   cache-overwrite-existing: false
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3213164Z   cache-cleanup: on-success
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3213757Z   gradle-home-cache-includes: caches
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	notifications
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3214379Z   add-job-summary: always
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3214873Z   add-job-summary-as-pr-comment: never
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3215496Z   dependency-graph: disabled
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3216212Z   dependency-graph-report-dir: dependency-graph-reports
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3216856Z   dependency-graph-continue-on-failure: true
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3217220Z   build-scan-publish: false
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3217523Z   validate-wrappers: true
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3217905Z   allow-snapshot-wrappers: false
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3218350Z   gradle-home-cache-strict-match: false
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3218830Z   workflow-job-context: null
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3221999Z   github-token: ***
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3222341Z env:
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3222868Z   JAVA_HOME: /opt/vectormatch-cpu/ci/production-correctness-r25/toolcache/Java_Temurin-Hotspot_jdk/21.0.13-9.0.LTS/x64
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3223718Z   JAVA_HOME_21_X64: /opt/vectormatch-cpu/ci/production-correctness-r25/toolcache/Java_Temurin-Hotspot_jdk/21.0.13-9.0.LTS/x64
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3224584Z   GRADLE_USER_HOME: /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/_temp/gradle-user-home
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.3225130Z ##[endgroup]
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.5119055Z Cache is disabled: will not restore state from previous builds.
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.5132264Z Merged default JDK locations into /opt/vectormatch-cpu/ci/production-correctness-r1/home/.m2/toolchains.xml
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.5205934Z ##[group]All Gradle Wrapper jars are valid
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.5208147Z ✓ Found known Gradle Wrapper JAR files:
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.5209103Z   7d3a4ac4de1c32b59bc6a4eb8ecb8e612ccd0cf1ae1e99f66902da64df296172 gradle/wrapper/gradle-wrapper.jar
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.5210104Z ##[endgroup]
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:23.7620818Z ##[group]Provision Gradle 8.14.3
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:25.1859425Z Downloaded https://services.gradle.org/distributions/gradle-8.14.3-bin.zip to /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/_temp/.gradle-actions/gradle-installations/downloads/gradle-8.14.3-bin.zip (size 137393837)
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:25.1887098Z [command]/usr/bin/unzip -o -q /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/_temp/.gradle-actions/gradle-installations/downloads/gradle-8.14.3-bin.zip
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:25.8114856Z Extracted Gradle 8.14.3 to /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/_temp/.gradle-actions/gradle-installations/installs/gradle-8.14.3
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:25.8116677Z Provisioned Gradle executable /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/_temp/.gradle-actions/gradle-installations/installs/gradle-8.14.3/bin/gradle
+correctness	Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:07:25.8118355Z ##[endgroup]
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	﻿2026-10-26T04:07:25.8377112Z ##[group]Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.8377564Z with:
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.8377772Z   node-version: 24.22.1
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.8377995Z   always-auth: false
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.8378214Z   check-latest: false
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.8380887Z   token: ***
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.8381083Z env:
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.8381541Z   JAVA_HOME: /opt/vectormatch-cpu/ci/production-correctness-r25/toolcache/Java_Temurin-Hotspot_jdk/21.0.13-9.0.LTS/x64
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.8382339Z   JAVA_HOME_21_X64: /opt/vectormatch-cpu/ci/production-correctness-r25/toolcache/Java_Temurin-Hotspot_jdk/21.0.13-9.0.LTS/x64
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.8382915Z   GRADLE_ACTION_ID: gradle/actions/setup-gradle
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.8383242Z   GRADLE_BUILD_ACTION_SETUP_COMPLETED: true
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.8383564Z   GRADLE_BUILD_ACTION_CACHE_RESTORED: true
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.8384005Z   DEVELOCITY_INJECTION_INIT_SCRIPT_NAME: gradle-actions.inject-develocity.init.gradle
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.8384475Z   DEVELOCITY_INJECTION_CUSTOM_VALUE: gradle-actions
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.8384874Z   GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.8385140Z ##[endgroup]
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.9189341Z Attempting to download 24.22.1...
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.9250696Z (node:226119) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:25.9251413Z (Use `node --trace-deprecation ...` to show where the warning was created)
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:27.0649597Z Acquiring 24.22.1 - x64 from https://github.com/actions/node-versions/releases/download/24.22.1-39619001896/node-24.22.1-linux-x64.tar.gz
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:28.0675547Z Extracting ...
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:28.0810584Z [command]/usr/bin/tar xz --strip 1 --warning=no-unknown-keyword --overwrite -C /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/_temp/8864b421-ce12-41cf-b32f-babc2d158598 -f /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/_temp/e1b8e153-2f45-4891-b088-c7c1ee61a5cb
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:28.8683766Z Adding to the cache ...
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:30.3647086Z ##[group]Environment details
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:30.4672489Z node: v24.22.1
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:30.4673029Z npm: 11.19.1
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:30.4673340Z yarn: 
+correctness	Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:07:30.4674086Z ##[endgroup]
+correctness	Verify Linux toolchain and run all correctness gates	﻿2026-10-26T04:07:30.4863166Z ##[group]Run bash scripts/ci-existing-cpu.sh
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.4863559Z ^[[36;1mbash scripts/ci-existing-cpu.sh^[[0m
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.4873780Z shell: /usr/bin/bash -e {0}
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.4874028Z env:
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.4874495Z   JAVA_HOME: /opt/vectormatch-cpu/ci/production-correctness-r25/toolcache/Java_Temurin-Hotspot_jdk/21.0.13-9.0.LTS/x64
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.4875307Z   JAVA_HOME_21_X64: /opt/vectormatch-cpu/ci/production-correctness-r25/toolcache/Java_Temurin-Hotspot_jdk/21.0.13-9.0.LTS/x64
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.4876089Z   GRADLE_ACTION_ID: gradle/actions/setup-gradle
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.4876413Z   GRADLE_BUILD_ACTION_SETUP_COMPLETED: true
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.4876710Z   GRADLE_BUILD_ACTION_CACHE_RESTORED: true
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.4877143Z   DEVELOCITY_INJECTION_INIT_SCRIPT_NAME: gradle-actions.inject-develocity.init.gradle
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.4877616Z   DEVELOCITY_INJECTION_CUSTOM_VALUE: gradle-actions
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.4877934Z   GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.4878467Z   GRADLE_USER_HOME: /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/_temp/gradle-user-home
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.4879000Z ##[endgroup]
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.5183350Z openjdk version "21.0.13" 2026-10-20 LTS
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.5183854Z OpenJDK Runtime Environment Temurin-21.0.13+9 (build 21.0.13+9-LTS)
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.5184258Z OpenJDK 64-Bit Server VM Temurin-21.0.13+9 (build 21.0.13+9-LTS, mixed mode, sharing)
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.5224276Z v24.22.1
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8027924Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8029066Z Welcome to Gradle 8.14.3!
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8029526Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8029845Z Here are the highlights of this release:
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8030390Z  - Java 24 support
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8030873Z  - GraalVM Native Image toolchain selection
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8031422Z  - Enhancements to test reporting
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8031895Z  - Build Authoring improvements
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8032179Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8032632Z For more details see https://docs.gradle.org/8.14.3/release-notes.html
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8033117Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8033134Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8033558Z ------------------------------------------------------------
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8034066Z Gradle 8.14.3
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8034563Z ------------------------------------------------------------
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8034925Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8035205Z Build time:    2025-07-04 13:15:44 UTC
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8035801Z Revision:      e5ee1df3d88b8ca3a8074787a94f373e3090e1db
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8036164Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8036331Z Kotlin:        2.0.21
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8036706Z Groovy:        3.0.24
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8037291Z Ant:           Apache Ant(TM) version 1.10.15 compiled on August 25 2024
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8038012Z Launcher JVM:  21.0.13 (Eclipse Adoptium 21.0.13+9-LTS)
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8039529Z Daemon JVM:    /opt/vectormatch-cpu/ci/production-correctness-r25/toolcache/Java_Temurin-Hotspot_jdk/21.0.13-9.0.LTS/x64 (no JDK specified, using current Java home)
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8040693Z OS:            Linux 6.8.0-147-generic amd64
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:30.8041007Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:31.8893424Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/scripts/bootstrap-postgres.py:36: DeprecationWarning: Python 3.14 will, by default, filter extracted tar archives and reject files or modify their metadata. Use the filter argument to control this behavior.
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:31.8895478Z   archive.extractall(target)
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.3545013Z PostgreSQL test binaries ready: 18.6.0 008ee189eaa7ca2b58bd01dd950291e638b998392cf982297acd4779ec898ac1
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.3857604Z The files belonging to this database system will be owned by user "vmci".
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.3858585Z This user must also own the server process.
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.3859020Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.3859383Z The database cluster will be initialized with locale "C".
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.3860143Z The default text search configuration will be set to "english".
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.3860561Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.3861760Z Data page checksums are enabled.
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.3862035Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.3862983Z fixing permissions on existing directory /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/_temp/vectormatch-pg.9RhX7L01 ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.3864064Z creating subdirectories ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.3864664Z selecting dynamic shared memory implementation ... posix
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.3910704Z selecting default "max_connections" ... 100
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.3983427Z selecting default "shared_buffers" ... 128MB
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.4057540Z selecting default time zone ... Etc/UTC
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.4060988Z creating configuration files ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.4696684Z running bootstrap script ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:32.6520047Z performing post-bootstrap initialization ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:34.0880781Z syncing data to disk ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:34.0881261Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:34.0881635Z Success. You can now start the database server using:
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:34.0882037Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:34.0882988Z     .tools/postgres/bin/pg_ctl -D /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/_temp/vectormatch-pg.9RhX7L01 -l logfile start
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:34.0883850Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:34.1956728Z waiting for server to start.... done
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:34.1957308Z server started
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:34.6051186Z To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:35.2044893Z Daemon will be stopped at the end of the build 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:49.9058005Z > Task :check UP-TO-DATE
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:49.9059219Z > Task :server:processResources NO-SOURCE
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:49.9060114Z > Task :bench:processResources NO-SOURCE
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:49.9060986Z > Task :cluster:processResources NO-SOURCE
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:49.9061879Z > Task :bench:processJmhResources NO-SOURCE
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:49.9062775Z > Task :bench:processTestResources NO-SOURCE
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:49.9063408Z > Task :server:processTestResources NO-SOURCE
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:49.9063978Z > Task :cluster:processTestResources
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:49.9064489Z > Task :projector:processResources
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:49.9065047Z > Task :projector:processTestResources NO-SOURCE
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:50.6042492Z > Task :core:compileJava
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:50.6043953Z > Task :core:processResources NO-SOURCE
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:50.6044704Z > Task :core:classes
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:50.7041779Z > Task :core:jar
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.5044216Z > Task :bench:compileJava
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.5044948Z > Task :bench:classes
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.6080695Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.6110102Z > Task :cluster:compileJava
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.6141413Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/main/java/io/vectormatch/cluster/MultiplexedLoadTransports.java:32: warning: [serial] serializable class OwnerFailure has no definition of serialVersionUID
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.6161912Z     static final class OwnerFailure extends Error {
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.6190047Z                  ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.6221561Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/main/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4.java:20: warning: [serial] non-transient instance field of a serializable class declared with a non-serializable type
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.6249826Z         private final List<byte[]> originals;
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.6272585Z                                    ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.6310724Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchOwnerV3.java:155: warning: [serial] non-transient instance field of a serializable class declared with a non-serializable type
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.6339643Z         private final List<byte[]> wires;
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.6369776Z                                    ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.6377253Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchOwnerV3.java:156: warning: [serial] non-transient instance field of a serializable class declared with a non-serializable type
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.6378587Z         private final List<Map<String,Object>> observations;
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.6379057Z                                                ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.7054411Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchMaintenanceV3.java:79: warning: [serial] non-transient instance field of a serializable class declared with a non-serializable type
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.7056453Z         private final List<byte[]> wires;
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.7056724Z                                    ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.7057938Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/main/java/io/vectormatch/cluster/RetentionBatchMaintenanceV3.java:80: warning: [serial] non-transient instance field of a serializable class declared with a non-serializable type
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.7059087Z         private final List<Map<String,Object>> observations;
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.7059457Z                                                ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.8040738Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.8042073Z > Task :core:compileTestJava
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.9041109Z > Task :core:processTestResources
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:52.9041834Z > Task :core:testClasses
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:53.4040196Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:53.4041048Z > Task :cluster:compileJava
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:53.4041586Z 6 warnings
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:53.4041785Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:53.4041991Z > Task :cluster:classes
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:53.5066660Z > Task :cluster:jar
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:54.1046811Z > Task :projector:compileJava
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:54.1049600Z > Task :projector:classes
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:54.1052589Z > Task :projector:jar
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:54.3042135Z > Task :projector:compileTestJava
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:54.3042652Z > Task :projector:testClasses
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:54.3043058Z > Task :bench:compileJmhJava
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:54.3043310Z > Task :bench:jmhClasses
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:54.4048061Z > Task :bench:compileTestJava
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:54.4048498Z > Task :bench:testClasses
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0039679Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0046330Z > Task :cluster:compileTestJava
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0048219Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:51: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0049800Z     final class Fixture implements AutoCloseable {
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0050165Z           ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0052635Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:84: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0054321Z         try(var f=new Fixture(RetentionBatchProfilesV3.finiteLoadProfile(),path->{},16L*1024*1024,true,true,32)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0054781Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0056138Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:118: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0057575Z         try(var f=new Fixture(RetentionBatchProfilesV3.finiteLoadProfile(),path->{},16L*1024*1024,true,true,32)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0058015Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0059491Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:140: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0061327Z         try(var fixture=new Fixture(path->{try{
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0061585Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0062984Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:175: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0065256Z         try(var f=new Fixture(p,path->{if(path.getFileName().toString().equals("0001-archive.bin")){entered.countDown();try{if(!release.await(5,TimeUnit.SECONDS))throw new IOException("gate");}catch(InterruptedException e){Thread.currentThread().interrupt();throw new IOException(e);}}},4L*1024*1024)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0066259Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0067617Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:211: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0070013Z         try(var f=new Fixture(path->{})){f.deposit(1,0);f.coordinator.start(1);var result=f.finish();assertEquals(0,result.throughEventSeq());assertTrue(result.durablePrefix().events().isEmpty());assertEquals(1,f.io.offers(ArchiveCommit.class));assertEquals(0,f.io.offers(EventAck.class));assertEquals(2,f.writer.snapshot().get("submitted"));assertEquals(0,f.coordinator.snapshot().get("reservedCommands"));}
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0071284Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0072670Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:219: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0073833Z         try(var f=new Fixture(path->{})){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0074071Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0075398Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:247: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0076552Z         try(var f=new Fixture(path->{})){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0076791Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0078114Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:265: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0079332Z         try(var f=new Fixture(path->{})){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0079570Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0080923Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:274: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0082102Z         try(var f=new Fixture(path->{})){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0082373Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0083839Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:284: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0086255Z         try(var f=new Fixture(RetentionBatchProfilesV3.finiteLoadProfile(),path->{if(path.getFileName().toString().equals("0001-archive.bin")){entered.countDown();try{if(!release.await(5,TimeUnit.SECONDS))throw new IOException("pause-control gate");}catch(InterruptedException e){Thread.currentThread().interrupt();throw new IOException(e);}}},4L*1024*1024,false)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0087419Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0088897Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionAsyncMaintenanceV4Test.java:294: warning: [try] auto-closeable resource RetentionAsyncMaintenanceV4Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0090975Z         try(var f=new Fixture(path->{if(path.getFileName().toString().equals("0001-archive.bin")){entered.countDown();try{if(!release.await(5,TimeUnit.SECONDS))throw new IOException("late trade gate");}catch(InterruptedException e){Thread.currentThread().interrupt();throw new IOException(e);}}})){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0091956Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0093118Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionLoopbackPortsV4Test.java:26: warning: [try] auto-closeable resource occupied is never referenced in body of corresponding try statement
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0094271Z         try(var occupied=new DatagramSocket(first+2,InetAddress.getByName("127.0.0.1"))) {
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0094636Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0096064Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:104: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0097326Z     private final class Fixture implements AutoCloseable {
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0097608Z                   ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0099092Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:171: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0100423Z         for(int window:new int[]{1,8})try(var f=new Fixture("success-"+window,window,false)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0100838Z                                               ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0102367Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:207: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0103620Z         try(var f=new Fixture("request-failure",8,false)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0103889Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0105195Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:216: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0106562Z         try(var f=new Fixture("reply-failure",8,false)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0106833Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0108131Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:226: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0109207Z         try(var f=new Fixture("timing-failure",8,false)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0109368Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0110146Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:234: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0110831Z         try(var f=new Fixture("event-mismatch",8,false)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0111190Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0111960Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:244: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0112643Z         try(var f=new Fixture("writer-failure",8,true)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0112806Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0113576Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:253: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0114313Z         for(int page:new int[]{16,32})try(var f=new Fixture("event-page-"+page,8,false,page)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0114552Z                                               ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0115354Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:268: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0116229Z         try(var f=new Fixture("page32-bad-event",8,false,32)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0116435Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0117197Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:277: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0118054Z         for(int page:new int[]{16,32})for(int window:new int[]{8,32})try(var f=new Fixture("common32-success-"+page+"-"+window,window,false,page,true,2048)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0118408Z                                                                              ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0119314Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:322: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0120221Z         for(String sink:new String[]{"requests","replies","timings"})for(int selected:new int[]{0,15,31})try(var f=new Fixture("common32-"+sink+"-"+selected,32,false,32,true,2048)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0120630Z                                                                                                                  ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0121473Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:382: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0122392Z         for(String sink:new String[]{"requests","replies","timings"})for(int selected:new int[]{0,63,127})try(var f=new Fixture("common128-"+sink+"-"+selected,128,false,32,false,3072,true)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0123056Z                                                                                                                   ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0123895Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:443: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0124755Z         for(int window:new int[]{32,128})try(var f=new Fixture("common128-success-"+window,window,false,32,false,3072,true)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0125039Z                                                  ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0125956Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:452: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0126690Z         try(var f=new Fixture("common128-writer",128,true,32,false,3072,true)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0126879Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0127636Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/src/test/java/io/vectormatch/cluster/RetentionMaintenanceReadWindowV3Test.java:458: warning: [try] auto-closeable resource RetentionMaintenanceReadWindowV3Test.Fixture has a member method close() that could throw InterruptedException
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0128325Z         try(var f=new Fixture("common32-writer",32,true,32,true,2048)){
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0128497Z                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0128606Z 28 warnings
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0128722Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.0128792Z > Task :cluster:testClasses
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.6040048Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.6044869Z > Task :server:compileJava
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.6045729Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/server/src/main/java/io/vectormatch/server/WorkbenchServer.java:32: warning: [deprecation] NioEventLoopGroup in io.netty.channel.nio has been deprecated
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.6046458Z     private final EventLoopGroup acceptor = new NioEventLoopGroup(1);
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.6046762Z                                                 ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.6047460Z /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/server/src/main/java/io/vectormatch/server/WorkbenchServer.java:33: warning: [deprecation] NioEventLoopGroup in io.netty.channel.nio has been deprecated
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.6048085Z     private final EventLoopGroup workers = new NioEventLoopGroup(2);
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.6048363Z                                                ^
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.6049736Z 2 warnings
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.6049997Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.6050110Z > Task :server:classes
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.8041495Z > Task :server:compileTestJava
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.8041968Z > Task :server:testClasses
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.8042188Z > Task :projector:test
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:55.8042370Z > Task :projector:check
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:56.1042477Z > Task :core:test
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:56.1042809Z > Task :core:check
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:57.8041467Z > Task :bench:test
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:07:57.8041943Z > Task :bench:check
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:08:16.3042080Z > Task :server:test
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:08:16.3042729Z > Task :server:check
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:08:25.0042073Z > Task :cluster:test
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:02.8022197Z > Task :cluster:check
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:02.8022989Z gradle/actions: Writing build results to /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/_temp/.gradle-actions/build-results/__run_2-1792987656827.json
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:02.8023323Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:02.8024021Z [Incubating] Problems report is available at: file:///opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/build/reports/problems/problems-report.html
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:02.8024393Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:02.8025219Z BUILD SUCCESSFUL in 4m 28s
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:02.8025411Z 22 actionable tasks: 22 executed
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:03.0547403Z {"bothActualThreeJvmRoutesVerified": true, "passed": true, "results": {"CLUSTER": {"actualImagePublicationEnvelopeMatched": true, "actualSession": 1, "allDirectDataMatchedOriginalCallbacks": true, "allOrdinaryPositiveFramesMatchedEndToEnd": true, "everyGrantBoundToOriginalLoggedDescriptor": true, "everyOriginalOfferRouteAndCodeMatched": true, "handshakes": 3, "matchingAlgorithmOrLatencyVerified": false, "originalAttempts": 431, "passed": true, "positiveOrdinaryReadAdmissions": 0, "readAttempts": 141, "route": "CLUSTER", "schema": "sealed-route-original-byte-audit-1", "serverLedgers": 6}, "DIRECT_UDP": {"actualImagePublicationEnvelopeMatched": true, "actualSession": 1, "allDirectDataMatchedOriginalCallbacks": true, "allOrdinaryPositiveFramesMatchedEndToEnd": true, "everyGrantBoundToOriginalLoggedDescriptor": true, "everyOriginalOfferRouteAndCodeMatched": true, "handshakes": 3, "matchingAlgorithmOrLatencyVerified": false, "originalAttempts": 433, "passed": true, "positiveOrdinaryReadAdmissions": 140, "readAttempts": 140, "route": "DIRECT_UDP", "schema": "sealed-route-original-byte-audit-1", "serverLedgers": 6}}}
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:03.5268344Z To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:04.2262990Z Daemon will be stopped at the end of the build 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:07.5269572Z > Task :cluster:processResources NO-SOURCE
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:07.5270249Z > Task :core:compileJava UP-TO-DATE
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:07.5271653Z > Task :core:processResources NO-SOURCE
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:07.5272065Z > Task :core:classes UP-TO-DATE
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:07.5272236Z > Task :core:jar UP-TO-DATE
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:07.6253230Z > Task :cluster:compileJava UP-TO-DATE
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:07.6253606Z > Task :cluster:classes UP-TO-DATE
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:09.6254658Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:09.6255646Z > Task :cluster:failoverSmoke
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:09.6256514Z VECTOR_FAILOVER_EVIDENCE /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/build/failover-smoke/run-1792987927610
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:09.6257141Z VECTOR_START_NODE member=0 pid=232434
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:09.6257421Z VECTOR_START_NODE member=1 pid=232452
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:09.6257699Z VECTOR_START_NODE member=2 pid=232455
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:09.6257980Z VECTOR_COMMAND_CHECK seq=1 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:09.6258425Z VECTOR_COMMAND_CHECK seq=1 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:09.6258909Z VECTOR_COMMAND_CHECK seq=2 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:09.6259234Z VECTOR_COMMAND_CHECK seq=2 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:09.6259477Z VECTOR_KILL_LEADER member=0 pid=232434
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:20.3255222Z VECTOR_COMMAND_CHECK seq=3 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:20.4253510Z VECTOR_COMMAND_CHECK seq=2 result=ACCEPTED replayed=true
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:20.4254063Z VECTOR_COMMAND_CHECK seq=2 result=IDEMPOTENCY_CONFLICT replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:20.4255048Z VECTOR_START_NODE member=0 pid=232544
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:20.4256080Z VECTOR_COMMAND_CHECK seq=3 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:20.5253790Z VECTOR_COMMAND_CHECK seq=2 result=ACCEPTED replayed=true
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:20.7255585Z Member [1]: SNAPSHOT applied successfully
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:21.1253623Z VECTOR_START_NODE member=0 pid=232585
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:21.1254075Z VECTOR_START_NODE member=1 pid=232586
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:21.1254266Z VECTOR_START_NODE member=2 pid=232588
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.3254964Z VECTOR_COMMAND_CHECK seq=2 result=ACCEPTED replayed=true
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.3255932Z VECTOR_COMMAND_CHECK seq=4 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.3256658Z VECTOR_COMMAND_CHECK seq=1 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.4253532Z VECTOR_COMMAND_CHECK seq=2 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.4255186Z VECTOR_COMMAND_CHECK seq=3 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.4255637Z VECTOR_COMMAND_CHECK seq=4 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.4256111Z VECTOR_COMMAND_CHECK seq=5 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.4256546Z VECTOR_COMMAND_CHECK seq=6 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.5254644Z VECTOR_COMMAND_CHECK seq=7 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.5255642Z VECTOR_COMMAND_CHECK seq=8 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.5257352Z VECTOR_COMMAND_CHECK seq=9 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.5258061Z VECTOR_COMMAND_CHECK seq=10 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.5259087Z VECTOR_COMMAND_CHECK seq=11 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.6255782Z VECTOR_COMMAND_CHECK seq=12 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.6257172Z VECTOR_COMMAND_CHECK seq=13 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.6258314Z VECTOR_COMMAND_CHECK seq=14 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.6259907Z VECTOR_COMMAND_CHECK seq=15 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.7255009Z VECTOR_COMMAND_CHECK seq=16 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.7256435Z VECTOR_COMMAND_CHECK seq=17 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.7257455Z VECTOR_COMMAND_CHECK seq=18 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.7258176Z VECTOR_COMMAND_CHECK seq=19 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.7259157Z VECTOR_COMMAND_CHECK seq=20 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.8254623Z VECTOR_COMMAND_CHECK seq=21 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.8256148Z VECTOR_COMMAND_CHECK seq=22 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.8257343Z VECTOR_COMMAND_CHECK seq=23 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.8258503Z VECTOR_COMMAND_CHECK seq=24 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.8259833Z VECTOR_COMMAND_CHECK seq=25 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.8260988Z VECTOR_COMMAND_CHECK seq=26 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.9254750Z VECTOR_COMMAND_CHECK seq=27 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.9255667Z VECTOR_COMMAND_CHECK seq=28 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.9256378Z VECTOR_COMMAND_CHECK seq=29 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.9257056Z VECTOR_COMMAND_CHECK seq=30 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.9257732Z VECTOR_COMMAND_CHECK seq=31 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:22.9258415Z VECTOR_COMMAND_CHECK seq=32 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.0255495Z VECTOR_COMMAND_CHECK seq=33 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.0256923Z VECTOR_COMMAND_CHECK seq=34 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.0258117Z VECTOR_COMMAND_CHECK seq=35 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.0259338Z VECTOR_COMMAND_CHECK seq=36 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.0260049Z VECTOR_COMMAND_CHECK seq=37 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.1254182Z VECTOR_COMMAND_CHECK seq=38 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.1255520Z VECTOR_COMMAND_CHECK seq=39 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.1256635Z VECTOR_COMMAND_CHECK seq=40 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.1257776Z VECTOR_COMMAND_CHECK seq=41 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.1259189Z VECTOR_COMMAND_CHECK seq=42 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.1260180Z VECTOR_COMMAND_CHECK seq=43 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.2254472Z VECTOR_COMMAND_CHECK seq=44 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.2255367Z VECTOR_COMMAND_CHECK seq=45 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.2256086Z VECTOR_COMMAND_CHECK seq=46 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.2256774Z VECTOR_COMMAND_CHECK seq=47 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.2257457Z VECTOR_COMMAND_CHECK seq=48 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.3253815Z VECTOR_COMMAND_CHECK seq=49 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.3254615Z VECTOR_COMMAND_CHECK seq=50 result=ACCEPTED replayed=false
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.4260386Z VECTOR_FAILOVER_PASS {   "test": "three-local-process-failover-snapshot-restart",   "passed": true,   "independentMachines": false,   "syncLevel": 2,   "oldLeader": 0,   "newLeader": 1,   "killToNextConfirmedCommandMs": 11560.989,   "finalCommandSeq": 57,   "finalEventSeq": 59,   "finalMarketSeq": 6,   "outboxBackpressureAndRecovery": true,   "chunkedCoreSnapshotVerified": true,   "stateHash": "b064fc0f0e58768bcb2d0fd4ad34a4b0965d89ca29ecd4b5689e69f437e1fb5e" } 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.4265399Z gradle/actions: Writing build results to /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/_temp/.gradle-actions/build-results/__run_2-1792987925447.json
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.4576055Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.4577455Z BUILD SUCCESSFUL in 20s
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.4578137Z 4 actionable tasks: 1 executed, 3 up-to-date
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.9513004Z test_all_repetitions_retained_and_mixed_rate_not_claimed_stable (test_analyze_capacity.CapacityAnalysisTest.test_all_repetitions_retained_and_mixed_rate_not_claimed_stable) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.9602614Z test_any_explicit_load_identity_requires_all_three_valid_fields (test_analyze_capacity.CapacityAnalysisTest.test_any_explicit_load_identity_requires_all_three_valid_fields) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.9606202Z test_backlog_uses_second_half_window_and_excludes_drain (test_analyze_capacity.CapacityAnalysisTest.test_backlog_uses_second_half_window_and_excludes_drain) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.9642597Z test_cli_writes_all_trials_json_csv_and_explicit_no_plot_status (test_analyze_capacity.CapacityAnalysisTest.test_cli_writes_all_trials_json_csv_and_explicit_no_plot_status) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.9679595Z test_client_resource_modes_get_separate_fingerprints_and_legacy_is_preserved (test_analyze_capacity.CapacityAnalysisTest.test_client_resource_modes_get_separate_fingerprints_and_legacy_is_preserved) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.9749808Z test_different_prepared_state_bundle_and_node_settings_are_separate_groups (test_analyze_capacity.CapacityAnalysisTest.test_different_prepared_state_bundle_and_node_settings_are_separate_groups) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.9789831Z test_different_request_timeout_is_not_merged_into_same_capacity_group (test_analyze_capacity.CapacityAnalysisTest.test_different_request_timeout_is_not_merged_into_same_capacity_group) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.9803993Z test_disagreeing_explicit_source_revision_and_release_is_unverified (test_analyze_capacity.CapacityAnalysisTest.test_disagreeing_explicit_source_revision_and_release_is_unverified) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.9848108Z test_distinct_load_bundle_sha_is_not_merged_with_identical_nodes (test_analyze_capacity.CapacityAnalysisTest.test_distinct_load_bundle_sha_is_not_merged_with_identical_nodes) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.9860261Z test_drain_is_not_counted_as_arrival_window_goodput (test_analyze_capacity.CapacityAnalysisTest.test_drain_is_not_counted_as_arrival_window_goodput) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.9874152Z test_drops_keep_conditional_p99_but_remove_all_offered_finite_p99 (test_analyze_capacity.CapacityAnalysisTest.test_drops_keep_conditional_p99_but_remove_all_offered_finite_p99) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.9897125Z test_failure_artifact_and_missing_final_result_never_mark_stable (test_analyze_capacity.CapacityAnalysisTest.test_failure_artifact_and_missing_final_result_never_mark_stable) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.9908583Z test_legacy_load_identity_defaults_to_common_node_bundle (test_analyze_capacity.CapacityAnalysisTest.test_legacy_load_identity_defaults_to_common_node_bundle) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.9947969Z test_load_release_must_be_absolute_and_match_its_commit (test_analyze_capacity.CapacityAnalysisTest.test_load_release_must_be_absolute_and_match_its_commit) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.9961964Z test_malformed_arrival_index_is_retained_as_invalid_not_tool_crash (test_analyze_capacity.CapacityAnalysisTest.test_malformed_arrival_index_is_retained_as_invalid_not_tool_crash) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:23.9977174Z test_missing_identity_is_explicitly_unverified_not_stable (test_analyze_capacity.CapacityAnalysisTest.test_missing_identity_is_explicitly_unverified_not_stable) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0001125Z test_release_commit_is_derived_and_different_release_is_not_merged (test_analyze_capacity.CapacityAnalysisTest.test_release_commit_is_derived_and_different_release_is_not_merged) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0032283Z test_scheduler_invalid_term_change_or_csv_count_mismatch_invalidates_measurement (test_analyze_capacity.CapacityAnalysisTest.test_scheduler_invalid_term_change_or_csv_count_mismatch_invalidates_measurement) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0088643Z test_separate_load_revision_is_legal_and_same_new_load_code_compares_across_workers (test_analyze_capacity.CapacityAnalysisTest.test_separate_load_revision_is_legal_and_same_new_load_code_compares_across_workers) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0100204Z test_short_window_and_missing_backlog_observations_are_not_instability_proof (test_analyze_capacity.CapacityAnalysisTest.test_short_window_and_missing_backlog_observations_are_not_instability_proof) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0103590Z test_source_alias_and_rate_worker_metadata_do_not_change_effective_identity (test_analyze_capacity.CapacityAnalysisTest.test_source_alias_and_rate_worker_metadata_do_not_change_effective_identity) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0119791Z test_stable_finite_trial_is_recomputed_without_latency_sla (test_analyze_capacity.CapacityAnalysisTest.test_stable_finite_trial_is_recomputed_without_latency_sla) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0132838Z test_unknown_server_rejection_and_unsent_are_separate (test_analyze_capacity.CapacityAnalysisTest.test_unknown_server_rejection_and_unsent_are_separate) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0170480Z test_arrival_error_order_is_preserved_before_backlog_and_offered_error (test_analyze_capacity_streaming.StreamingCapacityAnalysisTest.test_arrival_error_order_is_preserved_before_backlog_and_offered_error) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0214112Z test_cli_preserves_summary_and_capacity_csv (test_analyze_capacity_streaming.StreamingCapacityAnalysisTest.test_cli_preserves_summary_and_capacity_csv) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0218164Z test_exact_large_int_percentiles_fallback_without_truncation (test_analyze_capacity_streaming.StreamingCapacityAnalysisTest.test_exact_large_int_percentiles_fallback_without_truncation) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0242319Z test_hash_is_exact_bytes_and_arrivals_are_opened_once (test_analyze_capacity_streaming.StreamingCapacityAnalysisTest.test_hash_is_exact_bytes_and_arrivals_are_opened_once) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0316622Z test_late_parse_error_precedes_earlier_row_width_failure (test_analyze_capacity_streaming.StreamingCapacityAnalysisTest.test_late_parse_error_precedes_earlier_row_width_failure) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0373442Z test_late_parser_error_and_duplicate_or_empty_header_are_all_or_nothing (test_analyze_capacity_streaming.StreamingCapacityAnalysisTest.test_late_parser_error_and_duplicate_or_empty_header_are_all_or_nothing) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0392306Z test_late_row_width_error_discards_every_prior_aggregate_and_hash (test_analyze_capacity_streaming.StreamingCapacityAnalysisTest.test_late_row_width_error_discards_every_prior_aggregate_and_hash) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0430593Z test_late_structure_error_precedes_uncaught_early_numeric_error (test_analyze_capacity_streaming.StreamingCapacityAnalysisTest.test_late_structure_error_precedes_uncaught_early_numeric_error) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0481651Z test_missing_optional_columns_and_required_key_errors (test_analyze_capacity_streaming.StreamingCapacityAnalysisTest.test_missing_optional_columns_and_required_key_errors) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0505947Z test_nonfinite_invalid_numeric_and_legacy_negative_confirmation (test_analyze_capacity_streaming.StreamingCapacityAnalysisTest.test_nonfinite_invalid_numeric_and_legacy_negative_confirmation) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0528090Z test_per_row_partial_accumulation_and_issue_order_matches_legacy (test_analyze_capacity_streaming.StreamingCapacityAnalysisTest.test_per_row_partial_accumulation_and_issue_order_matches_legacy) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0567316Z test_randomized_scalar_and_error_parity (test_analyze_capacity_streaming.StreamingCapacityAnalysisTest.test_randomized_scalar_and_error_parity) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0592785Z test_reference_hash_guard_rejects_modified_dependency (test_analyze_capacity_streaming.StreamingCapacityAnalysisTest.test_reference_hash_guard_rejects_modified_dependency) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0644413Z test_valid_drop_rejection_unknown_and_failure_scope_parity (test_analyze_capacity_streaming.StreamingCapacityAnalysisTest.test_valid_drop_rejection_unknown_and_failure_scope_parity) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0670228Z test_valid_structure_keeps_uncaught_numeric_overflow_behavior (test_analyze_capacity_streaming.StreamingCapacityAnalysisTest.test_valid_structure_keeps_uncaught_numeric_overflow_behavior) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0679197Z test_archive_never_overwrites_either_existing_output (test_capacity_arrival_archive.CapacityArrivalArchiveTest.test_archive_never_overwrites_either_existing_output) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0685978Z test_archive_requires_expected_sha_and_never_publishes_mismatched_evidence (test_capacity_arrival_archive.CapacityArrivalArchiveTest.test_archive_requires_expected_sha_and_never_publishes_mismatched_evidence) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0786446Z test_compressed_tamper_is_rejected_before_any_csv_is_published (test_capacity_arrival_archive.CapacityArrivalArchiveTest.test_compressed_tamper_is_rejected_before_any_csv_is_published) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0875209Z test_concurrent_csv_creation_wins_without_being_overwritten_or_cleaned (test_capacity_arrival_archive.CapacityArrivalArchiveTest.test_concurrent_csv_creation_wins_without_being_overwritten_or_cleaned) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.0955177Z test_declared_sizes_and_manifest_names_are_bounded_and_fixed (test_capacity_arrival_archive.CapacityArrivalArchiveTest.test_declared_sizes_and_manifest_names_are_bounded_and_fixed) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1034967Z test_decoded_size_limit_cannot_be_bypassed_by_false_manifest_size (test_capacity_arrival_archive.CapacityArrivalArchiveTest.test_decoded_size_limit_cannot_be_bypassed_by_false_manifest_size) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1162868Z test_gzip_and_manifest_are_deterministic_without_timestamp_or_filename (test_capacity_arrival_archive.CapacityArrivalArchiveTest.test_gzip_and_manifest_are_deterministic_without_timestamp_or_filename) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1174498Z test_mutating_input_is_detected_and_only_owned_temporary_files_are_cleaned (test_capacity_arrival_archive.CapacityArrivalArchiveTest.test_mutating_input_is_detected_and_only_owned_temporary_files_are_cleaned) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1279084Z test_raw_hash_and_byte_count_are_independently_verified (test_capacity_arrival_archive.CapacityArrivalArchiveTest.test_raw_hash_and_byte_count_are_independently_verified) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1351617Z test_restore_verifies_existing_csv_without_modifying_it (test_capacity_arrival_archive.CapacityArrivalArchiveTest.test_restore_verifies_existing_csv_without_modifying_it) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1450523Z test_round_trip_preserves_every_row_and_original_csv (test_capacity_arrival_archive.CapacityArrivalArchiveTest.test_round_trip_preserves_every_row_and_original_csv) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1532208Z test_symlink_inputs_outputs_manifest_and_directory_are_rejected (test_capacity_arrival_archive.CapacityArrivalArchiveTest.test_symlink_inputs_outputs_manifest_and_directory_are_rejected) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1601554Z test_updated_compressed_digest_does_not_hide_truncated_gzip (test_capacity_arrival_archive.CapacityArrivalArchiveTest.test_updated_compressed_digest_does_not_hide_truncated_gzip) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1667203Z test_detail_reads_are_bounded_and_thread_scan_truncation_explicit (test_capacity_attribution.CapacityAttributionTest.test_detail_reads_are_bounded_and_thread_scan_truncation_explicit) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1689060Z test_exact_cli_aliases_and_defaults_for_controller (test_capacity_attribution.CapacityAttributionTest.test_exact_cli_aliases_and_defaults_for_controller) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1704181Z test_fd_ownership_lost_during_read_is_not_attributed_to_process (test_capacity_attribution.CapacityAttributionTest.test_fd_ownership_lost_during_read_is_not_attributed_to_process) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1717399Z test_fd_scan_failure_does_not_look_like_no_udp_sockets (test_capacity_attribution.CapacityAttributionTest.test_fd_scan_failure_does_not_look_like_no_udp_sockets) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1730207Z test_graceful_signal_emits_complete_and_flushes_jsonl (test_capacity_attribution.CapacityAttributionTest.test_graceful_signal_emits_complete_and_flushes_jsonl) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1741437Z test_ipv6_and_malformed_owned_udp_are_explicit (test_capacity_attribution.CapacityAttributionTest.test_ipv6_and_malformed_owned_udp_are_explicit) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1754354Z test_limits_missing_records_tables_and_sysctls_remain_visible (test_capacity_attribution.CapacityAttributionTest.test_limits_missing_records_tables_and_sysctls_remain_visible) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1763105Z test_output_existing_file_is_never_overwritten_and_handlers_restored (test_capacity_attribution.CapacityAttributionTest.test_output_existing_file_is_never_overwritten_and_handlers_restored) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1780423Z test_pid_reuse_before_or_during_sample_discards_all_metrics (test_capacity_attribution.CapacityAttributionTest.test_pid_reuse_before_or_during_sample_discards_all_metrics) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1796870Z test_same_thread_cpu_delta_and_missing_wait_channel_are_not_fake_zero (test_capacity_attribution.CapacityAttributionTest.test_same_thread_cpu_delta_and_missing_wait_channel_are_not_fake_zero) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1811359Z test_thread_reuse_does_not_subtract_counters_from_old_identity (test_capacity_attribution.CapacityAttributionTest.test_thread_reuse_does_not_subtract_counters_from_old_identity) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1821493Z test_thread_stat_comm_parentheses_and_schedstat_units (test_capacity_attribution.CapacityAttributionTest.test_thread_stat_comm_parentheses_and_schedstat_units) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1828011Z test_udp_join_excludes_unowned_rows_and_peer_uid_pointer (test_capacity_attribution.CapacityAttributionTest.test_udp_join_excludes_unowned_rows_and_peer_uid_pointer) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1838190Z test_verified_process_reports_details_and_no_command_line (test_capacity_attribution.CapacityAttributionTest.test_verified_process_reports_details_and_no_command_line) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1839757Z test_350k_sessions_and_state_profile_have_distinct_exact_argument_digests (test_capacity_config.CapacityConfigTest.test_350k_sessions_and_state_profile_have_distinct_exact_argument_digests) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1841564Z test_any_new_flag_requires_complete_runtime_evidence (test_capacity_config.CapacityConfigTest.test_any_new_flag_requires_complete_runtime_evidence) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1842816Z test_client_transport_fixed_fields_are_optional_complete_and_typed (test_capacity_config.CapacityConfigTest.test_client_transport_fixed_fields_are_optional_complete_and_typed) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1844094Z test_digest_preserves_argument_boundaries_and_final_nul (test_capacity_config.CapacityConfigTest.test_digest_preserves_argument_boundaries_and_final_nul) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1845455Z test_direct_256_remains_independent_sessions_and_worker_changes_change_argv (test_capacity_config.CapacityConfigTest.test_direct_256_remains_independent_sessions_and_worker_changes_change_argv) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1846667Z test_driver_count_must_match_mode_and_worker_count (test_capacity_config.CapacityConfigTest.test_driver_count_must_match_mode_and_worker_count) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1847943Z test_driver_mode_fills_profile_and_receive_positions_without_changing_legacy_argv (test_capacity_config.CapacityConfigTest.test_driver_mode_fills_profile_and_receive_positions_without_changing_legacy_argv) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1849758Z test_driver_threading_argument_is_optional_and_strict (test_capacity_config.CapacityConfigTest.test_driver_threading_argument_is_optional_and_strict) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1881292Z test_exact_terminal_unknown_can_verify_configuration_without_creating_business_result (test_capacity_config.CapacityConfigTest.test_exact_terminal_unknown_can_verify_configuration_without_creating_business_result) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1882813Z test_explicit_default_and_shared_properties_change_actual_argument_digest (test_capacity_config.CapacityConfigTest.test_explicit_default_and_shared_properties_change_actual_argument_digest) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1886049Z test_explicit_direct_and_multiplexed_flags_match_physical_runtime_and_full_digest (test_capacity_config.CapacityConfigTest.test_explicit_direct_and_multiplexed_flags_match_physical_runtime_and_full_digest) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1888967Z test_explicit_mode_requires_matching_threading_and_exact_idle_policy_startup (test_capacity_config.CapacityConfigTest.test_explicit_mode_requires_matching_threading_and_exact_idle_policy_startup) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1891253Z test_explicit_receive_buffer_requires_matching_started_record (test_capacity_config.CapacityConfigTest.test_explicit_receive_buffer_requires_matching_started_record) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1893038Z test_flag_and_declared_mode_must_agree (test_capacity_config.CapacityConfigTest.test_flag_and_declared_mode_must_agree) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1894945Z test_historical_cloud_argument_receipts_still_match_exactly (test_capacity_config.CapacityConfigTest.test_historical_cloud_argument_receipts_still_match_exactly) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1907860Z test_historical_node_argv_is_unchanged_without_new_opt_in (test_capacity_config.CapacityConfigTest.test_historical_node_argv_is_unchanged_without_new_opt_in) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1925225Z test_in_progress_unknown_is_skipped_even_with_failed_run_opt_in (test_capacity_config.CapacityConfigTest.test_in_progress_unknown_is_skipped_even_with_failed_run_opt_in) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1927323Z test_legacy_runtime_absence_and_explicit_empty_flags_pass (test_capacity_config.CapacityConfigTest.test_legacy_runtime_absence_and_explicit_empty_flags_pass) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1929493Z test_load_artifact_and_profile_remain_in_expected_argv (test_capacity_config.CapacityConfigTest.test_load_artifact_and_profile_remain_in_expected_argv) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1931938Z test_maximum_cluster_sessions_default_is_historical_and_explicit_values_are_strict (test_capacity_config.CapacityConfigTest.test_maximum_cluster_sessions_default_is_historical_and_explicit_values_are_strict) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1934480Z test_multiplexed_256_requires_true_pending_and_logical_runtime_bounds (test_capacity_config.CapacityConfigTest.test_multiplexed_256_requires_true_pending_and_logical_runtime_bounds) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1937096Z test_nak_configuration_is_all_or_none_bounded_integer_and_retains_legacy_absence (test_capacity_config.CapacityConfigTest.test_nak_configuration_is_all_or_none_bounded_integer_and_retains_legacy_absence) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1939627Z test_nak_properties_are_exactly_once_before_classpath_without_hidden_overrides (test_capacity_config.CapacityConfigTest.test_nak_properties_are_exactly_once_before_classpath_without_hidden_overrides) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1941949Z test_nak_started_fields_require_actual_effective_value_and_unchanged_ratio (test_capacity_config.CapacityConfigTest.test_nak_started_fields_require_actual_effective_value_and_unchanged_ratio) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1944025Z test_new_isolated_default_and_both_explicit_modes_pass (test_capacity_config.CapacityConfigTest.test_new_isolated_default_and_both_explicit_modes_pass) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1946049Z test_new_receive_buffer_keeps_profile_in_seventh_position (test_capacity_config.CapacityConfigTest.test_new_receive_buffer_keeps_profile_in_seventh_position) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1947877Z test_node_mode_is_in_nul_delimited_command_digest (test_capacity_config.CapacityConfigTest.test_node_mode_is_in_nul_delimited_command_digest) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1950691Z test_node_sessions_require_one_exact_jvm_property_without_overrides (test_capacity_config.CapacityConfigTest.test_node_sessions_require_one_exact_jvm_property_without_overrides) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1952888Z test_only_a_single_exact_allowlisted_jvm_property_is_allowed (test_capacity_config.CapacityConfigTest.test_only_a_single_exact_allowlisted_jvm_property_is_allowed) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.1997625Z test_optional_nak_values_enter_real_comparison_identity_and_command_hashes (test_capacity_config.CapacityConfigTest.test_optional_nak_values_enter_real_comparison_identity_and_command_hashes) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2001384Z test_partial_runtime_declarations_do_not_fall_back_to_legacy (test_capacity_config.CapacityConfigTest.test_partial_runtime_declarations_do_not_fall_back_to_legacy) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2005123Z test_pending_capacity_is_optional_for_legacy_128_but_strict_when_present (test_capacity_config.CapacityConfigTest.test_pending_capacity_is_optional_for_legacy_128_but_strict_when_present) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2007193Z test_receive_buffer_argument_requires_bounded_integer (test_capacity_config.CapacityConfigTest.test_receive_buffer_argument_requires_bounded_integer) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2010030Z test_shared_driver_and_nak_load_flags_are_allowlisted_and_attested_together (test_capacity_config.CapacityConfigTest.test_shared_driver_and_nak_load_flags_are_allowlisted_and_attested_together) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2094882Z test_terminal_unknown_flag_rejects_other_failures_missing_receipt_and_snapshot_without_annotation (test_capacity_config.CapacityConfigTest.test_terminal_unknown_flag_rejects_other_failures_missing_receipt_and_snapshot_without_annotation) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2099267Z test_transport_flags_reject_duplicates_conflicts_missing_fixed_or_runtime (test_capacity_config.CapacityConfigTest.test_transport_flags_reject_duplicates_conflicts_missing_fixed_or_runtime) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2150338Z test_transport_settings_enter_real_comparison_identity_without_mutating_legacy_fixed (test_capacity_config.CapacityConfigTest.test_transport_settings_enter_real_comparison_identity_without_mutating_legacy_fixed) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2154659Z test_unflagged_actual_runtime_defaults_are_compatible_without_new_fingerprint_settings (test_capacity_config.CapacityConfigTest.test_unflagged_actual_runtime_defaults_are_compatible_without_new_fingerprint_settings) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2157424Z test_unflagged_direct_transport_metadata_preserves_old_argv_and_comparison_identity (test_capacity_config.CapacityConfigTest.test_unflagged_direct_transport_metadata_preserves_old_argv_and_comparison_identity) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2159611Z test_unknown_modes_and_aeron_ownership_are_rejected (test_capacity_config.CapacityConfigTest.test_unknown_modes_and_aeron_ownership_are_rejected) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2166740Z test_actual_official_members_output_and_stable_counters_pass (test_capacity_leader.CapacityLeaderTest.test_actual_official_members_output_and_stable_counters_pass) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2179288Z test_candidate_or_second_leader_is_rejected (test_capacity_leader.CapacityLeaderTest.test_candidate_or_second_leader_is_rejected) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2212567Z test_cli_writes_reviewable_result_and_failure_exit_code (test_capacity_leader.CapacityLeaderTest.test_cli_writes_reviewable_result_and_failure_exit_code) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2223382Z test_collector_failure_and_invalid_json_are_reported (test_capacity_leader.CapacityLeaderTest.test_collector_failure_and_invalid_json_are_reported) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2245410Z test_counter_re_registration_is_not_silently_joined (test_capacity_leader.CapacityLeaderTest.test_counter_re_registration_is_not_silently_joined) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2271082Z test_duplicate_role_counter_is_ambiguous (test_capacity_leader.CapacityLeaderTest.test_duplicate_role_counter_is_ambiguous) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2285161Z test_election_counter_change_or_open_election_invalidates_fixed_period (test_capacity_leader.CapacityLeaderTest.test_election_counter_change_or_open_election_invalidates_fixed_period) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2295053Z test_missing_file_is_unverified (test_capacity_leader.CapacityLeaderTest.test_missing_file_is_unverified) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2320740Z test_missing_or_wrong_cluster_counter_cannot_pass (test_capacity_leader.CapacityLeaderTest.test_missing_or_wrong_cluster_counter_cannot_pass) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2330582Z test_non_active_module_is_rejected (test_capacity_leader.CapacityLeaderTest.test_non_active_module_is_rejected) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2338500Z test_official_command_error_is_rejected_even_with_plausible_stdout (test_capacity_leader.CapacityLeaderTest.test_official_command_error_is_rejected_even_with_plausible_stdout) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2347608Z test_same_leader_with_new_term_is_rejected (test_capacity_leader.CapacityLeaderTest.test_same_leader_with_new_term_is_rejected) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2372663Z test_term_transition_with_matching_pre_post_is_not_hidden (test_capacity_leader.CapacityLeaderTest.test_term_transition_with_matching_pre_post_is_not_hidden) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2382179Z test_truncated_collection_cannot_pass (test_capacity_leader.CapacityLeaderTest.test_truncated_collection_cannot_pass) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2398042Z test_cli_records_exact_input_sha_and_refuses_source_overwrite (test_capacity_repeats.CapacityRepeatsTest.test_cli_records_exact_input_sha_and_refuses_source_overwrite) ... usage: python3 -m unittest [-h] summary_json output_json
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2401133Z python3 -m unittest: error: Output must not overwrite the source summary
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2402089Z ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2404794Z test_cross_phase_mixed_retains_every_observation_and_does_not_claim_repeated_stability (test_capacity_repeats.CapacityRepeatsTest.test_cross_phase_mixed_retains_every_observation_and_does_not_claim_repeated_stability) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2408185Z test_duplicate_ids_are_refused_and_worker_counts_are_not_merged (test_capacity_repeats.CapacityRepeatsTest.test_duplicate_ids_are_refused_and_worker_counts_are_not_merged) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2410590Z test_invalid_or_short_trials_cannot_be_cherry_picked_into_repeated_result (test_capacity_repeats.CapacityRepeatsTest.test_invalid_or_short_trials_cannot_be_cherry_picked_into_repeated_result) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2412968Z test_loss_unknown_totals_are_separate_and_missing_values_are_not_zero (test_capacity_repeats.CapacityRepeatsTest.test_loss_unknown_totals_are_separate_and_missing_values_are_not_zero) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2415151Z test_missing_or_malformed_fingerprint_is_not_silently_grouped (test_capacity_repeats.CapacityRepeatsTest.test_missing_or_malformed_fingerprint_is_not_silently_grouped) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2417220Z test_mixed_fingerprint_is_rejected_even_for_an_invalid_trial (test_capacity_repeats.CapacityRepeatsTest.test_mixed_fingerprint_is_rejected_even_for_an_invalid_trial) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2419744Z test_single_observation_is_not_a_repeat_and_different_windows_remain_separate (test_capacity_repeats.CapacityRepeatsTest.test_single_observation_is_not_a_repeat_and_different_windows_remain_separate) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.2422104Z test_two_agreeing_cross_phase_trials_establish_repeated_finite_window (test_capacity_repeats.CapacityRepeatsTest.test_two_agreeing_cross_phase_trials_establish_repeated_finite_window) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.3623457Z test_bounded_run_flushes_json_lines_refuses_overwrite_and_has_completion (test_capacity_telemetry.BoundedRunTest.test_bounded_run_flushes_json_lines_refuses_overwrite_and_has_completion) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.3626095Z test_nonfinite_or_unbounded_durations_are_refused (test_capacity_telemetry.BoundedRunTest.test_nonfinite_or_unbounded_durations_are_refused) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.4885531Z test_sigterm_preserves_parseable_partial_evidence_and_completion (test_capacity_telemetry.BoundedRunTest.test_sigterm_preserves_parseable_partial_evidence_and_completion) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.4890734Z test_cgroup_mapping_honors_delegated_root_and_escaped_mountpoint (test_capacity_telemetry.CounterParsersTest.test_cgroup_mapping_honors_delegated_root_and_escaped_mountpoint) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.4892831Z test_cgroup_mismatched_root_and_traversal_are_refused (test_capacity_telemetry.CounterParsersTest.test_cgroup_mismatched_root_and_traversal_are_refused) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.4897973Z test_cgroup_samples_current_leaf_and_missing_file_errors (test_capacity_telemetry.CounterParsersTest.test_cgroup_samples_current_leaf_and_missing_file_errors) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.4906340Z test_cgroup_v1_maps_separate_cpu_memory_leaves_with_raw_units (test_capacity_telemetry.CounterParsersTest.test_cgroup_v1_maps_separate_cpu_memory_leaves_with_raw_units) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.4908549Z test_cpu_quota_and_zero_memory_counter_are_not_missing (test_capacity_telemetry.CounterParsersTest.test_cpu_quota_and_zero_memory_counter_are_not_missing) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.4911340Z test_network_selected_interface_only_and_udp_header_validation (test_capacity_telemetry.CounterParsersTest.test_network_selected_interface_only_and_udp_header_validation) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.4967593Z test_gone_zombie_or_malformed_record_is_explicit_missing_not_zero (test_capacity_telemetry.ProcessSampleTest.test_gone_zombie_or_malformed_record_is_explicit_missing_not_zero) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.4975318Z test_identity_change_during_collection_discards_metrics (test_capacity_telemetry.ProcessSampleTest.test_identity_change_during_collection_discards_metrics) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.4980106Z test_missing_io_does_not_erase_valid_other_metrics_or_fake_zero (test_capacity_telemetry.ProcessSampleTest.test_missing_io_does_not_erase_valid_other_metrics_or_fake_zero) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5001498Z test_pid_reuse_or_changed_argv_refuses_all_metrics (test_capacity_telemetry.ProcessSampleTest.test_pid_reuse_or_changed_argv_refuses_all_metrics) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5017940Z test_sampling_only_visits_fixed_node_records_and_explicit_load_record (test_capacity_telemetry.ProcessSampleTest.test_sampling_only_visits_fixed_node_records_and_explicit_load_record) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5031292Z test_verified_sample_parses_odd_comm_units_and_omits_command_arguments (test_capacity_telemetry.ProcessSampleTest.test_verified_sample_parses_odd_comm_units_and_omits_command_arguments) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5139563Z test_recorded_receipts_are_complete_and_unchanged (test_historical_fixtures.HistoricalFixtureTest.test_recorded_receipts_are_complete_and_unchanged) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5237231Z test_explicit_default_and_tuned_values_add_one_node_jvm_flag_only (test_node_data_path_config.NodeDataPathConfigurationTest.test_explicit_default_and_tuned_values_add_one_node_jvm_flag_only) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5392772Z test_explicit_factor_enters_real_annotation_and_retains_failed_scope (test_node_data_path_config.NodeDataPathConfigurationTest.test_explicit_factor_enters_real_annotation_and_retains_failed_scope) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5491369Z test_invalid_canonical_values_and_hidden_jvm_environment_are_rejected (test_node_data_path_config.NodeDataPathConfigurationTest.test_invalid_canonical_values_and_hidden_jvm_environment_are_rejected) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5581085Z test_mismatched_actual_agent_evidence_fails_before_annotation (test_node_data_path_config.NodeDataPathConfigurationTest.test_mismatched_actual_agent_evidence_fails_before_annotation) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5583609Z test_node_property_is_optional_typed_exact_once_and_before_classpath (test_node_data_path_config.NodeDataPathConfigurationTest.test_node_property_is_optional_typed_exact_once_and_before_classpath) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5585862Z test_node_tuning_cannot_be_added_to_load_generator_flags (test_node_data_path_config.NodeDataPathConfigurationTest.test_node_tuning_cannot_be_added_to_load_generator_flags) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5589311Z test_runtime_evidence_covers_actual_parameters_and_distinct_instances (test_node_data_path_config.NodeDataPathConfigurationTest.test_runtime_evidence_covers_actual_parameters_and_distinct_instances) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5596544Z test_unset_argv_and_historical_fingerprint_are_unchanged (test_node_data_path_config.NodeDataPathConfigurationTest.test_unset_argv_and_historical_fingerprint_are_unchanged) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5601819Z test_absent_process_is_absent (test_owned_process_identity.IdentityFixtureTest.test_absent_process_is_absent) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5609486Z test_changed_start_time_is_refused_even_with_complete_arguments (test_owned_process_identity.IdentityFixtureTest.test_changed_start_time_is_refused_even_with_complete_arguments) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5612328Z test_complete_arguments_preserve_bytes_empty_values_and_start_time (test_owned_process_identity.IdentityFixtureTest.test_complete_arguments_preserve_bytes_empty_values_and_start_time) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5634625Z test_empty_executable_is_not_an_identity (test_owned_process_identity.IdentityFixtureTest.test_empty_executable_is_not_an_identity) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5638304Z test_exit_between_stat_and_empty_command_line_is_proven_by_second_stat (test_owned_process_identity.IdentityFixtureTest.test_exit_between_stat_and_empty_command_line_is_proven_by_second_stat) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5645089Z test_exiting_empty_command_line_waits_beyond_old_retry_before_terminal_proof (test_owned_process_identity.IdentityFixtureTest.test_exiting_empty_command_line_waits_beyond_old_retry_before_terminal_proof) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5777627Z test_exiting_flag_alone_never_proves_absence_and_wait_is_read_bounded (test_owned_process_identity.IdentityFixtureTest.test_exiting_flag_alone_never_proves_absence_and_wait_is_read_bounded) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5784531Z test_exiting_flag_disappearing_while_live_is_refused (test_owned_process_identity.IdentityFixtureTest.test_exiting_flag_disappearing_while_live_is_refused) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5793752Z test_exiting_wait_also_obeys_monotonic_deadline (test_owned_process_identity.IdentityFixtureTest.test_exiting_wait_also_obeys_monotonic_deadline) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5798177Z test_exiting_wait_cannot_accept_a_different_birth_even_if_zombie (test_owned_process_identity.IdentityFixtureTest.test_exiting_wait_cannot_accept_a_different_birth_even_if_zombie) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5802801Z test_exiting_wait_disappearance_is_proven_absence (test_owned_process_identity.IdentityFixtureTest.test_exiting_wait_disappearance_is_proven_absence) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5805720Z test_exiting_wait_permission_failure_is_not_absence (test_owned_process_identity.IdentityFixtureTest.test_exiting_wait_permission_failure_is_not_absence) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5807634Z test_invalid_pid_types_are_refused (test_owned_process_identity.IdentityFixtureTest.test_invalid_pid_types_are_refused) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5814290Z test_live_empty_command_line_is_refused_after_bounded_retry (test_owned_process_identity.IdentityFixtureTest.test_live_empty_command_line_is_refused_after_bounded_retry) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5820031Z test_live_partial_arguments_are_refused_without_exposing_their_bytes (test_owned_process_identity.IdentityFixtureTest.test_live_partial_arguments_are_refused_without_exposing_their_bytes) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5839839Z test_malformed_stat_is_refused_before_arguments (test_owned_process_identity.IdentityFixtureTest.test_malformed_stat_is_refused_before_arguments) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5846818Z test_open_directory_cannot_switch_to_a_reused_path (test_owned_process_identity.IdentityFixtureTest.test_open_directory_cannot_switch_to_a_reused_path) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5865277Z test_oversized_arguments_are_bounded_and_refused (test_owned_process_identity.IdentityFixtureTest.test_oversized_arguments_are_bounded_and_refused) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5868311Z test_permission_failure_is_never_reported_as_absence (test_owned_process_identity.IdentityFixtureTest.test_permission_failure_is_never_reported_as_absence) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5870406Z test_symlink_process_directory_is_refused (test_owned_process_identity.IdentityFixtureTest.test_symlink_process_directory_is_refused) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5876204Z test_transient_live_empty_command_line_can_become_complete_without_absence (test_owned_process_identity.IdentityFixtureTest.test_transient_live_empty_command_line_can_become_complete_without_absence) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5878922Z test_wrong_pid_in_stat_is_refused (test_owned_process_identity.IdentityFixtureTest.test_wrong_pid_in_stat_is_refused) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5897728Z test_zombie_never_needs_command_line (test_owned_process_identity.IdentityFixtureTest.test_zombie_never_needs_command_line) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:24.5900142Z test_live_self_has_a_complete_stable_birth_and_command (test_owned_process_identity.LinuxProcessTest.test_live_self_has_a_complete_stable_birth_and_command) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:25.3126282Z test_owned_large_memory_natural_exit_keeps_proven_exit_semantics (test_owned_process_identity.LinuxProcessTest.test_owned_large_memory_natural_exit_keeps_proven_exit_semantics) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:25.6660354Z test_owned_short_lived_children_exit_without_unproven_live_absence (test_owned_process_identity.LinuxProcessTest.test_owned_short_lived_children_exit_without_unproven_live_absence) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:25.6665854Z test_java_version_probe_does_not_echo_secret_jvm_environment_options (test_preflight_and_lock.CgroupLimitsTest.test_java_version_probe_does_not_echo_secret_jvm_environment_options) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:25.6668202Z test_unmapped_membership_is_unknown_instead_of_reading_unrelated_root (test_preflight_and_lock.CgroupLimitsTest.test_unmapped_membership_is_unknown_instead_of_reading_unrelated_root) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:25.6670293Z test_v1_separate_mounts_delegated_root_and_escaped_mountpoint (test_preflight_and_lock.CgroupLimitsTest.test_v1_separate_mounts_delegated_root_and_escaped_mountpoint) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:25.6672072Z test_v2_process_and_ancestors_constrain_cpu_memory_and_cpuset (test_preflight_and_lock.CgroupLimitsTest.test_v2_process_and_ancestors_constrain_cpu_memory_and_cpuset) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:25.6673924Z test_zero_memory_limit_is_a_real_limit (test_preflight_and_lock.CgroupLimitsTest.test_zero_memory_limit_is_a_real_limit) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:25.7319587Z test_bash_reentry_preserves_the_lock_descriptor (test_preflight_and_lock.LauncherLockTest.test_bash_reentry_preserves_the_lock_descriptor) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:25.8470399Z test_inherited_descriptor_validation_and_drop_for_persistent_infrastructure (test_preflight_and_lock.LauncherLockTest.test_inherited_descriptor_validation_and_drop_for_persistent_infrastructure) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:25.9391295Z test_lock_survives_exec_rejects_second_launcher_and_releases_on_exit (test_preflight_and_lock.LauncherLockTest.test_lock_survives_exec_rejects_second_launcher_and_releases_on_exit) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:25.9394373Z test_128th_raw_admission_and_forged_observed_count_are_refused (test_retention_read_yield_audit_v4.ReadYieldAuditTest.test_128th_raw_admission_and_forged_observed_count_are_refused) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:25.9398169Z test_forged_open_bank_pending_credit_wrong_resume_and_early_drain_are_refused (test_retention_read_yield_audit_v4.ReadYieldAuditTest.test_forged_open_bank_pending_credit_wrong_resume_and_early_drain_are_refused) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:25.9401628Z test_legacy_closed_trace_stays_closed (test_retention_read_yield_audit_v4.ReadYieldAuditTest.test_legacy_closed_trace_stays_closed) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:25.9403649Z test_policy_registration_summary_and_resource_bound_must_all_match (test_retention_read_yield_audit_v4.ReadYieldAuditTest.test_policy_registration_summary_and_resource_bound_must_all_match) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:25.9405949Z test_valid_bounded_turn_binds_drain_to_its_original_admission_window (test_retention_read_yield_audit_v4.ReadYieldAuditTest.test_valid_bounded_turn_binds_drain_to_its_original_admission_window) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.4459147Z test_real_socket_authenticated_echo_ignores_invalid_requests (test_udp_preflight.DatagramSocketTest.test_real_socket_authenticated_echo_ignores_invalid_requests) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.6144608Z test_unreachable_peer_produces_failed_evidence_and_exits_on_deadline (test_udp_preflight.DatagramSocketTest.test_unreachable_peer_produces_failed_evidence_and_exits_on_deadline) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.6145923Z test_authentication_run_and_kind_are_checked_before_echo (test_udp_preflight.DatagramValidationTest.test_authentication_run_and_kind_are_checked_before_echo) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7113711Z test_key_is_never_overwritten_or_accepted_with_public_permissions (test_udp_preflight.DatagramValidationTest.test_key_is_never_overwritten_or_accepted_with_public_permissions) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7115055Z test_loss_duplicate_order_source_and_unmatched_echo_are_separate (test_udp_preflight.DatagramValidationTest.test_loss_duplicate_order_source_and_unmatched_echo_are_separate) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7117661Z test_only_explicit_private_addresses_are_accepted (test_udp_preflight.DatagramValidationTest.test_only_explicit_private_addresses_are_accepted) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7119855Z test_actual_metadata_cannot_claim_cluster_positions_for_the_ordinary_channel (test_verify_sealed_read_route.SealedRouteAuditTest.test_actual_metadata_cannot_claim_cluster_positions_for_the_ordinary_channel) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7122613Z test_checksum_and_outer_lengths_are_checked_before_embedded_payload (test_verify_sealed_read_route.SealedRouteAuditTest.test_checksum_and_outer_lengths_are_checked_before_embedded_payload) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7161426Z test_junit_rejects_skips_and_roots_outside_its_own_build (test_verify_sealed_read_route.SealedRouteAuditTest.test_junit_rejects_skips_and_roots_outside_its_own_build) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7174196Z test_ledger_rejects_gaps_truncation_and_symlinks (test_verify_sealed_read_route.SealedRouteAuditTest.test_ledger_rejects_gaps_truncation_and_symlinks) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7208562Z test_cloud_summary_preserves_http_checks_trace_and_metadata_provenance (test_workbench_verifier_manifest.WorkbenchDeploymentManifestTest.test_cloud_summary_preserves_http_checks_trace_and_metadata_provenance) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7210086Z test_declared_isolation_does_not_become_a_verified_independent_machine_claim (test_workbench_verifier_manifest.WorkbenchDeploymentManifestTest.test_declared_isolation_does_not_become_a_verified_independent_machine_claim) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7210982Z test_default_keeps_original_local_scope_and_limitation (test_workbench_verifier_manifest.WorkbenchDeploymentManifestTest.test_default_keeps_original_local_scope_and_limitation) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7227001Z test_manifest_cannot_override_actual_nonreplicated_http_backend (test_workbench_verifier_manifest.WorkbenchDeploymentManifestTest.test_manifest_cannot_override_actual_nonreplicated_http_backend) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7251103Z test_manifest_schema_rejects_wrong_types_unknown_fields_and_unusable_ip_claims (test_workbench_verifier_manifest.WorkbenchDeploymentManifestTest.test_manifest_schema_rejects_wrong_types_unknown_fields_and_unusable_ip_claims) ... ok
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7251912Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7252121Z ----------------------------------------------------------------------
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7252434Z Ran 206 tests in 2.778s
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7252579Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7252665Z OK
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7253277Z {"summary": "/tmp/tmpo5_askva/analysis/summary.json", "trials": 2, "valid": 1, "observedStableWindows": 1, "plots": {"status": "not-requested"}}
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7253767Z VERIFIED_CONFIGURATIONS 0
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7253918Z VERIFIED_CONFIGURATIONS 1
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7254066Z VERIFIED_CONFIGURATIONS 0
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:26.7254513Z {"output": "/tmp/tmpnhqc93f8/repeats.json", "trials": 2, "highestRepeatedlyStableRate": 14000.0, "lowestRepeatedlyNonstableRate": null, "mixedRates": []}
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:27.9235015Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:27.9237891Z added 70 packages, and audited 71 packages in 1s
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:27.9238605Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:27.9238987Z 10 packages are looking for funding
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:27.9239750Z   run `npm fund` for details
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:27.9241872Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:27.9242185Z found 0 vulnerabilities
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:27.9248989Z npm warn install-scripts 1 package has install scripts not yet covered by allowScripts:
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:27.9250659Z npm warn install-scripts   esbuild@0.25.12 (postinstall: node install.js)
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:27.9252193Z npm warn install-scripts
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:27.9253178Z npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to allow.
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:28.0249497Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:28.0251328Z > vectormatch-console@0.1.0 build
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:28.0252031Z > tsc -b && vite build
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:28.0252272Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:29.5231059Z ^[[36mvite v6.4.5 ^[[32mbuilding for production...^[[36m^[[39m
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:29.5647770Z transforming...
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:30.2911554Z ^[[32m✓^[[39m 33 modules transformed.
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:30.4732194Z rendering chunks...
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:30.5316006Z computing gzip size...
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:30.5597450Z ^[[2mdist/^[[22m^[[32mindex.html                 ^[[39m^[[1m^[[2m  0.68 kB^[[22m^[[1m^[[22m^[[2m │ gzip:  0.40 kB^[[22m
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:30.5598484Z ^[[2mdist/^[[22m^[[2massets/^[[22m^[[35mindex-DrvF4Agj.css  ^[[39m^[[1m^[[2m 53.25 kB^[[22m^[[1m^[[22m^[[2m │ gzip: 11.98 kB^[[22m
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:30.5599621Z ^[[2mdist/^[[22m^[[2massets/^[[22m^[[36mindex-DI4VYDAq.js   ^[[39m^[[1m^[[2m288.25 kB^[[22m^[[1m^[[22m^[[2m │ gzip: 88.27 kB^[[22m^[[2m │ map: 1,241.82 kB^[[22m
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:30.5600418Z ^[[32m✓ built in 1.02s^[[39m
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:30.6737249Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:30.6737983Z > vectormatch-console@0.1.0 format:check
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:30.6738340Z > prettier --check src package.json tsconfig.json vite.config.ts index.html
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:30.6738526Z 
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:30.7440198Z Checking formatting...
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:31.3403327Z All matched files use Prettier code style!
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:31.5672019Z waiting for server to shut down.... done
+correctness	Verify Linux toolchain and run all correctness gates	2026-10-26T04:12:31.5672339Z server stopped
+correctness	Record JUnit and regression evidence	﻿2026-10-26T04:12:31.5731165Z ##[group]Run python3 scripts/ci-summary.py
+correctness	Record JUnit and regression evidence	2026-10-26T04:12:31.5731567Z ^[[36;1mpython3 scripts/ci-summary.py^[[0m
+correctness	Record JUnit and regression evidence	2026-10-26T04:12:31.5742153Z shell: /usr/bin/bash -e {0}
+correctness	Record JUnit and regression evidence	2026-10-26T04:12:31.5742391Z env:
+correctness	Record JUnit and regression evidence	2026-10-26T04:12:31.5742860Z   JAVA_HOME: /opt/vectormatch-cpu/ci/production-correctness-r25/toolcache/Java_Temurin-Hotspot_jdk/21.0.13-9.0.LTS/x64
+correctness	Record JUnit and regression evidence	2026-10-26T04:12:31.5743710Z   JAVA_HOME_21_X64: /opt/vectormatch-cpu/ci/production-correctness-r25/toolcache/Java_Temurin-Hotspot_jdk/21.0.13-9.0.LTS/x64
+correctness	Record JUnit and regression evidence	2026-10-26T04:12:31.5744307Z   GRADLE_ACTION_ID: gradle/actions/setup-gradle
+correctness	Record JUnit and regression evidence	2026-10-26T04:12:31.5744631Z   GRADLE_BUILD_ACTION_SETUP_COMPLETED: true
+correctness	Record JUnit and regression evidence	2026-10-26T04:12:31.5744931Z   GRADLE_BUILD_ACTION_CACHE_RESTORED: true
+correctness	Record JUnit and regression evidence	2026-10-26T04:12:31.5745367Z   DEVELOCITY_INJECTION_INIT_SCRIPT_NAME: gradle-actions.inject-develocity.init.gradle
+correctness	Record JUnit and regression evidence	2026-10-26T04:12:31.5745841Z   DEVELOCITY_INJECTION_CUSTOM_VALUE: gradle-actions
+correctness	Record JUnit and regression evidence	2026-10-26T04:12:31.5746161Z   GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+correctness	Record JUnit and regression evidence	2026-10-26T04:12:31.5746429Z ##[endgroup]
+correctness	Record JUnit and regression evidence	2026-10-26T04:12:31.6208852Z {"tests": 544, "failures": 0, "errors": 0, "skipped": 0}
+correctness	Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	﻿2026-10-26T04:12:31.6355861Z Post job cleanup.
+correctness	Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:12:31.7331809Z (node:232873) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+correctness	Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020	2026-10-26T04:12:31.7332338Z (Use `node --trace-deprecation ...` to show where the warning was created)
+correctness	Post Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	﻿2026-10-26T04:12:31.7645210Z Post job cleanup.
+correctness	Post Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:12:31.9582177Z In post-action step
+correctness	Post Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:12:31.9589071Z Cache is disabled: will not save state for later builds.
+correctness	Post Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:12:31.9592919Z Generating Job Summary
+correctness	Post Run gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a	2026-10-26T04:12:31.9613128Z Completed post-action step
+correctness	Post Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	﻿2026-10-26T04:12:31.9854188Z Post job cleanup.
+correctness	Post Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:12:32.0871495Z (node:232893) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+correctness	Post Run actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3	2026-10-26T04:12:32.0872057Z (Use `node --trace-deprecation ...` to show where the warning was created)
+correctness	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	﻿2026-10-26T04:12:32.0992988Z Post job cleanup.
+correctness	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:12:32.1605395Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git version
+correctness	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:12:32.1644434Z git version 2.56.0
+correctness	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:12:32.1674811Z Temporarily overriding HOME='/opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/_temp/6f3af30c-d2b1-4fa5-8286-046ca4a7aaa1' before making global git config changes
+correctness	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:12:32.1676030Z Adding repository directory to the temporary git global config as a safe directory
+correctness	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:12:32.1679701Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git config --global --add safe.directory /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch
+correctness	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:12:32.1722721Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git config --local --name-only --get-regexp core\.sshCommand
+correctness	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:12:32.1763778Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+correctness	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:12:32.2003392Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+correctness	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:12:32.2032619Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+correctness	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:12:32.2267484Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+correctness	Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262	2026-10-26T04:12:32.2299324Z [command]/opt/vectormatch-cpu/ci/production-correctness-r25/tools/git-2.56.0/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+correctness	Complete job	﻿2026-10-26T04:12:32.2628965Z Cleaning up orphan processes
+correctness	Complete job	2026-10-26T04:12:32.2711064Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@11d5960a326750d5838078e36cf38b85af677262, actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3, actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020, gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

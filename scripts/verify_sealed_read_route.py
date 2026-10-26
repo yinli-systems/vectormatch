@@ -121,6 +121,12 @@ def original_replies(root):
             length=struct.unpack(">i",header[-4:])[0];require(0<length<=16384,"original reply bound")
             data=stream.read(length);require(len(data)==length,"truncated original reply");yield legacy(data,True)
 
+def check_routed_offer(original,code,record,route):
+    is_read=original["tag"]in (5,7)
+    expected="DIRECT_UDP"if is_read and route=="DIRECT_UDP"else"AERON_CLUSTER"
+    require(record==dict(correlationId=original["correlation"],requestSha256=hashlib.sha256(original["bytes"]).hexdigest(),route=expected,actualReturnCode=code,clusterLogPosition=False,publicationPositionKind="CLUSTER_INGRESS"if expected=="AERON_CLUSTER"else"ORDINARY_UDP"),"route/actual offer/original SHA mismatch")
+    return expected
+
 def verify(root,route):
     root=Path(root);require(route in ("CLUSTER","DIRECT_UDP"),"explicit read route required")
     client=check_endpoint(ledger(root/"sealed-client-ledger.bin"),True)
@@ -133,8 +139,7 @@ def verify(root,route):
     physical=list(originals(root));require(len(physical)==len(client["routed"]),"route ledger missing original attempts")
     direct=[];read_count=0
     for(original,code),record in zip(physical,client["routed"]):
-        is_read=original["tag"]in (5,7);expected="DIRECT_UDP"if is_read and route=="DIRECT_UDP"else"AERON_CLUSTER"
-        require(record==dict(correlationId=original["correlation"],requestSha256=hashlib.sha256(original["bytes"]).hexdigest(),route=expected,actualReturnCode=code,clusterLogPosition=expected=="AERON_CLUSTER"),"route/actual offer/original SHA mismatch")
+        is_read=original["tag"]in (5,7);expected=check_routed_offer(original,code,record,route)
         if is_read:read_count+=1
         if expected=="DIRECT_UDP"and code>0:direct.append((original["bytes"],code))
     network=[(v["frame"]["inner"]["bytes"],v["code"])for v in client["tx"]if v["frame"]["tag"]==3]

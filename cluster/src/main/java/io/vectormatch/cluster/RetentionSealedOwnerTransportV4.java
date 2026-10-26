@@ -52,7 +52,7 @@ final class RetentionSealedOwnerTransportV4 implements RetentionBatchOwnerIOV3 {
             code=endpoint.offer(serverPort,new Read(0,sessionId,endpoint.resolvedPort(),grant.id(),request));
             if(code>0)active.put(request.correlationId(),request);routedDirect++;
         }else{code=cluster.offer(bytes);routedCluster++;}
-        audit.metadata("ROUTED_OFFER",Map.of("correlationId",request.correlationId(),"requestSha256",sha(bytes),"route",read&&route==RetentionSealedReadPolicyV4.Route.DIRECT_UDP?"DIRECT_UDP":"AERON_CLUSTER","actualReturnCode",code,"clusterLogPosition",!(read&&route==RetentionSealedReadPolicyV4.Route.DIRECT_UDP)));
+        audit.metadata("ROUTED_OFFER",Map.of("correlationId",request.correlationId(),"requestSha256",sha(bytes),"route",read&&route==RetentionSealedReadPolicyV4.Route.DIRECT_UDP?"DIRECT_UDP":"AERON_CLUSTER","actualReturnCode",code,"clusterLogPosition",false,"publicationPositionKind",read&&route==RetentionSealedReadPolicyV4.Route.DIRECT_UDP?"ORDINARY_UDP":"CLUSTER_INGRESS"));
         if(code>0&&(request.operation()instanceof ArchiveCommit||request.operation()instanceof EventAck))grant=null;
         return code;
     }

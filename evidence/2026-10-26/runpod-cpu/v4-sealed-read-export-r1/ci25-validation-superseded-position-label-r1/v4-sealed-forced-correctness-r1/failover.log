@@ -1,0 +1,87 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :cluster:processResources NO-SOURCE
+> Task :core:compileJava UP-TO-DATE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar UP-TO-DATE
+> Task :cluster:compileJava UP-TO-DATE
+> Task :cluster:classes UP-TO-DATE
+
+> Task :cluster:failoverSmoke
+VECTOR_FAILOVER_EVIDENCE /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/vectormatch/vectormatch/cluster/build/failover-smoke/run-1792987927610
+VECTOR_START_NODE member=0 pid=232434
+VECTOR_START_NODE member=1 pid=232452
+VECTOR_START_NODE member=2 pid=232455
+VECTOR_COMMAND_CHECK seq=1 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=1 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=2 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=2 result=ACCEPTED replayed=false
+VECTOR_KILL_LEADER member=0 pid=232434
+VECTOR_COMMAND_CHECK seq=3 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=2 result=ACCEPTED replayed=true
+VECTOR_COMMAND_CHECK seq=2 result=IDEMPOTENCY_CONFLICT replayed=false
+VECTOR_START_NODE member=0 pid=232544
+VECTOR_COMMAND_CHECK seq=3 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=2 result=ACCEPTED replayed=true
+Member [1]: SNAPSHOT applied successfully
+VECTOR_START_NODE member=0 pid=232585
+VECTOR_START_NODE member=1 pid=232586
+VECTOR_START_NODE member=2 pid=232588
+VECTOR_COMMAND_CHECK seq=2 result=ACCEPTED replayed=true
+VECTOR_COMMAND_CHECK seq=4 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=1 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=2 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=3 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=4 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=5 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=6 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=7 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=8 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=9 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=10 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=11 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=12 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=13 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=14 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=15 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=16 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=17 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=18 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=19 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=20 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=21 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=22 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=23 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=24 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=25 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=26 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=27 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=28 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=29 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=30 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=31 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=32 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=33 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=34 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=35 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=36 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=37 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=38 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=39 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=40 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=41 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=42 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=43 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=44 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=45 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=46 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=47 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=48 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=49 result=ACCEPTED replayed=false
+VECTOR_COMMAND_CHECK seq=50 result=ACCEPTED replayed=false
+VECTOR_FAILOVER_PASS {   "test": "three-local-process-failover-snapshot-restart",   "passed": true,   "independentMachines": false,   "syncLevel": 2,   "oldLeader": 0,   "newLeader": 1,   "killToNextConfirmedCommandMs": 11560.989,   "finalCommandSeq": 57,   "finalEventSeq": 59,   "finalMarketSeq": 6,   "outboxBackpressureAndRecovery": true,   "chunkedCoreSnapshotVerified": true,   "stateHash": "b064fc0f0e58768bcb2d0fd4ad34a4b0965d89ca29ecd4b5689e69f437e1fb5e" } 
+gradle/actions: Writing build results to /opt/vectormatch-cpu/ci/production-correctness-r25/runner/_work/_temp/.gradle-actions/build-results/__run_2-1792987925447.json
+
+BUILD SUCCESSFUL in 20s
+4 actionable tasks: 1 executed, 3 up-to-date
