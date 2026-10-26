@@ -1,8 +1,11 @@
 # Sustained, sharded and failure-domain acceptance
 
 This is an implementation/experiment contract, not completed production evidence.
-The user authorizes a new aggregate cloud-spend cap of USD20. The existing prepaid
-CPU is separate; previous temporary GPU Pods remain stopped. Resource creation
+The latest user constraint is free infrastructure without a bank card: new cash
+spend is capped at USD0 and no paid subscription upgrade is authorized. Verified
+student credit may fund bounded experiments; its live balance, quotas and expiry
+are checked before deployment. This supersedes the earlier USD20 cash budget.
+The existing prepaid CPU is separate; previous temporary GPU Pods remain stopped. Resource creation
 requires a concrete qualified topology, live quote, bounded lifetime and shutdown
 plan. No 6/12/24-node result is claimed before those nodes actually run.
 
