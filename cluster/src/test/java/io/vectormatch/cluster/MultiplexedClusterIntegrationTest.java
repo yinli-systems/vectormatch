@@ -193,6 +193,10 @@ class MultiplexedClusterIntegrationTest {
                 assertEquals(workerCount * 3, validation.position(TIMEOUT).commandSeq(), "Timeout resends and duplicate/late replies must not execute business commands twice");
                 assertEquals(reference.stateHash(), validation.state(TIMEOUT).stateHash());
                 assertArrayEquals(reference.snapshot(), validation.readSnapshot(TIMEOUT));
+                assertArrayEquals(reference.snapshot(), validation.readSnapshot(TIMEOUT, 1));
+                assertArrayEquals(reference.snapshot(), validation.readSnapshot(TIMEOUT, 32));
+                assertEquals(reference.lastCommandSeq(), validation.position(TIMEOUT).commandSeq(),
+                        "Read-only pipeline must not apply any business command");
             }
         } finally {
             pool.shutdownNow(); assertTrue(pool.awaitTermination(5, TimeUnit.SECONDS));

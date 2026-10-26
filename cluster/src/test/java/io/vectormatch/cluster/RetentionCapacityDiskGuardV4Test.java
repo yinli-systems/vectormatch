@@ -33,4 +33,13 @@ class RetentionCapacityDiskGuardV4Test {
         Path link=temporary.toRealPath().resolve("link");Files.createSymbolicLink(link,root);
         assertThrows(IOException.class,()->new RetentionCapacityDiskGuardV4(link,plan(),p->sample(4096,1),p->Long.MAX_VALUE));assertEquals("retain",Files.readString(root.resolve("evidence")));
     }
+    @Test void overloadStorageNeverBorrowsFreeFloorOrExceedsItsExactCalculatedGrowth()throws Exception{
+        var plan=RetentionCapacityPlanV4.plan(new RetentionCapacityPlanV4.Config(8000,true),RetentionBatchProfilesV3.finiteLoadProfile(),false,RetentionCapacityPlanV4.ResourceProfile.OVERLOAD);
+        Path root=Files.createDirectory(temporary.toRealPath().resolve("overload"));var allocated=new AtomicLong(4096);var free=new AtomicLong(plan.initialFreeBytes()-1);
+        assertThrows(IOException.class,()->new RetentionCapacityDiskGuardV4(root,plan,p->sample(allocated.get(),1),p->free.get()));
+        free.incrementAndGet();var guard=new RetentionCapacityDiskGuardV4(root,plan,p->sample(allocated.get(),1),p->free.get());
+        allocated.set(4096+plan.allocatedGrowthBytes());guard.check();
+        allocated.incrementAndGet();assertThrows(IOException.class,guard::check);
+        allocated.set(4096);free.set(RetentionCapacityPlanV4.FREE_FLOOR-1);assertThrows(IOException.class,guard::check);
+    }
 }

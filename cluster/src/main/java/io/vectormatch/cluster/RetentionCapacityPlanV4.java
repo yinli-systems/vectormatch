@@ -10,6 +10,18 @@ public final class RetentionCapacityPlanV4 {
     public static final int CUT=1536,READ_WINDOW=32,EVENT_PAGE=32,CHUNK=6144,WARMUP_RPC_LIMIT=1024;
     public static final long RAW_LIMIT=2L*1024*1024*1024,WRITER_LIMIT=1024L*1024*1024;
     public static final long FREE_FLOOR=1024L*1024*1024,NATIVE_RESERVE=512L*1024*1024;
+    public static final String RESOURCE_PROPERTY="vectormatch.v4.capacity.resource.profile";
+    public enum ResourceProfile {
+        STANDARD("standard-v1",RAW_LIMIT,5L*1024*1024*1024/2),
+        OVERLOAD("overload-4g-v1",3L*1024*1024*1024,4L*1024*1024*1024);
+        final String id;final long rawLimit,growthLimit;
+        ResourceProfile(String id,long rawLimit,long growthLimit){this.id=id;this.rawLimit=rawLimit;this.growthLimit=growthLimit;}
+        public static ResourceProfile parse(String value){
+            for(var profile:values())if(profile.id.equals(value))return profile;
+            throw new IllegalArgumentException("Unknown V4 capacity resource profile: "+value);
+        }
+        public static ResourceProfile systemSelection(){return parse(System.getProperty(RESOURCE_PROPERTY,"standard-v1"));}
+    }
     public record Config(int rate,boolean continueDuringFileWork){
         public Config{if(rate!=500&&rate!=1000&&rate!=2000&&rate!=4000&&rate!=6000&&rate!=7000&&rate!=8000)throw new IllegalArgumentException("V4 fixed20s rate500|1000|2000|4000|6000|7000|8000 required");}
         public int arrivals(){return Math.multiplyExact(rate,20);}
@@ -22,11 +34,11 @@ public final class RetentionCapacityPlanV4 {
                        long maximumArchiveBytes,long maximumEventBytes,long maximumReadYieldTurns,long writerPayloadBytes,int writerPayloadFiles,
                        long coordinatorTraceBytes,long allRawBytes,long allocatedGrowthBytes,long initialFreeBytes,
                        long journalRecords,long journalBytes,int maximumSingleBusinessRequest,int maximumSingleBusinessReply,
-                       int maximumMaintenanceRequest,int maximumMaintenanceReply,List<String> rejections){
-        public Plan{rejections=List.copyOf(rejections);}
+                       int maximumMaintenanceRequest,int maximumMaintenanceReply,ResourceProfile resourceProfile,List<String> rejections){
+        public Plan{Objects.requireNonNull(resourceProfile);rejections=List.copyOf(rejections);}
         public boolean admitted(){return rejections.isEmpty();}
         public void requireAdmitted(){if(!admitted())throw new IllegalArgumentException("V4 finite admission refused:"+rejections);}
-        public Map<String,Object> observation(){var m=new LinkedHashMap<String,Object>();m.put("schema","retention-v4-capacity-admission-1");m.put("arrivals",arrivals);m.put("cycles",cycles);m.put("cutCommands",CUT);m.put("readWindow",READ_WINDOW);m.put("eventPage",EVENT_PAGE);m.put("archiveChunkBytes",CHUNK);m.put("allocatedLogicalWorkers",128);m.put("activeLoadWorkers",127);m.put("reservedBootstrapWorker",0);m.put("allocatedQueuePositions",8192);m.put("activeLoadQueuePositions",8128);m.put("maximumEntryBytes",maximumEntryBytes);m.put("archiveHeaderBytes",archiveHeaderBytes);m.put("maximumEvents",maximumEvents);m.put("maximumMaintenanceRpcs",maximumMaintenanceRpcs);m.put("negativeOfferLimit",negativeOfferLimit);m.put("maximumReadYieldTurns",maximumReadYieldTurns);m.put("maximumReadYieldPhaseFrames",3L*maximumReadYieldTurns);m.put("maximumPositiveOffersPerOriginal",4);m.put("maximumArchiveBytes",maximumArchiveBytes);m.put("maximumEventBytes",maximumEventBytes);m.put("writerPayloadBytes",writerPayloadBytes);m.put("writerPayloadFiles",writerPayloadFiles);m.put("writerFilesIncludingReceipts",writerPayloadFiles*2);m.put("coordinatorTraceBytes",coordinatorTraceBytes);m.put("allRawBytes",allRawBytes);m.put("allocatedGrowthBytes",allocatedGrowthBytes);m.put("initialFreeBytes",initialFreeBytes);m.put("runtimeFreeFloor",FREE_FLOOR);m.put("journalRecords",journalRecords);m.put("journalBytes",journalBytes);m.put("maximumSingleBusinessRequest",maximumSingleBusinessRequest);m.put("maximumSingleBusinessReply",maximumSingleBusinessReply);m.put("maximumMaintenanceRequest",maximumMaintenanceRequest);m.put("maximumMaintenanceReply",maximumMaintenanceReply);m.put("admissionRejections",rejections);m.put("capacityProven",false);return Collections.unmodifiableMap(m);}
+        public Map<String,Object> observation(){var m=new LinkedHashMap<String,Object>();m.put("schema","retention-v4-capacity-admission-1");m.put("resourceProfile",resourceProfile.id);m.put("maximumRawBytes",resourceProfile.rawLimit);m.put("maximumGrowthBytes",resourceProfile.growthLimit);m.put("arrivals",arrivals);m.put("cycles",cycles);m.put("cutCommands",CUT);m.put("readWindow",READ_WINDOW);m.put("eventPage",EVENT_PAGE);m.put("archiveChunkBytes",CHUNK);m.put("allocatedLogicalWorkers",128);m.put("activeLoadWorkers",127);m.put("reservedBootstrapWorker",0);m.put("allocatedQueuePositions",8192);m.put("activeLoadQueuePositions",8128);m.put("maximumEntryBytes",maximumEntryBytes);m.put("archiveHeaderBytes",archiveHeaderBytes);m.put("maximumEvents",maximumEvents);m.put("maximumMaintenanceRpcs",maximumMaintenanceRpcs);m.put("negativeOfferLimit",negativeOfferLimit);m.put("maximumReadYieldTurns",maximumReadYieldTurns);m.put("maximumReadYieldPhaseFrames",3L*maximumReadYieldTurns);m.put("maximumPositiveOffersPerOriginal",4);m.put("maximumArchiveBytes",maximumArchiveBytes);m.put("maximumEventBytes",maximumEventBytes);m.put("writerPayloadBytes",writerPayloadBytes);m.put("writerPayloadFiles",writerPayloadFiles);m.put("writerFilesIncludingReceipts",writerPayloadFiles*2);m.put("coordinatorTraceBytes",coordinatorTraceBytes);m.put("allRawBytes",allRawBytes);m.put("allocatedGrowthBytes",allocatedGrowthBytes);m.put("initialFreeBytes",initialFreeBytes);m.put("runtimeFreeFloor",FREE_FLOOR);m.put("journalRecords",journalRecords);m.put("journalBytes",journalBytes);m.put("maximumSingleBusinessRequest",maximumSingleBusinessRequest);m.put("maximumSingleBusinessReply",maximumSingleBusinessReply);m.put("maximumMaintenanceRequest",maximumMaintenanceRequest);m.put("maximumMaintenanceReply",maximumMaintenanceReply);m.put("admissionRejections",rejections);m.put("capacityProven",false);return Collections.unmodifiableMap(m);}
     }
     private record Witness(int header,int setupBytes,int maximumEntry,int singleRequest,int singleReply,
                            int maintenanceRequest,int maintenanceReply,int archiveOperation,int eventOperation){}
@@ -34,7 +46,13 @@ public final class RetentionCapacityPlanV4 {
     private static long ceil(long n,long d){return Math.floorDiv(Math.addExact(n,d-1),d);}
     public static Plan plan(Config config,RetentionServiceV3.Profile profile){return plan(config,profile,false);}
     static Plan plan(Config config,RetentionServiceV3.Profile profile,boolean sealedLedgers){
-        Objects.requireNonNull(config);Objects.requireNonNull(profile);var w=witness(profile);int n=config.arrivals(),cycles=Math.toIntExact(ceil(n+3L,CUT));
+        return plan(config,profile,sealedLedgers,ResourceProfile.STANDARD);
+    }
+    public static Plan plan(Config config,RetentionServiceV3.Profile profile,boolean sealedLedgers,ResourceProfile resourceProfile){
+        Objects.requireNonNull(config);Objects.requireNonNull(profile);Objects.requireNonNull(resourceProfile);
+        if(resourceProfile==ResourceProfile.OVERLOAD && (config.rate()!=7000&&config.rate()!=8000||sealedLedgers))
+            throw new IllegalArgumentException("Overload storage profile is restricted to unsealed 7k/8k controls");
+        var w=witness(profile);int n=config.arrivals(),cycles=Math.toIntExact(ceil(n+3L,CUT));
         long archives=Math.addExact((long)n*w.maximumEntry+w.setupBytes,(long)cycles*w.header);
         long totalEvents=2L*n+3;
         // Per-cycle ceil adds at most one page/chunk;all cycles include their own headers.
@@ -59,11 +77,11 @@ public final class RetentionCapacityPlanV4 {
         long allocation=raw+writerBytes+jobs*1024L+2048L*4096+NATIVE_RESERVE;
         var failures=new ArrayList<String>();
         if(cycles>128||jobs>512||journalRecords>Math.min(1024,profile.maxMaintenanceJournalRecords())||journalBytes>profile.maxMaintenanceJournalBytes())failures.add("finite cut/file/four-offer journal bound");
-        if(writerBytes>WRITER_LIMIT||raw>RAW_LIMIT||logical>512L*1024*1024||allocation>5L*1024*1024*1024/2)failures.add("finite payload/raw/trace/2.5GiB growth bound");
+        if(writerBytes>WRITER_LIMIT||raw>resourceProfile.rawLimit||logical>512L*1024*1024||allocation>resourceProfile.growthLimit)failures.add(resourceProfile==ResourceProfile.STANDARD?"finite payload/raw/trace/2.5GiB growth bound":"finite payload/raw/trace/4GiB overload growth bound");
         if(profile.core().maxPendingCommands()<4096||profile.core().maxPendingEvents()<8192||profile.outboxCapacity()<8192||profile.core().limits().maxProducers()<128)failures.add("exact finite profile headroom");
         if(w.header+(long)CUT*w.maximumEntry+w.setupBytes>profile.core().maxPendingSerializedBytes()+1024L)failures.add("largest canonical prefix allocation cap");
         if(w.maintenanceReply>MAX_REPLY_BYTES||w.maintenanceRequest>MAX_REQUEST_BYTES)failures.add("complete bounded wire envelope");
-        return new Plan(n,cycles,w.maximumEntry,w.header,totalEvents,rpcs,negatives,archives,eventBytes,readYieldTurns,writerBytes,jobs,logical,raw,allocation,allocation+FREE_FLOOR,journalRecords,journalBytes,w.singleRequest,w.singleReply,w.maintenanceRequest,w.maintenanceReply,failures);
+        return new Plan(n,cycles,w.maximumEntry,w.header,totalEvents,rpcs,negatives,archives,eventBytes,readYieldTurns,writerBytes,jobs,logical,raw,allocation,allocation+FREE_FLOOR,journalRecords,journalBytes,w.singleRequest,w.singleReply,w.maintenanceRequest,w.maintenanceReply,resourceProfile,failures);
     }
     private static Witness witness(RetentionServiceV3.Profile profile){
         String lineage="p".repeat(64);var scope=new Scope(profile.fingerprint(),lineage);var engine=new RetentionEngineV3(profile.core(),lineage);

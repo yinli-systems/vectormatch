@@ -31,6 +31,7 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
     private final IdleStrategy idle = new BackoffIdleStrategy();
     private final Map<Long, byte[]> responses = new LinkedHashMap<>();
     private final Map<Long, byte[]> asynchronousRequests = new LinkedHashMap<>();
+    private Map<Long, byte[]> snapshotRequests;
     private Thread asynchronousOwner;
     private int maximumAsynchronousPending;
     private long nextCorrelation;
@@ -286,6 +287,39 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
         throw new IllegalStateException("Snapshot unavailable before deadline; concurrent reads or recovery interrupted it");
     }
 
+    /** Opt-in bounded pipeline for canonical reads. The serial default and server wire format are unchanged. */
+    public byte[] readSnapshot(Duration timeout, int window) {
+        checkAsynchronousOwner();
+        PipelinedSnapshotReader.validate(timeout, window);
+        if (maximumAsynchronousPending != 0 || snapshotRequests != null)
+            throw new IllegalStateException("Snapshot pipeline requires an idle synchronous client");
+        snapshotRequests = new LinkedHashMap<>();
+        responses.clear(); idle.reset();
+        try {
+            return PipelinedSnapshotReader.read(new PipelinedSnapshotReader.IO() {
+                public long register(int offset, String token) {
+                    if (snapshotRequests.size() >= window) throw new IllegalStateException("Snapshot pending bound");
+                    long correlation = ++nextCorrelation;
+                    snapshotRequests.put(correlation, CommandCodec.snapshot(correlation, offset, token));
+                    return correlation;
+                }
+                public boolean offer(long correlation) {
+                    byte[] encoded = snapshotRequests.get(correlation);
+                    return client.offer(new UnsafeBuffer(encoded), 0, encoded.length) >= 0;
+                }
+                public int poll() { return client.pollEgress() + keepAliveIfDue(System.nanoTime()); }
+                public CommandCodec.SnapshotChunk take(long correlation) {
+                    byte[] bytes = responses.remove(correlation);
+                    return bytes == null ? null : CommandCodec.decodeSnapshotChunk(bytes);
+                }
+                public void retire(long correlation) { snapshotRequests.remove(correlation); responses.remove(correlation); }
+                public void idle(int work) { idle.idle(work); }
+            }, System::nanoTime, timeout, window);
+        } finally {
+            snapshotRequests = null; responses.clear();
+        }
+    }
+
     private static Duration remaining(long deadline) {
         long nanos = deadline - System.nanoTime();
         if (nanos <= 0) throw new IllegalStateException("Snapshot read timed out");
@@ -337,7 +371,9 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
         byte[] bytes = new byte[length];
         buffer.getBytes(offset, bytes);
         long correlation = CommandCodec.correlation(bytes);
-        if (maximumAsynchronousPending != 0) {
+        if (snapshotRequests != null) {
+            if (snapshotRequests.containsKey(correlation)) responses.putIfAbsent(correlation, bytes);
+        } else if (maximumAsynchronousPending != 0) {
             requireAsynchronousOwner();
             // Unknown/retired late replies cannot evict any live response, including the65th..256th.
             if (asynchronousRequests.containsKey(correlation)) responses.putIfAbsent(correlation, bytes);
