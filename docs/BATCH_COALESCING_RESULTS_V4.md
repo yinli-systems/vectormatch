@@ -33,3 +33,7 @@ Original whole-source batch-size counts include three bootstrap commands:
 Batch-request counts are not archive write/force-call counts. They show the measured coalescing behavior but cannot alone prove disk timing causality. Post-offer latency includes replication,execution,reply encoding and client polling. One-second backlog samples can miss short queues. Two20-second repeats establish neither statistical significance nor long-term latency,hard realtime,HFT endorsement,independent-host failure isolation or continuous100M.
 
 [Complete comparison derivation,all private raw references,execution logs and preserved index/report snapshots](../evidence/2026-10-26/runpod-cpu/v4-batch-coalescing-r1/comparison-r1/README.md).
+
+![Separate finite coalescing arms](../evidence/2026-10-26/runpod-cpu/v4-batch-coalescing-r1/comparison-figure-and-closure-r1/v4-batch-coalescing-figure-r1/batch-coalescing.png)
+
+[SVG](../evidence/2026-10-26/runpod-cpu/v4-batch-coalescing-r1/comparison-figure-and-closure-r1/v4-batch-coalescing-figure-r1/batch-coalescing.svg). The immutable original publication snapshot remains in comparison-r1;this later figure only presents its unchanged four measured arms.
