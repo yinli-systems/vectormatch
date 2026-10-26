@@ -38,6 +38,7 @@ public final class TradingSimulation {
         long[] latency=new long[trace.size()],service=new long[trace.size()],lag=new long[trace.size()];
         Result[] replies=new Result[trace.size()]; boolean[] replayed=new boolean[trace.size()];
         int completed=0; long elapsed=0,acceptedFresh=0,retries=0,rejected=0,trades=0,inWindow=0;
+        Set<Integer> leaders=new TreeSet<>();
         List<Event> actualEvents=new ArrayList<>();
         MatchingEngine core=funded(),reference=cluster?funded():null;
         byte[] fundedSnapshot=core.snapshot();
@@ -54,13 +55,14 @@ public final class TradingSimulation {
                 }
                 fundedSnapshot=reference.snapshot();
             }
-            long started=System.nanoTime();
+            Instant measurementStarted=Instant.now();long started=System.nanoTime();
             for(int i=0;i<trace.size();i++) {
                 var step=trace.get(i); long scheduled=rate==0?System.nanoTime():started+i*1_000_000_000L/rate;
                 if(rate>0) await(scheduled);
                 long begin=System.nanoTime(); Result result; boolean wasReplay;
                 if(cluster) {
                     CommandCodec.Reply reply=client.execute(step.command(),TIMEOUT);
+                    leaders.add(client.leaderMemberId());
                     require(reply.error().isEmpty(),"Server error: "+reply.error()); result=reply.result();wasReplay=reply.replayed();
                 } else {
                     Execution execution=core.execute(step.command()); result=execution.result();wasReplay=execution.replayed();
@@ -80,6 +82,9 @@ public final class TradingSimulation {
                 }
             }
             elapsed=System.nanoTime()-started;
+            JSON.writerWithDefaultPrettyPrinter().writeValue(out.resolve("measurement-window.json").toFile(),Map.of(
+                    "startedUtcApproximate",measurementStarted.toString(),"endedUtcApproximate",Instant.now().toString(),
+                    "durationNs",elapsed,"observedReplyLeaders",leaders));
             if(cluster) {
                 byte[] bytes=client.readSnapshot(TIMEOUT);core=MatchingEngine.restore(bytes);
                 require(Arrays.equals(bytes,reference.snapshot()),"Replica snapshot differs from command replay");
@@ -114,6 +119,7 @@ public final class TradingSimulation {
             summary.put("eventSource",cluster?"REFERENCE_MODEL_NOT_DISTRIBUTED_FEED":"ACTUAL_CORE_EXECUTIONS");
             summary.put("scope",cluster?"REPLICATED_RPC_SINGLE_INFLIGHT":"IN_PROCESS_MEMORY_ONLY");
             summary.put("capacityOrSlaClaim",false);
+            summary.put("observedReplyLeaders",leaders);
             JSON.writerWithDefaultPrettyPrinter().writeValue(out.resolve("result.json").toFile(),summary);
             System.out.println(JSON.writeValueAsString(summary));
         } catch(Exception e) {

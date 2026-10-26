@@ -1,0 +1,26 @@
+diff --git a/core/src/main/java/io/vectormatch/core/MatchingEngine.java b/core/src/main/java/io/vectormatch/core/MatchingEngine.java
+index 0accaa87..5ec943d1 100644
+--- a/core/src/main/java/io/vectormatch/core/MatchingEngine.java
++++ b/core/src/main/java/io/vectormatch/core/MatchingEngine.java
+@@ -111,7 +111,8 @@ public final class MatchingEngine {
+     private final NavigableMap<Long, Order> orders = new TreeMap<>();
+     private final Map<ClientOrderKey, Long> clientIds = new HashMap<>();
+     private final NavigableMap<ProducerKey, Producer> producers = new TreeMap<>();
+-    private final NavigableMap<Long, CacheLocation> cachedByCommandSeq = new TreeMap<>();
++    // Fresh commandSeq values are strictly increasing: insertion order is eviction order.
++    private final SequencedMap<Long, CacheLocation> cachedByCommandSeq = new LinkedHashMap<>();
+     private final NavigableMap<Long, LinkedHashMap<Long, Order>> bids = new TreeMap<>(Comparator.reverseOrder());
+     private final NavigableMap<Long, LinkedHashMap<Long, Order>> asks = new TreeMap<>();
+     private long commandSeq, eventSeq, marketSeq, nextOrderId = 1;
+@@ -515,6 +516,11 @@ public final class MatchingEngine {
+                     throw new IllegalArgumentException("invalid producer state");
+             }
+             if (in.available() != 0) throw new IllegalArgumentException("trailing snapshot data");
++            // Snapshot records are grouped by producer, not by command sequence. Rebuild
++            // chronology once on the cold path before any global FIFO eviction can occur.
++            Map<Long, CacheLocation> chronological = new TreeMap<>(engine.cachedByCommandSeq);
++            engine.cachedByCommandSeq.clear();
++            engine.cachedByCommandSeq.putAll(chronological);
+             engine.checkInvariants();
+             return engine;
+         } catch (IOException | ArithmeticException | IllegalStateException exception) {

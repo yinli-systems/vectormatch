@@ -46,6 +46,14 @@ The earlier read-bank and agent-idle experiments use [CI21-qualified source and 
 
 ## Verified evidence
 
+The [new synthetic trading simulation](docs/TRADING_SIMULATION_RESULTS.md) checks
+FIFO/partial fills,settlement,reservations,cancellation,rejections and retries on
+the real core and three-replica path. A1280000-attempt core cache comparison fails
+its paired promotion gate;the default is retained. A separate instrumented
+replicated polling comparison improves RPC P99 from11.11/17.42ms to6.87/7.94ms
+in two8000-attempt pairs,with identical business state and no unknowns. This is
+same-host,single-inflight,finite evidence;not a capacity or sustained SLA claim.
+
 The [two new30-minute baselines](docs/SUSTAINED_BASELINE_RESULTS.md) each confirm
 180000/180000 synthetic orders at100/s on the same CPU container and unchanged
 replica/client artifacts. P99 is24.892/11.130ms; both registered combined gates
