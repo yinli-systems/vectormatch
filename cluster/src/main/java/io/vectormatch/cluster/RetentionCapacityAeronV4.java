@@ -27,6 +27,7 @@ public final class RetentionCapacityAeronV4 {
     private final RetentionIdlePolicyV3.Selection idleSelection=RetentionIdlePolicyV3.systemSelection();
     private final RetentionCapacityPlanV4.Plan plan;
     private final RetentionJfrPolicyV4.Selection jfrSelection;
+    private final RetentionSegmentPreparationV4.Selection segmentSelection=RetentionSegmentPreparationV4.systemSelection();
     private final RetentionCapacityDiskGuardV4 disk;
     private RetentionCapacityAeronV4(Path newRoot,int rate,boolean proceed)throws Exception{
         config=new RetentionCapacityExperimentV4.Config(rate,proceed);
@@ -36,6 +37,7 @@ public final class RetentionCapacityAeronV4 {
         root=newRoot.toAbsolutePath().normalize();
         jfrSelection=RetentionJfrPolicyV4.systemSelection(root);
         for(Path path=root;path!=null;path=path.getParent())require(!Files.isSymbolicLink(path),"symlink native root refused");
+        if(segmentSelection.enabled())require(Files.getFileStore(root.getParent()).getUsableSpace()>=Math.addExact(plan.initialFreeBytes(),3L*RetentionSegmentPreparationV4.SEGMENT_BYTES),"additional first-segment disk reserve refused");
         Files.createDirectory(root);disk=RetentionCapacityDiskGuardV4.openFresh(root,plan);
         writeArtifactInventory();
         var registration=new LinkedHashMap<String,Object>(plan.observation());
@@ -43,6 +45,7 @@ public final class RetentionCapacityAeronV4 {
         registration.put("fileWorkDispatchPolicy",proceed?"CONTINUE":"PAUSE");registration.put("profile",profile.fingerprint());registration.put("lineage",lineage);
         registration.put("code",code);registration.put("ports",ports);registration.put("appointedLeader",0);registration.put("syncLevel",2);
         registration.put("activeLoadWorkers",127);registration.put("allocatedLogicalWorkers",128);registration.put("independentHosts",false);
+        if(segmentSelection.enabled())registration.put("segmentPreparation",segmentSelection.observation());
         if(batchFlushSelection.explicit())registration.put("batchFlushSelection",batchFlushSelection.observation());if(jfrSelection.enabled())registration.put("jfrDiagnostics",jfrSelection.observation());registration.put("readBankDispatchSelection",readYieldSelection.observation());if(idleSelection.explicit())registration.put("retentionIdleSelection",idleSelection.observation());registration.put("fundedExternalOrders",false);writeJson("registration.json",registration);
     }
     public static void main(String[] args)throws Exception{
@@ -125,10 +128,10 @@ public final class RetentionCapacityAeronV4 {
         for (Class<?> type : List.of(RetentionNodeMainV3.class, MatchingEngine.class, MediaDriver.class, DirectBuffer.class))
             classpath.add(Path.of(type.getProtectionDomain().getCodeSource().getLocation().toURI()).toString());
         for (int member = 0; member < 3; member++) {
-            List<String> argv = jfrSelection.childArguments(idleSelection.childArguments(List.of(Path.of(System.getProperty("java.home"), "bin", "java").toString(),
+            List<String> argv = segmentSelection.childArguments(jfrSelection.childArguments(idleSelection.childArguments(List.of(Path.of(System.getProperty("java.home"), "bin", "java").toString(),
                     "--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED", "--add-opens=java.base/java.util.zip=ALL-UNNAMED", "-Xmx256m",
                     "-Daeron.cluster.appointed.leader.id=0", "-cp", String.join(File.pathSeparator, classpath), RetentionNodeMainV3.class.getName(),
-                    Integer.toString(member), root.toString(), Integer.toString(ports), "2", RetentionBatchProfilesV3.PROFILE_ID, lineage, profile.fingerprint(), code, "bounded-maintenance-v1")));
+                    Integer.toString(member), root.toString(), Integer.toString(ports), "2", RetentionBatchProfilesV3.PROFILE_ID, lineage, profile.fingerprint(), code, "bounded-maintenance-v1"))));
             ProcessBuilder builder = new ProcessBuilder(argv).redirectErrorStream(true).redirectOutput(log(member).toFile());
             for (String name : List.of("JAVA_TOOL_OPTIONS", "JDK_JAVA_OPTIONS", "_JAVA_OPTIONS")) builder.environment().remove(name);
             Process process = builder.start();

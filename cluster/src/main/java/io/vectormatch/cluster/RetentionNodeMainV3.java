@@ -71,6 +71,8 @@ public final class RetentionNodeMainV3 {
         int node = Integer.parseInt(args[0]), portBase = Integer.parseInt(args[2]), sync = Integer.parseInt(args[3]);
         if (sync != 0 && sync != 2) throw new IllegalArgumentException("invalid V3 sync level");
         var idleSelection = RetentionIdlePolicyV3.systemSelection();
+        var segmentSelection = RetentionSegmentPreparationV4.systemSelection();
+        RetentionSegmentPreparationV4.requireEligible(segmentSelection,args[4],sync,Archive.Configuration.segmentFileLength());
         var idlePolicy = RetentionIdlePolicyV3.node(idleSelection, node);
         var profile = profile(args[4]); var scope = new RetentionWireV3.Scope(profile.fingerprint(), args[5]);
         String code = codeFingerprint();
@@ -79,8 +81,9 @@ public final class RetentionNodeMainV3 {
         var transport = new NetworkTransport(1248);
         Path base = Path.of(args[1]).toAbsolutePath().normalize().resolve("node-" + node);
         if (Files.isSymbolicLink(base) || (Files.exists(base) && !Files.isDirectory(base))) throw new IllegalArgumentException("unsafe V3 node path");
+        boolean freshNode = !Files.exists(base);
         String identity = "V3_LOCAL_NODE_1\nnode=" + node + "\nprofile=" + scope.profileHash() + "\nlineage=" + scope.lineageId()
-                + "\ncode=" + code + "\nmembers=" + topology.members() + "\nsync=" + sync + "\n" + idleSelection.identitySuffix();
+                + "\ncode=" + code + "\nmembers=" + topology.members() + "\nsync=" + sync + "\n" + idleSelection.identitySuffix() + segmentSelection.identitySuffix();
         if (Files.exists(base)) {
             Path marker = base.resolve("V3_IDENTITY.txt");
             if (Files.isSymbolicLink(marker) || !Files.readString(marker).equals(identity)) throw new IllegalArgumentException("existing state is not this exact V3 node lineage/code/profile");
@@ -99,6 +102,11 @@ public final class RetentionNodeMainV3 {
                 .localControlChannel("aeron:ipc?term-length=64k").recordingEventsEnabled(false).threadingMode(ArchiveThreadingMode.SHARED)
                 .fileSyncLevel(sync).catalogFileSyncLevel(sync).replicationChannel(transport.withMtu(topology.responseChannel(node)))
                 .archiveClientContext(new AeronArchive.Context().controlMtuLength(1248).controlResponseChannel(transport.withMtu(topology.responseChannel(node))));
+        if(segmentSelection.enabled()) {
+            RetentionSegmentPreparationV4.requireEligible(segmentSelection,args[4],sync,archive.segmentFileLength());
+            var prepared = RetentionSegmentPreparationV4.prepare(segmentSelection,base,freshNode,identity);
+            System.out.println("VECTOR_SEGMENT_PREPARATION_V4 "+RetentionCapacityJsonV3.json(prepared));
+        }
         var localArchive = new AeronArchive.Context().lock(NoOpLock.INSTANCE).controlMtuLength(1248).aeronDirectoryName(driverDir)
                 .controlRequestChannel(archive.localControlChannel()).controlResponseChannel(archive.localControlChannel());
         var consensus = new ConsensusModule.Context().aeronDirectoryName(driverDir).clusterMemberId(node).clusterMembers(topology.members())
