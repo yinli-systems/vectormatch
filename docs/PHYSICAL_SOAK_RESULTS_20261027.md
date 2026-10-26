@@ -51,3 +51,5 @@ The failed initial non-fresh-state soak, formal soak, fault probes, mount correc
 All four temporary VMs were deallocated, then the complete owned resource group was deleted and its absence confirmed at approximately 22:21 UTC. This removed managed disks, snapshot, IPs and networks. The prepaid Runpod CPU was untouched. The student spending limit stayed enabled; the plan allowed at most $3 of credit, with no cash authorization or subscription upgrade. This is not a final billing reconciliation.
 
 The next acceptance gates remain: controlled client-wait and V4 maintenance ABAB, a passing same-configuration sustained latency run, full cold-restore plus cached/fresh-trade validation, and separately scoped physical/network fault tests. This result is not a production-readiness certification.
+
+A subsequent [new-VM backup restore and snapshot-read ABAB](SNAPSHOT_RECOVERY_RESULTS_20261027.md) passed full canonical, cached-result and fresh-trade checks using the opt-in bounded reader. It uses a separate client artifact and experiment; the original failed cold-read attempt is unchanged.
