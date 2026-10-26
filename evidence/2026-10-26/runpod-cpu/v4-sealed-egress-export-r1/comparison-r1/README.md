@@ -1,0 +1,5 @@
+# Complete sealed-history read-route comparison
+
+RESULT is derived from all four original native analyses and complete authenticated private raw-download proofs. The controls,original actual publication/image/route/frame bindings,financial/replay/snapshot/cold-restoration checks and all input body hashes remain independently accessible in each native point directory and private attachment. Pair decisions use exact integer nanoseconds and accepted counts. No rows,unknowns,failed original or earlier cohort are removed or pooled.
+
+The qualification remains separate from comparison and is not added to a sustained capacity total. Matching/send hot paths are unchanged by sourcef99 terminal validation. Registered criterion requires at least10% globalp99 improvement,without worse post-offerp99 or fewer in-window accepted orders,and both finite gates,in both pairs. Default promotion,sustained latency,physical-host fault isolation,continuous100M and funded trading remain separate.

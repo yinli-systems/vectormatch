@@ -3462,6 +3462,102 @@
       "scope": "Two separate20-second repeats at4000/s;fresh lineage each;artifacta33240fa;one physical CPU/three UDP JVMs;sole factor first-segment preparation.No sustained capacity or100M claim.",
       "title": "V4 ZERO_FIRST_SEGMENT",
       "updatedAt": "2026-10-26T02:47:31.448621+00:00"
+    },
+    {
+      "configurationFingerprint": "0e8391ff4688912658cafc76a3058fd74734c0c32e37760a9f76f9ed3be31b3c",
+      "id": "cpu-v4-sealed-read-route-CLUSTER",
+      "points": [
+        {
+          "allOfferedAcceptedP99Millis": 362.615475,
+          "classification": "FINITE_V4_SEALED_READ_ROUTE_COMPARISON",
+          "clientNotSent": 0,
+          "drainSeconds": 0.359788841,
+          "goodput": 3993.45,
+          "id": "cpu-v4-sealed-egress-route-4000-c1",
+          "p99Millis": 362.615475,
+          "peakBacklog": 759,
+          "rate": 4000,
+          "rejected": 0,
+          "serverErrors": 0,
+          "stable": null,
+          "unknown": 0,
+          "unresolved": 0,
+          "valid": true,
+          "windowSeconds": 20,
+          "workers": 127
+        },
+        {
+          "allOfferedAcceptedP99Millis": 83.754352,
+          "classification": "FINITE_V4_SEALED_READ_ROUTE_COMPARISON",
+          "clientNotSent": 0,
+          "drainSeconds": 0.164148845,
+          "goodput": 3993.45,
+          "id": "cpu-v4-sealed-egress-route-4000-c2",
+          "p99Millis": 83.754352,
+          "peakBacklog": 204,
+          "rate": 4000,
+          "rejected": 0,
+          "serverErrors": 0,
+          "stable": null,
+          "unknown": 0,
+          "unresolved": 0,
+          "valid": true,
+          "windowSeconds": 20,
+          "workers": 127
+        }
+      ],
+      "reportPath": "docs/V4_SEALED_READ_EXPORT_RESULTS.md",
+      "scope": "Two separate20-second repeats at4000/s;fresh lineage each;artifact0a6b1c8b;one physical CPU/three UDP JVMs;sole factor historical-read route.No sustained capacity or100M claim.",
+      "title": "V4 CLUSTER",
+      "updatedAt": "2026-10-26T05:44:29.298236+00:00"
+    },
+    {
+      "configurationFingerprint": "69f6a0284ce81070761b09660bf97354b0a42dc36067b9e818b5edb4dfcd4255",
+      "id": "cpu-v4-sealed-read-route-DIRECT_UDP",
+      "points": [
+        {
+          "allOfferedAcceptedP99Millis": 110.431125,
+          "classification": "FINITE_V4_SEALED_READ_ROUTE_COMPARISON",
+          "clientNotSent": 0,
+          "drainSeconds": 0.135635285,
+          "goodput": 3993.45,
+          "id": "cpu-v4-sealed-egress-route-4000-d1",
+          "p99Millis": 110.431125,
+          "peakBacklog": 129,
+          "rate": 4000,
+          "rejected": 0,
+          "serverErrors": 0,
+          "stable": null,
+          "unknown": 0,
+          "unresolved": 0,
+          "valid": true,
+          "windowSeconds": 20,
+          "workers": 127
+        },
+        {
+          "allOfferedAcceptedP99Millis": 56.231503,
+          "classification": "FINITE_V4_SEALED_READ_ROUTE_COMPARISON",
+          "clientNotSent": 0,
+          "drainSeconds": 0.122500874,
+          "goodput": 3993.45,
+          "id": "cpu-v4-sealed-egress-route-4000-d2",
+          "p99Millis": 56.231503,
+          "peakBacklog": 158,
+          "rate": 4000,
+          "rejected": 0,
+          "serverErrors": 0,
+          "stable": null,
+          "unknown": 0,
+          "unresolved": 0,
+          "valid": true,
+          "windowSeconds": 20,
+          "workers": 127
+        }
+      ],
+      "reportPath": "docs/V4_SEALED_READ_EXPORT_RESULTS.md",
+      "scope": "Two separate20-second repeats at4000/s;fresh lineage each;artifact0a6b1c8b;one physical CPU/three UDP JVMs;sole factor historical-read route.No sustained capacity or100M claim.",
+      "title": "V4 DIRECT_UDP",
+      "updatedAt": "2026-10-26T05:44:29.298236+00:00"
     }
   ],
   "runs": [
@@ -6263,6 +6359,111 @@
       "scope": "80000 independent arrivals at4000/s for20seconds;fresh finite lineage",
       "throughput": 3993.45,
       "timestamp": "2026-10-26T02:45:51.914415480Z",
+      "trades": 80000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-sealed-egress-export-r1/qualification-500-q1-native-r1/README.md",
+      "commands": 10000,
+      "correctnessPassed": true,
+      "durability": "Sync2;complete forced/readback prefix and control-intent receipts;full canonical replay;three snapshots and cold restores agree",
+      "id": "cpu-v4-sealed-egress-qualification-500-q1",
+      "label": "V4 DIRECT_UDP · Q1",
+      "limitations": [
+        "Finite20-second observation;not a sustained SLA,independent-host isolation,100M,HFT endorsement or funded external trading.",
+        "Actual artifact 0a6b1c8b/sourcef99d3843;agent100us,owner1ms,batch4/50us,CLOSED reads,cut1536,read32/page32/chunk6144.",
+        "Both arms enable the same sealed servers and logged descriptor handshakes;only the historical read route changes."
+      ],
+      "model": "One prepaid CPU host;three UDP node JVMs;leader0/sync2;127 active producers;no JFR or observer JVM",
+      "p50Millis": 6.363667,
+      "p99Millis": 43.546721,
+      "scope": "10000 independent arrivals at500/s for20seconds;fresh finite lineage",
+      "throughput": 499.8,
+      "timestamp": "2026-10-26T05:21:32.979916785Z",
+      "trades": 10000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-sealed-egress-export-r1/route-4000-c1-native-r1/README.md",
+      "commands": 80000,
+      "correctnessPassed": true,
+      "durability": "Sync2;complete forced/readback prefix and control-intent receipts;full canonical replay;three snapshots and cold restores agree",
+      "id": "cpu-v4-sealed-egress-route-4000-c1",
+      "label": "V4 CLUSTER · C1",
+      "limitations": [
+        "Finite20-second observation;not a sustained SLA,independent-host isolation,100M,HFT endorsement or funded external trading.",
+        "Actual artifact 0a6b1c8b/sourcef99d3843;agent100us,owner1ms,batch4/50us,CLOSED reads,cut1536,read32/page32/chunk6144.",
+        "Both arms enable the same sealed servers and logged descriptor handshakes;only the historical read route changes."
+      ],
+      "model": "One prepaid CPU host;three UDP node JVMs;leader0/sync2;127 active producers;no JFR or observer JVM",
+      "p50Millis": 13.144109,
+      "p99Millis": 362.615475,
+      "scope": "80000 independent arrivals at4000/s for20seconds;fresh finite lineage",
+      "throughput": 3993.45,
+      "timestamp": "2026-10-26T05:24:10.934917378Z",
+      "trades": 80000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-sealed-egress-export-r1/route-4000-d1-native-r1/README.md",
+      "commands": 80000,
+      "correctnessPassed": true,
+      "durability": "Sync2;complete forced/readback prefix and control-intent receipts;full canonical replay;three snapshots and cold restores agree",
+      "id": "cpu-v4-sealed-egress-route-4000-d1",
+      "label": "V4 DIRECT_UDP · D1",
+      "limitations": [
+        "Finite20-second observation;not a sustained SLA,independent-host isolation,100M,HFT endorsement or funded external trading.",
+        "Actual artifact 0a6b1c8b/sourcef99d3843;agent100us,owner1ms,batch4/50us,CLOSED reads,cut1536,read32/page32/chunk6144.",
+        "Both arms enable the same sealed servers and logged descriptor handshakes;only the historical read route changes."
+      ],
+      "model": "One prepaid CPU host;three UDP node JVMs;leader0/sync2;127 active producers;no JFR or observer JVM",
+      "p50Millis": 7.025337,
+      "p99Millis": 110.431125,
+      "scope": "80000 independent arrivals at4000/s for20seconds;fresh finite lineage",
+      "throughput": 3993.45,
+      "timestamp": "2026-10-26T05:27:45.850373380Z",
+      "trades": 80000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-sealed-egress-export-r1/route-4000-c2-native-r1/README.md",
+      "commands": 80000,
+      "correctnessPassed": true,
+      "durability": "Sync2;complete forced/readback prefix and control-intent receipts;full canonical replay;three snapshots and cold restores agree",
+      "id": "cpu-v4-sealed-egress-route-4000-c2",
+      "label": "V4 CLUSTER · C2",
+      "limitations": [
+        "Finite20-second observation;not a sustained SLA,independent-host isolation,100M,HFT endorsement or funded external trading.",
+        "Actual artifact 0a6b1c8b/sourcef99d3843;agent100us,owner1ms,batch4/50us,CLOSED reads,cut1536,read32/page32/chunk6144.",
+        "Both arms enable the same sealed servers and logged descriptor handshakes;only the historical read route changes."
+      ],
+      "model": "One prepaid CPU host;three UDP node JVMs;leader0/sync2;127 active producers;no JFR or observer JVM",
+      "p50Millis": 9.421712,
+      "p99Millis": 83.754352,
+      "scope": "80000 independent arrivals at4000/s for20seconds;fresh finite lineage",
+      "throughput": 3993.45,
+      "timestamp": "2026-10-26T05:35:33.064887978Z",
+      "trades": 80000,
+      "unknown": 0
+    },
+    {
+      "artifactPath": "evidence/2026-10-26/runpod-cpu/v4-sealed-egress-export-r1/route-4000-d2-native-r1/README.md",
+      "commands": 80000,
+      "correctnessPassed": true,
+      "durability": "Sync2;complete forced/readback prefix and control-intent receipts;full canonical replay;three snapshots and cold restores agree",
+      "id": "cpu-v4-sealed-egress-route-4000-d2",
+      "label": "V4 DIRECT_UDP · D2",
+      "limitations": [
+        "Finite20-second observation;not a sustained SLA,independent-host isolation,100M,HFT endorsement or funded external trading.",
+        "Actual artifact 0a6b1c8b/sourcef99d3843;agent100us,owner1ms,batch4/50us,CLOSED reads,cut1536,read32/page32/chunk6144.",
+        "Both arms enable the same sealed servers and logged descriptor handshakes;only the historical read route changes."
+      ],
+      "model": "One prepaid CPU host;three UDP node JVMs;leader0/sync2;127 active producers;no JFR or observer JVM",
+      "p50Millis": 7.628098,
+      "p99Millis": 56.231503,
+      "scope": "80000 independent arrivals at4000/s for20seconds;fresh finite lineage",
+      "throughput": 3993.45,
+      "timestamp": "2026-10-26T05:38:34.437446646Z",
       "trades": 80000,
       "unknown": 0
     }
