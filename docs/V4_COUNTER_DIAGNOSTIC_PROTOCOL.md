@@ -1,0 +1,13 @@
+# V4 read-only counter diagnostic protocol
+
+Prospectively registered, one finite diagnostic at 4,000 arrivals/s for 20 seconds. This is an instrumented observation, not an optimization comparison, SLA, endurance result or independent-host result.
+
+The application artifact is `dcfeeb81e4d837bf1290ee7fd1792dfbfdd36b708fd45da4fd088908a6473bfa`, compiled from `c6445604b0a55119ad239d01e493ef556fd8efac` and qualified by CPU CI 21. Fixed leader 0, sync level 2, CONTINUE, read-bank CLOSED, agent requested maximum park 100,000 ns and owner maximum park 1,000,000 ns. Three JVMs share the existing prepaid CPU host and loopback UDP. All native financial, exact-cut, replay, snapshot and cold-restore checks remain required.
+
+One additional JVM, maximum heap 128 MiB, starts only after all three original nodes pass startup readiness. It maps their CnC files with OS READ_ONLY mappings, binds each to its registered original PID and file key, samples at a requested 100 ms interval, and stops on original-file absence or replacement without following cold-restored successors. Maximum 600 samples, 1 MiB per line, 32 MiB total. No business commands or counter writes are issued by the observer. Its startup, birth, argv, output and completion are retained. The source and two class bodies are pinned separately from the unchanged application JARs. Observation adds CPU, memory and filesystem activity; this run cannot be pooled with uninstrumented baselines.
+
+Admission refuses foreign Java/SQL workloads, changed qualified process-identity code, altered artifacts, reused run directories, changed CPU/boot/cgroups or an insufficient disk reserve. Cleanup uses only proven owned process identities and qualified pidfds. The original application restoration paths remain protected.
+
+Analysis must verify that complete three-driver observations precede the first arrival and extend past the 20-second arrival window. Preserve sample clock spans and skipped unstable records. Counter deltas require matching driver PID/file key and counter ID/type/registration/owner/key. A cumulative maximum is not a percentile; total write time divided by bytes is not per-write latency. Sequential counter reads are not atomic. Archive write timing includes the pinned implementation's write/force path and cannot independently separate fsync duration. If coverage or identity checks fail, keep the diagnostic but refuse the corresponding inference.
+
+All original run scopes, source inputs, raw arrivals, traces, counter JSONL, financial audit and cold-recovery artifacts will be archived with SHA-256 and privately downloaded for verification. No new cloud resources, GPUs or funded external orders are enabled.
