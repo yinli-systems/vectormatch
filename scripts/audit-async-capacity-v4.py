@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys,struct,json,csv,collections,hashlib,datetime,bisect
+from retention_read_yield_audit_v4 import validate as validate_read_yield
 native=Path(sys.argv[1]).resolve();state=native/'load';output=Path(sys.argv[2]);assert not output.exists();output.mkdir()
 class Reader:
  def __init__(self,body):self.body=body;self.offset=0
@@ -23,7 +24,7 @@ with(state/'arrivals.csv').open()as f:admission_rows=list(csv.DictReader(f))
 admission_slots={(int(row['correlation_id']),int(row['batch_index'])):row for row in admission_rows if row['correlation_id']and row['batch_index']}
 assert len(admission_slots)==sum(bool(row['correlation_id']and row['batch_index'])for row in admission_rows)
 trace=Reader((state/'maintenance-v4.bin').read_bytes());assert trace.value('I')==0x564d5434 and trace.value('i')==1
-records=[];requests={};logical_replies={};observations=collections.defaultdict(list);phases=[];receipts=[];last_ns=-1
+records=[];requests={};logical_replies={};observations=collections.defaultdict(list);phases=[];receipts=[];last_ns=-1;trace_metadata=None
 while trace.offset<len(trace.body):
  kind=trace.value('i');number=trace.value('q');ns=trace.value('q');n=trace.value('i');assert 1<=kind<=5 and number==len(records)+1 and ns>=last_ns and 0<n<=12288;last_ns=ns;body=trace.read(n);records.append((kind,number,ns,body))
  if kind in(1,2):
@@ -33,14 +34,16 @@ while trace.offset<len(trace.body):
  elif kind==3:
   value=json.loads(body)
   if 'from'in value:phases.append((ns,value));assert not value['readBankOpen']or value['to']in ('ARCHIVE_READ','EVENT_READ')
-  else:assert value['schema']=='retention-async-maintenance-v4-1'
+  else:assert value['schema']=='retention-async-maintenance-v4-1' and trace_metadata is None;trace_metadata=value
  elif kind==4:
   value=json.loads(body);assert value['correlationId']in requests;assert value['wireSha256']==digest(requests[value['correlationId']]['body']);observations[value['correlationId']].append((ns,value))
  else:receipts.append((ns,json.loads(body)))
 assert all(phases[n][1]['from']==phases[n-1][1]['to']for n in range(1,len(phases)))
 assert set(requests)==set(logical_replies) and phases[0][1]['from']=='INITIALIZING'and phases[-1][1]['to']=='IDLE'
+read_yield_enabled,read_drain_origins=validate_read_yield(configuration,registration,summary,trace_metadata,phases,admission_rows)
 retained=set();peak=0;generations=set()
 for kind,number,ns,body in records:
+ if kind==3 and json.loads(body).get('to')=='READ_YIELD':assert not retained,'read yield while original read credits remain'
  if kind!=4:continue
  value=json.loads(body);generation=value['readPhaseGeneration'];cid=value['correlationId']
  if generation is None:continue
@@ -54,6 +57,7 @@ def phase_at(ns):
  index=bisect.bisect_right(phase_times,ns)-1
  return (phases[index][1]['to'],phase_times[index])if index>=0 else('INITIALIZING',-1)
 allowed_admission={'IDLE','VERIFY_WAIT','FILE_WAIT'}if configuration['fileWorkDispatchPolicy']=='CONTINUE'else{'IDLE'}
+if read_yield_enabled:allowed_admission.add('READ_YIELD')
 for row in admission_rows:
  if row['submit_offset_ns']:assert phase_at(configuration['scheduledOriginMonotonicNs']+int(row['submit_offset_ns']))[0]in allowed_admission,('new logical submission during closed admission phase',row['arrival_index'])
 legitimate_drain_publications=[]
@@ -85,13 +89,14 @@ for ordinal,row in enumerate(codes,1):
  if operation in(1,8):
   phase,phase_started=phase_at(called)
   if phase not in allowed_admission:
-   assert configuration['fileWorkDispatchPolicy']=='CONTINUE'and operation==8 and phase in('EVENT_DRAIN','ACK_DRAIN'),('business publication outside admission/draining phases',phase,cid)
+   assert configuration['fileWorkDispatchPolicy']=='CONTINUE'and operation==8 and phase in(('EVENT_DRAIN','ACK_DRAIN','READ_DRAIN')if read_yield_enabled else('EVENT_DRAIN','ACK_DRAIN')),('business publication outside admission/draining phases',phase,cid)
    count=r.value('i');assert 1<=count<=4
-   expected_admission='VERIFY_WAIT'if phase=='EVENT_DRAIN'else'FILE_WAIT'
+   expected_admission={'EVENT_DRAIN':'VERIFY_WAIT','ACK_DRAIN':'FILE_WAIT','READ_DRAIN':'READ_YIELD'}[phase]
    for index in range(count):
     n=r.value('i');assert 1<=n<=2048;nested=r.read(n);original=admission_slots[cid,index]
     submit=configuration['scheduledOriginMonotonicNs']+int(original['submit_offset_ns'])
     assert digest(nested)==original['command_sha256']and submit<phase_started and phase_at(submit)[0]==expected_admission,('drain publication lacks prior original admission',cid,index)
+    if phase=='READ_DRAIN':assert phase_at(submit)[1]==read_drain_origins[phase_started],('read-drain publication belongs to another yield',cid,index)
    r.end();legitimate_drain_publications.append(dict(correlationId=cid,phase=phase,phaseStartedNs=phase_started,offerCalledNs=called,members=count))
 assert expected_positive==positives
 for cid,value in requests.items():assert originals[cid]==value['body']and 1<=positive_counts[cid]<=4
@@ -194,5 +199,5 @@ if accepted==planned:
 else:assert summary['allArrivalP99Ns']is None
 
 for p in [state/'maintenance-v4.bin',state/'physical-requests.bin',state/'physical-replies.bin',state/'physical-offer-codes.csv',state/'physical-request-index.csv',state/'arrivals.csv',state/'configuration.json',state/'load-result.json',*sorted((state/'writer').glob('*'))]:input_pins[p.name]=dict(bytes=p.stat().st_size,sha256=digest(p.read_bytes()))
-result=dict(passed=True,atUTC=datetime.datetime.now(datetime.timezone.utc).isoformat(),sourceSha256=digest(Path(__file__).read_bytes()),scope='Independent Python finite-capacity original logical-admission/drain-publication/physical-result/event/receipt audit;not a second matching algorithm or storage durability certification',allNewLogicalSubmissionsWithinAllowedAdmissionPhases=True,priorOriginalPublicationsDuringDrain=legitimate_drain_publications,plannedArrivals=planned,confirmedAcceptedTrades=accepted,notSent=not_sent,arrivalWindowGoodputPerSecond=in_window/20,allArrivalP99Ns=summary['allArrivalP99Ns'],fileWorkDispatchPolicy=configuration['fileWorkDispatchPolicy'],logicalRpcs=len(requests),physicalOffers=len(attempts),positiveOffers=len(positives),physicalReplies=len(physical_replies),maximumRetainedReadCredits=peak,readGenerations=len(generations),allReadCreditsConsumed=True,allOriginalDeadlinesUnchanged=True,allDestructiveOriginalIntentsAndBothPrefixReceiptsPredateOffers=True,archiveCommitIdentities=commits,eventAckIdentities=acks,throughBusinessSeq=through,eventCounts=dict(counts),uniqueOneUnitTrades=len(trades),notional=sum(e['price']*e['quantity']for e in trades),inputs=input_pins)
+result=dict(passed=True,atUTC=datetime.datetime.now(datetime.timezone.utc).isoformat(),sourceSha256=digest(Path(__file__).read_bytes()),readYieldAuditSourceSha256=digest((Path(__file__).parent/'retention_read_yield_audit_v4.py').read_bytes()),readYieldEnabled=read_yield_enabled,readYieldTurns=len(read_drain_origins),scope='Independent Python finite-capacity original logical-admission/drain-publication/physical-result/event/receipt audit;not a second matching algorithm or storage durability certification',allNewLogicalSubmissionsWithinAllowedAdmissionPhases=True,priorOriginalPublicationsDuringDrain=legitimate_drain_publications,plannedArrivals=planned,confirmedAcceptedTrades=accepted,notSent=not_sent,arrivalWindowGoodputPerSecond=in_window/20,allArrivalP99Ns=summary['allArrivalP99Ns'],fileWorkDispatchPolicy=configuration['fileWorkDispatchPolicy'],logicalRpcs=len(requests),physicalOffers=len(attempts),positiveOffers=len(positives),physicalReplies=len(physical_replies),maximumRetainedReadCredits=peak,readGenerations=len(generations),allReadCreditsConsumed=True,allOriginalDeadlinesUnchanged=True,allDestructiveOriginalIntentsAndBothPrefixReceiptsPredateOffers=True,archiveCommitIdentities=commits,eventAckIdentities=acks,throughBusinessSeq=through,eventCounts=dict(counts),uniqueOneUnitTrades=len(trades),notional=sum(e['price']*e['quantity']for e in trades),inputs=input_pins)
 (output/'RESULT.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n');print(json.dumps({k:v for k,v in result.items()if k!='inputs'}))

@@ -12,7 +12,7 @@ import static io.vectormatch.cluster.RetentionReplyV3.*;
 /** Finite single-caller coordinator. All business admission must pass through this fresh-lineage gate. */
 public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
     public enum Phase { INITIALIZING, IDLE, PREPARE_WAIT, ARCHIVE_READ, VERIFY_WAIT, EVENT_DRAIN, EVENT_READ,
-        FILE_WAIT, ACK_DRAIN, ARCHIVE_INTENT, ARCHIVE_ACK, EVENT_INTENT, EVENT_ACK, FAILED, CLOSED }
+        FILE_WAIT, ACK_DRAIN, ARCHIVE_INTENT, ARCHIVE_ACK, EVENT_INTENT, EVENT_ACK, READ_YIELD, READ_DRAIN, FAILED, CLOSED }
     public record Cycle(long number,RetentionEngineV3.ArchiveAck acknowledgement,long throughEventSeq,
                         RetentionPrefixPersistenceV4.DurablePrefix durablePrefix) {}
     public static final class Failure extends IOException {
@@ -39,7 +39,10 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
     private final RetentionServiceV3.Profile profile;
     private final Scope scope;
     private final int maximumCuts,readWindow,chunkBytes,eventCount;
-    private final boolean businessDuringFileWork;
+    private final boolean businessDuringFileWork,businessBetweenReadBanks;
+    public static final int MAX_READ_YIELD_COMMANDS=127;
+    private int readYieldCommands;
+    private Phase resumeRead;
     private final long maximumRpcs;
     private final DataOutputStream trace;
     private final long maximumTraceBytes;
@@ -71,23 +74,33 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
             RetentionPrefixPersistenceV4 pipeline,RetentionServiceV3.Profile profile,String lineage,
             Path newTrace,int maximumCuts,int readWindow,int chunkBytes,int eventCount,long maximumRpcs,long maximumTraceBytes,
             boolean businessDuringFileWork)throws IOException{
+        this(owner,writer,pipeline,profile,lineage,newTrace,maximumCuts,readWindow,chunkBytes,eventCount,maximumRpcs,maximumTraceBytes,businessDuringFileWork,false);
+    }
+    /** Opt-in bounded business turn between closed read banks; every original must drain before the next bank. */
+    public RetentionAsyncMaintenanceV4(RetentionBatchOwnerV3 owner,RetentionDurableWriterV3 writer,
+            RetentionPrefixPersistenceV4 pipeline,RetentionServiceV3.Profile profile,String lineage,
+            Path newTrace,int maximumCuts,int readWindow,int chunkBytes,int eventCount,long maximumRpcs,long maximumTraceBytes,
+            boolean businessDuringFileWork,boolean businessBetweenReadBanks)throws IOException{
+        if(businessBetweenReadBanks&&!businessDuringFileWork)throw new IllegalArgumentException("inter-bank dispatch requires CONTINUE file-work policy");
         this.owner=Objects.requireNonNull(owner);this.writer=Objects.requireNonNull(writer);this.pipeline=Objects.requireNonNull(pipeline);
         this.profile=Objects.requireNonNull(profile);scope=new Scope(profile.fingerprint(),lineage);
         if(maximumCuts<1||maximumCuts>128||maximumRpcs<1||maximumRpcs>250000||maximumTraceBytes<4096||maximumTraceBytes>512L*1024*1024)
             throw new IllegalArgumentException("finite V4 cut/RPC/trace limits required");
         this.maximumCuts=maximumCuts;this.maximumRpcs=maximumRpcs;this.maximumTraceBytes=maximumTraceBytes;
-        this.businessDuringFileWork=businessDuringFileWork;
+        this.businessDuringFileWork=businessDuringFileWork;this.businessBetweenReadBanks=businessBetweenReadBanks;
         this.readWindow=RetentionCapacityPlanV3.requireReadWindow128(readWindow);
         this.chunkBytes=requireArchiveChunkBytes(chunkBytes);this.eventCount=requireEventFetchCount(eventCount);
         Path path=newTrace.toAbsolutePath().normalize();for(Path p=path;p!=null;p=p.getParent())if(Files.isSymbolicLink(p))throw new IOException("symlink trace refused");
         trace=new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(path,StandardOpenOption.CREATE_NEW),65536));
         trace.writeInt(0x564d5434);trace.writeInt(1);trace.flush();
         try{
-            record(3,RetentionCapacityJsonV3.json(Map.of("schema","retention-async-maintenance-v4-1","scope",scope.toString(),
+            var metadata=new LinkedHashMap<String,Object>(Map.of("schema","retention-async-maintenance-v4-1","scope",scope.toString(),
                     "maximumCuts",maximumCuts,"maximumRpcs",maximumRpcs,"maximumTraceBytes",maximumTraceBytes,
                     "readWindow",readWindow,"archiveChunkBytes",chunkBytes,"eventFetchCount",eventCount,
                     "fileWorkDispatchPolicy",businessDuringFileWork?"CONTINUE":"PAUSE",
-                    "recoveryMode","fresh lineage only;persisted monotonic permits must not be reissued after restart")).getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+                    "recoveryMode","fresh lineage only;persisted monotonic permits must not be reissued after restart"));
+            metadata.put("interBankBusinessPolicy",businessBetweenReadBanks?"BOUNDED_TURN":"CLOSED");metadata.put("maximumReadYieldCommands",MAX_READ_YIELD_COMMANDS);
+            record(3,RetentionCapacityJsonV3.json(metadata).getBytes(java.nio.charset.StandardCharsets.US_ASCII));
             reserveControl(new Position(),false);
         }catch(IOException|RuntimeException|Error error){try{trace.close();}catch(IOException close){error.addSuppressed(close);}throw error;}
     }
@@ -95,7 +108,7 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
     private void healthy(){affinity();if(failure!=null||phase==Phase.CLOSED)throw new IllegalStateException("V4 coordinator terminal",failure);}
     private boolean pending(){return ((Number)owner.snapshot().get("pendingLogicalCommands")).longValue()!=0;}
     /** This gate never admits new business while any read lease/control/ACK fence is active. */
-    public boolean businessAllowed(){affinity();return failure==null&&(phase==Phase.IDLE||businessDuringFileWork&&(phase==Phase.VERIFY_WAIT||phase==Phase.FILE_WAIT));}
+    public boolean businessAllowed(){affinity();return failure==null&&(phase==Phase.IDLE||businessDuringFileWork&&(phase==Phase.VERIFY_WAIT||phase==Phase.FILE_WAIT)||businessBetweenReadBanks&&phase==Phase.READ_YIELD&&readYieldCommands<MAX_READ_YIELD_COMMANDS); }
     public Phase phase(){affinity();return phase;}
     public long knownBusinessSeq(){affinity();return lastKnownBusiness;}
     public long archivedThrough(){affinity();return lastArchive==null?0:lastArchive.throughCommandSeq();}
@@ -109,7 +122,7 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
         var bound=RetentionEngineV3.reservationBound(profile.core(),command);
         if(reservedCommands>=profile.core().maxPendingCommands()||bound.events()>Math.min(profile.core().maxPendingEvents(),profile.outboxCapacity())-reservedEvents
                 ||bound.historyBytes()>profile.core().maxPendingSerializedBytes()-reservedHistoryBytes)return Optional.empty();
-        var ticket=owner.submit(worker,command,deadline);pendingCredits.add(new Credit(bound,ticket));reservedCommands++;
+        var ticket=owner.submit(worker,command,deadline);if(phase==Phase.READ_YIELD)readYieldCommands++;pendingCredits.add(new Credit(bound,ticket));reservedCommands++;
         producerHighWater.put(producer,command.requestSeq());reservedEvents+=bound.events();reservedHistoryBytes+=bound.historyBytes();
         return Optional.of(ticket);
     }
@@ -132,7 +145,7 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
     private void transition(Phase next)throws IOException{
         record(3,RetentionCapacityJsonV3.json(Map.of("from",phase.name(),"to",next.name(),"reservedCommands",reservedCommands,
                 "reservedEvents",reservedEvents,"reservedHistoryBytes",reservedHistoryBytes,"readBankOpen",bank!=null,
-                "pendingLogicalCommands",owner.snapshot().get("pendingLogicalCommands"))).getBytes(java.nio.charset.StandardCharsets.US_ASCII));phase=next;
+                "pendingLogicalCommands",owner.snapshot().get("pendingLogicalCommands"),"readYieldCommands",readYieldCommands,"resumeRead",resumeRead==null?"NONE":resumeRead.name())).getBytes(java.nio.charset.StandardCharsets.US_ASCII));phase=next;
     }
     private void recordReceipt(String kind,RetentionDurableWriterV3.Persisted receipt)throws IOException{
         record(5,RetentionCapacityJsonV3.json(Map.of("kind",kind,"path",receipt.path().toString(),"bytes",receipt.bytes(),"sha256",receipt.sha256(),
@@ -181,6 +194,7 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
             case ARCHIVE_READ -> {
                 if(!readTurn(true))return;
                 if(archiveOffset==archive.length){pipeline.start(archive,acknowledgement,lastEvent);transition(Phase.VERIFY_WAIT);}
+                else yieldBetweenBanks(Phase.ARCHIVE_READ);
             }
             case VERIFY_WAIT -> {
                 var ready=pipeline.expectedEvents();if(ready.isEmpty())return;events=ready.orElseThrow();eventOffset=0;
@@ -190,7 +204,10 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
             case EVENT_READ -> {
                 if(!readTurn(false))return;
                 if(eventOffset==events.events().size()){pipeline.submitEvents(eventBytes.toByteArray());transition(Phase.FILE_WAIT);}
+                else yieldBetweenBanks(Phase.EVENT_READ);
             }
+            case READ_YIELD -> {transition(Phase.READ_DRAIN);}
+            case READ_DRAIN -> {if(!pending()){Phase next=resumeRead;resumeRead=null;transition(next);}}
             case FILE_WAIT -> {
                 var ready=pipeline.poll();if(ready.isEmpty())return;proof=ready.orElseThrow();recordReceipt("archive",proof.archive());
                 if(proof.events().isPresent())recordReceipt("events",proof.events().orElseThrow());transition(Phase.ACK_DRAIN);
@@ -213,6 +230,11 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
             }
             case FAILED,CLOSED -> throw new IllegalStateException("terminal coordinator");
         }}catch(Throwable error){throw fail(error);}
+    }
+    private void yieldBetweenBanks(Phase next)throws IOException{
+        if(!businessBetweenReadBanks)return;
+        if(bank!=null||!reads.isEmpty()||pending()||(next!=Phase.ARCHIVE_READ&&next!=Phase.EVENT_READ))throw new IllegalStateException("closed and drained bank required before read yield");
+        resumeRead=next;readYieldCommands=0;transition(Phase.READ_YIELD);
     }
     private boolean readTurn(boolean chunks)throws IOException{
         if(reads.isEmpty()){
@@ -265,6 +287,6 @@ public final class RetentionAsyncMaintenanceV4 implements AutoCloseable {
         if(bank!=null){try{originals.addAll(bank.abort(error).originalWires());}catch(Throwable abort){error.addSuppressed(abort);for(var read:reads)originals.add(read.ticket.originalWire());}}
         failure=new Failure(error,originals);phase=Phase.FAILED;return failure;
     }
-    public Map<String,Object> snapshot(){affinity();var out=new LinkedHashMap<String,Object>();out.put("schema","retention-async-maintenance-v4-1");out.put("phase",phase.name());out.put("businessAllowed",businessAllowed());out.put("completedCycles",cycles);out.put("logicalRpcs",rpcs);out.put("traceRecords",traceRecords);out.put("traceBytes",traceBytes);out.put("reservedCommands",reservedCommands);out.put("pendingCreditObservations",pendingCredits.size());out.put("reservedEvents",reservedEvents);out.put("reservedHistoryBytes",reservedHistoryBytes);out.put("reservedJournalRecords",journalRecords);out.put("reservedJournalBytes",journalBytes);out.put("knownBusinessSeq",lastKnownBusiness);out.put("archivedThrough",lastArchive==null?0:lastArchive.throughCommandSeq());out.put("exportedEventSeq",lastEvent);out.put("readBankOpen",bank!=null);return Collections.unmodifiableMap(out);}
+    public Map<String,Object> snapshot(){affinity();var out=new LinkedHashMap<String,Object>();out.put("schema","retention-async-maintenance-v4-1");out.put("phase",phase.name());out.put("businessAllowed",businessAllowed());out.put("completedCycles",cycles);out.put("logicalRpcs",rpcs);out.put("traceRecords",traceRecords);out.put("traceBytes",traceBytes);out.put("reservedCommands",reservedCommands);out.put("pendingCreditObservations",pendingCredits.size());out.put("reservedEvents",reservedEvents);out.put("reservedHistoryBytes",reservedHistoryBytes);out.put("reservedJournalRecords",journalRecords);out.put("reservedJournalBytes",journalBytes);out.put("knownBusinessSeq",lastKnownBusiness);out.put("archivedThrough",lastArchive==null?0:lastArchive.throughCommandSeq());out.put("exportedEventSeq",lastEvent);out.put("readBankOpen",bank!=null);out.put("interBankBusinessPolicy",businessBetweenReadBanks?"BOUNDED_TURN":"CLOSED");out.put("readYieldCommands",readYieldCommands);out.put("maximumReadYieldCommands",MAX_READ_YIELD_COMMANDS);return Collections.unmodifiableMap(out);}
     @Override public void close()throws IOException{affinity();try{trace.close();}finally{if(phase!=Phase.IDLE||failure!=null||pending()){phase=Phase.CLOSED;throw new IOException("V4 closed with unproven prefix/business;retain originals and drain borrowed workers",failure);}phase=Phase.CLOSED;}}
 }

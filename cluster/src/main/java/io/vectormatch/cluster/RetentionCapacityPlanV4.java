@@ -19,14 +19,14 @@ public final class RetentionCapacityPlanV4 {
     }
     public record Plan(int arrivals,int cycles,int maximumEntryBytes,int archiveHeaderBytes,
                        long maximumEvents,long maximumMaintenanceRpcs,long negativeOfferLimit,
-                       long maximumArchiveBytes,long maximumEventBytes,long writerPayloadBytes,int writerPayloadFiles,
+                       long maximumArchiveBytes,long maximumEventBytes,long maximumReadYieldTurns,long writerPayloadBytes,int writerPayloadFiles,
                        long coordinatorTraceBytes,long allRawBytes,long allocatedGrowthBytes,long initialFreeBytes,
                        long journalRecords,long journalBytes,int maximumSingleBusinessRequest,int maximumSingleBusinessReply,
                        int maximumMaintenanceRequest,int maximumMaintenanceReply,List<String> rejections){
         public Plan{rejections=List.copyOf(rejections);}
         public boolean admitted(){return rejections.isEmpty();}
         public void requireAdmitted(){if(!admitted())throw new IllegalArgumentException("V4 finite admission refused:"+rejections);}
-        public Map<String,Object> observation(){var m=new LinkedHashMap<String,Object>();m.put("schema","retention-v4-capacity-admission-1");m.put("arrivals",arrivals);m.put("cycles",cycles);m.put("cutCommands",CUT);m.put("readWindow",READ_WINDOW);m.put("eventPage",EVENT_PAGE);m.put("archiveChunkBytes",CHUNK);m.put("allocatedLogicalWorkers",128);m.put("activeLoadWorkers",127);m.put("reservedBootstrapWorker",0);m.put("allocatedQueuePositions",8192);m.put("activeLoadQueuePositions",8128);m.put("maximumEntryBytes",maximumEntryBytes);m.put("archiveHeaderBytes",archiveHeaderBytes);m.put("maximumEvents",maximumEvents);m.put("maximumMaintenanceRpcs",maximumMaintenanceRpcs);m.put("negativeOfferLimit",negativeOfferLimit);m.put("maximumPositiveOffersPerOriginal",4);m.put("maximumArchiveBytes",maximumArchiveBytes);m.put("maximumEventBytes",maximumEventBytes);m.put("writerPayloadBytes",writerPayloadBytes);m.put("writerPayloadFiles",writerPayloadFiles);m.put("writerFilesIncludingReceipts",writerPayloadFiles*2);m.put("coordinatorTraceBytes",coordinatorTraceBytes);m.put("allRawBytes",allRawBytes);m.put("allocatedGrowthBytes",allocatedGrowthBytes);m.put("initialFreeBytes",initialFreeBytes);m.put("runtimeFreeFloor",FREE_FLOOR);m.put("journalRecords",journalRecords);m.put("journalBytes",journalBytes);m.put("maximumSingleBusinessRequest",maximumSingleBusinessRequest);m.put("maximumSingleBusinessReply",maximumSingleBusinessReply);m.put("maximumMaintenanceRequest",maximumMaintenanceRequest);m.put("maximumMaintenanceReply",maximumMaintenanceReply);m.put("admissionRejections",rejections);m.put("capacityProven",false);return Collections.unmodifiableMap(m);}
+        public Map<String,Object> observation(){var m=new LinkedHashMap<String,Object>();m.put("schema","retention-v4-capacity-admission-1");m.put("arrivals",arrivals);m.put("cycles",cycles);m.put("cutCommands",CUT);m.put("readWindow",READ_WINDOW);m.put("eventPage",EVENT_PAGE);m.put("archiveChunkBytes",CHUNK);m.put("allocatedLogicalWorkers",128);m.put("activeLoadWorkers",127);m.put("reservedBootstrapWorker",0);m.put("allocatedQueuePositions",8192);m.put("activeLoadQueuePositions",8128);m.put("maximumEntryBytes",maximumEntryBytes);m.put("archiveHeaderBytes",archiveHeaderBytes);m.put("maximumEvents",maximumEvents);m.put("maximumMaintenanceRpcs",maximumMaintenanceRpcs);m.put("negativeOfferLimit",negativeOfferLimit);m.put("maximumReadYieldTurns",maximumReadYieldTurns);m.put("maximumReadYieldPhaseFrames",3L*maximumReadYieldTurns);m.put("maximumPositiveOffersPerOriginal",4);m.put("maximumArchiveBytes",maximumArchiveBytes);m.put("maximumEventBytes",maximumEventBytes);m.put("writerPayloadBytes",writerPayloadBytes);m.put("writerPayloadFiles",writerPayloadFiles);m.put("writerFilesIncludingReceipts",writerPayloadFiles*2);m.put("coordinatorTraceBytes",coordinatorTraceBytes);m.put("allRawBytes",allRawBytes);m.put("allocatedGrowthBytes",allocatedGrowthBytes);m.put("initialFreeBytes",initialFreeBytes);m.put("runtimeFreeFloor",FREE_FLOOR);m.put("journalRecords",journalRecords);m.put("journalBytes",journalBytes);m.put("maximumSingleBusinessRequest",maximumSingleBusinessRequest);m.put("maximumSingleBusinessReply",maximumSingleBusinessReply);m.put("maximumMaintenanceRequest",maximumMaintenanceRequest);m.put("maximumMaintenanceReply",maximumMaintenanceReply);m.put("admissionRejections",rejections);m.put("capacityProven",false);return Collections.unmodifiableMap(m);}
     }
     private record Witness(int header,int setupBytes,int maximumEntry,int singleRequest,int singleReply,
                            int maintenanceRequest,int maintenanceReply,int archiveOperation,int eventOperation){}
@@ -39,6 +39,9 @@ public final class RetentionCapacityPlanV4 {
         // Per-cycle ceil adds at most one page/chunk;all cycles include their own headers.
         long chunks=ceil(archives,CHUNK)+cycles,fetches=ceil(totalEvents,EVENT_PAGE)+cycles;
         long rpcs=1L+WARMUP_RPC_LIMIT+chunks+fetches+3L*cycles;
+        // Sum of per-cycle ceil(bank/page) is bounded by the aggregate ceil plus one per cycle.
+        // Every nonfinal bank may add YIELD,DRAIN,resume; both controls reserve the same bytes.
+        long readYieldTurns=ceil(chunks,READ_WINDOW)+ceil(fetches,READ_WINDOW)+2L*cycles;
         int eventReply=maxEncodedEventsReplyBytes(EVENT_PAGE);
         long eventBytes=fetches*(4L+eventReply);
         long intentBytes=cycles*2L*(32+MAX_REQUEST_BYTES);
@@ -49,7 +52,7 @@ public final class RetentionCapacityPlanV4 {
         long network=(long)n*(w.singleRequest+12L+4L*(w.singleReply+12L))
                 +rpcs*(w.maintenanceRequest+12L+4L*(w.maintenanceReply+12L));
         long logical=rpcs*(48L+w.maintenanceRequest+w.maintenanceReply+3L*(24+2048))
-                +(long)cycles*(24L*(24+2048)+4L*(24+8192))+1024L*1024;
+                +(long)cycles*(24L*(24+2048)+4L*(24+8192))+3L*readYieldTurns*(24+2048)+1024L*1024;
         long raw=network+logical+frames*(128L+5L*128)+(long)n*640+4L*1024*1024;
         long allocation=raw+writerBytes+jobs*1024L+2048L*4096+NATIVE_RESERVE;
         var failures=new ArrayList<String>();
@@ -58,7 +61,7 @@ public final class RetentionCapacityPlanV4 {
         if(profile.core().maxPendingCommands()<4096||profile.core().maxPendingEvents()<8192||profile.outboxCapacity()<8192||profile.core().limits().maxProducers()<128)failures.add("exact finite profile headroom");
         if(w.header+(long)CUT*w.maximumEntry+w.setupBytes>profile.core().maxPendingSerializedBytes()+1024L)failures.add("largest canonical prefix allocation cap");
         if(w.maintenanceReply>MAX_REPLY_BYTES||w.maintenanceRequest>MAX_REQUEST_BYTES)failures.add("complete bounded wire envelope");
-        return new Plan(n,cycles,w.maximumEntry,w.header,totalEvents,rpcs,negatives,archives,eventBytes,writerBytes,jobs,logical,raw,allocation,allocation+FREE_FLOOR,journalRecords,journalBytes,w.singleRequest,w.singleReply,w.maintenanceRequest,w.maintenanceReply,failures);
+        return new Plan(n,cycles,w.maximumEntry,w.header,totalEvents,rpcs,negatives,archives,eventBytes,readYieldTurns,writerBytes,jobs,logical,raw,allocation,allocation+FREE_FLOOR,journalRecords,journalBytes,w.singleRequest,w.singleReply,w.maintenanceRequest,w.maintenanceReply,failures);
     }
     private static Witness witness(RetentionServiceV3.Profile profile){
         String lineage="p".repeat(64);var scope=new Scope(profile.fingerprint(),lineage);var engine=new RetentionEngineV3(profile.core(),lineage);

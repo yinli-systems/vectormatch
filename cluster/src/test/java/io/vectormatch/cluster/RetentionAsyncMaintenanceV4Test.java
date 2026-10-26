@@ -30,7 +30,8 @@ class RetentionAsyncMaintenanceV4Test {
         final Queue<Reply> replies=new ConcurrentLinkedQueue<>();
         final Queue<Runnable> networkActions=new ConcurrentLinkedQueue<>();
         Thread network;
-        volatile boolean corruptChunk,dropCommitReply;
+        volatile boolean corruptChunk,dropCommitReply,holdBusinessReplies;
+        final Queue<Reply> heldBusinessReplies=new ConcurrentLinkedQueue<>();
         volatile Consumer<Request> beforeOffer=request->{};
         volatile boolean seedExistingState;
         IO(RetentionServiceV3.Profile profile){adapter=new RetentionClusteredServiceV3(profile,LINEAGE,true);}
@@ -39,9 +40,9 @@ class RetentionAsyncMaintenanceV4Test {
         public long offer(byte[] raw){affinity();var request=RetentionWireV3.decode(raw);beforeOffer.accept(request);originals.add(raw.clone());
             var reply=RetentionReplyV3.decode(adapter.dispatch(request));
             if(corruptChunk&&reply.payload() instanceof Chunk chunk){var bytes=chunk.data();bytes[bytes.length-1]^=1;reply=new Reply(reply.scope(),reply.correlationId(),reply.counters(),new Chunk(chunk.acknowledgement(),chunk.totalBytes(),chunk.offset(),bytes),reply.error());}
-            if(!(dropCommitReply&&request.operation() instanceof ArchiveCommit))replies.add(reply);return 1;
+            if(holdBusinessReplies&&request.operation() instanceof BusinessBatch)heldBusinessReplies.add(reply);else if(!(dropCommitReply&&request.operation() instanceof ArchiveCommit))replies.add(reply);return 1;
         }
-        public int poll(Consumer<Reply> consumer){affinity();Runnable action;while((action=networkActions.poll())!=null)action.run();int count=0;Reply reply;while(count<128&&(reply=replies.poll())!=null){consumer.accept(reply);count++;}return count;}
+        public int poll(Consumer<Reply> consumer){affinity();if(!holdBusinessReplies){Reply held;while((held=heldBusinessReplies.poll())!=null)replies.add(held);}Runnable action;while((action=networkActions.poll())!=null)action.run();int count=0;Reply reply;while(count<128&&(reply=replies.poll())!=null){consumer.accept(reply);count++;}return count;}
         public Map<String,Object> observation(){affinity();return Map.of("available",false,"source","real-adapter-in-process-correctness-only");}
         public void close(){affinity();}
         long offers(Class<?> kind){return originals.stream().map(RetentionWireV3::decode).filter(request->kind.isInstance(request.operation())).count();}
@@ -61,12 +62,15 @@ class RetentionAsyncMaintenanceV4Test {
             this(profile,hook,traceLimit,true);
         }
         Fixture(RetentionServiceV3.Profile profile,RetentionDurableWriterV3.AfterForce hook,long traceLimit,boolean businessDuringFileWork)throws Exception{
+            this(profile,hook,traceLimit,businessDuringFileWork,false,32);
+        }
+        Fixture(RetentionServiceV3.Profile profile,RetentionDurableWriterV3.AfterForce hook,long traceLimit,boolean businessDuringFileWork,boolean betweenBanks,int readWindow)throws Exception{
             this.profile=profile;files=root.resolve("files");io=new IO(profile);
             owner=new RetentionBatchOwnerV3(RetentionBatchOwnerV3.Config.forBatch(profile,LINEAGE,4),()->io,()->System.nanoTime()+clock.get());
             preparation=new RetentionArchivePreparationV4(Math.toIntExact(profile.core().maxPendingSerializedBytes()+1024),64L*1024*1024,4);
             writer=new RetentionDurableWriterV3(files,profile.core().maxPendingSerializedBytes()+1024,128L*1024*1024,16,hook);
             pipeline=new RetentionPrefixPersistenceV4(preparation,writer,profile,LINEAGE,4);
-            coordinator=new RetentionAsyncMaintenanceV4(owner,writer,pipeline,profile,LINEAGE,root.resolve("trace-v4.bin"),4,32,6144,32,10000,traceLimit,businessDuringFileWork);
+            coordinator=new RetentionAsyncMaintenanceV4(owner,writer,pipeline,profile,LINEAGE,root.resolve("trace-v4.bin"),4,readWindow,6144,32,10000,traceLimit,businessDuringFileWork,betweenBanks);
             driveTo(RetentionAsyncMaintenanceV4.Phase.IDLE);
         }
         Fixture(RetentionDurableWriterV3.AfterForce hook)throws Exception{this(RetentionBatchProfilesV3.finiteLoadProfile(),hook,4L*1024*1024);}
@@ -75,6 +79,61 @@ class RetentionAsyncMaintenanceV4Test {
         void driveTo(RetentionAsyncMaintenanceV4.Phase phase)throws Exception{long end=System.nanoTime()+TimeUnit.SECONDS.toNanos(5);while(!coordinator.snapshot().get("phase").equals(phase.name())&&System.nanoTime()<end){coordinator.step();Thread.sleep(1);}assertEquals(phase.name(),coordinator.snapshot().get("phase"));}
         RetentionAsyncMaintenanceV4.Cycle finish()throws Exception{driveTo(RetentionAsyncMaintenanceV4.Phase.IDLE);return coordinator.takeCompleted().orElseThrow();}
         public void close()throws Exception{coordinator.close();pipeline.close();preparation.close();writer.close();owner.close();}
+    }
+    @Test void boundedInterBankBurstDrainsOriginalsBeforeNewReadsAndPreservesBothImmutablePrefixes()throws Exception{
+        try(var f=new Fixture(RetentionBatchProfilesV3.finiteLoadProfile(),path->{},16L*1024*1024,true,true,32)){
+            for(int n=1;n<=1536;n++)f.deposit(n,1);
+            f.coordinator.start(1536);f.driveTo(RetentionAsyncMaintenanceV4.Phase.READ_YIELD);
+            assertFalse((Boolean)f.coordinator.snapshot().get("readBankOpen"));assertTrue(f.coordinator.businessAllowed());
+            long previousReads=f.io.offers(ArchiveChunk.class)+f.io.offers(FetchEvents.class);
+            f.io.holdBusinessReplies=true;var tickets=new ArrayList<RetentionBatchOwnerV3.Ticket>();
+            try{
+                for(int worker=1;worker<=127;worker++)tickets.add(f.coordinator.trySubmit(worker,new Deposit(1,"yield-"+worker,1,Asset.BASE,1),System.nanoTime()+TimeUnit.SECONDS.toNanos(20)).orElseThrow());
+                assertFalse(f.coordinator.businessAllowed());assertEquals(127,f.coordinator.snapshot().get("readYieldCommands"));
+                assertTrue(f.coordinator.trySubmit(0,new Deposit(1,"p",1537,Asset.BASE,1),System.nanoTime()+TimeUnit.SECONDS.toNanos(20)).isEmpty());
+                f.coordinator.step();assertEquals(RetentionAsyncMaintenanceV4.Phase.READ_DRAIN,f.coordinator.phase());
+                eventually(()->!f.io.heldBusinessReplies.isEmpty());
+                for(int n=0;n<10;n++){f.coordinator.step();Thread.sleep(1);}
+                assertEquals(RetentionAsyncMaintenanceV4.Phase.READ_DRAIN,f.coordinator.phase());assertFalse((Boolean)f.coordinator.snapshot().get("readBankOpen"));
+                assertEquals(previousReads,f.io.offers(ArchiveChunk.class)+f.io.offers(FetchEvents.class));assertEquals(0,f.io.offers(ArchiveCommit.class));assertEquals(0,f.io.offers(EventAck.class));
+            }finally{f.io.holdBusinessReplies=false;f.owner.wake();}
+            for(var ticket:tickets)assertEquals(RetentionBatchOwnerV3.Terminal.APPLIED,ticket.await(Duration.ofSeconds(3)).terminal());
+            var first=f.finish();assertEquals(1536,first.acknowledgement().throughCommandSeq());assertEquals(1536,first.throughEventSeq());
+            assertEquals(127,f.coordinator.snapshot().get("reservedCommands"));assertEquals(1663,f.coordinator.knownBusinessSeq());
+            f.coordinator.start(1663);var second=f.finish();assertEquals(1537,second.acknowledgement().firstCommandSeq());assertEquals(1663,second.throughEventSeq());assertEquals(0,f.coordinator.snapshot().get("reservedCommands"));
+            var reference=new RetentionClusteredServiceV3(f.profile,LINEAGE,true);reference.onStart(null,null);for(var raw:f.io.originals)reference.dispatch(RetentionWireV3.decode(raw));
+            byte[] actual=f.io.snapshotOwned();assertArrayEquals(state(reference).snapshot(),actual);assertArrayEquals(actual,RetentionServiceV3.restore(actual,f.profile,LINEAGE).snapshot());
+            try(var input=new DataInputStream(Files.newInputStream(root.resolve("trace-v4.bin")))){
+                input.readInt();input.readInt();var resumes=new HashSet<String>();
+                while(input.available()>0){int kind=input.readInt();input.readLong();input.readLong();int n=input.readInt();byte[] raw=input.readNBytes(n);String text=new String(raw,java.nio.charset.StandardCharsets.US_ASCII);
+                    if(kind==3&&text.contains("\"to\":\"READ_YIELD\"")){
+                        assertTrue(text.contains("\"readBankOpen\":false"));assertTrue(text.contains("\"pendingLogicalCommands\":0"));
+                        if(text.contains("\"resumeRead\":\"ARCHIVE_READ\""))resumes.add("archive");if(text.contains("\"resumeRead\":\"EVENT_READ\""))resumes.add("events");
+                    }
+                }assertEquals(Set.of("archive","events"),resumes);
+            }
+        }
+    }
+    @Test void unknownInterBankOriginalHoldsReadFenceUntilItsSameLateReplyResolves()throws Exception{
+        try(var f=new Fixture(RetentionBatchProfilesV3.finiteLoadProfile(),path->{},16L*1024*1024,true,true,32)){
+            for(int n=1;n<=1536;n++)f.deposit(n,1);f.coordinator.start(1536);f.driveTo(RetentionAsyncMaintenanceV4.Phase.READ_YIELD);
+            long reads=f.io.offers(ArchiveChunk.class)+f.io.offers(FetchEvents.class);f.io.holdBusinessReplies=true;
+            var ticket=f.coordinator.trySubmit(1,new Deposit(1,"later",1,Asset.BASE,1),System.nanoTime()+TimeUnit.MILLISECONDS.toNanos(50)).orElseThrow();
+            try{
+                f.coordinator.step();eventually(()->!f.io.heldBusinessReplies.isEmpty());
+                var unknown=assertThrows(RetentionBatchOwnerV3.UnresolvedCommandException.class,()->ticket.await(Duration.ofMillis(1)));assertTrue(unknown.mayHaveExecuted());
+                byte[] original=ticket.originalWire();var identity=ticket.identity();ticket.revoke();f.clock.set(TimeUnit.SECONDS.toNanos(1));f.owner.wake();
+                for(int n=0;n<20;n++){f.coordinator.step();Thread.sleep(1);}
+                long offered=f.io.offers(BusinessBatch.class);
+                for(int n=0;n<20;n++){f.coordinator.step();Thread.sleep(1);}
+                assertEquals(offered,f.io.offers(BusinessBatch.class));assertArrayEquals(original,ticket.originalWire());assertEquals(identity,ticket.identity());
+                assertEquals(RetentionAsyncMaintenanceV4.Phase.READ_DRAIN,f.coordinator.phase());assertFalse(f.coordinator.businessAllowed());assertFalse((Boolean)f.coordinator.snapshot().get("readBankOpen"));
+                assertTrue(f.coordinator.trySubmit(1,new Deposit(1,"later",2,Asset.BASE,1),System.nanoTime()+TimeUnit.SECONDS.toNanos(20)).isEmpty());
+                assertEquals(reads,f.io.offers(ArchiveChunk.class)+f.io.offers(FetchEvents.class));assertEquals(0,f.io.offers(ArchiveCommit.class));assertEquals(0,f.io.offers(EventAck.class));
+            }finally{f.io.holdBusinessReplies=false;f.owner.wake();}
+            assertEquals(RetentionBatchOwnerV3.Terminal.APPLIED,ticket.await(Duration.ofSeconds(3)).terminal());
+            var first=f.finish();assertEquals(1536,first.throughEventSeq());assertEquals(1,f.coordinator.snapshot().get("reservedCommands"));f.coordinator.start(1537);f.finish();assertEquals(0,f.coordinator.snapshot().get("reservedCommands"));
+        }
     }
     @Test void businessProgressesDuringOriginalFileWorkAndTwoCutsMatchFullCanonicalReplayAndBinaryRestore()throws Exception{
         var archiveEntered=new CountDownLatch(1);var archiveRelease=new CountDownLatch(1);var eventEntered=new CountDownLatch(1);var eventRelease=new CountDownLatch(1);

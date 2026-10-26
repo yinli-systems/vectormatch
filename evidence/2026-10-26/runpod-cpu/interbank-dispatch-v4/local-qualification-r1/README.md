@@ -1,0 +1,5 @@
+# Local inter-bank candidate qualification
+
+29 Java tests across six suites pass with zero failure/error/skip. Both original20-second arrival-clock fixtures are included. The complete Python suite has202 tests,198 pass and four actual Linux-only process/signal cases skip on macOS;all historical fixture checks pass. Linux regression,native candidate audit/cold recovery and controlled performance comparisons remain pending. No default/performance promotion.
+
+All six local attempts and exact qualified sources are preserved. Test fixture/exception-name/semantic errors and the actual disk refusal are retained;runtime guards are unchanged. Full compressed closed native archives remain on CPU/local/private assets after retiring only fully verified uncompressed runtime duplicates. Cleanup R2 verified20 scopes before deleting their duplicate state directories and preserved every compressed archive. The JDK cache retirement label still says17 originals,while its executed selection actually checks all18 closed CI archives;the raw record is unchanged. Main HTTP evidence has103 runs/38 cohorts.
