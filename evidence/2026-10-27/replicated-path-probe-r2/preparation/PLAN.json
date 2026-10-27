@@ -1,0 +1,110 @@
+{
+  "boot": "8d765c71-dbfa-4354-8db0-6c392e701e6f",
+  "host": "33ace3d92505",
+  "portBase": 26000,
+  "rate": 100,
+  "qualSeconds": 30,
+  "soakSeconds": 1800,
+  "sourceCollector": "G1",
+  "heapInitial": "1g",
+  "heapMax": "2g",
+  "activeProcessors": 4,
+  "cpuSets": [
+    [
+      0,
+      2,
+      7,
+      10
+    ],
+    [
+      12,
+      19,
+      24,
+      26
+    ],
+    [
+      29,
+      30,
+      34,
+      35
+    ],
+    [
+      40,
+      48,
+      52,
+      62
+    ]
+  ],
+  "leader": 0,
+  "archiveSyncLevel": 2,
+  "selection": "100us only if both paired B accept all originals, no unknown, release max <=20ms, >=99% in-window, p99 <=90% paired A and p999 <=paired A; otherwise explicit1ms",
+  "scope": "same-host replicated diagnostic, source memory tape; sync2 unchanged; NOOP not trading; no continuous export/retention claim",
+  "cases": {
+    "functional-noop": {
+      "mode": "NOOP",
+      "seconds": 2,
+      "rate": 10,
+      "maxParkNs": 1000000
+    },
+    "functional-matching": {
+      "mode": "MATCHING",
+      "seconds": 2,
+      "rate": 10,
+      "maxParkNs": 1000000
+    },
+    "path-a1": {
+      "mode": "NOOP",
+      "seconds": 30,
+      "rate": 100,
+      "maxParkNs": 1000000
+    },
+    "path-b1": {
+      "mode": "MATCHING",
+      "seconds": 30,
+      "rate": 100,
+      "maxParkNs": 1000000
+    },
+    "path-a2": {
+      "mode": "NOOP",
+      "seconds": 30,
+      "rate": 100,
+      "maxParkNs": 1000000
+    },
+    "path-b2": {
+      "mode": "MATCHING",
+      "seconds": 30,
+      "rate": 100,
+      "maxParkNs": 1000000
+    },
+    "idle-a1": {
+      "mode": "MATCHING",
+      "seconds": 60,
+      "rate": 100,
+      "maxParkNs": 1000000
+    },
+    "idle-b1": {
+      "mode": "MATCHING",
+      "seconds": 60,
+      "rate": 100,
+      "maxParkNs": 100000
+    },
+    "idle-a2": {
+      "mode": "MATCHING",
+      "seconds": 60,
+      "rate": 100,
+      "maxParkNs": 1000000
+    },
+    "idle-b2": {
+      "mode": "MATCHING",
+      "seconds": 60,
+      "rate": 100,
+      "maxParkNs": 100000
+    },
+    "sustained-r1": {
+      "mode": "MATCHING",
+      "seconds": 1800,
+      "rate": 100,
+      "maxParkNs": 1000000
+    }
+  }
+}
