@@ -1,0 +1,86 @@
+{
+  "boot": "8d765c71-dbfa-4354-8db0-6c392e701e6f",
+  "host": "33ace3d92505",
+  "portBase": 26000,
+  "rate": 100,
+  "qualSeconds": 30,
+  "soakSeconds": 1800,
+  "sourceCollector": "G1",
+  "heapInitial": "1g",
+  "heapMax": "2g",
+  "activeProcessors": 4,
+  "cpuSets": [
+    [
+      0,
+      2,
+      7,
+      10
+    ],
+    [
+      12,
+      19,
+      24,
+      26
+    ],
+    [
+      29,
+      30,
+      34,
+      35
+    ],
+    [
+      40,
+      48,
+      52,
+      62
+    ]
+  ],
+  "leader": 0,
+  "archiveSyncLevel": 2,
+  "selection": "Observer OFF/ON/OFF/ON; do not call instrumentation a performance improvement. Require all native originals auditable. Select a new optimization only after all six arms close.",
+  "scope": "same-host request/log-position attribution; shared native CLOCK_MONOTONIC and identical diagnostic Aeron overlay in every arm; fixed sync2, G1, affinity, leader, 1ms park, overlay storage",
+  "cases": {
+    "functional-off": {
+      "mode": "MATCHING",
+      "seconds": 2,
+      "rate": 10,
+      "maxParkNs": 1000000,
+      "traceEnabled": false
+    },
+    "functional-on": {
+      "mode": "MATCHING",
+      "seconds": 2,
+      "rate": 10,
+      "maxParkNs": 1000000,
+      "traceEnabled": true
+    },
+    "trace-a1": {
+      "mode": "MATCHING",
+      "seconds": 30,
+      "rate": 100,
+      "maxParkNs": 1000000,
+      "traceEnabled": false
+    },
+    "trace-b1": {
+      "mode": "MATCHING",
+      "seconds": 30,
+      "rate": 100,
+      "maxParkNs": 1000000,
+      "traceEnabled": true
+    },
+    "trace-a2": {
+      "mode": "MATCHING",
+      "seconds": 30,
+      "rate": 100,
+      "maxParkNs": 1000000,
+      "traceEnabled": false
+    },
+    "trace-b2": {
+      "mode": "MATCHING",
+      "seconds": 30,
+      "rate": 100,
+      "maxParkNs": 1000000,
+      "traceEnabled": true
+    }
+  }
+}
