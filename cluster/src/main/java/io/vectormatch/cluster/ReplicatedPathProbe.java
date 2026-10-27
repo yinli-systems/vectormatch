@@ -94,6 +94,11 @@ public final class ReplicatedPathProbe {
             } finally { source.interrupt(); source.join(); }
             for (int i : pending) if (i >= 0) { outcomes[i] = offered[i] == 0 ? "NOT_SENT" : "UNKNOWN"; client.asynchronousCancel(correlations[i]); }
             for (Integer i; (i = queue.poll()) != null;) outcomes[i] = "NOT_SENT";
+            // Permit the 1 Hz external process sampler and JFR stream to enclose the
+            // complete window even for NOOP, whose post-window validation is trivial.
+            // All original confirmation timestamps are already final and are never changed.
+            long telemetryTail = System.nanoTime() + 2_000_000_000L;
+            while (System.nanoTime() < telemetryTail) { client.asynchronousPoll(); LockSupport.parkNanos(1_000_000); }
             // All CSV serialization and matching replay occur after the measured arrival/drain window.
             writeRows(out, commands, outcomes, released, offered, confirmed, correlations, replies, origin, rate);
             Files.writeString(out.resolve("window.json"), "{\"mode\":\"" + mode + "\",\"rate\":" + rate + ",\"seconds\":" + seconds + ",\"planned\":" + count + ",\"originNs\":" + origin + ",\"deadlineNs\":" + windowEnd + ",\"approximateStartEpochMs\":" + approximateStartEpochMs + ",\"sessionId\":" + client.clusterSessionId() + ",\"peakPending\":" + peakPending + ",\"observedPeakQueue\":" + peakQueue + ",\"leaderChangeObservations\":" + leaderChanges + ",\"archiveSyncLevel\":2,\"sourceRecordsDurableDuringWindow\":false}\n");
