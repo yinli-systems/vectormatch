@@ -9,3 +9,16 @@ After the ongoing three-replica endurance and cold-restore experiment fully clos
 Report all planned/sent/replied/accepted/rejected/not-sent/unknown counters, full-stream p50/p99/p99.9 only if every original is accepted, exact backlog peaks, source timing, business-local call durations, GC and CPU. Both matched pairs must remove missing acceptances and pass timing/goodput gates to establish a repeatable finite capacity improvement. Failed arms stay archived. Five-second improvement never proves30minute250K/s endurance or replicated capacity.
 
 Raw assets are privately archived and downloaded in full for SHA verification before closed duplicate retirement. Never overlap native benchmark groups. Keep the prepaid CPU running and stop only owned test processes.
+
+## Local reproduction
+
+Build `:bench:comparisonInstallDist` with Java21, then run each point with a fresh output path:
+
+```sh
+scripts/run-process-isolation.sh ISOLATED GEN_ZGC false 250000 5 73439 /tmp/vm-sizing-a1
+python3 scripts/audit-process-isolation.py /tmp/vm-sizing-a1 --output /tmp/vm-sizing-a1-audit.json
+scripts/run-process-isolation.sh ISOLATED GEN_ZGC true 250000 5 73439 /tmp/vm-sizing-b1
+python3 scripts/audit-process-isolation.py /tmp/vm-sizing-b1 --output /tmp/vm-sizing-b1-audit.json
+```
+
+Repeat A then B with new a2/b2 directories. Set the same `VM_COMPARE_CPUSET` on Linux for all arms. The launcher removes inherited JVM option variables and fixes the source heap/collector; the actual business child flags and original outputs remain recorded. The frozen remote campaign additionally captures process CPU/IO, executable hashes and authenticated raw-archive receipts.
