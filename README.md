@@ -8,6 +8,7 @@ A private engineering project exploring a limit-order matching engine, replicate
 
 ## Latest completed evidence · 27 October
 
+- **Recording preallocation rejected by both ABAB pairs:** p99 rises from 10.86 → 22.57 ms and 11.83 → 53.76 ms at 100/s, with identical sync2/configuration and all 24,000 comparison originals correctly confirmed. Exact request attribution shows durable-replication waiting dominates; the option remains disabled and no candidate endurance run follows. [Full negative result, concrete slow request and original evidence](docs/RECORDING_PREALLOCATION_RESULTS.md).
 - **Slow requests joined to exact log blocks and commit gates:** all 6,000 traced comparison originals have additive phase timings on an attested kernel clock. Durability/replication waiting accounts for 86.7%/67.3% of the slowest-original latency; file-force calls and associated recording waits dominate the stalled sample. Observer controls have mixed directions, so no negligible-overhead or performance-win claim follows. [Exact phase evidence and limits](docs/REPLICATED_STAGE_TRACE_RESULTS.md).
 
 - **Communication-buffer placement ABAB closed:** moving only Aeron driver files to tmpfs produces p99 55.10/17.39 ms against overlay controls 37.85/43.67 ms, each at 100/s for 60 seconds. All 24,000 comparison orders confirm and final states agree, but paired directions differ, so the candidate is not promoted. Durable archives stay on the original storage with sync2. [Every arm, actual mapped devices and closure](docs/REPLICATED_BUFFER_LAYOUT_RESULTS.md).
