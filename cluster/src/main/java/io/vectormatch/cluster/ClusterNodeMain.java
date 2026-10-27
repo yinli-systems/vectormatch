@@ -38,6 +38,12 @@ public final class ClusterNodeMain {
     @SuppressWarnings("try")
     public static void main(String[] args) throws Exception {
         Configuration configuration = configuration(args, System.getenv());
+        run(configuration, new MatchingClusteredService(configuration.outboxCapacity(), configuration.stateProfile()));
+    }
+
+    /** Shared transport construction for the explicit diagnostic entry point; production always matches. */
+    @SuppressWarnings("try")
+    static void run(Configuration configuration, io.aeron.cluster.service.ClusteredService hostedService) throws Exception {
         int node = configuration.node();
         Path base = configuration.base();
         int sync = configuration.sync();
@@ -99,7 +105,7 @@ public final class ClusterNodeMain {
                 .archiveContext(localArchive.clone())
                 .clusterDir(clusterDir)
                 .snapshotChannel(transport.withRecordingMtu(ClusteredServiceContainer.Configuration.snapshotChannel()))
-                .clusteredService(new MatchingClusteredService(outboxCapacity, configuration.stateProfile()))
+                .clusteredService(hostedService)
                 .errorHandler(errors);
         applyDataPathIdlePolicy(dataPathIdle, archive, consensus, service);
 
