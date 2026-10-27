@@ -1,0 +1,100 @@
+{
+  "boot": "8d765c71-dbfa-4354-8db0-6c392e701e6f",
+  "host": "33ace3d92505",
+  "portBase": 26000,
+  "rate": 100,
+  "qualSeconds": 60,
+  "soakSeconds": 1800,
+  "sourceCollector": "G1",
+  "heapInitial": "1g",
+  "heapMax": "2g",
+  "activeProcessors": 4,
+  "cpuSets": [
+    [
+      0,
+      2,
+      7,
+      10
+    ],
+    [
+      12,
+      19,
+      24,
+      26
+    ],
+    [
+      29,
+      30,
+      34,
+      35
+    ],
+    [
+      40,
+      48,
+      52,
+      62
+    ]
+  ],
+  "leader": 0,
+  "archiveSyncLevel": 2,
+  "selection": "Run first six arms in order. Require all originals accepted, all stages joined, all existing gates in BOTH A/B pairs, identical canonical final state, B/A p99<=0.90 and p99.9<=1.0 EACH pair. Only then run sustained-b1 for 1800s; otherwise retain negative result without promotion.",
+  "scope": "same-host exact request stages; sole A/B switch is recording segment preallocation; same native CLOCK_MONOTONIC, artifact, trace ON, sync2, G1, affinity, leader0, park1ms, overlay device48",
+  "cases": {
+    "functional-a": {
+      "mode": "MATCHING",
+      "seconds": 2,
+      "rate": 10,
+      "maxParkNs": 1000000,
+      "traceEnabled": true,
+      "preallocate": false
+    },
+    "functional-b": {
+      "mode": "MATCHING",
+      "seconds": 2,
+      "rate": 10,
+      "maxParkNs": 1000000,
+      "traceEnabled": true,
+      "preallocate": true
+    },
+    "allocation-a1": {
+      "mode": "MATCHING",
+      "seconds": 60,
+      "rate": 100,
+      "maxParkNs": 1000000,
+      "traceEnabled": true,
+      "preallocate": false
+    },
+    "allocation-b1": {
+      "mode": "MATCHING",
+      "seconds": 60,
+      "rate": 100,
+      "maxParkNs": 1000000,
+      "traceEnabled": true,
+      "preallocate": true
+    },
+    "allocation-a2": {
+      "mode": "MATCHING",
+      "seconds": 60,
+      "rate": 100,
+      "maxParkNs": 1000000,
+      "traceEnabled": true,
+      "preallocate": false
+    },
+    "allocation-b2": {
+      "mode": "MATCHING",
+      "seconds": 60,
+      "rate": 100,
+      "maxParkNs": 1000000,
+      "traceEnabled": true,
+      "preallocate": true
+    },
+    "sustained-b1": {
+      "mode": "MATCHING",
+      "seconds": 1800,
+      "rate": 100,
+      "maxParkNs": 1000000,
+      "traceEnabled": true,
+      "preallocate": true
+    }
+  }
+}
