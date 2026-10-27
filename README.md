@@ -8,6 +8,8 @@ A private engineering project exploring a limit-order matching engine, replicate
 
 ## Latest completed evidence · 27 October
 
+- **250K/s finite bottleneck fixed in repeated ABAB:** opt-in startup client-index sizing removes the ~80ms resize stall. Both five-second candidates accept all 1.25M mixed commands with zero not-sent/rejected/unknown; full-stream p99 is 2.372/0.386ms. Both lazy-sizing controls miss more than 11k originals. At 100K/s, p99 directions disagree, so no universal/default performance win is claimed. [All arms, exact stall location and raw receipts](docs/CLIENT_INDEX_SIZING_RESULTS.md).
+
 - **Three-replica continuous endurance:** one 30-minute, 100/s same-host UDP run confirms all 180,000 originals and passes canonical replay plus cold-backup continuation. Full-stream p99 is 33.72ms; 107 source releases exceed 20ms, so the latency/timing acceptance gate fails. This is separate from high-rate core/TCP capacity. [Complete windows, telemetry and recovery](docs/REPLICATED_SUSTAINED_R3_RESULTS.md).
 
 - **Independent arrival clock + collector ABAB:** at 100k/s, the same-host TCP path accepts every original in both collector pairs; business Generational ZGC reduces full-stream p99 from 15.06/30.13ms to 0.30/1.98ms. At 250k/s, missing arrivals remain and global accepted p99 is undefined. Exact worker originals identify client-index expansion as the next tested hypothesis. These five-second results exclude journal/replication. [All 16 arms and failure accounting](docs/PROCESS_ISOLATION_RESULTS.md).

@@ -4,6 +4,8 @@
 
 This is one host with three separate UDP Aeron JVM replicas and a separate generator process, each on a disjoint four-CPU affinity set. Leader0 remained fixed; all use G1,1–2GiB heap and the frozen archive file-sync level2. The workload is the existing bounded single-lot IOC fixture, not the mixed GTC/IOC/cancel TCP workload. It does not establish100K/s or250K/s replicated capacity, independent physical fault domains, hardware power-loss durability or production readiness. The state/outbox profile is finite: the final outbox contains360267pending events; no continuous archival-retention throughput is claimed.
 
+![Every completed minute](../evidence/2026-10-27/isolation-followup-figures/replicated-sustained-r3.png)
+
 ## Qualification and precommitted selection
 
 |30-second100/s qualification|Replica collector|All-original p99 ms|Confirmed inside window|Source timing|
