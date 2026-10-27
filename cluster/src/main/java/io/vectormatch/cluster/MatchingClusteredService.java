@@ -2,7 +2,6 @@ package io.vectormatch.cluster;
 
 import io.aeron.ExclusivePublication;
 import io.aeron.Image;
-import io.aeron.Publication;
 import io.aeron.cluster.codecs.CloseReason;
 import io.aeron.cluster.service.ClientSession;
 import io.aeron.cluster.service.Cluster;
@@ -10,7 +9,6 @@ import io.aeron.cluster.service.ClusteredService;
 import io.aeron.logbuffer.Header;
 import io.vectormatch.core.MatchingEngine;
 import org.agrona.DirectBuffer;
-import org.agrona.concurrent.UnsafeBuffer;
 
 import java.util.Arrays;
 import java.util.HexFormat;
@@ -18,7 +16,7 @@ import java.util.List;
 
 /** Thin deterministic Cluster adapter; transport IDs never become business idempotency IDs. */
 public final class MatchingClusteredService implements ClusteredService {
-    private static final int MAX_RESPONSE_OFFER_ATTEMPTS = 3;
+    private final PendingReplies pendingReplies = new PendingReplies(PendingReplies.DEFAULT_CAPACITY);
     private final ClusterCapacity.StateProfile stateProfile;
     private MatchingEngine engine;
     private ReplicatedOutbox outbox;
@@ -59,6 +57,9 @@ public final class MatchingClusteredService implements ClusteredService {
 
     @Override public void onSessionMessage(ClientSession session, long timestamp, DirectBuffer buffer,
                                            int offset, int length, Header header) {
+        // Aeron forbids egress from doBackgroundWork, so earlier back-pressured replies drain here, before
+        // this message's reply; an idle client's timeout resend is itself the message that delivers them.
+        pendingReplies.drain();
         if (length > CommandCodec.MAX_COMMAND_BYTES) return;
         byte[] bytes = new byte[length];
         buffer.getBytes(offset, bytes);
@@ -101,8 +102,9 @@ public final class MatchingClusteredService implements ClusteredService {
                         engine.lastCommandSeq(), engine.lastEventSeq(), engine.lastMarketSeq(), "", "");
             }
         }
-        // Never let an unresponsive client stall the replicated business state machine.
-        // A failed response offer remains an unknown result; retry uses the core's original idempotency key.
+        // Never let an unresponsive client stall the replicated business state machine. Back-pressured
+        // replies wait in order for the next log message; any reply that still cannot be delivered remains
+        // an unknown result, and retry uses the core's original idempotency key.
         respond(session, CommandCodec.reply(reply));
     }
 
@@ -144,23 +146,19 @@ public final class MatchingClusteredService implements ClusteredService {
     }
 
     private void respond(ClientSession session, byte[] response) {
-        if (session == null) return;
-        UnsafeBuffer buffer = new UnsafeBuffer(response);
-        for (int attempt = 0; attempt < MAX_RESPONSE_OFFER_ATTEMPTS; attempt++) {
-            // Term rotation rejects the current offer; retry that response without applying the command again.
-            // Every other outcome returns immediately. Exhaustion keeps the existing same-key client recovery.
-            long started = StageTrace.ENABLED ? StageTrace.clock() : 0;
-            long result = session.offer(buffer, 0, response.length);
-            if (StageTrace.ENABLED) StageTrace.event(StageTrace.EGRESS, started, StageTrace.clock(), session.id(), StageTrace.correlation(buffer, 0, response.length), result, 0);
-            if (result != Publication.ADMIN_ACTION) return;
-        }
+        pendingReplies.respond(session, response);
     }
 
     @Override public void onRoleChange(Cluster.Role role) {
+        pendingReplies.clear();
         System.out.println("VECTOR_CLUSTER_ROLE role=" + role);
     }
     @Override public void onSessionOpen(ClientSession session, long timestamp) {}
-    @Override public void onSessionClose(ClientSession session, long timestamp, CloseReason reason) {}
-    @Override public void onTimerEvent(long correlationId, long timestamp) {}
-    @Override public void onTerminate(Cluster cluster) {}
+    @Override public void onSessionClose(ClientSession session, long timestamp, CloseReason reason) {
+        if (session != null) pendingReplies.remove(session.id());
+    }
+    @Override public void onTimerEvent(long correlationId, long timestamp) { pendingReplies.drain(); }
+    @Override public void onTerminate(Cluster cluster) {
+        pendingReplies.clear();
+    }
 }

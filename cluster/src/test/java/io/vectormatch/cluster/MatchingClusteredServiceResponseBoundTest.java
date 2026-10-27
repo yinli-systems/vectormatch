@@ -15,21 +15,48 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class MatchingClusteredServiceResponseBoundTest {
-    @Test void repeatedAdministrationActionsStopAfterThreeOffersAndSameKeyCanResolveTheResult() {
+    @Test void repeatedAdministrationActionsStopAfterThreeOffersThenDeliverInOrderWithSameKeyReplay() {
         MatchingClusteredService service = new MatchingClusteredService();
         Deposit command = new Deposit(1, "bounded-response", 1, Asset.BASE, 10);
-        ScriptedSession rejected = new ScriptedSession(Publication.ADMIN_ACTION);
-        invoke(service, rejected, CommandCodec.request(1, command));
-        assertEquals(3, rejected.offered.size(), "Response recovery must have a fixed work bound");
-        assertArrayEquals(rejected.offered.getFirst(), rejected.offered.getLast());
+        ScriptedSession session = new ScriptedSession(Publication.ADMIN_ACTION, Publication.ADMIN_ACTION, Publication.ADMIN_ACTION, 1);
+        invoke(service, session, CommandCodec.request(1, command));
+        assertEquals(3, session.offered.size(), "Response recovery must have a fixed immediate work bound");
+        assertArrayEquals(session.offered.getFirst(), session.offered.getLast());
 
-        ScriptedSession retry = new ScriptedSession(1);
-        invoke(service, retry, CommandCodec.request(2, command));
-        CommandCodec.Reply resolved = CommandCodec.decodeReply(retry.offered.getFirst());
+        // The same-key retry first delivers the undelivered original, then its own replay; never overtaking.
+        invoke(service, session, CommandCodec.request(2, command));
+        assertEquals(5, session.offered.size());
+        CommandCodec.Reply original = CommandCodec.decodeReply(session.offered.get(3));
+        CommandCodec.Reply resolved = CommandCodec.decodeReply(session.offered.get(4));
+        assertEquals(1, original.correlationId());
+        assertFalse(original.replayed());
+        assertEquals(2, resolved.correlationId());
         assertTrue(resolved.replayed());
         assertEquals(1, resolved.commandSeq());
         assertEquals(1, resolved.eventSeq());
         assertTrue(resolved.result().accepted());
+        assertEquals(0, service.doBackgroundWork(0), "Aeron forbids egress from background work");
+    }
+
+    @Test void backPressuredReplyIsDeliveredByTheNextLogMessageInsteadOfDropped() {
+        MatchingClusteredService service = new MatchingClusteredService();
+        ScriptedSession session = new ScriptedSession(Publication.BACK_PRESSURED, 1);
+        invoke(service, session, CommandCodec.position(7));
+        assertEquals(1, session.offered.size());
+        invoke(service, session, CommandCodec.position(8));
+        assertEquals(3, session.offered.size());
+        assertArrayEquals(session.offered.get(0), session.offered.get(1));
+        assertEquals(7, CommandCodec.decodeReply(session.offered.get(1)).correlationId());
+        assertEquals(8, CommandCodec.decodeReply(session.offered.get(2)).correlationId());
+    }
+
+    @Test void timerEventAlsoDrainsBackPressuredReplies() {
+        MatchingClusteredService service = new MatchingClusteredService();
+        ScriptedSession session = new ScriptedSession(Publication.BACK_PRESSURED, 1);
+        invoke(service, session, CommandCodec.position(7));
+        service.onTimerEvent(1, 0);
+        assertEquals(2, session.offered.size());
+        assertEquals(7, CommandCodec.decodeReply(session.offered.get(1)).correlationId());
     }
 
     @Test void nonAdministrationFailuresReturnAfterOneOffer() {
