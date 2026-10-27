@@ -1,0 +1,76 @@
+{
+  "pid": 362207,
+  "boot": "8d765c71-dbfa-4354-8db0-6c392e701e6f",
+  "argv": [
+    "taskset",
+    "-c",
+    "40,48,52,62",
+    "/opt/vectormatch-cpu/experiments/soak-20261026-r1/tools/jdk-21.0.13+9/bin/java",
+    "--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED",
+    "--add-opens=java.base/java.util.zip=ALL-UNNAMED",
+    "-Xms1g",
+    "-Xmx2g",
+    "-XX:ActiveProcessorCount=4",
+    "-XX:+UseG1GC",
+    "-Daeron.cluster.max.sessions=256",
+    "-Xlog:class+load=info:file=/opt/vectormatch-cpu/experiments/replicated-buffer-layout-20261027-r1/experiments/layout-b2/node3-g0/class-origins.log",
+    "-javaagent:/opt/vectormatch-cpu/experiments/replicated-buffer-layout-20261027-r1/soak-agent.jar=/opt/vectormatch-cpu/experiments/replicated-buffer-layout-20261027-r1/experiments/layout-b2/evidence,/opt/vectormatch-cpu/experiments/replicated-buffer-layout-20261027-r1/experiments/layout-b2/telemetry/node3-g0",
+    "-Xlog:gc*,safepoint:file=/opt/vectormatch-cpu/experiments/replicated-buffer-layout-20261027-r1/experiments/layout-b2/node3-g0/gc.log:time,uptime,level,tags:filecount=2,filesize=10M",
+    "-Dvectormatch.probe.driverRoot=/dev/shm/vectormatch-probe-layout-20261027-r1-layout-b2",
+    "-cp",
+    "/opt/vectormatch-cpu/experiments/replicated-buffer-layout-20261027-r1/lib/*",
+    "io.vectormatch.cluster.ReplicatedPathProbe",
+    "/opt/vectormatch-cpu/experiments/replicated-buffer-layout-20261027-r1/experiments/layout-b2/evidence",
+    "26000",
+    "100",
+    "60",
+    "MATCHING"
+  ],
+  "environment": {
+    "VECTOR_AERON_MTU_LENGTH": "1248",
+    "VECTOR_CLUSTER_HOSTS": "127.0.0.1,127.0.0.1,127.0.0.1",
+    "VECTOR_CLIENT_EGRESS_HOST": "127.0.0.1",
+    "VECTOR_OUTBOX_CAPACITY": "524288"
+  },
+  "startedUTC": "2026-10-27T10:59:34Z",
+  "startTicks": "30728890",
+  "candidate": {
+    "sourceCommit": "8a9bb125b627d4a05d80a1ff149f792c0b341d00",
+    "files": {
+      "lib/agrona-2.6.1.jar": {
+        "sha256": "84c07eb02695c06bfda3d6c3a20c1984e3ff1bbd617b2f8e678140baf973fa28",
+        "bytes": 491990
+      },
+      "lib/aeron-all-1.53.3.jar": {
+        "sha256": "4c6c8a5014a2b67424051170392a005daa9a998ac963302d2819d0f3db749ef2",
+        "bytes": 3544128
+      },
+      "lib/core-0.1.0-SNAPSHOT.jar": {
+        "sha256": "24038fe13e51df6505dce3a6a41b5d6cfbf6387610f01625dc7e6284706ac513",
+        "bytes": 111079
+      },
+      "lib/cluster-0.1.0-SNAPSHOT.jar": {
+        "sha256": "55cf934c315528d938a0b110e9f88c2dc566060ea150938a6154776301bf6ae6",
+        "bytes": 957422
+      },
+      "soak-agent.jar": {
+        "sha256": "0f89f410e2490cdb66c9c41b7183266d9e6abfd39581c18fdba9131e34125df4",
+        "bytes": 7151
+      },
+      "audit-replicated-path-probe.py": {
+        "sha256": "28a0f5e1db4d44970d8f66f6a7633d877271d5ec116edb473f29770960729d71",
+        "bytes": 9011
+      },
+      "audit-replicated-buffer-layout.py": {
+        "sha256": "8449470505e048d8c5562e2457057ffbe617a410d6be94bec5080c5afa90a171",
+        "bytes": 2484
+      },
+      "process_agent.py": {
+        "sha256": "f58b458ae25555dff559b28df071933826ee5027e920f61d2264f16a7fc3f1bc",
+        "bytes": 3474
+      }
+    },
+    "javaPath": "/opt/vectormatch-cpu/experiments/soak-20261026-r1/tools/jdk-21.0.13+9/bin/java",
+    "javaBinarySha256": "9cad3f2620d3ef2ed10b26f922af7e773d54fdaa05f615d6d6df014f3fec4155"
+  }
+}

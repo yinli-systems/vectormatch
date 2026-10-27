@@ -8,6 +8,8 @@ A private engineering project exploring a limit-order matching engine, replicate
 
 ## Latest completed evidence · 27 October
 
+- **Communication-buffer placement ABAB closed:** moving only Aeron driver files to tmpfs produces p99 55.10/17.39 ms against overlay controls 37.85/43.67 ms, each at 100/s for 60 seconds. All 24,000 comparison orders confirm and final states agree, but paired directions differ, so the candidate is not promoted. Durable archives stay on the original storage with sync2. [Every arm, actual mapped devices and closure](docs/REPLICATED_BUFFER_LAYOUT_RESULTS.md).
+
 - **Replicated path diagnosis and a second 30-minute window:** the empty service already has 74.9/75.1 ms p99; reducing replica park from 1 ms to 100 µs has inconsistent paired results. The selected baseline confirms all 180,000 originals at 100/s, with 202.1 ms p99 and failed latency/source-timing gates. Long file-force stalls remain when matching callbacks are short. This uses a different source fixture from the earlier endurance run and is not a performance improvement claim. [All controls, 30 minute windows and raw receipts](docs/REPLICATED_PATH_PROBE_RESULTS.md).
 
 - **250K/s finite bottleneck fixed in repeated ABAB:** opt-in startup client-index sizing removes the ~80ms resize stall. Both five-second candidates accept all 1.25M mixed commands with zero not-sent/rejected/unknown; full-stream p99 is 2.372/0.386ms. Both lazy-sizing controls miss more than 11k originals. At 100K/s, p99 directions disagree, so no universal/default performance win is claimed. [All arms, exact stall location and raw receipts](docs/CLIENT_INDEX_SIZING_RESULTS.md).
