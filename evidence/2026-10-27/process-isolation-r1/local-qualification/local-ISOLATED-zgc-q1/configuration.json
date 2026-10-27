@@ -1,0 +1,27 @@
+{
+  "mode" : "VECTOR",
+  "placement" : "ISOLATED",
+  "collector" : "GEN_ZGC",
+  "rate" : 1000,
+  "seconds" : 1,
+  "count" : 1000,
+  "seed" : 73439,
+  "totalOutstandingCreditBound" : 8192,
+  "wireBatchLimit" : 64,
+  "characteristics" : {
+    "maximumLiveOrders" : 1025,
+    "minimumLiveOrders" : 760,
+    "trades" : 563,
+    "multiFillCommands" : 150,
+    "ioc" : 207,
+    "partialIocCommands" : 6,
+    "initialRestingOrders" : 1024,
+    "initialPriceLevelsPerSide" : 64,
+    "gtc" : 459,
+    "nativeAmend" : 0,
+    "cancel" : 334
+  },
+  "adapter" : "MatchingEngine;single-writer;cache-per-producer=256;memory-only;native terminal-order retention",
+  "java" : "21.0.13+9-LTS",
+  "scope" : "same-loopback-TCP scheduled-to-source-received-result; no replication or journal; worker service durations use worker clock only"
+}
