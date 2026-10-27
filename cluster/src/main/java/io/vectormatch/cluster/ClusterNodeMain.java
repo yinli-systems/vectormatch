@@ -33,7 +33,20 @@ public final class ClusterNodeMain {
     static final long DRIVER_IDLE_MIN_PARK_NS = 1000, DRIVER_IDLE_MAX_PARK_NS = 1_000_000;
     static final String DATA_PATH_MAX_PARK_PROPERTY = "vectormatch.node.dataPathMaxParkNs";
     static final String DATA_PATH_MAX_PARK_ENV = "VECTOR_DATA_PATH_MAX_PARK_NS";
+    static final String ARCHIVE_DATA_SYNC_PROPERTY = "vectormatch.archive.dataSyncLevel";
     private ClusterNodeMain() {}
+
+    /**
+     * Opt-in experiment: recording data uses fdatasync (level 1) while the catalog and consensus state keep the
+     * configured level 2. Only meaningful for fixed-length, fully initialized segments, where data blocks are
+     * already allocated and no file metadata is needed to recover written records. Unset keeps the configured level.
+     */
+    static int archiveDataSyncLevel(int sync, String property) {
+        if (property == null) return sync;
+        if (!property.equals("1") || sync != 2)
+            throw new IllegalArgumentException(ARCHIVE_DATA_SYNC_PROPERTY + " only accepts 1, and only lowers sync2 recording data");
+        return 1;
+    }
 
     @SuppressWarnings("try")
     public static void main(String[] args) throws Exception {
@@ -54,6 +67,7 @@ public final class ClusterNodeMain {
         int node = configuration.node();
         Path base = configuration.base();
         int sync = configuration.sync();
+        int archiveDataSync = archiveDataSyncLevel(sync, System.getProperty(ARCHIVE_DATA_SYNC_PROPERTY));
         int outboxCapacity = configuration.outboxCapacity();
         ClusterTopology topology = configuration.topology();
         NetworkTransport transport = configuration.transport();
@@ -78,7 +92,7 @@ public final class ClusterNodeMain {
                 .localControlChannel("aeron:ipc?term-length=64k")
                 .recordingEventsEnabled(false)
                 .threadingMode(ArchiveThreadingMode.SHARED)
-                .fileSyncLevel(sync)
+                .fileSyncLevel(archiveDataSync)
                 .catalogFileSyncLevel(sync)
                 .replicationChannel(transport.withMtu(topology.responseChannel(node)))
                 .archiveClientContext(new AeronArchive.Context()
@@ -122,6 +136,9 @@ public final class ClusterNodeMain {
                      consensus.terminationHook(barrier::signalAll));
              ClusteredServiceContainer ignoredService = ClusteredServiceContainer.launch(
                      service.terminationHook(barrier::signalAll))) {
+            if (archiveDataSync != sync)
+                System.out.printf("VECTOR_ARCHIVE_DATA_SYNC node=%d recordingData=%d catalog=%d consensus=%d%n",
+                        node, archiveDataSync, sync, sync);
             System.out.printf("VECTOR_CLUSTER_STARTED node=%d pid=%d sync=%d state=%s members=%s mtu=%d profile=%s limits=%s outbox=%d checkpointMaxBytes=%d resultCachePerProducer=%d requestedSocketReceiveBufferBytes=%d driverThreading=%s driverIdleMaxSpins=%d driverIdleMaxYields=%d driverIdleMinParkNs=%d driverIdleMaxParkNs=%d nakUnicastDelayNs=%d nakUnicastRetryDelayRatio=%d%s%n",
                     node, ProcessHandle.current().pid(), sync, base, topology.members(), transport.mtuLength(),
                     configuration.stateProfile().id(), configuration.stateProfile().limits(), outboxCapacity,
