@@ -185,7 +185,10 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
         requireAsynchronousOwner();
         byte[] bytes = asynchronousRequests.get(correlation);
         if (bytes == null) throw new IllegalStateException("Unregistered async correlation");
-        return client.offer(new UnsafeBuffer(bytes), 0, bytes.length);
+        long started = StageTrace.ENABLED ? StageTrace.clock() : 0;
+        long result = client.offer(new UnsafeBuffer(bytes), 0, bytes.length);
+        if (StageTrace.ENABLED) StageTrace.event(StageTrace.OFFER, started, StageTrace.clock(), client.clusterSessionId(), correlation, result, 0);
+        return result;
     }
 
     int asynchronousPoll() {
@@ -368,6 +371,7 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
     @Override public void onMessage(long sessionId, long timestamp, DirectBuffer buffer,
                                      int offset, int length, Header header) {
         if (length > CommandCodec.MAX_REPLY_BYTES) throw new IllegalStateException("Oversized Cluster reply");
+        if (StageTrace.ENABLED) StageTrace.point(StageTrace.RECEIVE, sessionId, StageTrace.correlation(buffer, offset, length), length, 0);
         byte[] bytes = new byte[length];
         buffer.getBytes(offset, bytes);
         long correlation = CommandCodec.correlation(bytes);

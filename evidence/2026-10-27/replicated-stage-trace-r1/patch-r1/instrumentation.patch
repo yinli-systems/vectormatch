@@ -1,0 +1,115 @@
+--- original/ConsensusModuleAgent.java
++++ modified/ConsensusModuleAgent.java
+@@ -15,6 +15,7 @@
+  */
+ package io.aeron.cluster;
+ 
++import io.vectormatch.cluster.StageTrace;
+ import io.aeron.Aeron;
+ import io.aeron.ChannelUri;
+ import io.aeron.ControlledFragmentAssembler;
+@@ -832,6 +833,7 @@
+         final int offset,
+         final int length)
+     {
++        if (StageTrace.ENABLED) StageTrace.point(StageTrace.INGRESS, clusterSessionId, StageTrace.correlation(buffer, offset, length), leadershipTermId, memberId);
+         if (leadershipTermId == this.leadershipTermId && Cluster.Role.LEADER == role)
+         {
+             final ClusterSession session = sessionManager.findBySessionId(clusterSessionId);
+@@ -1099,6 +1101,7 @@
+ 
+     void updateMemberLogPosition(final ClusterMember member, final long leadershipTermId, final long logPosition)
+     {
++        if (StageTrace.ENABLED) StageTrace.point(StageTrace.ACK, member.id(), leadershipTermId, logPosition, 0);
+         member
+             .leadershipTermId(leadershipTermId)
+             .logPosition(logPosition)
+@@ -2928,7 +2931,9 @@
+ 
+             publishCommitPosition(quorumPosition, leadershipTermId);
+ 
++            final long traceCommit = StageTrace.ENABLED ? StageTrace.clock() : 0;
+             commitPosition.proposeMaxRelease(quorumPosition);
++            if (StageTrace.ENABLED) StageTrace.event(StageTrace.COMMIT, traceCommit, StageTrace.clock(), memberId, leadershipTermId, quorumPosition, appendPosition);
+             timeOfLastLogUpdateNs = nowNs;
+ 
+             sweepUncommittedEntriesTo(quorumPosition);
+--- original/LogPublisher.java
++++ modified/LogPublisher.java
+@@ -15,6 +15,7 @@
+  */
+ package io.aeron.cluster;
+ 
++import io.vectormatch.cluster.StageTrace;
+ import io.aeron.ChannelUri;
+ import io.aeron.ExclusivePublication;
+ import io.aeron.Publication;
+@@ -120,6 +121,7 @@
+         final int offset,
+         final int length)
+     {
++        final long traceStart = StageTrace.ENABLED ? StageTrace.clock() : 0;
+         sessionHeaderEncoder
+             .leadershipTermId(leadershipTermId)
+             .clusterSessionId(clusterSessionId)
+@@ -140,6 +142,7 @@
+         }
+         while (--attempts > 0);
+ 
++        if (StageTrace.ENABLED) StageTrace.event(StageTrace.APPEND, traceStart, StageTrace.clock(), clusterSessionId, StageTrace.correlation(buffer, offset, length), position, publication.sessionId());
+         return position;
+     }
+ 
+--- original/RecordingSession.java
++++ modified/RecordingSession.java
+@@ -15,6 +15,7 @@
+  */
+ package io.aeron.archive;
+ 
++import io.vectormatch.cluster.StageTrace;
+ import io.aeron.*;
+ import io.aeron.archive.client.ArchiveException;
+ import io.aeron.archive.logging.ArchiveLog;
+@@ -237,7 +238,9 @@
+             final int workCount = image.blockPoll(recordingWriter, blockLengthLimit);
+             if (workCount > 0)
+             {
++                final long tracePublish = StageTrace.ENABLED ? StageTrace.clock() : 0;
+                 this.position.setRelease(recordingWriter.position());
++                if (StageTrace.ENABLED) StageTrace.event(StageTrace.RECORDED, tracePublish, StageTrace.clock(), recordingId, image.sessionId(), recordingWriter.position(), 0);
+             }
+             else if (image.isEndOfStream() || image.isClosed())
+             {
+--- original/RecordingWriter.java
++++ modified/RecordingWriter.java
+@@ -15,6 +15,7 @@
+  */
+ package io.aeron.archive;
+ 
++import io.vectormatch.cluster.StageTrace;
+ import io.aeron.Image;
+ import io.aeron.archive.checksum.Checksum;
+ import io.aeron.archive.client.ArchiveException;
+@@ -108,6 +109,8 @@
+     public void onBlock(
+         final DirectBuffer termBuffer, final int termOffset, final int length, final int sessionId, final int termId)
+     {
++        final long traceStart = StageTrace.ENABLED ? StageTrace.clock() : 0;
++        final long tracePosition = position();
+         try
+         {
+             final boolean isPaddingFrame = termBuffer.getShort(typeOffset(termOffset)) == PADDING_FRAME_TYPE;
+@@ -135,9 +138,13 @@
+             }
+             while (byteBuffer.remaining() > 0);
+ 
++            if (StageTrace.ENABLED) StageTrace.event(StageTrace.WRITE, traceStart, StageTrace.clock(), recordingId, sessionId, tracePosition, tracePosition + length);
++
+             if (forceWrites)
+             {
++                final long traceForce = StageTrace.ENABLED ? StageTrace.clock() : 0;
+                 recordingFileChannel.force(forceMetadata);
++                if (StageTrace.ENABLED) StageTrace.event(StageTrace.FORCE, traceForce, StageTrace.clock(), recordingId, sessionId, tracePosition, tracePosition + length);
+             }
+ 
+             final long writeTimeNs = nanoClock.nanoTime() - startNs;

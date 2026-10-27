@@ -149,7 +149,10 @@ public final class MatchingClusteredService implements ClusteredService {
         for (int attempt = 0; attempt < MAX_RESPONSE_OFFER_ATTEMPTS; attempt++) {
             // Term rotation rejects the current offer; retry that response without applying the command again.
             // Every other outcome returns immediately. Exhaustion keeps the existing same-key client recovery.
-            if (session.offer(buffer, 0, response.length) != Publication.ADMIN_ACTION) return;
+            long started = StageTrace.ENABLED ? StageTrace.clock() : 0;
+            long result = session.offer(buffer, 0, response.length);
+            if (StageTrace.ENABLED) StageTrace.event(StageTrace.EGRESS, started, StageTrace.clock(), session.id(), StageTrace.correlation(buffer, 0, response.length), result, 0);
+            if (result != Publication.ADMIN_ACTION) return;
         }
     }
 

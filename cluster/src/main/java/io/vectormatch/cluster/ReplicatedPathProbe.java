@@ -48,17 +48,17 @@ public final class ReplicatedPathProbe {
             }
             if (client.leaderMemberId() != 0) throw new IllegalStateException("leader0 required");
             client.enableAsynchronousOwner(256);
-            origin = System.nanoTime() + 1_000_000_000L; windowEnd = origin + seconds * 1_000_000_000L;
+            origin = StageTrace.clock() + 1_000_000_000L; windowEnd = origin + seconds * 1_000_000_000L;
             long approximateStartEpochMs = System.currentTimeMillis() + 1000;
             final long start = origin;
             Thread source = new Thread(() -> {
                 for (int i = 0; i < count; i++) {
                     long planned = start + i * 1_000_000_000L / rate, remaining;
-                    while ((remaining = planned - System.nanoTime()) > 0) {
+                    while ((remaining = planned - StageTrace.clock()) > 0) {
                         if (Thread.currentThread().isInterrupted()) return;
                         if (remaining > 100_000) LockSupport.parkNanos(Math.min(remaining - 50_000, 100_000)); else Thread.onSpinWait();
                     }
-                    released[i] = System.nanoTime(); outcomes[i] = "QUEUED";
+                    released[i] = StageTrace.clock(); outcomes[i] = "QUEUED";
                     if (!queue.offer(i)) outcomes[i] = "NOT_SENT";
                 }
             }, "probe-absolute-arrivals");
@@ -66,8 +66,8 @@ public final class ReplicatedPathProbe {
             source.start();
             try {
                 long nextProgress = origin;
-                while (source.isAlive() || !queue.isEmpty() || active != 0 || System.nanoTime() < windowEnd) {
-                    long now = System.nanoTime();
+                while (source.isAlive() || !queue.isEmpty() || active != 0 || StageTrace.clock() < windowEnd) {
+                    long now = StageTrace.clock();
                     if (now > windowEnd + 30_000_000_000L) break;
                     int work = client.asynchronousPoll();
                     if (client.leaderMemberId() != 0) leaderChanges++;
@@ -75,16 +75,16 @@ public final class ReplicatedPathProbe {
                         int i = pending[slot]; if (i < 0 || offered[i] == 0) continue;
                         var reply = client.asynchronousTake(correlations[i]);
                         if (reply != null) {
-                            confirmed[i] = System.nanoTime(); replies[i] = reply; outcomes[i] = reply.error().isEmpty() && reply.result() != null && reply.result().accepted() ? "ACCEPTED" : "REJECTED";
+                            confirmed[i] = StageTrace.clock(); replies[i] = reply; outcomes[i] = reply.error().isEmpty() && reply.result() != null && reply.result().accepted() ? "ACCEPTED" : "REJECTED";
                             pending[slot] = -1; active--; work++;
                         }
                     }
-                    if (unsent >= 0 && client.asynchronousOffer(correlations[unsent]) >= 0) { offered[unsent] = System.nanoTime(); unsent = -1; work++; }
+                    if (unsent >= 0 && client.asynchronousOffer(correlations[unsent]) >= 0) { offered[unsent] = StageTrace.clock(); unsent = -1; work++; }
                     while (unsent < 0 && active < 256 && !queue.isEmpty()) {
                         Integer i = queue.poll(); if (i == null) break;
                         int slot = 0; while (pending[slot] >= 0) slot++;
                         correlations[i] = client.asynchronousRegister(commands[i]); pending[slot] = i; active++;
-                        if (client.asynchronousOffer(correlations[i]) >= 0) offered[i] = System.nanoTime(); else unsent = i;
+                        if (client.asynchronousOffer(correlations[i]) >= 0) offered[i] = StageTrace.clock(); else unsent = i;
                         work++;
                     }
                     peakPending = Math.max(peakPending, active); peakQueue = Math.max(peakQueue, queue.size());
@@ -97,8 +97,8 @@ public final class ReplicatedPathProbe {
             // Permit the 1 Hz external process sampler and JFR stream to enclose the
             // complete window even for NOOP, whose post-window validation is trivial.
             // All original confirmation timestamps are already final and are never changed.
-            long telemetryTail = System.nanoTime() + 2_000_000_000L;
-            while (System.nanoTime() < telemetryTail) { client.asynchronousPoll(); LockSupport.parkNanos(1_000_000); }
+            long telemetryTail = StageTrace.clock() + 2_000_000_000L;
+            while (StageTrace.clock() < telemetryTail) { client.asynchronousPoll(); LockSupport.parkNanos(1_000_000); }
             // All CSV serialization and matching replay occur after the measured arrival/drain window.
             writeRows(out, commands, outcomes, released, offered, confirmed, correlations, replies, origin, rate);
             Files.writeString(out.resolve("window.json"), "{\"mode\":\"" + mode + "\",\"rate\":" + rate + ",\"seconds\":" + seconds + ",\"planned\":" + count + ",\"originNs\":" + origin + ",\"deadlineNs\":" + windowEnd + ",\"approximateStartEpochMs\":" + approximateStartEpochMs + ",\"sessionId\":" + client.clusterSessionId() + ",\"peakPending\":" + peakPending + ",\"observedPeakQueue\":" + peakQueue + ",\"leaderChangeObservations\":" + leaderChanges + ",\"archiveSyncLevel\":2,\"sourceRecordsDurableDuringWindow\":false}\n");

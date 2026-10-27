@@ -63,9 +63,10 @@ public final class ReplicatedPathProbeNode {
         @Override public void onSessionMessage(ClientSession s, long t, DirectBuffer b, int o, int l, Header h) {
             int i = count;
             if (i == correlations.length) throw new IllegalStateException("diagnostic timing capacity exhausted");
-            long started = System.nanoTime();
+            long started = StageTrace.clock();
             delegate.onSessionMessage(s, t, b, o, l, h);
-            durations[i] = System.nanoTime() - started; starts[i] = started; lengths[i] = l;
+            durations[i] = StageTrace.clock() - started; starts[i] = started; lengths[i] = l;
+            if (StageTrace.ENABLED) StageTrace.event(StageTrace.SERVICE, started, started + durations[i], s == null ? -1 : s.id(), StageTrace.correlation(b, o, l), h == null ? -1 : h.position(), 0);
             correlations[i] = l >= 14 ? b.getLong(o + 6, ByteOrder.BIG_ENDIAN) : -1;
             sessions[i] = s == null ? -1 : s.id();
             count = i + 1;
