@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "reviewDate": "2026-10-27",
+  "scope": "Reviewed historical cohorts and four highlighted gaps; not an exhaustive deployment gate or certification",
+  "cohortSummariesIndependentlyReproduced": 3,
+  "allFourAccepted": false,
+  "acceptedGateCount": 0,
+  "gates": {
+    "production_latency": {
+      "status": "failed",
+      "accepted": false,
+      "productionTarget": {
+        "p99Ms": 5,
+        "p999Ms": 20,
+        "minimumSecondsPerRepeat": 600,
+        "repeats": 3,
+        "rateAtMostFractionOfMeasuredSustainableKnee": 0.7,
+        "concurrentMaintenanceRequired": true
+      },
+      "observedLongRun": {
+        "seconds": 1800,
+        "plannedRate": 100,
+        "planned": 180000,
+        "counts": {
+          "ACCEPTED": 180000
+        },
+        "p99Ms": 202.05123999999998,
+        "p999Ms": 402.291386,
+        "sourceTimingValid": false
+      },
+      "diagnostic25ms100msThresholdsAreNotProductionTargets": true,
+      "latestStorageCandidateSelected": false,
+      "remaining": [
+        "Passing repeated production-target runs",
+        "Concurrent maintenance and same-artifact capacity knee qualification"
+      ]
+    },
+    "sustained_high_throughput": {
+      "status": "unverified",
+      "accepted": false,
+      "finiteHighRateScope": "Five-second same-host TCP, mixed common flow; independent source G1, business Generational ZGC. Only initial client-index sizing changes.",
+      "finite250kImprovementVerified": true,
+      "sustainedCapacityProven": false,
+      "replicatedHighRateProvenByThisCohort": false,
+      "remaining": [
+        "Predeclared high-rate objective and measured sustainable knee",
+        "30\u201360 minute repeated replicated sync2 runs with bounded retention",
+        "All planned originals, full latency distributions, backlog, failures and resource traces; no reset-run addition"
+      ]
+    },
+    "high_availability": {
+      "status": "partial",
+      "accepted": false,
+      "leaderProcessProbeAccepted": 128,
+      "leaderProbeFinalUnresolved": 0,
+      "controllerObservedProgressUpperBoundSeconds": 13.827820958,
+      "rtoScope": "includes controller SSH signalling and observation; bound on a confirmed trade under a new leader, not exact service RTO",
+      "newVmBackupContinuationVerified": true,
+      "physicalMediaFaultProven": false,
+      "productionRtoQualified": false,
+      "remaining": [
+        "Predeclared RTO/RPO per failure class",
+        "Partition/quorum-loss safety and node/rejoin tests under sustained load",
+        "Disk full/I/O-error and independent failure-domain coverage with every command reconciled"
+      ]
+    },
+    "external_venue": {
+      "status": "unverified",
+      "accepted": false,
+      "availableEvidence": "Local synthetic matching simulation",
+      "simulationScope": "REPLICATED_RPC_SINGLE_INFLIGHT",
+      "syntheticTradesInQualification": 400,
+      "reviewedVenueSandboxReceipts": 0,
+      "fundedTradingAuthorizedByThisReport": false,
+      "remaining": [
+        "Chosen venue and authenticated paper/testnet adapter",
+        "Venue order/fill identities and ledger/balance reconciliation",
+        "Partial-fill/cancel races, disconnect/retry, restart and rate-limit verification",
+        "Separate explicit account/strategy/capital/loss-limit authorization before funded orders"
+      ]
+    }
+  },
+  "inputs": {
+    "evidence/2026-10-27/replicated-path-probe-r2/SUMMARY.json": {
+      "bytes": 68188,
+      "sha256": "0e963980fd8c4cb46172c380b8b0242642b21126773238112abc2f8973e13dd7"
+    },
+    "scripts/summarize-replicated-path-probe.py": {
+      "bytes": 4041,
+      "sha256": "d4abb98c5441a61bc75e0bb8a9e8437bf6914d0f261b427bc6b44a97cc6ebee4"
+    },
+    "evidence/2026-10-27/client-index-sizing-r1/SUMMARY.json": {
+      "bytes": 14319,
+      "sha256": "aa9181f9f327f371af70bc4a0032bd846efffd3effbdfc0f11243c8f10cc68e6"
+    },
+    "scripts/summarize-client-index-sizing.py": {
+      "bytes": 5479,
+      "sha256": "cd1c78460d776eca1c9244b1765399c7660ed520939a3e5c4024bf4562beecc0"
+    },
+    "evidence/2026-10-27/recording-initialization-r1/SUMMARY.json": {
+      "bytes": 259166,
+      "sha256": "041ded2ff946ad5fef353e365e6d240f1baa43c7a58db2b748c38382d08018ec"
+    },
+    "scripts/summarize-recording-initialization.py": {
+      "bytes": 5690,
+      "sha256": "1d92f0aedf2efa7b2ba5ab8fc9c8fc14481fa3994b967e05bf1552c41e371644"
+    },
+    "evidence/2026-10-27/azure-restore-r2/RECOVERY_COMPLETE.json": {
+      "bytes": 266,
+      "sha256": "9793999b771ef3ab68fae432ca2cce56588b35dc1be942d3d36d3aae9eb98a4e"
+    },
+    "evidence/2026-10-27/azure-physical-r1/fault-window-result.json": {
+      "bytes": 403,
+      "sha256": "4df987f4381675c31ca855ea7fe6e87d22b375a0b73eeb7b2abb0fde5f9cede0"
+    },
+    "evidence/2026-10-27/azure-physical-r1/leader-fault-rto.json": {
+      "bytes": 271,
+      "sha256": "db1ef5d9346870103c3338e7cfdafd48bb28721ffb85d04fc5ca03f0260f705b"
+    },
+    "evidence/2026-10-26/trading-sim-r1/cluster-qualification-result.json": {
+      "bytes": 942,
+      "sha256": "2872886a9ce27832a27f37e2ec448ce48d2bfc62f20fadb9e865d781d78d63e7"
+    }
+  },
+  "futureEvidencePolicy": "New qualifying evidence requires a new review; editing a status flag cannot certify readiness."
+}

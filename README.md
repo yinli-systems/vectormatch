@@ -6,6 +6,8 @@ A private engineering project exploring a limit-order matching engine, replicate
 
 [Source-only review checkout](docs/REVIEW_AND_REPRODUCE.md) · [Forced Linux correctness results](docs/PRODUCTION_CORRECTNESS_RESULTS.md) · [Writer timing results](docs/WRITER_TIMING_RESULTS_V3.md) · [Production acceptance gates](docs/PRODUCTION_ACCEPTANCE.md)
 
+Production acceptance remains open for latency, sustained replicated throughput, full failure coverage and external venue integration. The [current evidence review](docs/PRODUCTION_ACCEPTANCE.md#four-outstanding-acceptance-gaps) distinguishes failed targets, partial coverage and unverified capabilities; successful evidence reproduction does not certify readiness.
+
 ## Latest completed evidence · 27 October
 
 - **Fresh segment initialization also rejected:** same-config sync2 ABAB gives p99 20.22→65.77 ms and 30.96→35.12 ms; all 24,040 originals confirm and states agree. Full zero-write/force/readback initialization does not remove sampled filesystem blocking. The option remains disabled; the registered stable-benefit prerequisite prevents a candidate long run. [Complete outcomes, startup cost and raw evidence](docs/RECORDING_INITIALIZATION_RESULTS.md).

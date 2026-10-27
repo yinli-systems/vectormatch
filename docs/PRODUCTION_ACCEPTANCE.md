@@ -4,6 +4,30 @@ This is an implementation and evidence contract, not a production certification.
 
 ## Latest evidence: 27 October 2026
 
+### Four outstanding acceptance gaps
+
+These are unresolved delivery gates, not deductions that can be offset by a larger cumulative order count. **None of these four has final acceptance.** The [machine-readable review](../evidence/2026-10-27/production-status-r1/STATUS.json) reproduces three complete cohort summaries and binds its inputs by SHA-256. It is a historical evidence review, not an exhaustive production certification.
+
+| Area | Current status | Evidence boundary | Required next acceptance |
+| --- | --- | --- | --- |
+| Production latency | **Failed** | The latest replicated 30-minute diagnostic at 100/s has p99 202.051 ms and p99.9 402.291 ms; its source-timing gate also fails. Later 60-second storage ABABs do not replace it. | Preserve the original **p99 ≤5 ms / p99.9 ≤20 ms** target below, with all arrivals, concurrent maintenance, three fixed-config repeats and a qualified load rate. Diagnostic 25/100 ms thresholds are not a relaxed production target. |
+| Sustained high throughput | **Unverified** | Two finite 250k/s TCP candidates succeed for five seconds; that path excludes replicated durability. Continuous 100M in-process business lineage also does not prove sustained replicated rate. | Predeclare the high-rate objective, measure the same-artifact sustainable knee, then repeat 30–60 minute replicated sync2 runs with bounded maintenance, complete outcomes and no accumulating backlog. |
+| High availability | **Partial; not accepted** | A leader-process fault probe resolves all 128 orders, with a controller-observed 13.828 s progress upper bound. New-VM/disk backup continuation is verified. Neither is a complete production RTO or physical-media-fault proof. | Predeclare RTO/RPO per failure class; cover partition/quorum loss, node loss/rejoin, disk full/I/O errors and independent failure domains under load, with no duplicate settlement or divergent acknowledged state. |
+| External venue integration | **Unverified** | Current business simulation trades synthetic local balances. There are no reviewed external venue sandbox order/fill receipts in this evidence set. | Authenticate a chosen paper/testnet venue; reconcile venue order/fill IDs and balances; verify partial-fill/cancel races, reconnect/retry, restart and rate limits. Funded trading is a separate gate with explicit account and limits. |
+
+The [force attribution](FORCE_WAIT_RESULTS.md) identifies off-CPU force tails and sampled XFS synchronization/writeback waits; exact storage/runqueue durations remain unavailable. The [full segment initialization ABAB](RECORDING_INITIALIZATION_RESULTS.md) fails both p99 pair criteria. It stays disabled and does not qualify for a long candidate run. All-request correctness passes do not close latency or availability gates.
+
+Reproduce the status review with:
+
+```sh
+python3 scripts/audit-production-status.py --output /tmp/vectormatch-production-status.json
+python3 scripts/audit-production-status.py --require-ready
+```
+
+The second command intentionally returns **2** for the current reviewed evidence. A successful evidence audit means the recorded results reproduced, not that production acceptance passed. New qualifying experiments require a new review; this snapshot does not auto-certify future code. The four highlighted gaps also do not replace the authentication, risk, history and market-distribution gates below.
+
+Prioritize the durable recording/confirmation boundary first, then repeated healthy long runs, then faults on that qualified configuration. External paper/testnet integration can develop separately, but its receipts cannot substitute for internal capacity or durability evidence. One CPU host remains suitable for implementation and local process-fault tests; it cannot establish independent physical failure domains.
+
 The [mixed-flow same-host comparison](COMMON_ENGINE_COMPARISON_RESULTS.md) closes all 16 five-second arms and checks every original against independent Java/Python business models. VectorMatch passes twice at 50k/s, once at 100k/s and zero times at 250k/s; the exchange-core compatibility cohort passes eight finite gates. All 8.2M planned arrivals are accounted for, including 17,420 not sent, 1,649 business rejections and zero unknowns. Neither callback timing (unequal settlement positions), finite observation duration nor this memory-only path qualifies production or replicated latency. Exact stock-dependency failures and all failed capacity points remain retained.
 
 The [100M anchored campaign](ANCHORED_CONTINUITY_RESULTS_V4.md) completes 100,000,000 accepted orders and 99,999,999 synthetic trades with 23 fully replayed private raw packs, one funding genesis and 22 explicit cold-continuation boundaries. It satisfies the no-reset business-lineage count for this in-process path. It does not establish uninterrupted service uptime or replicated continuous operation.
