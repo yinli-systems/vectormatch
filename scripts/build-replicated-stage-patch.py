@@ -10,7 +10,7 @@ SOURCES={
  'RecordingWriter.java':('aeron-archive/src/main/java/io/aeron/archive/','d86b3cefbc41fc1e115ba5354423add7cade8cfb5a759041d7b91177cb259a50')}
 def once(s,old,new):
  assert s.count(old)==1,(old[:100],s.count(old));return s.replace(old,new)
-def patch(name,s):
+def patch(name,s,preallocation=False):
  assert '\nimport io.aeron.' in s
  s=s.replace('\nimport io.aeron.','\nimport io.vectormatch.cluster.StageTrace;\nimport io.aeron.',1)
  if name=='LogPublisher.java':
@@ -37,22 +37,28 @@ def patch(name,s):
   s=once(s,'                this.position.setRelease(recordingWriter.position());','''                final long tracePublish = StageTrace.ENABLED ? StageTrace.clock() : 0;
                 this.position.setRelease(recordingWriter.position());
                 if (StageTrace.ENABLED) StageTrace.event(StageTrace.RECORDED, tracePublish, StageTrace.clock(), recordingId, image.sessionId(), recordingWriter.position(), 0);''')
+ if name=='RecordingWriter.java' and preallocation:
+  s=once(s,'            recordingFile.setLength(segmentLength);','''            recordingFile.setLength(segmentLength);
+            if (Boolean.getBoolean("vectormatch.stage.preallocate"))
+            {
+                StageTrace.reserveRecording(segmentFile.getAbsolutePath(), segmentLength);
+            }''')
  return s
 
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('output',type=Path);p.add_argument('--jdk',type=Path,required=True);p.add_argument('--classpath',required=True);a=p.parse_args()
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('output',type=Path);p.add_argument('--jdk',type=Path,required=True);p.add_argument('--classpath',required=True);p.add_argument('--preallocation',action='store_true');a=p.parse_args()
  a.output.mkdir(parents=True,exist_ok=False);original=a.output/'original';modified=a.output/'modified';classes=a.output/'classes'
  for d in [original,modified,classes]:d.mkdir()
  manifest={};diff=[]
  for name,(directory,digest)in SOURCES.items():
   url='https://raw.githubusercontent.com/aeron-io/aeron/1.53.3/'+directory+name
   raw=urllib.request.urlopen(url,timeout=30).read();assert hashlib.sha256(raw).hexdigest()==digest,name
-  (original/name).write_bytes(raw);text=patch(name,raw.decode());(modified/name).write_text(text)
+  (original/name).write_bytes(raw);text=patch(name,raw.decode(),a.preallocation);(modified/name).write_text(text)
   manifest[name]={'url':url,'originalSha256':digest,'patchedSha256':hashlib.sha256(text.encode()).hexdigest()}
   diff.extend(difflib.unified_diff(raw.decode().splitlines(True),text.splitlines(True),fromfile='original/'+name,tofile='modified/'+name))
  (a.output/'instrumentation.patch').write_text(''.join(diff))
  subprocess.run([str(a.jdk/'bin/javac'),'--release','21','-cp',a.classpath,'-d',str(classes),*[str(x)for x in modified.glob('*.java')]],check=True)
  jar=a.output/'stage-patch.jar';subprocess.run([str(a.jdk/'bin/jar'),'--create','--file',str(jar),'-C',str(classes),'.'],check=True)
- (a.output/'MANIFEST.json').write_text(json.dumps({'pinnedAeron':'1.53.3','diagnosticOnly':True,'sources':manifest,'jarSha256':hashlib.sha256(jar.read_bytes()).hexdigest()},indent=2)+'\n')
+ (a.output/'MANIFEST.json').write_text(json.dumps({'pinnedAeron':'1.53.3','diagnosticOnly':True,'preallocationOptIn':a.preallocation,'sources':manifest,'jarSha256':hashlib.sha256(jar.read_bytes()).hexdigest()},indent=2)+'\n')
  print(json.dumps({'jar':str(jar),'sha256':hashlib.sha256(jar.read_bytes()).hexdigest()}))
 if __name__=='__main__':main()

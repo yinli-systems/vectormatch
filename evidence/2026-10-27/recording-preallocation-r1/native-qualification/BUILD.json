@@ -1,0 +1,40 @@
+{
+  "sourceSha256": "e9f19ea8ac70ec3dcfa92cfcfb66f86d0991cf68e5dab9e624c0b9234e1d4316",
+  "librarySha256": "5805ab5a6d42421c844ea8d704b9f9b529b9d3075e93326590c9aecd84301c90",
+  "command": [
+    "gcc",
+    "-O2",
+    "-fPIC",
+    "-shared",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-I/opt/vectormatch-cpu/experiments/soak-20261026-r1/tools/jdk-21.0.13+9/include",
+    "-I/opt/vectormatch-cpu/experiments/soak-20261026-r1/tools/jdk-21.0.13+9/include/linux",
+    "/opt/vectormatch-cpu/experiments/recording-preallocation-build-20261027-r1/clock.c",
+    "-o",
+    "/opt/vectormatch-cpu/experiments/recording-preallocation-build-20261027-r1/libvmclock.so"
+  ],
+  "compiler": "gcc (Ubuntu 9.4.0-1ubuntu1~20.04.2) 9.4.0",
+  "boot": "8d765c71-dbfa-4354-8db0-6c392e701e6f",
+  "timeNamespace": "time:[4026531834]",
+  "noJavaBeforeQualification": true,
+  "originalFailure": {
+    "reason": "First allocation preflight used size-15 for a 16-byte tail sentinel and its final size assertion correctly failed. No trading workload ran. The original file is retained.",
+    "originalSize": 134217729,
+    "originalSha256": "4b74e75ec2b9f66f86cbf2735000c603687aeda4c190e6b960f32b331ee83892",
+    "dataRecipe": "128 MiB zero file, 16-byte VECTORMATCH-HEAD at 0 and 16-byte VECTORMATCH-TAIL at size-15, yielding size+1."
+  },
+  "qualification": {
+    "file": "/opt/vectormatch-cpu/experiments/recording-preallocation-build-20261027-r1/qualification-r2.rec",
+    "logicalBytes": 134217728,
+    "allocatedBeforeBytes": 8192,
+    "allocatedAfterBytes": 134217728,
+    "sha256Before": "c69a0d0331b750c5366b1b11fb7739d92aafd04651114b24932af9eda320faa2",
+    "sha256After": "c69a0d0331b750c5366b1b11fb7739d92aafd04651114b24932af9eda320faa2",
+    "fallocateDurationNs": 83679,
+    "keepSizeFlag": 1,
+    "dataRecipe": "128 MiB zero file; 16-byte VECTORMATCH-HEAD at 0; 16-byte VECTORMATCH-TAIL at size-16",
+    "freeAfterBytes": 3920277504
+  }
+}

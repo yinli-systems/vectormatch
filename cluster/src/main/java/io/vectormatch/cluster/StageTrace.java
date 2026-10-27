@@ -35,7 +35,30 @@ public final class StageTrace {
     }
     private StageTrace() {}
     private static native long monotonicNanos();
+    private static native long allocateRecording(String path, long length);
     public static long clock() { return LIBRARY == null ? System.nanoTime() : monotonicNanos(); }
+    static Path recordingTarget(String file, String directory) {
+        if (directory == null) throw new IllegalArgumentException("Explicit diagnostic directory required");
+        Path dir = Path.of(directory), target = Path.of(file);
+        if (!dir.isAbsolute() || !dir.normalize().equals(dir) || dir.getParent() == null || dir.getParent().getParent() == null
+                || !dir.getParent().getFileName().toString().equals("stages")
+                || !target.isAbsolute() || !target.normalize().equals(target)
+                || !target.startsWith(dir.getParent().getParent().resolve("state"))
+                || !target.getFileName().toString().endsWith(".rec"))
+            throw new IllegalArgumentException("Only this experiment's recording segments may be allocated");
+        for (Path p = target; p != null; p = p.getParent()) if (Files.isSymbolicLink(p))
+            throw new IllegalArgumentException("No symlinks in recording allocation path");
+        return target;
+    }
+    /** Allocate blocks without changing file bytes or length; sync2 is still performed by Aeron. */
+    public static void reserveRecording(String file, long length) {
+        if (LIBRARY == null || length <= 0 || length > 536_870_912L)
+            throw new IllegalArgumentException("Native clock library and bounded segment required");
+        Path target = recordingTarget(file, DIRECTORY);
+        long start = clock(), allocated = allocateRecording(target.toString(), length);
+        System.out.println("VECTOR_RECORDING_PREALLOC path=" + target + " logicalBytes=" + length
+                + " allocatedBytes=" + allocated + " durationNs=" + (clock()-start) + " keepSize=true syncUnchanged=true");
+    }
     public static long correlation(DirectBuffer b, int offset, int length) {
         return length >= 14 && b.getInt(offset, ByteOrder.BIG_ENDIAN) == 0x564d5731
                 ? b.getLong(offset + 6, ByteOrder.BIG_ENDIAN) : -1;
