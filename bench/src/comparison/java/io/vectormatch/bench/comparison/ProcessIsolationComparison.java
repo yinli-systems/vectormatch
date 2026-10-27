@@ -18,6 +18,11 @@ import static io.vectormatch.bench.comparison.IsolatedArrivalSource.*;
 public final class ProcessIsolationComparison {
     private static final ObjectMapper JSON=new ObjectMapper();
     private static volatile Data heldSourceArrays;
+    static boolean presizeClientIds() {
+        String value=System.getProperty("vectormatch.comparison.presizeClientIds","false");
+        require(value.equals("true")||value.equals("false"),"presizeClientIds must be true or false");
+        return Boolean.parseBoolean(value);
+    }
     private ProcessIsolationComparison(){}
     public record Config(String placement,String collector,int rate,int seconds,long seed,Path output) {
         public Config {
@@ -41,6 +46,7 @@ public final class ProcessIsolationComparison {
         require(Files.getFileStore(c.output()).getUsableSpace()>512L*1024*1024+c.count()*1024L,"evidence disk admission");
         var argv=new ArrayList<String>();argv.add(Path.of(System.getProperty("java.home"),"bin","java").toString());
         argv.addAll(List.of("-Xms1g","-Xmx3g","-XX:ActiveProcessorCount=8"));
+        argv.add("-Dvectormatch.comparison.presizeClientIds="+presizeClientIds());
         if(c.collector().equals("G1"))argv.add("-XX:+UseG1GC");else argv.addAll(List.of("-XX:+UseZGC","-XX:+ZGenerational"));
         argv.add("-Xlog:gc*,safepoint:file="+c.output().resolve("business-gc.log")+":time,uptime,level,tags");
         argv.addAll(List.of("-cp",System.getProperty("java.class.path"),ProcessIsolationComparison.class.getName(),"worker",c.placement(),c.collector(),""+c.rate(),""+c.seconds(),""+c.seed(),c.output().toString(),"3"));
@@ -94,9 +100,10 @@ public final class ProcessIsolationComparison {
             var b=new FlatBook();for(var x:warm.setup())require(b.apply(x).equals(CommonComparison.sync(a,x)),"warm seed mismatch");for(var x:warm.commands())require(b.apply(x).equals(CommonComparison.sync(a,x)),"warm execution mismatch");require(b.state().equals(a.state()),"warm balances mismatch");}
         Outcome[] outcomes=new Outcome[c.count()];long[] start=new long[c.count()],end=new long[c.count()];
         var sourceFailure=new AtomicReference<Throwable>();Thread sourceThread=null;boolean verified=false;
-        try(TradingAdapter adapter=new VectorMatchAdapter(c.count()+SEED_ORDERS+1);ServerSocketChannel listener=ServerSocketChannel.open()) {
+        try(TradingAdapter adapter=new VectorMatchAdapter(c.count()+SEED_ORDERS+1,presizeClientIds());ServerSocketChannel listener=ServerSocketChannel.open()) {
             var model=new FlatBook();for(var x:corpus.setup())require(model.apply(x).equals(CommonComparison.sync(adapter,x)),"seed mismatch");require(model.state().equals(adapter.state()),"seed balances mismatch");
             var cfg=new LinkedHashMap<String,Object>();cfg.put("mode","VECTOR");cfg.put("placement",c.placement());cfg.put("collector",c.collector());cfg.put("rate",c.rate());cfg.put("seconds",c.seconds());cfg.put("count",c.count());cfg.put("seed",c.seed());cfg.put("totalOutstandingCreditBound",CREDITS);cfg.put("wireBatchLimit",BATCH);cfg.put("characteristics",corpus.characteristics());cfg.put("adapter",adapter.configuration());cfg.put("java",System.getProperty("java.runtime.version"));cfg.put("scope","same-loopback-TCP scheduled-to-source-received-result; no replication or journal; worker service durations use worker clock only");
+            cfg.put("presizeClientIds",presizeClientIds());cfg.put("expectedRetainedOrderSizingHint",presizeClientIds()?c.count()+SEED_ORDERS+1:0);
             write(c.output().resolve("configuration.json"),cfg);
             listener.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(),0));listener.configureBlocking(false);int port=((InetSocketAddress)listener.getLocalAddress()).getPort();
             Path temporary=c.output().resolve("ready.tmp");write(temporary,Map.of("port",port,"count",c.count(),"businessPid",ProcessHandle.current().pid()));Files.move(temporary,c.output().resolve("ready.json"),StandardCopyOption.ATOMIC_MOVE);

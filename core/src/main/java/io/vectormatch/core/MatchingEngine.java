@@ -109,7 +109,7 @@ public final class MatchingEngine {
     private final Limits limits;
     private final NavigableMap<Long, Account> accounts = new TreeMap<>();
     private final NavigableMap<Long, Order> orders = new TreeMap<>();
-    private final Map<ClientOrderKey, Long> clientIds = new HashMap<>();
+    private final Map<ClientOrderKey, Long> clientIds;
     private final NavigableMap<ProducerKey, Producer> producers = new TreeMap<>();
     private final NavigableMap<Long, CacheLocation> cachedByCommandSeq = new TreeMap<>();
     private final NavigableMap<Long, LinkedHashMap<Long, Order>> bids = new TreeMap<>(Comparator.reverseOrder());
@@ -123,10 +123,22 @@ public final class MatchingEngine {
     public MatchingEngine() { this(1024); }
     public MatchingEngine(int resultCachePerProducer) { this(resultCachePerProducer, Limits.defaults()); }
     public MatchingEngine(int resultCachePerProducer, Limits limits) {
+        this(resultCachePerProducer, limits, 0);
+    }
+
+    /**
+     * Optional startup sizing hint for the retained client-order index. This changes only
+     * allocation timing, never the retention limit, duplicate semantics or snapshot format.
+     * Zero preserves lazy default sizing; callers must budget memory for a nonzero hint.
+     */
+    public MatchingEngine(int resultCachePerProducer, Limits limits, int expectedRetainedOrders) {
         if (resultCachePerProducer < 1 || resultCachePerProducer > 1_000_000)
             throw new IllegalArgumentException("result cache must be between 1 and 1000000");
         this.resultCachePerProducer = resultCachePerProducer;
         this.limits = Objects.requireNonNull(limits, "limits");
+        if (expectedRetainedOrders < 0 || expectedRetainedOrders > limits.maxRetainedOrders)
+            throw new IllegalArgumentException("retained-order sizing hint must be within the configured limit");
+        clientIds = expectedRetainedOrders == 0 ? new HashMap<>() : HashMap.newHashMap(expectedRetainedOrders);
     }
 
     public long lastCommandSeq() { return commandSeq; }

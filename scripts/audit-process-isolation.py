@@ -30,6 +30,10 @@ def audit(root):
     flags=launch['argv'];require(all(v in flags for v in ['-Xms1g','-Xmx3g','-XX:ActiveProcessorCount=8']),'worker resource configuration changed')
     require(('-XX:+UseG1GC' in flags)==(config['collector']=='G1') and ('-XX:+UseZGC' in flags)==(config['collector']=='GEN_ZGC'),'collector argument mismatch')
     if config['collector']=='GEN_ZGC':require('-XX:+ZGenerational' in flags,'generational ZGC absent')
+    if 'presizeClientIds' in config:
+        sized=config['presizeClientIds'];require(type(sized)is bool,'invalid index-sizing mode')
+        require('-Dvectormatch.comparison.presizeClientIds='+str(sized).lower() in flags,'sizing hint did not reach business process')
+        require(config['expectedRetainedOrderSizingHint']==(config['count']+1025 if sized else 0),'sizing hint differs from frozen workload admission')
     source=read('source-result.json');final=read('result.json');require(source.pop('correctnessPassed') is False and final.pop('correctnessPassed') is True and source==final,'original source receipt changed beyond business verification')
     done=read('source-finished.json');require(done['sourceResultSha256']==common.sha(root/'source-result.json') and done['sourceRows']==config['count'] and done['unknown']==0 and done['pid']==origin['sourcePid'],'source receipt/hash mismatch')
     services=[];received=0

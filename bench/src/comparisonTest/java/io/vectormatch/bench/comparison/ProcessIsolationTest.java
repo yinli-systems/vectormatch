@@ -37,4 +37,16 @@ class ProcessIsolationTest {
             assertEquals(1001,Files.readAllLines(out.resolve("server-outcomes.csv")).size());
         }
     }
+    @Test @Timeout(60) void explicitSizingHintReachesActualBusinessChild()throws Exception {
+        String key="vectormatch.comparison.presizeClientIds",previous=System.getProperty(key);
+        try {
+            System.setProperty(key,"true");Path out=temporary.resolve("sized");
+            ProcessIsolationComparison.main(new String[]{"ISOLATED","G1","1000","1","73439",out.toString(),"3"});
+            var json=new ObjectMapper();var cfg=json.readTree(out.resolve("configuration.json").toFile());
+            assertTrue(cfg.get("presizeClientIds").asBoolean());
+            assertEquals(1000+CommonFlow.SEED_ORDERS+1,cfg.get("expectedRetainedOrderSizingHint").asInt());
+            assertTrue(json.readTree(out.resolve("business-launch.json").toFile()).get("argv").toString().contains(key+"=true"));
+            assertEquals(1000,json.readTree(out.resolve("result.json").toFile()).get("accepted").asInt());
+        } finally {if(previous==null)System.clearProperty(key);else System.setProperty(key,previous);}
+    }
 }

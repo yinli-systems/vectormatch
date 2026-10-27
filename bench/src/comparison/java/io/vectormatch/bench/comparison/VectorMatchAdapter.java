@@ -9,9 +9,14 @@ import static io.vectormatch.bench.comparison.CommonFlow.*;
 public final class VectorMatchAdapter implements TradingAdapter {
     private final MatchingEngine engine;
     private final long[] toNative,toCommon;
+    private final int expectedRetainedOrders;
     private long sequence;
     public VectorMatchAdapter(int maximumOrders) {
-        engine=new MatchingEngine(256,new MatchingEngine.Limits(ACCOUNTS,ACCOUNTS*2,maximumOrders,ACCOUNTS*256));
+        this(maximumOrders, false);
+    }
+    public VectorMatchAdapter(int maximumOrders, boolean presizeClientIds) {
+        expectedRetainedOrders=presizeClientIds?maximumOrders:0;
+        engine=new MatchingEngine(256,new MatchingEngine.Limits(ACCOUNTS,ACCOUNTS*2,maximumOrders,ACCOUNTS*256),expectedRetainedOrders);
         toNative=new long[maximumOrders+1];toCommon=new long[maximumOrders+1];
         for(int a=1;a<=ACCOUNTS;a++) {
             require(engine.execute(new MatchingEngine.Deposit(a,"fund",1,MatchingEngine.Asset.BASE,BASE)).result().accepted(),"base funding");
@@ -41,6 +46,6 @@ public final class VectorMatchAdapter implements TradingAdapter {
             orders.add(new Resting(toCommon[Math.toIntExact(o.orderId())],(int)o.accountId(),o.side()==MatchingEngine.Side.BUY,o.priceTicks(),o.remainingQuantity()));
         orders.sort(Comparator.comparingLong(Resting::id));return new State(funds,orders);
     }
-    @Override public String configuration(){return "MatchingEngine;single-writer;cache-per-producer=256;memory-only;native terminal-order retention";}
+    @Override public String configuration(){return "MatchingEngine;single-writer;cache-per-producer=256;memory-only;native terminal-order retention;client-index-sizing-hint="+expectedRetainedOrders;}
     @Override public void close() {}
 }
