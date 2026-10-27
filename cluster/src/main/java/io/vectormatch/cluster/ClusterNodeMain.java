@@ -44,6 +44,13 @@ public final class ClusterNodeMain {
     /** Shared transport construction for the explicit diagnostic entry point; production always matches. */
     @SuppressWarnings("try")
     static void run(Configuration configuration, io.aeron.cluster.service.ClusteredService hostedService) throws Exception {
+        run(configuration, hostedService, configuration.base().resolve("driver"));
+    }
+
+    /** The selected media-driver directory is disposable; archive/consensus state stays under base. */
+    @SuppressWarnings("try")
+    static void run(Configuration configuration, io.aeron.cluster.service.ClusteredService hostedService,
+                    Path mediaDriverDirectory) throws Exception {
         int node = configuration.node();
         Path base = configuration.base();
         int sync = configuration.sync();
@@ -52,7 +59,7 @@ public final class ClusterNodeMain {
         NetworkTransport transport = configuration.transport();
         topology.requireLocalMember(node);
         Files.createDirectories(base);
-        String driverDir = base.resolve("driver").toString();
+        String driverDir = mediaDriverDirectory.toAbsolutePath().normalize().toString();
         File clusterDir = base.resolve("cluster").toFile();
         ErrorHandler errors = error -> {
             System.err.println("VECTOR_CLUSTER_ERROR node=" + node);

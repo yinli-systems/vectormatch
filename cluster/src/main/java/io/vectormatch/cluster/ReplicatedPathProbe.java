@@ -36,7 +36,7 @@ public final class ReplicatedPathProbe {
         long origin, windowEnd; int peakPending = 0, peakQueue = 0, leaderChanges = 0;
         MatchingEngine reference = ClusterCapacity.newEngine(ClusterCapacity.StateProfile.CAPACITY_190K_V1);
         var seedReplies = new ArrayList<CommandCodec.Reply>();
-        try (ClusterClient client = new ClusterClient(out.resolve("driver"), ports)) {
+        try (ClusterClient client = new ClusterClient(ProbeDriverDirectory.select(out.resolve("driver"), "load"), ports)) {
             for (Command seed : setup(count)) {
                 CommandCodec.Reply reply = client.execute(seed, Duration.ofSeconds(30)); seedReplies.add(reply);
                 if (mode.equals("MATCHING") && !reference.apply(seed).result().equals(reply.result())) throw new IllegalStateException("seed result mismatch");
@@ -112,7 +112,7 @@ public final class ReplicatedPathProbe {
                 reference.checkInvariants();
                 Files.write(out.resolve("reference-final.bin"), reference.snapshot());
                 byte[] snapshot;
-                try (var observer = new ClusterClient(out.resolve("observer-driver"), ports)) {
+                try (var observer = new ClusterClient(ProbeDriverDirectory.select(out.resolve("observer-driver"), "observer"), ports)) {
                     snapshot = observer.readSnapshot(Duration.ofMinutes(4), 32);
                 }
                 Files.write(out.resolve("cluster-final.bin"), snapshot);

@@ -25,7 +25,8 @@ public final class ReplicatedPathProbeNode {
                 : new MatchingClusteredService(c.outboxCapacity(), c.stateProfile()), Path.of(args[1]));
         Runtime.getRuntime().addShutdownHook(new Thread(service::save, "probe-timing-close"));
         System.out.println("VECTOR_PATH_PROBE mode=" + mode + " tradingSemantics=" + mode.equals("MATCHING"));
-        try { ClusterNodeMain.run(c, service); } finally { service.save(); }
+        Path driver = ProbeDriverDirectory.select(c.base().resolve("driver"), "node-" + c.node());
+        try { ClusterNodeMain.run(c, service, driver); } finally { service.save(); }
     }
 
     /** Same normal successful IOC reply length, fixed body; only the correlation is echoed. */
