@@ -10,7 +10,7 @@ SOURCES={
  'RecordingWriter.java':('aeron-archive/src/main/java/io/aeron/archive/','d86b3cefbc41fc1e115ba5354423add7cade8cfb5a759041d7b91177cb259a50')}
 def once(s,old,new):
  assert s.count(old)==1,(old[:100],s.count(old));return s.replace(old,new)
-def patch(name,s,preallocation=False):
+def patch(name,s,preallocation=False,force_wait=False):
  assert '\nimport io.aeron.' in s
  s=s.replace('\nimport io.aeron.','\nimport io.vectormatch.cluster.StageTrace;\nimport io.aeron.',1)
  if name=='LogPublisher.java':
@@ -43,22 +43,25 @@ def patch(name,s,preallocation=False):
             {
                 StageTrace.reserveRecording(segmentFile.getAbsolutePath(), segmentLength);
             }''')
+ if name=='RecordingWriter.java' and force_wait:
+  s=once(s,'                final long traceForce = StageTrace.ENABLED ? StageTrace.clock() : 0;', '                final long forceHandle = io.vectormatch.cluster.ForceWaitTrace.ENABLED ? io.vectormatch.cluster.ForceWaitTrace.begin() : 0;\n                final long traceForce = StageTrace.ENABLED ? StageTrace.clock() : 0;')
+  s=once(s,'                if (StageTrace.ENABLED) StageTrace.event(StageTrace.FORCE, traceForce, StageTrace.clock(), recordingId, sessionId, tracePosition, tracePosition + length);', '                final long traceForceEnd = StageTrace.ENABLED ? StageTrace.clock() : 0;\n                if (io.vectormatch.cluster.ForceWaitTrace.ENABLED) io.vectormatch.cluster.ForceWaitTrace.end(forceHandle, traceForce, traceForceEnd, recordingId, sessionId, tracePosition, tracePosition + length);\n                if (StageTrace.ENABLED) StageTrace.event(StageTrace.FORCE, traceForce, traceForceEnd, recordingId, sessionId, tracePosition, tracePosition + length);')
  return s
 
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('output',type=Path);p.add_argument('--jdk',type=Path,required=True);p.add_argument('--classpath',required=True);p.add_argument('--preallocation',action='store_true');a=p.parse_args()
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('output',type=Path);p.add_argument('--jdk',type=Path,required=True);p.add_argument('--classpath',required=True);p.add_argument('--preallocation',action='store_true');p.add_argument('--force-wait',action='store_true');a=p.parse_args()
  a.output.mkdir(parents=True,exist_ok=False);original=a.output/'original';modified=a.output/'modified';classes=a.output/'classes'
  for d in [original,modified,classes]:d.mkdir()
  manifest={};diff=[]
  for name,(directory,digest)in SOURCES.items():
   url='https://raw.githubusercontent.com/aeron-io/aeron/1.53.3/'+directory+name
   raw=urllib.request.urlopen(url,timeout=30).read();assert hashlib.sha256(raw).hexdigest()==digest,name
-  (original/name).write_bytes(raw);text=patch(name,raw.decode(),a.preallocation);(modified/name).write_text(text)
+  (original/name).write_bytes(raw);text=patch(name,raw.decode(),a.preallocation,a.force_wait);(modified/name).write_text(text)
   manifest[name]={'url':url,'originalSha256':digest,'patchedSha256':hashlib.sha256(text.encode()).hexdigest()}
   diff.extend(difflib.unified_diff(raw.decode().splitlines(True),text.splitlines(True),fromfile='original/'+name,tofile='modified/'+name))
  (a.output/'instrumentation.patch').write_text(''.join(diff))
  subprocess.run([str(a.jdk/'bin/javac'),'--release','21','-cp',a.classpath,'-d',str(classes),*[str(x)for x in modified.glob('*.java')]],check=True)
  jar=a.output/'stage-patch.jar';subprocess.run([str(a.jdk/'bin/jar'),'--create','--file',str(jar),'-C',str(classes),'.'],check=True)
- (a.output/'MANIFEST.json').write_text(json.dumps({'pinnedAeron':'1.53.3','diagnosticOnly':True,'preallocationOptIn':a.preallocation,'sources':manifest,'jarSha256':hashlib.sha256(jar.read_bytes()).hexdigest()},indent=2)+'\n')
+ (a.output/'MANIFEST.json').write_text(json.dumps({'pinnedAeron':'1.53.3','diagnosticOnly':True,'preallocationOptIn':a.preallocation,'forceWaitOptIn':a.force_wait,'sources':manifest,'jarSha256':hashlib.sha256(jar.read_bytes()).hexdigest()},indent=2)+'\n')
  print(json.dumps({'jar':str(jar),'sha256':hashlib.sha256(jar.read_bytes()).hexdigest()}))
 if __name__=='__main__':main()

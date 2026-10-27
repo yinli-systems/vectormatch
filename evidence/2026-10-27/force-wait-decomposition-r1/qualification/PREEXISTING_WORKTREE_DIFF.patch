@@ -1,0 +1,24 @@
+diff --git a/scripts/audit-replicated-stage-trace.py b/scripts/audit-replicated-stage-trace.py
+index 507a04fc..91f44aa1 100644
+--- a/scripts/audit-replicated-stage-trace.py
++++ b/scripts/audit-replicated-stage-trace.py
+@@ -13,8 +13,7 @@ def audit_stages(root):
+   p=root/f'stages/node{role}-g0';meta=json.loads((p/'complete.json').read_text());assert meta['dropped']==0 and meta['clock']=='CLOCK_MONOTONIC'
+   clock=(p/'clock.txt').read_text().splitlines();assert clock[0]=='CLOCK_MONOTONIC' and clock[1]=='boot='+host['bootId'];namespaces.append(clock[2]);modes.append(meta['recording']);rows=[]
+   for f in sorted(p.glob('thread-*.csv')):
+-   with f.open() as inp:thread=list(csv.DictReader(inp))
+-   last=-1
++   thread=list(csv.DictReader(f.open()));last=-1
+    for row in thread:
+     row={k:int(v)for k,v in row.items()};assert 1<=row['type']<=11 and row['end_ns']>=row['start_ns'];assert row['end_ns']>=last;last=row['end_ns'];rows.append(row)
+   assert len(rows)==meta['rows'];total+=len(rows);events.append(rows)
+@@ -24,8 +23,7 @@ def audit_stages(root):
+     assert any(name+' source: file:'in line and '/stage-patch.jar'in line for line in origins.splitlines()),name
+  assert len(set(namespaces))==1 and len(set(modes))==1
+  if not modes[0]:assert total==0;return {'recording':False,'sameKernelClockVerified':True,'rows':0}
+- session=window['sessionId']
+- with (root/'evidence/samples.csv').open() as inp:samples=list(csv.DictReader(inp))
++ session=window['sessionId'];samples=list(csv.DictReader((root/'evidence/samples.csv').open()))
+  def by_type(role,kind):return [e for e in events[role]if e['type']==kind]
+  def request_events(role,kind,positive=False):
+   out={}
