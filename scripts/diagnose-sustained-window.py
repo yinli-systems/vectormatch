@@ -58,6 +58,13 @@ def diagnose(root,host_measurement):
    slow+=1;overlapping_slow+=overlap>0
   if d>1_000_000:details.append(dict(index=i,preIntentRecordDelayNs=d,overlapWithRecordedCheckpointForceNs=overlap,scheduledToConfirmedNs=latency))
  component={k:qs([int(x[k])for x in rows if x[k]!=''])for k in ['scheduler_lateness_ns','queue_delay_ns','initial_execute_rtt_ns','scheduled_to_confirmed_ns']}
- return dict(scope='Observational diagnosis of the closed native window; same-JVM checkpoint overlap is not a randomized intervention',seconds=r['arrivalWindowSeconds'],originals=len(rows),roles=roles,componentLatencies=component,queueDelayIncludesIntentRecorderAndWorkerWait=True,preIntentRecordDelay=qs(delay),preIntentDelaysAbove1ms=details,acceptedAbove25ms=slow,acceptedAbove25msWithRecordedCheckpointForceOverlap=overlapping_slow,checkpointForceDuration=qs([int(x['force_duration_ns'])for x in forces]),sourceRowsSha256=manifest['evidence/arrivals.csv']['sha256'],sameClockSourceAndCheckpointOffsets=True,separateQuantilesNotAdditive=True,clockTicksProvenance=host)
+ events=[]
+ for x in rows:
+  events.append((int(x['planned_offset_ns']),1))
+  if x['outcome']=='CONFIRMED_ACCEPTED':events.append((int(x['confirmed_offset_ns']),-1))
+ events.sort(key=lambda x:(x[0],-x[1]));live=peak=0
+ for _,delta in events:live+=delta;peak=max(peak,live);assert live>=0
+ assert live==len(rows)-r['confirmedAcceptedCommands']
+ return dict(scope='Observational diagnosis of the closed native window; same-JVM checkpoint overlap is not a randomized intervention',seconds=r['arrivalWindowSeconds'],originals=len(rows),roles=roles,maxScheduledNotYetConfirmed=peak,scheduledNotConfirmedAtClosure=live,backlogMethod='all original planned and confirmed source-clock events, arrivals first on exact ties; not a kernel/server queue estimate',componentLatencies=component,queueDelayIncludesIntentRecorderAndWorkerWait=True,preIntentRecordDelay=qs(delay),preIntentDelaysAbove1ms=details,acceptedAbove25ms=slow,acceptedAbove25msWithRecordedCheckpointForceOverlap=overlapping_slow,checkpointForceDuration=qs([int(x['force_duration_ns'])for x in forces]),sourceRowsSha256=manifest['evidence/arrivals.csv']['sha256'],sameClockSourceAndCheckpointOffsets=True,separateQuantilesNotAdditive=True,clockTicksProvenance=host)
 if __name__=='__main__':
  p=argparse.ArgumentParser(description=__doc__);p.add_argument('root',type=Path);p.add_argument('--output',type=Path,required=True);p.add_argument('--host-measurement',type=Path,required=True);a=p.parse_args();v=diagnose(a.root,a.host_measurement);a.output.write_text(json.dumps(v,indent=2)+'\n');print(json.dumps({k:v[k]for k in ['seconds','originals','componentLatencies','preIntentRecordDelay','acceptedAbove25ms','acceptedAbove25msWithRecordedCheckpointForceOverlap']}))

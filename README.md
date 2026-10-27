@@ -8,6 +8,8 @@ A private engineering project exploring a limit-order matching engine, replicate
 
 ## Latest completed evidence · 27 October
 
+- **Three-replica continuous endurance:** one 30-minute, 100/s same-host UDP run confirms all 180,000 originals and passes canonical replay plus cold-backup continuation. Full-stream p99 is 33.72ms; 107 source releases exceed 20ms, so the latency/timing acceptance gate fails. This is separate from high-rate core/TCP capacity. [Complete windows, telemetry and recovery](docs/REPLICATED_SUSTAINED_R3_RESULTS.md).
+
 - **Independent arrival clock + collector ABAB:** at 100k/s, the same-host TCP path accepts every original in both collector pairs; business Generational ZGC reduces full-stream p99 from 15.06/30.13ms to 0.30/1.98ms. At 250k/s, missing arrivals remain and global accepted p99 is undefined. Exact worker originals identify client-index expansion as the next tested hypothesis. These five-second results exclude journal/replication. [All 16 arms and failure accounting](docs/PROCESS_ISOLATION_RESULTS.md).
 
 - **Mixed-flow same-host comparison:** all 16 five-second VectorMatch/exchange-core arms complete independent financial replay. VectorMatch passes both finite gates at 50k/s (global API-result p99 1.24–2.07ms), one at 100k/s, and neither at 250k/s. The explicit exchange-core Java 21 compatibility cohort passes its eight finite gates. Native callback settlement positions differ; no sustained, replicated or equivalent-settlement ranking follows. [Complete counts, tails, curves and reproduction](docs/COMMON_ENGINE_COMPARISON_RESULTS.md).
