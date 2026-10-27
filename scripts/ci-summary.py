@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 
 root = Path(__file__).resolve().parent.parent
 suites = []
-for path in sorted(root.glob("*/build/test-results/test/TEST-*.xml")):
+for path in sorted(root.glob("*/build/test-results/*/TEST-*.xml")):
     suite = ET.parse(path).getroot()
     suites.append(dict(path=path.relative_to(root).as_posix(),
                        sha256=hashlib.sha256(path.read_bytes()).hexdigest(),

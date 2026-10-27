@@ -9,6 +9,46 @@ dependencies {
 }
 application { mainClass.set("io.vectormatch.bench.CoreBenchmark") }
 
+// An isolated comparison classpath avoids mixing exchange-core's Agrona/Chronicle
+// dependencies into the application, Aeron runtime or existing benchmarks.
+val comparison = sourceSets.create("comparison")
+val comparisonTest = sourceSets.create("comparisonTest")
+dependencies {
+    add(comparison.implementationConfigurationName, project(":core"))
+    add(comparison.implementationConfigurationName, "exchange.core2:exchange-core:0.5.3")
+    // Explicit Java 21 compatibility cohort. Stock 0.5.3's Chronicle 2.19
+    // cannot initialize on JDK 21; never label this as its stock benchmark.
+    add(comparison.implementationConfigurationName, enforcedPlatform("net.openhft:chronicle-bom:2.25ea60"))
+    add(comparison.implementationConfigurationName, "com.fasterxml.jackson.core:jackson-databind:2.22.4")
+    add(comparison.runtimeOnlyConfigurationName, "org.slf4j:slf4j-simple:1.7.36")
+    add(comparisonTest.implementationConfigurationName, comparison.output)
+    add(comparisonTest.implementationConfigurationName, platform("org.junit:junit-bom:5.11.4"))
+    add(comparisonTest.implementationConfigurationName, "org.junit.jupiter:junit-jupiter")
+    add(comparisonTest.runtimeOnlyConfigurationName, "org.junit.platform:junit-platform-launcher")
+}
+configurations[comparisonTest.implementationConfigurationName].extendsFrom(configurations[comparison.implementationConfigurationName])
+configurations[comparisonTest.runtimeOnlyConfigurationName].extendsFrom(configurations[comparison.runtimeOnlyConfigurationName])
+val comparisonTests = tasks.register<Test>("comparisonTest") {
+    testClassesDirs = comparisonTest.output.classesDirs
+    classpath = comparisonTest.runtimeClasspath
+    jvmArgs("--add-opens=java.base/java.lang.reflect=ALL-UNNAMED", "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.base/java.nio=ALL-UNNAMED", "--add-exports=java.base/jdk.internal.ref=ALL-UNNAMED",
+        "--add-exports=java.base/sun.nio.ch=ALL-UNNAMED", "--add-opens=java.base/java.io=ALL-UNNAMED",
+        "--add-opens=java.base/java.util=ALL-UNNAMED")
+    maxHeapSize = "1g"
+}
+tasks.named("check") { dependsOn(comparisonTests) }
+val comparisonJar = tasks.register<Jar>("comparisonJar") {
+    archiveBaseName.set("vectormatch-common-comparison")
+    from(comparison.output)
+}
+tasks.register<Sync>("comparisonInstallDist") {
+    into(layout.buildDirectory.dir("install/common-comparison/lib"))
+    from(comparisonJar)
+    from(configurations[comparison.runtimeClasspathConfigurationName])
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+}
+
 // This source set has only the core and JMH dependencies; the legacy application
 // and HTTP workload retain their existing runtime classpaths.
 val coreJmh = sourceSets.create("jmh")

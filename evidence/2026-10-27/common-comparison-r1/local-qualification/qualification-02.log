@@ -1,0 +1,35 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :bench:processComparisonResources NO-SOURCE
+> Task :bench:processComparisonTestResources NO-SOURCE
+> Task :core:compileJava UP-TO-DATE
+> Task :core:processResources NO-SOURCE
+> Task :core:classes UP-TO-DATE
+> Task :core:jar UP-TO-DATE
+> Task :bench:compileComparisonJava FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':bench:compileComparisonJava'.
+> Could not resolve all files for configuration ':bench:comparisonCompileClasspath'.
+   > Could not find net.openhft:chronicle-wire:2.25.25.
+     Searched in the following locations:
+       - https://repo.maven.apache.org/maven2/net/openhft/chronicle-wire/2.25.25/chronicle-wire-2.25.25.pom
+     Required by:
+         project :bench > exchange.core2:exchange-core:0.5.3
+   > Could not find net.openhft:chronicle-wire:2.25.25.
+     Searched in the following locations:
+       - https://repo.maven.apache.org/maven2/net/openhft/chronicle-wire/2.25.25/chronicle-wire-2.25.25.pom
+     Required by:
+         project :bench > net.openhft:chronicle-bom:2.25.102
+
+* Try:
+> If the artifact you are trying to retrieve can be found in the repository but without metadata in 'Maven POM' format, you need to adjust the 'metadataSources { ... }' of the repository declaration.
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 16s
+3 actionable tasks: 1 executed, 2 up-to-date
