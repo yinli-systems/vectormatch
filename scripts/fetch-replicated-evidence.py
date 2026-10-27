@@ -4,7 +4,7 @@ from pathlib import Path
 import argparse,json,hashlib,subprocess,tarfile,tempfile,shutil
 
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('thin_arm',type=Path);p.add_argument('output',type=Path);p.add_argument('--gh',default='gh');p.add_argument('--repo',default='yinli-systems/vectormatch');a=p.parse_args()
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('thin_arm',type=Path);p.add_argument('output',type=Path);p.add_argument('--gh',default='gh');p.add_argument('--repo',default='yinli-systems/vectormatch');p.add_argument('--include-force',action='store_true',help='Also extract native force inputs and launch identities for offline re-audit');a=p.parse_args()
  proof=json.loads((a.thin_arm/'PRIVATE_ASSET_VERIFIED.json').read_text());manifest=json.loads((a.thin_arm/'ARCHIVE_MEMBER_MANIFEST.json').read_text())
  assert proof['authenticatedFullDownloadVerified'] and proof['allOriginalMembersVerified'] and not a.output.exists()
  assert shutil.disk_usage(a.output.parent).free>proof['bytes']+300*1024**2
@@ -22,6 +22,7 @@ def main():
     if n=='ARCHIVE_MEMBER_MANIFEST.json':assert not manifest_seen and json.loads(t.extractfile(m).read())==manifest;manifest_seen=True;continue
     assert n in manifest['files'] and n not in seen;seen.add(n);v=manifest['files'][n];assert m.size==v['bytes']
     keep=n=='stage-attribution.csv' or (n.startswith('stages/')and(n.endswith('.csv')or n.endswith('complete.json')or n.endswith('clock.txt')))
+    if a.include_force:keep=keep or n.startswith('force-wait/') or n in [f'node{i}-g0/LAUNCH.json'for i in range(3)]
     f=t.extractfile(m);h=hashlib.sha256();target=Path(tmp)/'selected'/n
     if keep:target.parent.mkdir(parents=True,exist_ok=True);out=target.open('xb')
     try:

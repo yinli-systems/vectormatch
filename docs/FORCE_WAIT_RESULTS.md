@@ -11,6 +11,8 @@ Six original arms on the existing CPU are closed and privately archived. Both ob
 
 Each arm lasts 60 seconds at 100/s. Two additional 20-request functional arms also pass correctness. All 24,040 requests are accepted, without unknown, rejection or unsent outcomes. All stage sums and canonical states verify. This is a same-host, three-replica diagnostic at low load with leader 0, G1, fixed affinity, 1 ms parks, overlay storage and **sync2** throughout. It is not a capacity or independent-fault-domain test.
 
+![Observer controls and sampled blocking locations](assets/force-wait.png)
+
 ## What force is doing
 
 For the slowest 1% of end-to-end requests, the thread CPU counter bounds show at least **99.528% (B1)** and **99.661% (B2)** of the associated force wall time is off CPU. These are request-weighted force intervals; a batched force can serve multiple requests. Unique-force state counts are also retained separately.
@@ -37,4 +39,11 @@ The next hypothesis is to fully write and sync fresh recording segments before t
 
 ```sh
 python3 scripts/summarize-force-wait.py evidence/2026-10-27/force-wait-decomposition-r1 --output /tmp/force-wait-summary.json
+```
+
+Both ON arms were also fetched again and re-audited locally from all original native CSV files. The 6,000-row force-attribution CSV for each arm is **byte-identical** to its archived counterpart, and all aggregate fields match. The fetch verifies all 113 members per archive even though it extracts only attribution inputs.
+
+```sh
+python3 scripts/fetch-replicated-evidence.py evidence/2026-10-27/force-wait-decomposition-r1/observer-b1 /tmp/force-b1 --include-force
+python3 scripts/replay-force-wait.py /tmp/force-b1 evidence/2026-10-27/force-wait-decomposition-r1/observer-b1 --output /tmp/force-b1-replay.json
 ```
