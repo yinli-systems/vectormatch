@@ -8,11 +8,12 @@ A private engineering project exploring a limit-order matching engine, replicate
 
 ## Latest completed evidence · 27 October
 
+- **Mixed-flow same-host comparison:** all 16 five-second VectorMatch/exchange-core arms complete independent financial replay. VectorMatch passes both finite gates at 50k/s (global API-result p99 1.24–2.07ms), one at 100k/s, and neither at 250k/s. The explicit exchange-core Java 21 compatibility cohort passes its eight finite gates. Native callback settlement positions differ; no sustained, replicated or equivalent-settlement ranking follows. [Complete counts, tails, curves and reproduction](docs/COMMON_ENGINE_COMPARISON_RESULTS.md).
 - **100,000,000 accepted orders in one business lineage:** 99,999,999 settled synthetic trades, exact cash/inventory reconciliation, complete raw replay and verified private archives. State continues across 22 explicit cold restarts; this is an in-process continuity result, not uninterrupted replicated uptime. [Counters, timings and boundaries](docs/ANCHORED_CONTINUITY_RESULTS_V4.md).
 - **Full 7k/8k PAUSE/CONTINUE ABAB:** all eight raw/replay/three-node cold-restore checks pass; all eight capacity gates fail. Asynchronous maintenance improves window goodput by 7.6–10.8%, but 260,619 of 1,200,000 planned arrivals are not sent. Global accepted-arrival p99 is undefined. [Complete overload results](docs/OVERLOAD_RESULTS_V4.md).
 - **Independent managed-VM recovery:** three replicas use distinct provider fault domains. Full state is recovered onto replacement VMs/disks; an original retry and a fresh trade reconcile exactly. The 30-minute cross-region load run fails scheduler validity, and no physical media/power-loss claim is made. [Long-run result](docs/PHYSICAL_SOAK_RESULTS_20261027.md) · [Replacement recovery and snapshot-transfer ABAB](docs/SNAPSHOT_RECOVERY_RESULTS_20261027.md).
 
-Uninterrupted high-rate replicated V4 endurance and the production latency target remain open. The current measured source is available as a verified 1.80MB [source-only bundle](docs/REVIEW_AND_REPRODUCE.md), independently compiled to the exact candidate class bodies. Complete raw experiments remain private attachments rather than new bulk Git blobs.
+Uninterrupted high-rate replicated V4 endurance and the production latency target remain open. The earlier replicated overload source is available as a verified 1.80MB [source-only bundle](docs/REVIEW_AND_REPRODUCE.md), independently compiled to that candidate's class bodies; the new common-flow comparison records its own source and artifact hashes. Complete raw experiments remain private attachments rather than new bulk Git blobs.
 
 ## Delivery principles
 

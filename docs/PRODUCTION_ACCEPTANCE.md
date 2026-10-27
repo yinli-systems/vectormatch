@@ -4,6 +4,8 @@ This is an implementation and evidence contract, not a production certification.
 
 ## Latest evidence: 27 October 2026
 
+The [mixed-flow same-host comparison](COMMON_ENGINE_COMPARISON_RESULTS.md) closes all 16 five-second arms and checks every original against independent Java/Python business models. VectorMatch passes twice at 50k/s, once at 100k/s and zero times at 250k/s; the exchange-core compatibility cohort passes eight finite gates. All 8.2M planned arrivals are accounted for, including 17,420 not sent, 1,649 business rejections and zero unknowns. Neither callback timing (unequal settlement positions), finite observation duration nor this memory-only path qualifies production or replicated latency. Exact stock-dependency failures and all failed capacity points remain retained.
+
 The [100M anchored campaign](ANCHORED_CONTINUITY_RESULTS_V4.md) completes 100,000,000 accepted orders and 99,999,999 synthetic trades with 23 fully replayed private raw packs, one funding genesis and 22 explicit cold-continuation boundaries. It satisfies the no-reset business-lineage count for this in-process path. It does not establish uninterrupted service uptime or replicated continuous operation.
 
 The [same-artifact 7k/8k overload ABAB](OVERLOAD_RESULTS_V4.md) completes all eight arms with full correctness, independent raw audit and three-node cold restore. All eight finite capacity gates fail. CONTINUE improves goodput in all four pairs, but every arm loses planned arrivals before sending; global accepted-arrival p99 is undefined. A fresh 27-test targeted Linux qualification covers this candidate; it is not a replacement for the earlier full CI28 execution. The source-only bundle is independently compiled and all 364 application class bodies match the candidate.

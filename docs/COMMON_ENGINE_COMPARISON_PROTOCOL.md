@@ -36,12 +36,11 @@ Full independent Java flat-list replay and Python price-level/FIFO replay must a
 
 ```sh
 ./gradlew :bench:comparisonTest :bench:comparisonInstallDist
-# JAVA21_FLAGS are the explicit --add-opens/--add-exports in bench/build.gradle.kts.
-java $JAVA21_FLAGS -Xms1g -Xmx3g -XX:ActiveProcessorCount=8 \
-  -cp 'bench/build/install/common-comparison/lib/*' \
-  io.vectormatch.bench.comparison.CommonComparison VECTOR 10000 5 73439 NEW_OUTPUT
+scripts/run-common-comparison.sh VECTOR 10000 5 73439 NEW_OUTPUT
 python3 scripts/audit-common-comparison.py NEW_OUTPUT --output NEW_AUDIT.json
 ```
+
+The wrapper supplies every Java 21 access flag and the registered heap/collector settings, removes inherited JVM-option overrides, and refuses existing output/GC-log paths. Set `JAVA_HOME` to Java 21 and, on Linux, `VM_COMPARE_CPUSET` to eight CPUs allowed on your host. Without an explicit CPU set it does not reproduce the recorded affinity. It writes a sibling `NEW_OUTPUT.gc.log`; retain that with the complete output directory. Substitute `EXCHANGE` using a different new output path for the second adapter. The wrapper is a convenience added after campaign launch; the original worker's recorded argv and artifact hashes remain authoritative for the measured points.
 
 The controller records complete argv, CPU/boot identity and all JAR hashes. New output paths are mandatory; no failed native point is overwritten or silently rerun. Full commands, outcomes, trades, balances, GC, telemetry, sources and audit results remain in private raw attachments with hashes and complete authenticated download/member verification. Only thin indexes/results belong in Git. The existing prepaid CPU is used; no new cloud node is required.
 
