@@ -18,6 +18,8 @@ The absolute source plan has an independent thread and never waits for a respons
 
 Scheduled-to-copied-result latency includes source scheduling, common queue, adapter conversion/copy and engine processing. Publisher-to-result is separate. Neither is pure matching-function time or wire-to-wire latency. Engine callback data is copied before mutable native objects can be recycled. Workload construction, separate 10k-command warmup, funding, seed-book setup, full replay and file serialization occur outside the measured arrival window. Warmup uses a separate state and is not included in measured business counts.
 
+Timing clarification verified against the [released 0.5.3 sources](https://repo.maven.apache.org/maven2/exchange/core2/exchange-core/0.5.3/exchange-core-0.5.3-sources.jar) while the frozen campaign ran: exchange-core's result handler and risk-release stage both depend on matching; its result callback does **not** wait for risk release. VectorMatch's synchronous `execute` returns after its account changes. These are native API-result boundaries with unequal settlement timing, not equivalent final-settlement acknowledgements. Full final balances are checked after the run, which does not move the earlier timestamps. No candidate, arrival plan, acceptance gate or original preregistration bytes were changed by this clarification. This further prevents interpreting a timing ratio as an engine or settlement-performance ranking.
+
 ## Order and acceptance
 
 First run the six targeted Java tests on actual Linux classes, three Python auditor tests, then 1,000/s for one second in each engine as functional native qualification. These points are not comparative performance evidence.
