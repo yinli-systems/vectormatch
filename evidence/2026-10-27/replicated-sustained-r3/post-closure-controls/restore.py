@@ -1,10 +1,13 @@
 """Restore verified stopped journal bytes into a fresh directory on the same disk."""
 from pathlib import Path
-import sys,json,tarfile,csv,io,subprocess,hashlib,shlex,time
+import sys,json,tarfile,csv,io,subprocess,hashlib,shlex,time,os
 P=Path(__file__).resolve().parent;sys.path.insert(0,str(P));import controller as c,archive_closed as archive,close_case
 assert (P/'SUSTAINED_CLOSED.json').is_file()
 proof=json.loads((P/'archive-sustained-r1/PRIVATE_ASSET_VERIFIED.json').read_text());a=P/'archive-sustained-r1'/proof['name']
 assert archive.sha(a)==proof['sha256']and proof['authenticatedFullDownloadVerified']
+kept=P/'RESTORE_SOURCE_LOCAL.tar.gz'
+if not kept.exists():os.link(a,kept)
+assert archive.sha(kept)==proof['sha256'];a=kept
 with tarfile.open(a,'r:gz')as t:
  manifest=json.load(t.extractfile('ARCHIVE_MEMBER_MANIFEST.json'))['files']
  rows=csv.DictReader(io.TextIOWrapper(t.extractfile('evidence/arrivals.csv')));last=None

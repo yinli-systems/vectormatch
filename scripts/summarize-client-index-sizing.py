@@ -5,7 +5,10 @@ import argparse,json,hashlib
 
 def summary(root):
  root=Path(root);candidate=json.loads((root/'preparation/CANDIDATE.json').read_text());admission=json.loads((root/'preparation/CPU_ADMISSION.json').read_text());rows=[];assets=[]
- q=root/'qualification-r1';tests=json.loads((q/'junit__RESULT.json').read_text());assert tests['found']==tests['passed']==12 and all(tests[k]==0 for k in ['failed','skipped','aborted','containerFailures'])
+ q=root/'qualification-r1';qm=json.loads((q/'MEMBER_MANIFEST.json').read_text())['files'];qp=json.loads((q/'PRIVATE_ASSET_VERIFIED.json').read_text());assert qp['allOriginalMembersVerified']and qp['authenticatedFullDownloadVerified']
+ raw=(q/'junit__RESULT.json').read_bytes();assert hashlib.sha256(raw).hexdigest()==qm['junit/RESULT.json']['sha256']
+ for n,v in candidate['files'].items():assert qm['input-artifacts/'+n]['sha256']==v['sha256']and qm['input-artifacts/'+n]['bytes']==v['bytes']
+ tests=json.loads(raw);assert tests['found']==tests['passed']==12 and all(tests[k]==0 for k in ['failed','skipped','aborted','containerFailures'])
  for rate in [100000,250000]:
   times=[];corpora=[]
   for arm in ['a1','b1','a2','b2']:
@@ -13,6 +16,7 @@ def summary(root):
    for n in ['native__result.json','native__configuration.json','native__backlog.json','native__business-resources.json','PYTHON_AUDIT.json','environment.json','java.launch.json','java.exit.json','complete.json']:
     b=(p/n).read_bytes();v=manifest[n.replace('__','/')];assert len(b)==v['bytes']and hashlib.sha256(b).hexdigest()==v['sha256']
    c=read('native__configuration.json');r=read('native__result.json');env=read('environment.json');launch=read('java.launch.json');sized=arm.startswith('b')
+   assert manifest['inputs/CANDIDATE.json']['sha256']==hashlib.sha256((root/'preparation/CANDIDATE.json').read_bytes()).hexdigest()
    assert c['presizeClientIds']==sized and c['expectedRetainedOrderSizingHint']==(rate*5+1025 if sized else 0)
    assert c['placement']=='ISOLATED'and c['collector']=='GEN_ZGC'and c['rate']==rate and c['seconds']==5 and c['seed']==73439 and c['totalOutstandingCreditBound']==8192 and c['wireBatchLimit']==64
    assert env['sourceCommit']==candidate['sourceCommit']and env['bootId']==admission['boot']and env['affinity']==admission['chosen']
