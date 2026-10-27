@@ -8,6 +8,8 @@ A private engineering project exploring a limit-order matching engine, replicate
 
 ## Latest completed evidence · 27 October
 
+- **Fresh segment initialization also rejected:** same-config sync2 ABAB gives p99 20.22→65.77 ms and 30.96→35.12 ms; all 24,040 originals confirm and states agree. Full zero-write/force/readback initialization does not remove sampled filesystem blocking. The option remains disabled; the registered stable-benefit prerequisite prevents a candidate long run. [Complete outcomes, startup cost and raw evidence](docs/RECORDING_INITIALIZATION_RESULTS.md).
+
 - **Force tails localized to filesystem blocking:** in both instrumented arms, at least 99.5% of critical force time for the slowest 1% of requests is off CPU, with D-state samples in XFS log/writeback/flush waits. All 24,040 original requests and exact stage joins verify; observer effects have opposite paired directions. Exact storage/runqueue durations remain unavailable, and no performance win is claimed. [Kernel observations, counter bounds and every original arm](docs/FORCE_WAIT_RESULTS.md).
 
 - **Recording preallocation rejected by both ABAB pairs:** p99 rises from 10.86 → 22.57 ms and 11.83 → 53.76 ms at 100/s, with identical sync2/configuration and all 24,000 comparison originals correctly confirmed. Exact request attribution shows durable-replication waiting dominates; the option remains disabled and no candidate endurance run follows. [Full negative result, concrete slow request and original evidence](docs/RECORDING_PREALLOCATION_RESULTS.md).

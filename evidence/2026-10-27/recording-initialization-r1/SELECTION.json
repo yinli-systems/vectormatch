@@ -1,0 +1,27 @@
+{
+  "pairs": [
+    {
+      "a": "initialization-a1",
+      "b": "initialization-b1",
+      "p99Ratio": 3.2530153049404067,
+      "p999Ratio": 2.3100143240186934,
+      "baselineLatencyGate": true,
+      "baselineNonLatencyGates": true,
+      "candidateGate": false,
+      "passes": false
+    },
+    {
+      "a": "initialization-a2",
+      "b": "initialization-b2",
+      "p99Ratio": 1.1343530041986607,
+      "p999Ratio": 0.7911191096418579,
+      "baselineLatencyGate": false,
+      "baselineNonLatencyGates": true,
+      "candidateGate": false,
+      "passes": false
+    }
+  ],
+  "finalStateEqual": true,
+  "candidateSelected": false,
+  "rule": "First six originals in order. Every A/B source/completion/correctness gate and exact joins must pass, states must agree. Both B latency gates must pass: p99<=25ms,p999<=100ms,every-minute-p99<=25ms. Baseline A latency failures remain reported but do not block selection. EACH pair B/A p99<=0.90,p999<=1.00. Only then run sustained-b1 1800s in same configuration. No default promotion."
+}

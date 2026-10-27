@@ -22,6 +22,7 @@ def summarize(root):
   starts=[];ends=[];signatures[case]=[]
   for role in range(4):
    launch=json.loads((d/f'node{role}-g0__LAUNCH.json').read_text());argv=launch['argv'];assert launch['candidate']==candidate and launch['boot']==plan['boot']
+   assert launch['environment']==dict(VECTOR_AERON_MTU_LENGTH='1248',VECTOR_CLUSTER_HOSTS='127.0.0.1,127.0.0.1,127.0.0.1',VECTOR_CLIENT_EGRESS_HOST='127.0.0.1',VECTOR_OUTBOX_CAPACITY='524288')
    assert argv[:3]==['taskset','-c',','.join(map(str,plan['cpuSets'][role]))] and '-Xms1g'in argv and '-Xmx2g'in argv and '-XX:+UseG1GC'in argv and '-XX:ActiveProcessorCount=4'in argv
    assert '-Dvectormatch.stage.trace=true'in argv and '-Dvectormatch.stage.preallocate=false'in argv and '-Dvectormatch.forceWait.enabled=true'in argv and '-Dvectormatch.stage.initializeRecording='+str(spec['initializeRecording']).lower()in argv and '-Dvectormatch.stage.capacity=2097152'in argv
    if role<3:assert '-Dvectormatch.node.dataPathMaxParkNs=1000000'in argv and '-Daeron.cluster.appointed.leader.id=0'in argv and argv[-7:]==[str(plan['portBase']),'2','524288','127.0.0.1,127.0.0.1,127.0.0.1','capacity-190k-v1','131072','SHARED']
