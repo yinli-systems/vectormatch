@@ -23,6 +23,8 @@ One B2 request takes 117.462 ms end to end. Its critical force takes 66.751 ms, 
 
 The kernel has schedstats and task delay accounting disabled, rejects own-process perf counters, and exposes no accessible tracefs. Thus **exact runnable-wait and storage-wait nanoseconds remain null**. R samples mean running or runnable. Context-switch counts are not durations. No host-wide settings were changed.
 
+There is also queue amplification: for the slowest 1% of requests, archive-delivery/poll waiting consumes 21.070% / 43.515% of full latency. **93.519% / 99.849% of that waiting overlaps an earlier force on the same recording.** This supports head-of-line blocking behind the synchronous recorder. Overlap is a temporal observation, not proof of an exact packet-arrival time or exclusion of scheduling delay. Recomputed input hashes and complete figures are retained in each ON arm's `PRIOR_FORCE_OVERLAP.json`.
+
 ## Observer effect and next hypothesis
 
 ON/OFF p99 ratios are **0.325 and 2.146**, with p99.9 ratios **0.216 and 1.983**. Mean process CPU cores sum to 0.617→0.717 and 0.662→0.684. The inconsistent latency direction does not establish negligible probe overhead or a performance improvement. Both sides of the next optimization experiment must carry identical probes.

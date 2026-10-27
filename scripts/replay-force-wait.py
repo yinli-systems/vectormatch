@@ -5,10 +5,13 @@ import argparse,json,hashlib,importlib.util
 
 def replay(root,thin):
  root=Path(root);thin=Path(thin);receipt=json.loads((root/'FETCH_VERIFIED.json').read_text());manifest=json.loads((root/'ARCHIVE_MEMBER_MANIFEST.json').read_text())
+ proof=json.loads((thin/'PRIVATE_ASSET_VERIFIED.json').read_text())
+ assert manifest==json.loads((thin/'ARCHIVE_MEMBER_MANIFEST.json').read_text()) and receipt['assetId']==proof['assetId'] and receipt['archiveSha256']==proof['sha256']
  assert receipt['allMembersVerified']==len(manifest['files']) and receipt['onlySelectedMembersExtracted']
  for n in receipt['selectedFiles']:
   b=(root/n).read_bytes();v=manifest['files'][n];assert len(b)==v['bytes'] and hashlib.sha256(b).hexdigest()==v['sha256'],n
- expected=json.loads((thin/'AUDIT.json').read_text())['forceWait']
+ b=(thin/'AUDIT.json').read_bytes();v=manifest['files']['AUDIT.json'];assert len(b)==v['bytes'] and hashlib.sha256(b).hexdigest()==v['sha256']
+ expected=json.loads(b)['forceWait']
  spec=importlib.util.spec_from_file_location('force',Path(__file__).with_name('audit-force-wait.py'));module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
  actual=module.audit_wait(root);assert actual==expected
  b=(root/'force-attribution.csv').read_bytes();v=manifest['files']['force-attribution.csv'];assert len(b)==v['bytes'] and hashlib.sha256(b).hexdigest()==v['sha256']
