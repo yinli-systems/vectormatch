@@ -2,7 +2,17 @@
 
 This is an implementation and evidence contract, not a production certification. Each gate remains unverified until its linked results pass. No HFT firm endorsement, hard real-time guarantee, zero latency, 100M/s or 100M physical connections is established by this repository.
 
-## Latest evidence: 26 October 2026
+## Latest evidence: 27 October 2026
+
+The [100M anchored campaign](ANCHORED_CONTINUITY_RESULTS_V4.md) completes 100,000,000 accepted orders and 99,999,999 synthetic trades with 23 fully replayed private raw packs, one funding genesis and 22 explicit cold-continuation boundaries. It satisfies the no-reset business-lineage count for this in-process path. It does not establish uninterrupted service uptime or replicated continuous operation.
+
+The [same-artifact 7k/8k overload ABAB](OVERLOAD_RESULTS_V4.md) completes all eight arms with full correctness, independent raw audit and three-node cold restore. All eight finite capacity gates fail. CONTINUE improves goodput in all four pairs, but every arm loses planned arrivals before sending; global accepted-arrival p99 is undefined. A fresh 27-test targeted Linux qualification covers this candidate; it is not a replacement for the earlier full CI28 execution. The source-only bundle is independently compiled and all 364 application class bodies match the candidate.
+
+The [30-minute managed-VM experiment](PHYSICAL_SOAK_RESULTS_20261027.md) uses three distinct provider fault domains and a separate cross-region generator. All 180,000 orders reconcile, but 69,323 scheduler delays violate the 20ms timing bound: it does not qualify sustained latency. [Replacement-VM/disk recovery](SNAPSHOT_RECOVERY_RESULTS_20261027.md) restores exact archived state onto new VMs/disks, replays an original identity and settles a fresh order. All temporary resources are deleted. Deliberate offline volume replacement is not an actual disk-controller failure or power-loss durability test.
+
+The next unresolved integration gate is an anchored replicated service plus bounded streaming source/evidence rotation. The present finite V4 coordinator cannot establish a 30–60 minute high-rate run by increasing a duration constant or adding reset runs. No production or HFT certification follows from these narrower results.
+
+## Earlier evidence: 26 October 2026
 
 CI28 passes556 Java/209 Python tests with zero failures/errors/skips,including11 actual PostgreSQL tests,on the existing one-job CPU runner. All308 application class bodies,454 JDK files,59 observed Linux class origins and1009-file CI evidence are verified. Both CLOSED and BOUNDED_TURN sealed direct-read capacity regressions complete10000 synthetic orders each,physical-order replay,three snapshots and cold restores. Independent audits verify32 bounded turns and300 actual business admissions;CI latency is not a benchmark. The earlier source78a native sealed-read qualification remains failed/unqualified. The repaired sourcef99 qualification and all four4000/s route comparisons pass financial/replay/snapshot/cold-recovery checks. Both direct-read candidates reduce globalp99,but the second regresses post-offerp99,so the registered two-pair optimization criterion fails;default remains unchanged. See [the complete comparison](V4_SEALED_READ_EXPORT_RESULTS.md). The complete native first-segment comparison accepts80000 orders in each arm,with3993.45/s in-window goodput and globalp9955.03–59.09ms;both registered paired optimization criteria fail. See [correctness](PRODUCTION_CORRECTNESS_RESULTS.md) and [native comparison](V4_SEGMENT_PREPARATION_RESULTS.md). These finite tests do not close the continuous operation,physical-host failure,production latency,authentication or external-venue gates below.
 

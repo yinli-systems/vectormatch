@@ -1,5 +1,7 @@
 # Prospective 7k/8k overload controls
 
+Execution is now complete on the corrected r2 artifact: [all eight results and phase exposure](OVERLOAD_RESULTS_V4.md). All correctness/replay/cold-restore gates pass, all finite capacity gates fail, and the full paired promotion criterion fails. The prospective text and failed preparations below are retained as the original registration history.
+
 This registers two additional **finite overload diagnostics**, not an escalation of the passed-capacity claim. The exact-cut campaign's 6k/s failures remain failures. The anchored in-process endurance runner is a separate path and cannot qualify this replicated experiment.
 
 The input parser now recognises explicit 7,000 and 8,000/s requests so the planner can produce their full bounds. **Both remain refused by the default resource profile.** The window remains 20 seconds. All codec-derived raw/writer/journal/file/RPC bounds, the 2.5GiB allocation ceiling and the 1GiB runtime free floor remain enforced. No refusal can be reclassified as a measured latency result.

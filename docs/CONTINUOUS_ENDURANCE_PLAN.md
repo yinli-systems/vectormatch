@@ -1,6 +1,6 @@
 # Continuous endurance toward 100M accepted orders
 
-This is an implementation plan based on the current source,not a completed benchmark. The later [dispatch fairness ABAB](DISPATCH_FAIRNESS_RESULTS.md) and [fine rotating-capacity curve](DISPATCH_CAPACITY_RESULTS.md) are complete finite V3 observations. Their short fresh lineages do not implement continuous endurance. The V4 changes below require separate correctness,artifact and native qualification.
+This records the original implementation plan and the remaining replicated integration. The [in-process anchored campaign](ANCHORED_CONTINUITY_RESULTS_V4.md) now completes one business lineage through 1M, 10M and 100M accepted orders, with full original evidence and 22 explicitly recorded cold continuations. The anchored journal, recovery and bounded raw-pack mechanisms are implemented for that path. They are not yet integrated into the Aeron V4 maintenance adapter and uninterrupted streaming source. The [7k/8k replicated ABAB](OVERLOAD_RESULTS_V4.md) remains finite overload evidence and fails all capacity gates. Neither reset lineages nor summed native intervals establish uninterrupted replicated endurance.
 
 The three targets are separate:100M fresh accepted orders in one continuous lineage,100M accepted orders per second, and100M simultaneous physical connections. Completing the first does not establish either of the others. Multiple reset lineages, virtual workers, read RPCs, replayed results and event fanout must not be relabelled fresh accepted orders or physical connections.
 
