@@ -17,7 +17,7 @@ final class RetentionCodecV3 {
 
     private static byte[] encode(Writer writer) {
         try {
-            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream(256);
             DataOutputStream out = new DataOutputStream(bytes);
             writer.write(out); out.flush();
             if (bytes.size() > MAX_SNAPSHOT_BYTES - 32)
@@ -343,7 +343,10 @@ final class RetentionCodecV3 {
     private static void writeString(DataOutputStream out, String value) throws IOException {
         if (value == null) { out.writeInt(-1); return; }
         if (value.length() > MAX_TEXT_CHARS) throw new IllegalArgumentException("V3 encoded text bound");
-        out.writeInt(value.length()); for (int i = 0; i < value.length(); i++) out.writeChar(value.charAt(i));
+        out.writeInt(value.length());
+        byte[] chars = new byte[value.length() * 2];
+        for (int i = 0, o = 0; i < value.length(); i++, o += 2) { char c = value.charAt(i); chars[o] = (byte) (c >>> 8); chars[o + 1] = (byte) c; }
+        out.write(chars);
     }
     private static String readString(DataInputStream in) throws IOException {
         int length = in.readInt(); if (length == -1) return null;

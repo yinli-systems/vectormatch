@@ -7,11 +7,14 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.CodingErrorAction;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static io.vectormatch.cluster.RetentionWireV3.*;
 
 /** Bounded replies never contain a business Execution's arbitrary event list. */
 public final class RetentionReplyV3 {
+    private static final Pattern HASH_HEX = Pattern.compile("[0-9a-f]{64}");
+    private static final Pattern ERROR_CODE = Pattern.compile("[A-Z0-9_]{0,128}");
     private static final int MAGIC = 0x564d5233, VERSION = 3;
     public static final int MAX_REPLY_BYTES = 8192;
     /** Entire attainable Chunk envelope: max scope/hash/error fields, Ack and all fixed headers. */
@@ -31,7 +34,7 @@ public final class RetentionReplyV3 {
             if (applicationMutation < businessSeq || businessSeq < 0 || eventSeq < 0 || marketSeq < 0 || marketSeq > eventSeq
                     || coreMaintenanceSeq < 0 || coreMaintenanceSeq > businessSeq || acceptedPlaceCount < 0
                     || acceptedPlaceCount > businessSeq || exportedEventSeq < 0 || exportedEventSeq > eventSeq
-                    || stateHash == null || (!stateHash.isEmpty() && !stateHash.matches("[0-9a-f]{64}")))
+                    || stateHash == null || (!stateHash.isEmpty() && !HASH_HEX.matcher(stateHash).matches()))
                 throw new IllegalArgumentException("invalid V3 reply counters");
         }
     }
@@ -50,7 +53,7 @@ public final class RetentionReplyV3 {
                              boolean replayed, BatchStatus status, Frontier frontier) {
         public BatchEntry {
             if (index < 0 || index >= MAX_BUSINESS_BATCH || identity == null || commandSha256 == null
-                    || !commandSha256.matches("[0-9a-f]{64}") || status == null || frontier == null)
+                    || !HASH_HEX.matcher(commandSha256).matches() || status == null || frontier == null)
                 throw new IllegalArgumentException("invalid V3 batch reply entry");
             if (status == BatchStatus.APPLIED) {
                 if (result == null) throw new IllegalArgumentException("applied V3 batch entry requires a core result");
@@ -175,7 +178,7 @@ public final class RetentionReplyV3 {
     public record Reply(Scope scope, long correlationId, Counters counters, Payload payload, String error) {
         public Reply {
             Objects.requireNonNull(scope); Objects.requireNonNull(counters); Objects.requireNonNull(payload); Objects.requireNonNull(error);
-            if (!error.matches("[A-Z0-9_]{0,128}")) throw new IllegalArgumentException("invalid bounded V3 reply error");
+            if (!ERROR_CODE.matcher(error).matches()) throw new IllegalArgumentException("invalid bounded V3 reply error");
             if (payload instanceof State state) {
                 if (state.result != null && state.result.commandSeq() > counters.businessSeq)
                     throw new IllegalArgumentException("business result exceeds current sequence");
