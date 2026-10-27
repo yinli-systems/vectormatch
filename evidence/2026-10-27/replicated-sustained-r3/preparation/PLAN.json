@@ -1,0 +1,48 @@
+{
+  "boot": "8d765c71-dbfa-4354-8db0-6c392e701e6f",
+  "host": "33ace3d92505",
+  "portBase": 26000,
+  "rate": 100,
+  "qualSeconds": 30,
+  "soakSeconds": 1800,
+  "sourceCollector": "G1",
+  "heapInitial": "1g",
+  "heapMax": "2g",
+  "activeProcessors": 4,
+  "cpuSets": [
+    [
+      0,
+      2,
+      7,
+      10
+    ],
+    [
+      12,
+      19,
+      24,
+      26
+    ],
+    [
+      29,
+      30,
+      34,
+      35
+    ],
+    [
+      40,
+      48,
+      52,
+      62
+    ]
+  ],
+  "leader": 0,
+  "archiveSyncLevel": 2,
+  "qualifiedCases": {
+    "qual-a1": "G1",
+    "qual-b1": "GEN_ZGC",
+    "qual-a2": "G1",
+    "qual-b2": "GEN_ZGC"
+  },
+  "selection": "GEN_ZGC only if both paired global p99 values do not regress, accepted in-window goodput does not regress, and all non-duration sustained-auditor gates pass; otherwise G1 after complete baseline qualification",
+  "scope": "Same host, three UDP Aeron replicas and separate load process; 100/s at 30 minutes is endurance, not high-rate V4 capacity"
+}
