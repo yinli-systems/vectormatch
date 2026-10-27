@@ -1,0 +1,100 @@
+{
+  "pid": 368534,
+  "boot": "8d765c71-dbfa-4354-8db0-6c392e701e6f",
+  "argv": [
+    "taskset",
+    "-c",
+    "29,30,34,35",
+    "/opt/vectormatch-cpu/experiments/soak-20261026-r1/tools/jdk-21.0.13+9/bin/java",
+    "--add-opens=java.base/jdk.internal.misc=ALL-UNNAMED",
+    "--add-opens=java.base/java.util.zip=ALL-UNNAMED",
+    "-Xms1g",
+    "-Xmx2g",
+    "-XX:ActiveProcessorCount=4",
+    "-XX:+UseG1GC",
+    "-Dvectormatch.stage.preallocate=true",
+    "-Dvectormatch.stage.clockLibrary=/opt/vectormatch-cpu/experiments/recording-preallocation-20261027-r1/libvmclock.so",
+    "-Dvectormatch.stage.directory=/opt/vectormatch-cpu/experiments/recording-preallocation-20261027-r1/experiments/allocation-b1/stages/node2-g0",
+    "-Dvectormatch.stage.capacity=1048576",
+    "-Dvectormatch.stage.trace=true",
+    "-Daeron.cluster.max.sessions=256",
+    "-Xlog:class+load=info:file=/opt/vectormatch-cpu/experiments/recording-preallocation-20261027-r1/experiments/allocation-b1/node2-g0/class-origins.log",
+    "-javaagent:/opt/vectormatch-cpu/experiments/recording-preallocation-20261027-r1/soak-agent.jar=/opt/vectormatch-cpu/experiments/recording-preallocation-20261027-r1/experiments/allocation-b1/state,/opt/vectormatch-cpu/experiments/recording-preallocation-20261027-r1/experiments/allocation-b1/telemetry/node2-g0",
+    "-Xlog:gc*,safepoint:file=/opt/vectormatch-cpu/experiments/recording-preallocation-20261027-r1/experiments/allocation-b1/node2-g0/gc.log:time,uptime,level,tags:filecount=2,filesize=10M",
+    "-Daeron.cluster.appointed.leader.id=0",
+    "-Dvectormatch.node.dataPathMaxParkNs=1000000",
+    "-cp",
+    "/opt/vectormatch-cpu/experiments/recording-preallocation-20261027-r1/stage-patch.jar:/opt/vectormatch-cpu/experiments/recording-preallocation-20261027-r1/lib/*",
+    "io.vectormatch.cluster.ReplicatedPathProbeNode",
+    "MATCHING",
+    "/opt/vectormatch-cpu/experiments/recording-preallocation-20261027-r1/experiments/allocation-b1/worker-2.csv",
+    "2",
+    "/opt/vectormatch-cpu/experiments/recording-preallocation-20261027-r1/experiments/allocation-b1/state",
+    "26000",
+    "2",
+    "524288",
+    "127.0.0.1,127.0.0.1,127.0.0.1",
+    "capacity-190k-v1",
+    "131072",
+    "SHARED"
+  ],
+  "environment": {
+    "VECTOR_AERON_MTU_LENGTH": "1248",
+    "VECTOR_CLUSTER_HOSTS": "127.0.0.1,127.0.0.1,127.0.0.1",
+    "VECTOR_CLIENT_EGRESS_HOST": "127.0.0.1",
+    "VECTOR_OUTBOX_CAPACITY": "524288"
+  },
+  "startedUTC": "2026-10-27T12:30:51Z",
+  "startTicks": "31276648",
+  "candidate": {
+    "sourceCommit": "97a9076f53faaff7cda5b8bea6a6d928d9a45e9a",
+    "files": {
+      "lib/agrona-2.6.1.jar": {
+        "sha256": "84c07eb02695c06bfda3d6c3a20c1984e3ff1bbd617b2f8e678140baf973fa28",
+        "bytes": 491990
+      },
+      "lib/aeron-all-1.53.3.jar": {
+        "sha256": "4c6c8a5014a2b67424051170392a005daa9a998ac963302d2819d0f3db749ef2",
+        "bytes": 3544128
+      },
+      "lib/core-0.1.0-SNAPSHOT.jar": {
+        "sha256": "24038fe13e51df6505dce3a6a41b5d6cfbf6387610f01625dc7e6284706ac513",
+        "bytes": 111079
+      },
+      "lib/cluster-0.1.0-SNAPSHOT.jar": {
+        "sha256": "eeafeec30e44bbc151dc0ac503025c1f89b60a7052201e1a868415e4752238a5",
+        "bytes": 963842
+      },
+      "soak-agent.jar": {
+        "sha256": "0f89f410e2490cdb66c9c41b7183266d9e6abfd39581c18fdba9131e34125df4",
+        "bytes": 7151
+      },
+      "stage-patch.jar": {
+        "sha256": "a76b05b79415144d34be517e8f124ba48f7add57620d8bad8d2f09b13f3e4c47",
+        "bytes": 47559
+      },
+      "libvmclock.so": {
+        "sha256": "5805ab5a6d42421c844ea8d704b9f9b529b9d3075e93326590c9aecd84301c90",
+        "bytes": 16784
+      },
+      "audit-replicated-stage-trace.py": {
+        "sha256": "932d348fa1f6e75f176c2f6c2af39f5b816c7026132b5fbb44baf4a39f69c778",
+        "bytes": 8330
+      },
+      "audit-replicated-path-probe.py": {
+        "sha256": "28a0f5e1db4d44970d8f66f6a7633d877271d5ec116edb473f29770960729d71",
+        "bytes": 9011
+      },
+      "audit-recording-preallocation.py": {
+        "sha256": "8e2f04b5f5b595c8f5a40ec6464ddc2e1f03fc496d363c963ac84099ef13acf0",
+        "bytes": 2758
+      },
+      "process_agent.py": {
+        "sha256": "6db804cab7234306d89caddd69d195fefacc9eae007d57b03f8140b87b165918",
+        "bytes": 3107
+      }
+    },
+    "javaPath": "/opt/vectormatch-cpu/experiments/soak-20261026-r1/tools/jdk-21.0.13+9/bin/java",
+    "javaBinarySha256": "9cad3f2620d3ef2ed10b26f922af7e773d54fdaa05f615d6d6df014f3fec4155"
+  }
+}
