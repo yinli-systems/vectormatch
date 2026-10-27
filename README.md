@@ -8,6 +8,8 @@ A private engineering project exploring a limit-order matching engine, replicate
 
 ## Latest completed evidence · 27 October
 
+- **Replicated path diagnosis and a second 30-minute window:** the empty service already has 74.9/75.1 ms p99; reducing replica park from 1 ms to 100 µs has inconsistent paired results. The selected baseline confirms all 180,000 originals at 100/s, with 202.1 ms p99 and failed latency/source-timing gates. Long file-force stalls remain when matching callbacks are short. This uses a different source fixture from the earlier endurance run and is not a performance improvement claim. [All controls, 30 minute windows and raw receipts](docs/REPLICATED_PATH_PROBE_RESULTS.md).
+
 - **250K/s finite bottleneck fixed in repeated ABAB:** opt-in startup client-index sizing removes the ~80ms resize stall. Both five-second candidates accept all 1.25M mixed commands with zero not-sent/rejected/unknown; full-stream p99 is 2.372/0.386ms. Both lazy-sizing controls miss more than 11k originals. At 100K/s, p99 directions disagree, so no universal/default performance win is claimed. [All arms, exact stall location and raw receipts](docs/CLIENT_INDEX_SIZING_RESULTS.md).
 
 - **Three-replica continuous endurance:** one 30-minute, 100/s same-host UDP run confirms all 180,000 originals and passes canonical replay plus cold-backup continuation. Full-stream p99 is 33.72ms; 107 source releases exceed 20ms, so the latency/timing acceptance gate fails. This is separate from high-rate core/TCP capacity. [Complete windows, telemetry and recovery](docs/REPLICATED_SUSTAINED_R3_RESULTS.md).

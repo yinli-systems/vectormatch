@@ -6,6 +6,7 @@ import argparse,json,hashlib
 def summarize(root):
  root=Path(root);p=root/'preparation';plan=json.loads((p/'PLAN.json').read_text());candidate=json.loads((p/'CANDIDATE.json').read_text());selection=json.loads((root/'SELECTION.json').read_text());complete=json.loads((root/'COMPLETE.json').read_text());results={};assets=[];hashes={}
  names=list(plan['cases']) if selection['promotedTmpfs'] else list(plan['cases'])[:-1]
+ previous_end=None
  for case in names:
   d=root/case;spec=plan['cases'][case];manifest=json.loads((d/'ARCHIVE_MEMBER_MANIFEST.json').read_text())['files'];asset=json.loads((d/'PRIVATE_ASSET_VERIFIED.json').read_text())
   assert asset['authenticatedFullDownloadVerified'] and asset['allOriginalMembersVerified'] and asset['privateDraftRelease']==423510304 and asset['closedNativeRoot'].endswith('/'+case);assets.append(asset['assetId'])
@@ -15,6 +16,7 @@ def summarize(root):
     b=f.read_bytes();v=manifest[name];assert len(b)==v['bytes'] and hashlib.sha256(b).hexdigest()==v['sha256']
   a=json.loads((d/'AUDIT.json').read_text());assert a['case']==case and a['mode']=='MATCHING' and a['rate']==spec['rate'] and a['seconds']==spec['seconds']
   assert a['driverLayout']['medium']==spec['driverMedium'] and a['driverLayout']['durableStateRemainsOnOriginalOverlay']
+  starts=[];ends=[]
   for role in range(4):
    launch=json.loads((d/f'node{role}-g0__LAUNCH.json').read_text());argv=launch['argv'];assert launch['candidate']==candidate and launch['boot']==plan['boot']
    assert argv[:3]==['taskset','-c',','.join(map(str,plan['cpuSets'][role]))] and '-Xms1g'in argv and '-Xmx2g'in argv and '-XX:+UseG1GC'in argv
@@ -26,6 +28,10 @@ def summarize(root):
     assert argv[-7:]==[str(plan['portBase']),'2','524288','127.0.0.1,127.0.0.1,127.0.0.1','capacity-190k-v1','131072','SHARED']
    else:
     i=argv.index('io.vectormatch.cluster.ReplicatedPathProbe');assert argv[i+2:]==[str(plan['portBase']),str(spec['rate']),str(spec['seconds']),'MATCHING']
+   exited=json.loads((d/f'node{role}-g0__EXIT.json').read_text());assert exited['returncode']in[0,143]
+   starts.append(launch['startedUTC']);ends.append(exited['completedUTC'])
+  assert previous_end is None or previous_end<=min(starts)
+  previous_end=max(ends)
   if spec['driverMedium']=='tmpfs':assert json.loads((root/(case+'-TMPFS_CLOSED.json')).read_text())['durableStateRemoved']is False
   hashes[case]=manifest['evidence/cluster-final.bin']['sha256'];results[case]=a
  assert len(set(assets))==len(assets)==complete['originalArmsClosed']

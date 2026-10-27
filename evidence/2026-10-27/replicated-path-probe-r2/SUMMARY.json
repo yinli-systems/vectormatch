@@ -1,0 +1,2574 @@
+{
+  "sourceCommit": "a73f29e8d18187c0e0eb3e56f87170eae79b763b",
+  "scope": "same-host replicated diagnostic, source memory tape; sync2 unchanged; NOOP not trading; no continuous export/retention claim",
+  "all11OriginalArmsVerified": true,
+  "selection": {
+    "selectedMaxParkNs": 1000000,
+    "policy": "100us only if both paired B accept all originals, no unknown, release max <=20ms, >=99% in-window, p99 <=90% paired A and p999 <=paired A; otherwise explicit1ms",
+    "bothPairedCriteriaPassed": false
+  },
+  "pairedComparisons": [
+    {
+      "a": "idle-a1",
+      "b": "idle-b1",
+      "criteriaPassed": false,
+      "p99RatioBoverA": 2.1851768578286612
+    },
+    {
+      "a": "idle-a2",
+      "b": "idle-b2",
+      "criteriaPassed": true,
+      "p99RatioBoverA": 0.6407006903012271
+    }
+  ],
+  "results": {
+    "functional-noop": {
+      "case": "functional-noop",
+      "mode": "NOOP",
+      "seconds": 2,
+      "rate": 10,
+      "originals": 20,
+      "counts": {
+        "ACCEPTED": 20
+      },
+      "fullLatency": {
+        "p50Us": 9554.992,
+        "p99Us": 18503.11,
+        "p999Us": 18503.11,
+        "maxUs": 18503.11
+      },
+      "conditionalAcceptedLatency": {
+        "p50Us": 9554.992,
+        "p99Us": 18503.11,
+        "p999Us": 18503.11,
+        "maxUs": 18503.11
+      },
+      "offerToReply": {
+        "p50Us": 9423.874,
+        "p99Us": 18281.074,
+        "p999Us": 18281.074,
+        "maxUs": 18281.074
+      },
+      "releaseLateness": {
+        "p50Us": 0.431,
+        "p99Us": 3.986,
+        "p999Us": 3.986,
+        "maxUs": 3.986
+      },
+      "releaseToOffer": {
+        "p50Us": 74.43,
+        "p99Us": 3039.685,
+        "p999Us": 3039.685,
+        "maxUs": 3039.685
+      },
+      "sourceLateAbove20ms": 0,
+      "confirmedInWindow": 20,
+      "inWindowGoodput": 10.0,
+      "maxPlannedNotConfirmed": 1,
+      "remainingUnconfirmed": 0,
+      "workers": [
+        {
+          "role": 0,
+          "originalCallbacks": 20,
+          "callbackDuration": {
+            "p50Us": 24.42,
+            "p99Us": 33.399,
+            "p999Us": 33.399,
+            "maxUs": 33.399
+          }
+        },
+        {
+          "role": 1,
+          "originalCallbacks": 20,
+          "callbackDuration": {
+            "p50Us": 4.59,
+            "p99Us": 8.48,
+            "p999Us": 8.48,
+            "maxUs": 8.48
+          }
+        },
+        {
+          "role": 2,
+          "originalCallbacks": 20,
+          "callbackDuration": {
+            "p50Us": 6.23,
+            "p99Us": 10.279,
+            "p999Us": 10.279,
+            "maxUs": 10.279
+          }
+        }
+      ],
+      "telemetry": [
+        {
+          "role": 0,
+          "cpuSeconds": 0.28,
+          "enclosingSeconds": 3.010305643081665,
+          "meanCpuCores": 0.09301381095421347,
+          "fileForceCount": 20,
+          "fileForce": {
+            "p50Us": 3669.828,
+            "p99Us": 10228.905,
+            "p999Us": 10228.905,
+            "maxUs": 10228.905
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.004457712173462
+        },
+        {
+          "role": 1,
+          "cpuSeconds": 0.27,
+          "enclosingSeconds": 3.0103111267089844,
+          "meanCpuCores": 0.08969172575034691,
+          "fileForceCount": 20,
+          "fileForce": {
+            "p50Us": 3536.94,
+            "p99Us": 11447.241,
+            "p999Us": 11447.241,
+            "maxUs": 11447.241
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.004364013671875
+        },
+        {
+          "role": 2,
+          "cpuSeconds": 0.21,
+          "enclosingSeconds": 3.0093228816986084,
+          "meanCpuCores": 0.06978314001369829,
+          "fileForceCount": 20,
+          "fileForce": {
+            "p50Us": 3937.805,
+            "p99Us": 13547.916,
+            "p999Us": 13547.916,
+            "maxUs": 13547.916
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0037925243377686
+        },
+        {
+          "role": 3,
+          "cpuSeconds": 0.56,
+          "enclosingSeconds": 3.0114991664886475,
+          "meanCpuCores": 0.18595389506713686,
+          "fileForceCount": 0,
+          "fileForce": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 4,
+          "maxMetricGapSeconds": 1.0042979717254639
+        }
+      ],
+      "minuteWindows": [
+        {
+          "minute": 0,
+          "planned": 20,
+          "accepted": 20,
+          "latency": {
+            "p50Us": 9554.992,
+            "p99Us": 18503.11,
+            "p999Us": 18503.11,
+            "maxUs": 18503.11
+          }
+        }
+      ],
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "correctness": {
+        "noopSentinelsVerified": true,
+        "tradingCorrectnessClaimed": false
+      },
+      "allRawMembersVerified": true,
+      "sourceRowsSha256": "77a15825faf96d46662157b7bc0dcbe7d3814029b52c7750269a08c730bb0d62",
+      "sourceRecordsDurableDuringWindow": false,
+      "physicalFaultDomainClaimed": false,
+      "replicaMaxParkNs": 1000000
+    },
+    "functional-matching": {
+      "case": "functional-matching",
+      "mode": "MATCHING",
+      "seconds": 2,
+      "rate": 10,
+      "originals": 20,
+      "counts": {
+        "ACCEPTED": 20
+      },
+      "fullLatency": {
+        "p50Us": 9194.006,
+        "p99Us": 24701.469,
+        "p999Us": 24701.469,
+        "maxUs": 24701.469
+      },
+      "conditionalAcceptedLatency": {
+        "p50Us": 9194.006,
+        "p99Us": 24701.469,
+        "p999Us": 24701.469,
+        "maxUs": 24701.469
+      },
+      "offerToReply": {
+        "p50Us": 9130.627,
+        "p99Us": 24615.282,
+        "p999Us": 24615.282,
+        "maxUs": 24615.282
+      },
+      "releaseLateness": {
+        "p50Us": 0.321,
+        "p99Us": 10.402,
+        "p999Us": 10.402,
+        "maxUs": 10.402
+      },
+      "releaseToOffer": {
+        "p50Us": 69.499,
+        "p99Us": 2479.522,
+        "p999Us": 2479.522,
+        "maxUs": 2479.522
+      },
+      "sourceLateAbove20ms": 0,
+      "confirmedInWindow": 20,
+      "inWindowGoodput": 10.0,
+      "maxPlannedNotConfirmed": 1,
+      "remainingUnconfirmed": 0,
+      "workers": [
+        {
+          "role": 0,
+          "originalCallbacks": 20,
+          "callbackDuration": {
+            "p50Us": 220.508,
+            "p99Us": 312.247,
+            "p999Us": 312.247,
+            "maxUs": 312.247
+          }
+        },
+        {
+          "role": 1,
+          "originalCallbacks": 20,
+          "callbackDuration": {
+            "p50Us": 123.799,
+            "p99Us": 277.297,
+            "p999Us": 277.297,
+            "maxUs": 277.297
+          }
+        },
+        {
+          "role": 2,
+          "originalCallbacks": 20,
+          "callbackDuration": {
+            "p50Us": 149.719,
+            "p99Us": 278.967,
+            "p999Us": 278.967,
+            "maxUs": 278.967
+          }
+        }
+      ],
+      "telemetry": [
+        {
+          "role": 0,
+          "cpuSeconds": 0.29,
+          "enclosingSeconds": 3.0115010738372803,
+          "meanCpuCores": 0.096297491812108,
+          "fileForceCount": 20,
+          "fileForce": {
+            "p50Us": 3132.534,
+            "p99Us": 17921.747,
+            "p999Us": 17921.747,
+            "maxUs": 17921.747
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0042381286621094
+        },
+        {
+          "role": 1,
+          "cpuSeconds": 0.22,
+          "enclosingSeconds": 3.0077128410339355,
+          "meanCpuCores": 0.07314528069254526,
+          "fileForceCount": 20,
+          "fileForce": {
+            "p50Us": 3450.591,
+            "p99Us": 15153.019,
+            "p999Us": 15153.019,
+            "maxUs": 15153.019
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.004913330078125
+        },
+        {
+          "role": 2,
+          "cpuSeconds": 0.23,
+          "enclosingSeconds": 3.011401653289795,
+          "meanCpuCores": 0.07637639427764056,
+          "fileForceCount": 20,
+          "fileForce": {
+            "p50Us": 3463.501,
+            "p99Us": 17894.407,
+            "p999Us": 17894.407,
+            "maxUs": 17894.407
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.004659652709961
+        },
+        {
+          "role": 3,
+          "cpuSeconds": 0.45,
+          "enclosingSeconds": 3.011648178100586,
+          "meanCpuCores": 0.1494198436830062,
+          "fileForceCount": 0,
+          "fileForce": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 20,
+          "maxMetricGapSeconds": 1.0043611526489258
+        }
+      ],
+      "minuteWindows": [
+        {
+          "minute": 0,
+          "planned": 20,
+          "accepted": 20,
+          "latency": {
+            "p50Us": 9194.006,
+            "p99Us": 24701.469,
+            "p999Us": 24701.469,
+            "maxUs": 24701.469
+          }
+        }
+      ],
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "correctness": {
+        "matchingResultsAgree": true,
+        "canonicalStateAgrees": true,
+        "invariantsPassed": true,
+        "referenceUsesSameMatchingImplementation": true
+      },
+      "allRawMembersVerified": true,
+      "sourceRowsSha256": "6e47f362685f29674d2b6b0a84fca0fe3351e522de33e65f73953ff6cb875874",
+      "sourceRecordsDurableDuringWindow": false,
+      "physicalFaultDomainClaimed": false,
+      "replicaMaxParkNs": 1000000
+    },
+    "path-a1": {
+      "case": "path-a1",
+      "mode": "NOOP",
+      "seconds": 30,
+      "rate": 100,
+      "originals": 3000,
+      "counts": {
+        "ACCEPTED": 3000
+      },
+      "fullLatency": {
+        "p50Us": 9259.229,
+        "p99Us": 74921.514,
+        "p999Us": 175520.475,
+        "maxUs": 191139.058
+      },
+      "conditionalAcceptedLatency": {
+        "p50Us": 9259.229,
+        "p99Us": 74921.514,
+        "p999Us": 175520.475,
+        "maxUs": 191139.058
+      },
+      "offerToReply": {
+        "p50Us": 9223.275,
+        "p99Us": 74887.443,
+        "p999Us": 175484.726,
+        "maxUs": 191121.149
+      },
+      "releaseLateness": {
+        "p50Us": 0.042,
+        "p99Us": 14.224,
+        "p999Us": 1403.865,
+        "maxUs": 8577.476
+      },
+      "releaseToOffer": {
+        "p50Us": 32.619,
+        "p99Us": 117.069,
+        "p999Us": 1045.688,
+        "maxUs": 2572.821
+      },
+      "sourceLateAbove20ms": 0,
+      "confirmedInWindow": 3000,
+      "inWindowGoodput": 100.0,
+      "maxPlannedNotConfirmed": 20,
+      "remainingUnconfirmed": 0,
+      "workers": [
+        {
+          "role": 0,
+          "originalCallbacks": 3000,
+          "callbackDuration": {
+            "p50Us": 0.87,
+            "p99Us": 27.46,
+            "p999Us": 103.339,
+            "maxUs": 136.849
+          }
+        },
+        {
+          "role": 1,
+          "originalCallbacks": 3000,
+          "callbackDuration": {
+            "p50Us": 0.15,
+            "p99Us": 3.85,
+            "p999Us": 32.569,
+            "maxUs": 68.009
+          }
+        },
+        {
+          "role": 2,
+          "originalCallbacks": 3000,
+          "callbackDuration": {
+            "p50Us": 0.16,
+            "p99Us": 3.27,
+            "p999Us": 12.439,
+            "maxUs": 52.809
+          }
+        }
+      ],
+      "telemetry": [
+        {
+          "role": 0,
+          "cpuSeconds": 6.67,
+          "enclosingSeconds": 31.114479780197144,
+          "meanCpuCores": 0.2143696454872156,
+          "fileForceCount": 2805,
+          "fileForce": {
+            "p50Us": 2510.031,
+            "p99Us": 30497.625,
+            "p999Us": 77675.731,
+            "maxUs": 161564.883
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.004206895828247
+        },
+        {
+          "role": 1,
+          "cpuSeconds": 4.62,
+          "enclosingSeconds": 31.09579849243164,
+          "meanCpuCores": 0.1485731264024127,
+          "fileForceCount": 2780,
+          "fileForce": {
+            "p50Us": 3000.186,
+            "p99Us": 32257.026,
+            "p999Us": 72121.685,
+            "maxUs": 173995.212
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0043118000030518
+        },
+        {
+          "role": 2,
+          "cpuSeconds": 4.8,
+          "enclosingSeconds": 31.1047842502594,
+          "meanCpuCores": 0.15431709673279506,
+          "fileForceCount": 2794,
+          "fileForce": {
+            "p50Us": 2987.197,
+            "p99Us": 30974.679,
+            "p999Us": 71682.44,
+            "maxUs": 173951.693
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0043020248413086
+        },
+        {
+          "role": 3,
+          "cpuSeconds": 5.97,
+          "enclosingSeconds": 31.11373257637024,
+          "meanCpuCores": 0.1918766893475841,
+          "fileForceCount": 0,
+          "fileForce": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "gcPauseCount": 1,
+          "gcPause": {
+            "p50Us": 7595.664,
+            "p99Us": 7595.664,
+            "p999Us": 7595.664,
+            "maxUs": 7595.664
+          },
+          "tailOnlyEvents": 110,
+          "maxMetricGapSeconds": 1.0043158531188965
+        }
+      ],
+      "minuteWindows": [
+        {
+          "minute": 0,
+          "planned": 3000,
+          "accepted": 3000,
+          "latency": {
+            "p50Us": 9259.229,
+            "p99Us": 74921.514,
+            "p999Us": 175520.475,
+            "maxUs": 191139.058
+          }
+        }
+      ],
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": false,
+        "p999AtMost100ms": false,
+        "everyMinuteP99AtMost25ms": false
+      },
+      "registeredGatePass": false,
+      "correctness": {
+        "noopSentinelsVerified": true,
+        "tradingCorrectnessClaimed": false
+      },
+      "allRawMembersVerified": true,
+      "sourceRowsSha256": "29d44cff7c0f89ac898cdf9a67ba0ca61183b414c1587bb61eb0242f87460312",
+      "sourceRecordsDurableDuringWindow": false,
+      "physicalFaultDomainClaimed": false,
+      "replicaMaxParkNs": 1000000
+    },
+    "path-b1": {
+      "case": "path-b1",
+      "mode": "MATCHING",
+      "seconds": 30,
+      "rate": 100,
+      "originals": 3000,
+      "counts": {
+        "ACCEPTED": 3000
+      },
+      "fullLatency": {
+        "p50Us": 9410.917,
+        "p99Us": 86199.5,
+        "p999Us": 127655.793,
+        "maxUs": 132986.102
+      },
+      "conditionalAcceptedLatency": {
+        "p50Us": 9410.917,
+        "p99Us": 86199.5,
+        "p999Us": 127655.793,
+        "maxUs": 132986.102
+      },
+      "offerToReply": {
+        "p50Us": 9328.965,
+        "p99Us": 86145.946,
+        "p999Us": 127600.247,
+        "maxUs": 132934.577
+      },
+      "releaseLateness": {
+        "p50Us": 1.811,
+        "p99Us": 5.805,
+        "p999Us": 1401.481,
+        "maxUs": 4367.251
+      },
+      "releaseToOffer": {
+        "p50Us": 51.419,
+        "p99Us": 124.589,
+        "p999Us": 1699.32,
+        "maxUs": 5689.566
+      },
+      "sourceLateAbove20ms": 0,
+      "confirmedInWindow": 3000,
+      "inWindowGoodput": 100.0,
+      "maxPlannedNotConfirmed": 14,
+      "remainingUnconfirmed": 0,
+      "workers": [
+        {
+          "role": 0,
+          "originalCallbacks": 3000,
+          "callbackDuration": {
+            "p50Us": 28.44,
+            "p99Us": 193.547,
+            "p999Us": 348.276,
+            "maxUs": 411.645
+          }
+        },
+        {
+          "role": 1,
+          "originalCallbacks": 3000,
+          "callbackDuration": {
+            "p50Us": 24.69,
+            "p99Us": 185.538,
+            "p999Us": 362.846,
+            "maxUs": 577.174
+          }
+        },
+        {
+          "role": 2,
+          "originalCallbacks": 3000,
+          "callbackDuration": {
+            "p50Us": 11.93,
+            "p99Us": 149.609,
+            "p999Us": 305.207,
+            "maxUs": 464.804
+          }
+        }
+      ],
+      "telemetry": [
+        {
+          "role": 0,
+          "cpuSeconds": 6.7,
+          "enclosingSeconds": 31.106314659118652,
+          "meanCpuCores": 0.21539034994735162,
+          "fileForceCount": 2769,
+          "fileForce": {
+            "p50Us": 2538.262,
+            "p99Us": 33896.817,
+            "p999Us": 77091.448,
+            "maxUs": 102813.967
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.004101276397705
+        },
+        {
+          "role": 1,
+          "cpuSeconds": 4.97,
+          "enclosingSeconds": 30.1050865650177,
+          "meanCpuCores": 0.1650883809706487,
+          "fileForceCount": 2746,
+          "fileForce": {
+            "p50Us": 3055.086,
+            "p99Us": 33695.499,
+            "p999Us": 76726.452,
+            "maxUs": 105594.555
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0047082901000977
+        },
+        {
+          "role": 2,
+          "cpuSeconds": 4.91,
+          "enclosingSeconds": 30.111479997634888,
+          "meanCpuCores": 0.16306073299570983,
+          "fileForceCount": 2739,
+          "fileForce": {
+            "p50Us": 3051.306,
+            "p99Us": 33488.122,
+            "p999Us": 77945.129,
+            "maxUs": 114080.16
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.004413366317749
+        },
+        {
+          "role": 3,
+          "cpuSeconds": 3.67,
+          "enclosingSeconds": 31.11860966682434,
+          "meanCpuCores": 0.11793586022297776,
+          "fileForceCount": 0,
+          "fileForce": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "gcPauseCount": 1,
+          "gcPause": {
+            "p50Us": 8502.343,
+            "p99Us": 8502.343,
+            "p999Us": 8502.343,
+            "maxUs": 8502.343
+          },
+          "tailOnlyEvents": 53,
+          "maxMetricGapSeconds": 1.0041635036468506
+        }
+      ],
+      "minuteWindows": [
+        {
+          "minute": 0,
+          "planned": 3000,
+          "accepted": 3000,
+          "latency": {
+            "p50Us": 9410.917,
+            "p99Us": 86199.5,
+            "p999Us": 127655.793,
+            "maxUs": 132986.102
+          }
+        }
+      ],
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": false,
+        "p999AtMost100ms": false,
+        "everyMinuteP99AtMost25ms": false
+      },
+      "registeredGatePass": false,
+      "correctness": {
+        "matchingResultsAgree": true,
+        "canonicalStateAgrees": true,
+        "invariantsPassed": true,
+        "referenceUsesSameMatchingImplementation": true
+      },
+      "allRawMembersVerified": true,
+      "sourceRowsSha256": "8501b5153c415ecc009f5498b0d8615169fc7c94ebca9cbfa7db8005f07fb1df",
+      "sourceRecordsDurableDuringWindow": false,
+      "physicalFaultDomainClaimed": false,
+      "replicaMaxParkNs": 1000000
+    },
+    "path-a2": {
+      "case": "path-a2",
+      "mode": "NOOP",
+      "seconds": 30,
+      "rate": 100,
+      "originals": 3000,
+      "counts": {
+        "ACCEPTED": 3000
+      },
+      "fullLatency": {
+        "p50Us": 14394.663,
+        "p99Us": 75112.709,
+        "p999Us": 98251.079,
+        "maxUs": 100806.298
+      },
+      "conditionalAcceptedLatency": {
+        "p50Us": 14394.663,
+        "p99Us": 75112.709,
+        "p999Us": 98251.079,
+        "maxUs": 100806.298
+      },
+      "offerToReply": {
+        "p50Us": 14323.918,
+        "p99Us": 75086.971,
+        "p999Us": 98230.28,
+        "maxUs": 100788.181
+      },
+      "releaseLateness": {
+        "p50Us": 1.888,
+        "p99Us": 6.752,
+        "p999Us": 1946.004,
+        "maxUs": 9361.369
+      },
+      "releaseToOffer": {
+        "p50Us": 23.19,
+        "p99Us": 119.889,
+        "p999Us": 234.077,
+        "maxUs": 5521.597
+      },
+      "sourceLateAbove20ms": 0,
+      "confirmedInWindow": 2999,
+      "inWindowGoodput": 99.96666666666667,
+      "maxPlannedNotConfirmed": 11,
+      "remainingUnconfirmed": 0,
+      "workers": [
+        {
+          "role": 0,
+          "originalCallbacks": 3000,
+          "callbackDuration": {
+            "p50Us": 2.27,
+            "p99Us": 36.37,
+            "p999Us": 147.068,
+            "maxUs": 249.527
+          }
+        },
+        {
+          "role": 1,
+          "originalCallbacks": 3000,
+          "callbackDuration": {
+            "p50Us": 0.35,
+            "p99Us": 3.97,
+            "p999Us": 24.529,
+            "maxUs": 86.609
+          }
+        },
+        {
+          "role": 2,
+          "originalCallbacks": 3000,
+          "callbackDuration": {
+            "p50Us": 0.32,
+            "p99Us": 4.52,
+            "p999Us": 19.57,
+            "maxUs": 65.069
+          }
+        }
+      ],
+      "telemetry": [
+        {
+          "role": 0,
+          "cpuSeconds": 6.88,
+          "enclosingSeconds": 31.125760793685913,
+          "meanCpuCores": 0.22103877381836262,
+          "fileForceCount": 2534,
+          "fileForce": {
+            "p50Us": 6109.131,
+            "p99Us": 40775.899,
+            "p999Us": 68247.199,
+            "maxUs": 73696.937
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0047588348388672
+        },
+        {
+          "role": 1,
+          "cpuSeconds": 4.04,
+          "enclosingSeconds": 31.128892183303833,
+          "meanCpuCores": 0.12978296741850898,
+          "fileForceCount": 2511,
+          "fileForce": {
+            "p50Us": 6583.896,
+            "p99Us": 45850.822,
+            "p999Us": 71372.122,
+            "maxUs": 75180.98
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0047194957733154
+        },
+        {
+          "role": 2,
+          "cpuSeconds": 4.49,
+          "enclosingSeconds": 31.121790409088135,
+          "meanCpuCores": 0.14427190534285064,
+          "fileForceCount": 2509,
+          "fileForce": {
+            "p50Us": 6619.185,
+            "p99Us": 44636.755,
+            "p999Us": 66431.619,
+            "maxUs": 71984.286
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.00480318069458
+        },
+        {
+          "role": 3,
+          "cpuSeconds": 5.79,
+          "enclosingSeconds": 31.115642309188843,
+          "meanCpuCores": 0.18608004110813872,
+          "fileForceCount": 0,
+          "fileForce": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "gcPauseCount": 1,
+          "gcPause": {
+            "p50Us": 16053.228,
+            "p99Us": 16053.228,
+            "p999Us": 16053.228,
+            "maxUs": 16053.228
+          },
+          "tailOnlyEvents": 110,
+          "maxMetricGapSeconds": 1.0050108432769775
+        }
+      ],
+      "minuteWindows": [
+        {
+          "minute": 0,
+          "planned": 3000,
+          "accepted": 3000,
+          "latency": {
+            "p50Us": 14394.663,
+            "p99Us": 75112.709,
+            "p999Us": 98251.079,
+            "maxUs": 100806.298
+          }
+        }
+      ],
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": false,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": false
+      },
+      "registeredGatePass": false,
+      "correctness": {
+        "noopSentinelsVerified": true,
+        "tradingCorrectnessClaimed": false
+      },
+      "allRawMembersVerified": true,
+      "sourceRowsSha256": "96f4f1899ccdb3a8d2f715c9e970b1a0391f8a478cda52d2387dc1faf87a9e75",
+      "sourceRecordsDurableDuringWindow": false,
+      "physicalFaultDomainClaimed": false,
+      "replicaMaxParkNs": 1000000
+    },
+    "path-b2": {
+      "case": "path-b2",
+      "mode": "MATCHING",
+      "seconds": 30,
+      "rate": 100,
+      "originals": 3000,
+      "counts": {
+        "ACCEPTED": 3000
+      },
+      "fullLatency": {
+        "p50Us": 9453.083,
+        "p99Us": 65137.029,
+        "p999Us": 125455.905,
+        "maxUs": 138223.62
+      },
+      "conditionalAcceptedLatency": {
+        "p50Us": 9453.083,
+        "p99Us": 65137.029,
+        "p999Us": 125455.905,
+        "maxUs": 138223.62
+      },
+      "offerToReply": {
+        "p50Us": 9415.903,
+        "p99Us": 65107.174,
+        "p999Us": 125426.622,
+        "maxUs": 138189.177
+      },
+      "releaseLateness": {
+        "p50Us": 5.825,
+        "p99Us": 87.189,
+        "p999Us": 2931.981,
+        "maxUs": 3402.767
+      },
+      "releaseToOffer": {
+        "p50Us": 23.72,
+        "p99Us": 92.479,
+        "p999Us": 1362.215,
+        "maxUs": 2669.82
+      },
+      "sourceLateAbove20ms": 0,
+      "confirmedInWindow": 2999,
+      "inWindowGoodput": 99.96666666666667,
+      "maxPlannedNotConfirmed": 14,
+      "remainingUnconfirmed": 0,
+      "workers": [
+        {
+          "role": 0,
+          "originalCallbacks": 3000,
+          "callbackDuration": {
+            "p50Us": 31.169,
+            "p99Us": 145.129,
+            "p999Us": 303.667,
+            "maxUs": 535.014
+          }
+        },
+        {
+          "role": 1,
+          "originalCallbacks": 3000,
+          "callbackDuration": {
+            "p50Us": 29.529,
+            "p99Us": 133.328,
+            "p999Us": 276.707,
+            "maxUs": 305.497
+          }
+        },
+        {
+          "role": 2,
+          "originalCallbacks": 3000,
+          "callbackDuration": {
+            "p50Us": 26.64,
+            "p99Us": 157.648,
+            "p999Us": 313.836,
+            "maxUs": 359.626
+          }
+        }
+      ],
+      "telemetry": [
+        {
+          "role": 0,
+          "cpuSeconds": 6.94,
+          "enclosingSeconds": 31.1219162940979,
+          "meanCpuCores": 0.22299398065395262,
+          "fileForceCount": 2837,
+          "fileForce": {
+            "p50Us": 2751.519,
+            "p99Us": 24621.002,
+            "p999Us": 59985.532,
+            "maxUs": 122664.202
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.004730224609375
+        },
+        {
+          "role": 1,
+          "cpuSeconds": 4.91,
+          "enclosingSeconds": 31.118865728378296,
+          "meanCpuCores": 0.15778210050639516,
+          "fileForceCount": 2838,
+          "fileForce": {
+            "p50Us": 3080.156,
+            "p99Us": 25761.468,
+            "p999Us": 62529.783,
+            "maxUs": 83718.594
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.004302740097046
+        },
+        {
+          "role": 2,
+          "cpuSeconds": 5.04,
+          "enclosingSeconds": 31.113335847854614,
+          "meanCpuCores": 0.16198841630629998,
+          "fileForceCount": 2824,
+          "fileForce": {
+            "p50Us": 3130.365,
+            "p99Us": 25217.185,
+            "p999Us": 55225.925,
+            "maxUs": 125892.836
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0043938159942627
+        },
+        {
+          "role": 3,
+          "cpuSeconds": 4.58,
+          "enclosingSeconds": 31.120521545410156,
+          "meanCpuCores": 0.14716977006047272,
+          "fileForceCount": 0,
+          "fileForce": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "gcPauseCount": 1,
+          "gcPause": {
+            "p50Us": 7855.721,
+            "p99Us": 7855.721,
+            "p999Us": 7855.721,
+            "maxUs": 7855.721
+          },
+          "tailOnlyEvents": 134,
+          "maxMetricGapSeconds": 1.0047781467437744
+        }
+      ],
+      "minuteWindows": [
+        {
+          "minute": 0,
+          "planned": 3000,
+          "accepted": 3000,
+          "latency": {
+            "p50Us": 9453.083,
+            "p99Us": 65137.029,
+            "p999Us": 125455.905,
+            "maxUs": 138223.62
+          }
+        }
+      ],
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": false,
+        "p999AtMost100ms": false,
+        "everyMinuteP99AtMost25ms": false
+      },
+      "registeredGatePass": false,
+      "correctness": {
+        "matchingResultsAgree": true,
+        "canonicalStateAgrees": true,
+        "invariantsPassed": true,
+        "referenceUsesSameMatchingImplementation": true
+      },
+      "allRawMembersVerified": true,
+      "sourceRowsSha256": "f09e8237158e8cc90311369a1c1f64db81e12aeb49879defd7dfed9bf1e82bc6",
+      "sourceRecordsDurableDuringWindow": false,
+      "physicalFaultDomainClaimed": false,
+      "replicaMaxParkNs": 1000000
+    },
+    "idle-a1": {
+      "case": "idle-a1",
+      "mode": "MATCHING",
+      "seconds": 60,
+      "rate": 100,
+      "originals": 6000,
+      "counts": {
+        "ACCEPTED": 6000
+      },
+      "fullLatency": {
+        "p50Us": 9241.485,
+        "p99Us": 79261.292,
+        "p999Us": 127710.098,
+        "maxUs": 146965.309
+      },
+      "conditionalAcceptedLatency": {
+        "p50Us": 9241.485,
+        "p99Us": 79261.292,
+        "p999Us": 127710.098,
+        "maxUs": 146965.309
+      },
+      "offerToReply": {
+        "p50Us": 9212.956,
+        "p99Us": 79178.445,
+        "p999Us": 127680.446,
+        "maxUs": 146914.559
+      },
+      "releaseLateness": {
+        "p50Us": 0.136,
+        "p99Us": 18.797,
+        "p999Us": 216.11,
+        "maxUs": 13209.651
+      },
+      "releaseToOffer": {
+        "p50Us": 28.579,
+        "p99Us": 89.739,
+        "p999Us": 430.165,
+        "maxUs": 14034.241
+      },
+      "sourceLateAbove20ms": 0,
+      "confirmedInWindow": 6000,
+      "inWindowGoodput": 100.0,
+      "maxPlannedNotConfirmed": 15,
+      "remainingUnconfirmed": 0,
+      "workers": [
+        {
+          "role": 0,
+          "originalCallbacks": 6000,
+          "callbackDuration": {
+            "p50Us": 13.31,
+            "p99Us": 176.368,
+            "p999Us": 378.465,
+            "maxUs": 11169.903
+          }
+        },
+        {
+          "role": 1,
+          "originalCallbacks": 6000,
+          "callbackDuration": {
+            "p50Us": 11.05,
+            "p99Us": 105.549,
+            "p999Us": 303.196,
+            "maxUs": 1231.576
+          }
+        },
+        {
+          "role": 2,
+          "originalCallbacks": 6000,
+          "callbackDuration": {
+            "p50Us": 12.86,
+            "p99Us": 138.528,
+            "p999Us": 378.036,
+            "maxUs": 9136.127
+          }
+        }
+      ],
+      "telemetry": [
+        {
+          "role": 0,
+          "cpuSeconds": 12.98,
+          "enclosingSeconds": 60.214539527893066,
+          "meanCpuCores": 0.2155625551863151,
+          "fileForceCount": 5655,
+          "fileForce": {
+            "p50Us": 2595.301,
+            "p99Us": 29211.57,
+            "p999Us": 71088.206,
+            "maxUs": 102957.086
+          },
+          "gcPauseCount": 1,
+          "gcPause": {
+            "p50Us": 10899.317,
+            "p99Us": 10899.317,
+            "p999Us": 10899.317,
+            "maxUs": 10899.317
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0045666694641113
+        },
+        {
+          "role": 1,
+          "cpuSeconds": 8.35,
+          "enclosingSeconds": 61.23243451118469,
+          "meanCpuCores": 0.1363656380259516,
+          "fileForceCount": 5657,
+          "fileForce": {
+            "p50Us": 3038.165,
+            "p99Us": 27331.871,
+            "p999Us": 79443.322,
+            "maxUs": 130267.627
+          },
+          "gcPauseCount": 1,
+          "gcPause": {
+            "p50Us": 19540.579,
+            "p99Us": 19540.579,
+            "p999Us": 19540.579,
+            "maxUs": 19540.579
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0045115947723389
+        },
+        {
+          "role": 2,
+          "cpuSeconds": 8.91,
+          "enclosingSeconds": 60.197391510009766,
+          "meanCpuCores": 0.14801305798305936,
+          "fileForceCount": 5675,
+          "fileForce": {
+            "p50Us": 3017.126,
+            "p99Us": 27291.461,
+            "p999Us": 72788.107,
+            "maxUs": 101046.097
+          },
+          "gcPauseCount": 1,
+          "gcPause": {
+            "p50Us": 8866.8,
+            "p99Us": 8866.8,
+            "p999Us": 8866.8,
+            "maxUs": 8866.8
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.004180908203125
+        },
+        {
+          "role": 3,
+          "cpuSeconds": 8.99,
+          "enclosingSeconds": 60.22293949127197,
+          "meanCpuCores": 0.14927866484004668,
+          "fileForceCount": 0,
+          "fileForce": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "gcPauseCount": 1,
+          "gcPause": {
+            "p50Us": 6919.192,
+            "p99Us": 6919.192,
+            "p999Us": 6919.192,
+            "maxUs": 6919.192
+          },
+          "tailOnlyEvents": 235,
+          "maxMetricGapSeconds": 1.0043723583221436
+        }
+      ],
+      "minuteWindows": [
+        {
+          "minute": 0,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 9241.485,
+            "p99Us": 79261.292,
+            "p999Us": 127710.098,
+            "maxUs": 146965.309
+          }
+        }
+      ],
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": false,
+        "p999AtMost100ms": false,
+        "everyMinuteP99AtMost25ms": false
+      },
+      "registeredGatePass": false,
+      "correctness": {
+        "matchingResultsAgree": true,
+        "canonicalStateAgrees": true,
+        "invariantsPassed": true,
+        "referenceUsesSameMatchingImplementation": true
+      },
+      "allRawMembersVerified": true,
+      "sourceRowsSha256": "6767d55a46fc9b18f2e9dff2c7ce4054427aa9f3117c2aec14dd26474211ee52",
+      "sourceRecordsDurableDuringWindow": false,
+      "physicalFaultDomainClaimed": false,
+      "replicaMaxParkNs": 1000000
+    },
+    "idle-b1": {
+      "case": "idle-b1",
+      "mode": "MATCHING",
+      "seconds": 60,
+      "rate": 100,
+      "originals": 6000,
+      "counts": {
+        "ACCEPTED": 6000
+      },
+      "fullLatency": {
+        "p50Us": 9751.2,
+        "p99Us": 173199.941,
+        "p999Us": 245039.39,
+        "maxUs": 276638.805
+      },
+      "conditionalAcceptedLatency": {
+        "p50Us": 9751.2,
+        "p99Us": 173199.941,
+        "p999Us": 245039.39,
+        "maxUs": 276638.805
+      },
+      "offerToReply": {
+        "p50Us": 9691.671,
+        "p99Us": 173186.662,
+        "p999Us": 245017.64,
+        "maxUs": 276632.612
+      },
+      "releaseLateness": {
+        "p50Us": 0.128,
+        "p99Us": 20.598,
+        "p999Us": 654.893,
+        "maxUs": 2909.254
+      },
+      "releaseToOffer": {
+        "p50Us": 16.79,
+        "p99Us": 88.549,
+        "p999Us": 499.684,
+        "maxUs": 5224.261
+      },
+      "sourceLateAbove20ms": 0,
+      "confirmedInWindow": 5997,
+      "inWindowGoodput": 99.95,
+      "maxPlannedNotConfirmed": 28,
+      "remainingUnconfirmed": 0,
+      "workers": [
+        {
+          "role": 0,
+          "originalCallbacks": 6000,
+          "callbackDuration": {
+            "p50Us": 16.26,
+            "p99Us": 128.719,
+            "p999Us": 299.376,
+            "maxUs": 674.892
+          }
+        },
+        {
+          "role": 1,
+          "originalCallbacks": 6000,
+          "callbackDuration": {
+            "p50Us": 5.97,
+            "p99Us": 110.809,
+            "p999Us": 1290.745,
+            "maxUs": 3659.328
+          }
+        },
+        {
+          "role": 2,
+          "originalCallbacks": 6000,
+          "callbackDuration": {
+            "p50Us": 27.959,
+            "p99Us": 146.879,
+            "p999Us": 354.916,
+            "maxUs": 639.513
+          }
+        }
+      ],
+      "telemetry": [
+        {
+          "role": 0,
+          "cpuSeconds": 16.23,
+          "enclosingSeconds": 61.25585460662842,
+          "meanCpuCores": 0.26495426607343053,
+          "fileForceCount": 4554,
+          "fileForce": {
+            "p50Us": 3118.695,
+            "p99Us": 65447.03,
+            "p999Us": 143465.827,
+            "maxUs": 202725.738
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0047283172607422
+        },
+        {
+          "role": 1,
+          "cpuSeconds": 11.25,
+          "enclosingSeconds": 61.21933937072754,
+          "meanCpuCores": 0.18376545901407207,
+          "fileForceCount": 4564,
+          "fileForce": {
+            "p50Us": 3926.936,
+            "p99Us": 64725.129,
+            "p999Us": 157153.233,
+            "maxUs": 204013.463
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.004286766052246
+        },
+        {
+          "role": 2,
+          "cpuSeconds": 14.51,
+          "enclosingSeconds": 61.2068133354187,
+          "meanCpuCores": 0.23706511104382985,
+          "fileForceCount": 4609,
+          "fileForce": {
+            "p50Us": 3645.019,
+            "p99Us": 63761.639,
+            "p999Us": 148547.68,
+            "maxUs": 213181.539
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0043046474456787
+        },
+        {
+          "role": 3,
+          "cpuSeconds": 9.56,
+          "enclosingSeconds": 60.219398021698,
+          "meanCpuCores": 0.15875283237729115,
+          "fileForceCount": 0,
+          "fileForce": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "gcPauseCount": 2,
+          "gcPause": {
+            "p50Us": 6672.835,
+            "p99Us": 6978.96,
+            "p999Us": 6978.96,
+            "maxUs": 6978.96
+          },
+          "tailOnlyEvents": 81,
+          "maxMetricGapSeconds": 1.0045239925384521
+        }
+      ],
+      "minuteWindows": [
+        {
+          "minute": 0,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 9751.2,
+            "p99Us": 173199.941,
+            "p999Us": 245039.39,
+            "maxUs": 276638.805
+          }
+        }
+      ],
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": false,
+        "p999AtMost100ms": false,
+        "everyMinuteP99AtMost25ms": false
+      },
+      "registeredGatePass": false,
+      "correctness": {
+        "matchingResultsAgree": true,
+        "canonicalStateAgrees": true,
+        "invariantsPassed": true,
+        "referenceUsesSameMatchingImplementation": true
+      },
+      "allRawMembersVerified": true,
+      "sourceRowsSha256": "c808e825f937c895adbbd4c8789b79dcbfaabaf683585e58206d440e627782b1",
+      "sourceRecordsDurableDuringWindow": false,
+      "physicalFaultDomainClaimed": false,
+      "replicaMaxParkNs": 100000
+    },
+    "idle-a2": {
+      "case": "idle-a2",
+      "mode": "MATCHING",
+      "seconds": 60,
+      "rate": 100,
+      "originals": 6000,
+      "counts": {
+        "ACCEPTED": 6000
+      },
+      "fullLatency": {
+        "p50Us": 34043.101,
+        "p99Us": 233275.842,
+        "p999Us": 512737.88,
+        "maxUs": 572735.33
+      },
+      "conditionalAcceptedLatency": {
+        "p50Us": 34043.101,
+        "p99Us": 233275.842,
+        "p999Us": 512737.88,
+        "maxUs": 572735.33
+      },
+      "offerToReply": {
+        "p50Us": 33982.745,
+        "p99Us": 233237.743,
+        "p999Us": 512689.733,
+        "maxUs": 572689.034
+      },
+      "releaseLateness": {
+        "p50Us": 0.048,
+        "p99Us": 10.239,
+        "p999Us": 1483.46,
+        "maxUs": 14313.868
+      },
+      "releaseToOffer": {
+        "p50Us": 45.199,
+        "p99Us": 114.569,
+        "p999Us": 1473.303,
+        "maxUs": 16700.091
+      },
+      "sourceLateAbove20ms": 0,
+      "confirmedInWindow": 5996,
+      "inWindowGoodput": 99.93333333333334,
+      "maxPlannedNotConfirmed": 58,
+      "remainingUnconfirmed": 0,
+      "workers": [
+        {
+          "role": 0,
+          "originalCallbacks": 6000,
+          "callbackDuration": {
+            "p50Us": 13.9,
+            "p99Us": 155.648,
+            "p999Us": 313.276,
+            "maxUs": 689.522
+          }
+        },
+        {
+          "role": 1,
+          "originalCallbacks": 6000,
+          "callbackDuration": {
+            "p50Us": 14.89,
+            "p99Us": 148.709,
+            "p999Us": 406.656,
+            "maxUs": 3803.647
+          }
+        },
+        {
+          "role": 2,
+          "originalCallbacks": 6000,
+          "callbackDuration": {
+            "p50Us": 9.95,
+            "p99Us": 140.139,
+            "p999Us": 331.436,
+            "maxUs": 1373.055
+          }
+        }
+      ],
+      "telemetry": [
+        {
+          "role": 0,
+          "cpuSeconds": 10.52,
+          "enclosingSeconds": 60.22940993309021,
+          "meanCpuCores": 0.17466549998890626,
+          "fileForceCount": 3499,
+          "fileForce": {
+            "p50Us": 5871.874,
+            "p99Us": 82372.218,
+            "p999Us": 192680.951,
+            "maxUs": 417606.618
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0044922828674316
+        },
+        {
+          "role": 1,
+          "cpuSeconds": 7.55,
+          "enclosingSeconds": 60.21467351913452,
+          "meanCpuCores": 0.12538472034728915,
+          "fileForceCount": 3502,
+          "fileForce": {
+            "p50Us": 6368.238,
+            "p99Us": 83865.582,
+            "p999Us": 190607.025,
+            "maxUs": 460923.378
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0045783519744873
+        },
+        {
+          "role": 2,
+          "cpuSeconds": 7.59,
+          "enclosingSeconds": 60.24918460845947,
+          "meanCpuCores": 0.12597680863774383,
+          "fileForceCount": 3396,
+          "fileForce": {
+            "p50Us": 6050.832,
+            "p99Us": 91564.454,
+            "p999Us": 163251.314,
+            "maxUs": 410973.672
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0425264835357666
+        },
+        {
+          "role": 3,
+          "cpuSeconds": 9.94,
+          "enclosingSeconds": 61.22877550125122,
+          "meanCpuCores": 0.16234196941921325,
+          "fileForceCount": 0,
+          "fileForce": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "gcPauseCount": 3,
+          "gcPause": {
+            "p50Us": 6845.912,
+            "p99Us": 8756.831,
+            "p999Us": 8756.831,
+            "maxUs": 8756.831
+          },
+          "tailOnlyEvents": 375,
+          "maxMetricGapSeconds": 1.0043020248413086
+        }
+      ],
+      "minuteWindows": [
+        {
+          "minute": 0,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 34043.101,
+            "p99Us": 233275.842,
+            "p999Us": 512737.88,
+            "maxUs": 572735.33
+          }
+        }
+      ],
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": false,
+        "p999AtMost100ms": false,
+        "everyMinuteP99AtMost25ms": false
+      },
+      "registeredGatePass": false,
+      "correctness": {
+        "matchingResultsAgree": true,
+        "canonicalStateAgrees": true,
+        "invariantsPassed": true,
+        "referenceUsesSameMatchingImplementation": true
+      },
+      "allRawMembersVerified": true,
+      "sourceRowsSha256": "991cc9cd4f1e1c3631af5a14c2f6b6d7b99e12fd686bdf4e4e65792e3823beef",
+      "sourceRecordsDurableDuringWindow": false,
+      "physicalFaultDomainClaimed": false,
+      "replicaMaxParkNs": 1000000
+    },
+    "idle-b2": {
+      "case": "idle-b2",
+      "mode": "MATCHING",
+      "seconds": 60,
+      "rate": 100,
+      "originals": 6000,
+      "counts": {
+        "ACCEPTED": 6000
+      },
+      "fullLatency": {
+        "p50Us": 5611.372,
+        "p99Us": 149459.993,
+        "p999Us": 236525.253,
+        "maxUs": 274905.796
+      },
+      "conditionalAcceptedLatency": {
+        "p50Us": 5611.372,
+        "p99Us": 149459.993,
+        "p999Us": 236525.253,
+        "maxUs": 274905.796
+      },
+      "offerToReply": {
+        "p50Us": 5591.827,
+        "p99Us": 149448.3,
+        "p999Us": 236460.706,
+        "maxUs": 274881.412
+      },
+      "releaseLateness": {
+        "p50Us": 0.044,
+        "p99Us": 3.736,
+        "p999Us": 1245.36,
+        "maxUs": 5527.165
+      },
+      "releaseToOffer": {
+        "p50Us": 15.09,
+        "p99Us": 80.339,
+        "p999Us": 259.507,
+        "maxUs": 5556.057
+      },
+      "sourceLateAbove20ms": 0,
+      "confirmedInWindow": 6000,
+      "inWindowGoodput": 100.0,
+      "maxPlannedNotConfirmed": 28,
+      "remainingUnconfirmed": 0,
+      "workers": [
+        {
+          "role": 0,
+          "originalCallbacks": 6000,
+          "callbackDuration": {
+            "p50Us": 15.02,
+            "p99Us": 133.309,
+            "p999Us": 294.187,
+            "maxUs": 526.954
+          }
+        },
+        {
+          "role": 1,
+          "originalCallbacks": 6000,
+          "callbackDuration": {
+            "p50Us": 9.39,
+            "p99Us": 111.438,
+            "p999Us": 238.267,
+            "maxUs": 418.236
+          }
+        },
+        {
+          "role": 2,
+          "originalCallbacks": 6000,
+          "callbackDuration": {
+            "p50Us": 8.61,
+            "p99Us": 120.158,
+            "p999Us": 301.077,
+            "maxUs": 1014.449
+          }
+        }
+      ],
+      "telemetry": [
+        {
+          "role": 0,
+          "cpuSeconds": 16.07,
+          "enclosingSeconds": 61.21825933456421,
+          "meanCpuCores": 0.26250338011369717,
+          "fileForceCount": 4655,
+          "fileForce": {
+            "p50Us": 2380.493,
+            "p99Us": 56431.232,
+            "p999Us": 132505.362,
+            "maxUs": 180245.482
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0046935081481934
+        },
+        {
+          "role": 1,
+          "cpuSeconds": 8.82,
+          "enclosingSeconds": 61.237826108932495,
+          "meanCpuCores": 0.14402862675612624,
+          "fileForceCount": 4558,
+          "fileForce": {
+            "p50Us": 3088.645,
+            "p99Us": 59411.408,
+            "p999Us": 123393.565,
+            "maxUs": 188268.291
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.00602388381958
+        },
+        {
+          "role": 2,
+          "cpuSeconds": 14.38,
+          "enclosingSeconds": 61.21061134338379,
+          "meanCpuCores": 0.23492658681890988,
+          "fileForceCount": 4586,
+          "fileForce": {
+            "p50Us": 3087.205,
+            "p99Us": 60142.85,
+            "p999Us": 121495.566,
+            "maxUs": 169638.681
+          },
+          "gcPauseCount": 0,
+          "gcPause": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0052547454833984
+        },
+        {
+          "role": 3,
+          "cpuSeconds": 7.14,
+          "enclosingSeconds": 61.196061849594116,
+          "meanCpuCores": 0.11667417451711978,
+          "fileForceCount": 0,
+          "fileForce": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "gcPauseCount": 2,
+          "gcPause": {
+            "p50Us": 5913.603,
+            "p99Us": 8039.919,
+            "p999Us": 8039.919,
+            "maxUs": 8039.919
+          },
+          "tailOnlyEvents": 81,
+          "maxMetricGapSeconds": 1.0052855014801025
+        }
+      ],
+      "minuteWindows": [
+        {
+          "minute": 0,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 5611.372,
+            "p99Us": 149459.993,
+            "p999Us": 236525.253,
+            "maxUs": 274905.796
+          }
+        }
+      ],
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": false,
+        "p999AtMost100ms": false,
+        "everyMinuteP99AtMost25ms": false
+      },
+      "registeredGatePass": false,
+      "correctness": {
+        "matchingResultsAgree": true,
+        "canonicalStateAgrees": true,
+        "invariantsPassed": true,
+        "referenceUsesSameMatchingImplementation": true
+      },
+      "allRawMembersVerified": true,
+      "sourceRowsSha256": "417aef0671d3de65ca50ab7e32f799b1ebdbb8d4af7573ea435d8dd0f712efbf",
+      "sourceRecordsDurableDuringWindow": false,
+      "physicalFaultDomainClaimed": false,
+      "replicaMaxParkNs": 100000
+    },
+    "sustained-r1": {
+      "case": "sustained-r1",
+      "mode": "MATCHING",
+      "seconds": 1800,
+      "rate": 100,
+      "originals": 180000,
+      "counts": {
+        "ACCEPTED": 180000
+      },
+      "fullLatency": {
+        "p50Us": 8847.581,
+        "p99Us": 202051.24,
+        "p999Us": 402291.386,
+        "maxUs": 1080175.174
+      },
+      "conditionalAcceptedLatency": {
+        "p50Us": 8847.581,
+        "p99Us": 202051.24,
+        "p999Us": 402291.386,
+        "maxUs": 1080175.174
+      },
+      "offerToReply": {
+        "p50Us": 8827.121,
+        "p99Us": 202036.046,
+        "p999Us": 402285.072,
+        "maxUs": 1080138.306
+      },
+      "releaseLateness": {
+        "p50Us": 0.039,
+        "p99Us": 2.395,
+        "p999Us": 34.031,
+        "maxUs": 42203.072
+      },
+      "releaseToOffer": {
+        "p50Us": 5.49,
+        "p99Us": 53.069,
+        "p999Us": 126.229,
+        "maxUs": 8354.146
+      },
+      "sourceLateAbove20ms": 8,
+      "confirmedInWindow": 179999,
+      "inWindowGoodput": 99.99944444444445,
+      "maxPlannedNotConfirmed": 109,
+      "remainingUnconfirmed": 0,
+      "workers": [
+        {
+          "role": 0,
+          "originalCallbacks": 180000,
+          "callbackDuration": {
+            "p50Us": 5.2,
+            "p99Us": 43.419,
+            "p999Us": 106.919,
+            "maxUs": 14458.527
+          }
+        },
+        {
+          "role": 1,
+          "originalCallbacks": 180000,
+          "callbackDuration": {
+            "p50Us": 4.12,
+            "p99Us": 32.47,
+            "p999Us": 78.63,
+            "maxUs": 36628.312
+          }
+        },
+        {
+          "role": 2,
+          "originalCallbacks": 180000,
+          "callbackDuration": {
+            "p50Us": 4.48,
+            "p99Us": 34.21,
+            "p999Us": 85.619,
+            "maxUs": 16002.12
+          }
+        }
+      ],
+      "telemetry": [
+        {
+          "role": 0,
+          "cpuSeconds": 283.13,
+          "enclosingSeconds": 1800.6622004508972,
+          "meanCpuCores": 0.157236598807429,
+          "fileForceCount": 147241,
+          "fileForce": {
+            "p50Us": 1955.598,
+            "p99Us": 55598.274,
+            "p999Us": 135438.566,
+            "maxUs": 768774.947
+          },
+          "gcPauseCount": 8,
+          "gcPause": {
+            "p50Us": 14202.15,
+            "p99Us": 23061.413,
+            "p999Us": 23061.413,
+            "maxUs": 23061.413
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0046007633209229
+        },
+        {
+          "role": 1,
+          "cpuSeconds": 186.77,
+          "enclosingSeconds": 1800.283459186554,
+          "meanCpuCores": 0.10374477366158259,
+          "fileForceCount": 146680,
+          "fileForce": {
+            "p50Us": 2561.301,
+            "p99Us": 55936.821,
+            "p999Us": 142785.347,
+            "maxUs": 785863.243
+          },
+          "gcPauseCount": 8,
+          "gcPause": {
+            "p50Us": 14504.947,
+            "p99Us": 33058.391,
+            "p999Us": 33058.391,
+            "maxUs": 33058.391
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0054333209991455
+        },
+        {
+          "role": 2,
+          "cpuSeconds": 195.45,
+          "enclosingSeconds": 1800.363026857376,
+          "meanCpuCores": 0.10856143849008483,
+          "fileForceCount": 146449,
+          "fileForce": {
+            "p50Us": 2591.74,
+            "p99Us": 56221.777,
+            "p999Us": 138513.582,
+            "maxUs": 778676.545
+          },
+          "gcPauseCount": 8,
+          "gcPause": {
+            "p50Us": 15466.376,
+            "p99Us": 32985.152,
+            "p999Us": 32985.152,
+            "maxUs": 32985.152
+          },
+          "tailOnlyEvents": 0,
+          "maxMetricGapSeconds": 1.0052807331085205
+        },
+        {
+          "role": 3,
+          "cpuSeconds": 134.84,
+          "enclosingSeconds": 1800.8989729881287,
+          "meanCpuCores": 0.07487371697273373,
+          "fileForceCount": 0,
+          "fileForce": {
+            "p50Us": null,
+            "p99Us": null,
+            "p999Us": null,
+            "maxUs": null
+          },
+          "gcPauseCount": 7,
+          "gcPause": {
+            "p50Us": 9495.423,
+            "p99Us": 21869.246,
+            "p999Us": 21869.246,
+            "maxUs": 21869.246
+          },
+          "tailOnlyEvents": 1735,
+          "maxMetricGapSeconds": 1.005523443222046
+        }
+      ],
+      "minuteWindows": [
+        {
+          "minute": 0,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 10977.415,
+            "p99Us": 513324.679,
+            "p999Us": 1020187.294,
+            "maxUs": 1080175.174
+          }
+        },
+        {
+          "minute": 1,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 32546.748,
+            "p99Us": 331773.375,
+            "p999Us": 737714.438,
+            "maxUs": 797705.138
+          }
+        },
+        {
+          "minute": 2,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 8371.141,
+            "p99Us": 151043.814,
+            "p999Us": 283867.278,
+            "maxUs": 307156.154
+          }
+        },
+        {
+          "minute": 3,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 8034.462,
+            "p99Us": 12919.981,
+            "p999Us": 29169.12,
+            "maxUs": 35657.6
+          }
+        },
+        {
+          "minute": 4,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 20267.807,
+            "p99Us": 241007.244,
+            "p999Us": 346230.183,
+            "maxUs": 376228.093
+          }
+        },
+        {
+          "minute": 5,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 58640.213,
+            "p99Us": 288755.118,
+            "p999Us": 389130.175,
+            "maxUs": 423229.369
+          }
+        },
+        {
+          "minute": 6,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 9703.559,
+            "p99Us": 150010.696,
+            "p999Us": 319346.322,
+            "maxUs": 349345.172
+          }
+        },
+        {
+          "minute": 7,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 50667.541,
+            "p99Us": 286019.236,
+            "p999Us": 524620.962,
+            "maxUs": 554619.382
+          }
+        },
+        {
+          "minute": 8,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 9700.217,
+            "p99Us": 180529.385,
+            "p999Us": 248864.052,
+            "maxUs": 280960.537
+          }
+        },
+        {
+          "minute": 9,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 8743.651,
+            "p99Us": 83555.963,
+            "p999Us": 152974.864,
+            "maxUs": 197272.357
+          }
+        },
+        {
+          "minute": 10,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 10056.136,
+            "p99Us": 119703.076,
+            "p999Us": 219696.396,
+            "maxUs": 250854.158
+          }
+        },
+        {
+          "minute": 11,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 8166.729,
+            "p99Us": 114449.017,
+            "p999Us": 355231.15,
+            "maxUs": 407353.163
+          }
+        },
+        {
+          "minute": 12,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 9178.749,
+            "p99Us": 170772.092,
+            "p999Us": 309331.697,
+            "maxUs": 358068.124
+          }
+        },
+        {
+          "minute": 13,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 8330.32,
+            "p99Us": 68910.524,
+            "p999Us": 183145.02,
+            "maxUs": 230489.902
+          }
+        },
+        {
+          "minute": 14,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 9062.065,
+            "p99Us": 154284.863,
+            "p999Us": 204284.223,
+            "maxUs": 224497.858
+          }
+        },
+        {
+          "minute": 15,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 8848.258,
+            "p99Us": 79223.364,
+            "p999Us": 222503.657,
+            "maxUs": 282500.827
+          }
+        },
+        {
+          "minute": 16,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 7980.838,
+            "p99Us": 11113.76,
+            "p999Us": 29744.677,
+            "maxUs": 48742.657
+          }
+        },
+        {
+          "minute": 17,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 8479.812,
+            "p99Us": 149119.808,
+            "p999Us": 202607.893,
+            "maxUs": 237805.461
+          }
+        },
+        {
+          "minute": 18,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 9113.146,
+            "p99Us": 42501.262,
+            "p999Us": 117649.693,
+            "maxUs": 148560.569
+          }
+        },
+        {
+          "minute": 19,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 8795.969,
+            "p99Us": 221230.722,
+            "p999Us": 275708.513,
+            "maxUs": 319700.446
+          }
+        },
+        {
+          "minute": 20,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 8009.842,
+            "p99Us": 11755.365,
+            "p999Us": 39006.927,
+            "maxUs": 49169.77
+          }
+        },
+        {
+          "minute": 21,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 8591.733,
+            "p99Us": 167224.259,
+            "p999Us": 252442.817,
+            "maxUs": 283006.074
+          }
+        },
+        {
+          "minute": 22,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 8168.117,
+            "p99Us": 123084.801,
+            "p999Us": 340669.103,
+            "maxUs": 390667.883
+          }
+        },
+        {
+          "minute": 23,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 8903.463,
+            "p99Us": 148304.39,
+            "p999Us": 306745.097,
+            "maxUs": 345179.167
+          }
+        },
+        {
+          "minute": 24,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 8009.534,
+            "p99Us": 39222.039,
+            "p999Us": 67654.149,
+            "maxUs": 80959.685
+          }
+        },
+        {
+          "minute": 25,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 8114.114,
+            "p99Us": 47607.298,
+            "p999Us": 67198.26,
+            "maxUs": 82906.694
+          }
+        },
+        {
+          "minute": 26,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 8381.455,
+            "p99Us": 278082.83,
+            "p999Us": 440496.787,
+            "maxUs": 492286.966
+          }
+        },
+        {
+          "minute": 27,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 8487.024,
+            "p99Us": 209286.789,
+            "p999Us": 278780.388,
+            "maxUs": 289544.871
+          }
+        },
+        {
+          "minute": 28,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 10007.906,
+            "p99Us": 287306.282,
+            "p999Us": 445022.132,
+            "maxUs": 495020.332
+          }
+        },
+        {
+          "minute": 29,
+          "planned": 6000,
+          "accepted": 6000,
+          "latency": {
+            "p50Us": 8580.752,
+            "p99Us": 242995.323,
+            "p999Us": 363223.198,
+            "maxUs": 403278.871
+          }
+        }
+      ],
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": false,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": false,
+        "p999AtMost100ms": false,
+        "everyMinuteP99AtMost25ms": false
+      },
+      "registeredGatePass": false,
+      "correctness": {
+        "matchingResultsAgree": true,
+        "canonicalStateAgrees": true,
+        "invariantsPassed": true,
+        "referenceUsesSameMatchingImplementation": true
+      },
+      "allRawMembersVerified": true,
+      "sourceRowsSha256": "45d76b9c141a3054613c332203d6cf9099ca43333c4f40b4ffc76422c84f82ac",
+      "sourceRecordsDurableDuringWindow": false,
+      "physicalFaultDomainClaimed": false,
+      "replicaMaxParkNs": 1000000
+    }
+  },
+  "allPrivateAssetIds": [
+    681179390,
+    681182141,
+    681186345,
+    681190078,
+    681193932,
+    681197834,
+    681202746,
+    681207366,
+    681211634,
+    681217009,
+    681296307
+  ]
+}

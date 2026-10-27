@@ -1,0 +1,93 @@
+{
+  "boot": "8d765c71-dbfa-4354-8db0-6c392e701e6f",
+  "host": "33ace3d92505",
+  "portBase": 26000,
+  "rate": 100,
+  "qualSeconds": 30,
+  "soakSeconds": 1800,
+  "sourceCollector": "G1",
+  "heapInitial": "1g",
+  "heapMax": "2g",
+  "activeProcessors": 4,
+  "cpuSets": [
+    [
+      0,
+      2,
+      7,
+      10
+    ],
+    [
+      12,
+      19,
+      24,
+      26
+    ],
+    [
+      29,
+      30,
+      34,
+      35
+    ],
+    [
+      40,
+      48,
+      52,
+      62
+    ]
+  ],
+  "leader": 0,
+  "archiveSyncLevel": 2,
+  "selection": "tmpfs only if both paired B accept all originals, no unknown, release max <=20ms, >=99% in-window, p99 <=90% paired A and p999 <=paired A; otherwise no follow-on long run",
+  "scope": "same-host replicated matching; only disposable driver directory placement changes; source memory tape and sync2 unchanged; no continuous export/retention claim",
+  "cases": {
+    "functional-a": {
+      "mode": "MATCHING",
+      "seconds": 2,
+      "rate": 10,
+      "maxParkNs": 1000000,
+      "driverMedium": "overlay"
+    },
+    "functional-b": {
+      "mode": "MATCHING",
+      "seconds": 2,
+      "rate": 10,
+      "maxParkNs": 1000000,
+      "driverMedium": "tmpfs"
+    },
+    "layout-a1": {
+      "mode": "MATCHING",
+      "seconds": 60,
+      "rate": 100,
+      "maxParkNs": 1000000,
+      "driverMedium": "overlay"
+    },
+    "layout-b1": {
+      "mode": "MATCHING",
+      "seconds": 60,
+      "rate": 100,
+      "maxParkNs": 1000000,
+      "driverMedium": "tmpfs"
+    },
+    "layout-a2": {
+      "mode": "MATCHING",
+      "seconds": 60,
+      "rate": 100,
+      "maxParkNs": 1000000,
+      "driverMedium": "overlay"
+    },
+    "layout-b2": {
+      "mode": "MATCHING",
+      "seconds": 60,
+      "rate": 100,
+      "maxParkNs": 1000000,
+      "driverMedium": "tmpfs"
+    },
+    "sustained-r1": {
+      "mode": "MATCHING",
+      "seconds": 1800,
+      "rate": 100,
+      "maxParkNs": 1000000,
+      "driverMedium": "tmpfs"
+    }
+  }
+}
