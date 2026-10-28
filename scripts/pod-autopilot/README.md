@@ -34,6 +34,7 @@ refuses the stream (for example orders the source could not send) are still reco
 | `setup_b.py` | Creates a campaign root from a verified runtime (`VM_RUNTIME`, `VM_CPUSETS`) |
 | `patch_runtime.py` | Derives a runtime whose cluster jar differs only by classes compiled from given sources |
 | `pin_threads.py` | Thread-level CPU isolation while a case runs (cases with `pinThreads`); tested by `scripts/tests/test_pod_thread_pinning.py` |
+| `tail_attribution.py` | Places every JVM's GC pauses on the window timeline and attributes the orders at or above p99 to GC or not; tested by `scripts/tests/test_pod_tail_attribution.py` |
 | `fsync_floor.py` | 4 KiB append + `fdatasync`/`fsync` latency on the pod's root filesystem |
 
 ## Thread pinning
@@ -47,6 +48,17 @@ JVM's whole set, and confines every other thread to the housekeeping CPUs. Agent
 out in thread-creation order; the launcher's primordial thread is never an agent; an agent with no free CPU
 is confined to housekeeping and reported. Every decision goes to `thread-pinning.jsonl` in the case
 directory, and a summary goes to `<case>-THREAD_PINNING.json`.
+
+Two exceptions keep stop-the-world pauses short. GC workers and the VM Thread may use the JVM's whole set,
+because they work while every Java thread is stopped. JIT compiler threads stay on housekeeping at nice 19, so
+housekeeping Java threads (JFR, Aeron client conductors) reach safepoints promptly. Without these, the first
+pinned runs saw time-to-safepoint of 28–39 ms and 70 ms young-GC copying. Pinned configurations also run with
+`-XX:-UseDynamicNumberOfGCThreads` (in both ABAB arms), so every GC worker exists, and is pinned, before
+measurement.
+
+After an ABAB the autopilot runs `tail_attribution.py` on each 8000/s case, writes
+`<case>-TAIL_ATTRIBUTION.json` and adds a table to `SUMMARY.md`: the p99 threshold, how many slow orders
+overlapped a leader or source GC pause, a follower-only pause or none, and the largest stall episode.
 
 ## Running on a fresh pod
 
