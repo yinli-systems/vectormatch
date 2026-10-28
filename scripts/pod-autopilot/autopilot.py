@@ -176,7 +176,7 @@ def summarize(state):
     lines += ['', 'Caveats: vendor figures are vendor-reported round trips across separate hosts, without a matching engine;',
               "our durability mode for those tests is assumed to be Aeron's default (no per-write force), not verified.",
               'Our runs are single-host, include matching and reply, and are bounded to 180,000 originals per run.',
-              'Errors and stage failures are listed in AUTOPILOT.log and STATE.json.', '']
+              'Errors and stage failures are listed in AUTOPILOT.log and SUMMARY.json.', '']
     (HOME / 'SUMMARY.md').write_text('\n'.join(lines))
     (HOME / 'SUMMARY.json').write_text(json.dumps(state, indent=2) + '\n')
 

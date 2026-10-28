@@ -1,0 +1,196 @@
+{
+  "rungs": [
+    {
+      "case": "r1000",
+      "rate": 1000,
+      "seconds": 60,
+      "sync": 0,
+      "latency": {
+        "p50Us": 456.144,
+        "p99Us": 852.399,
+        "p999Us": 5338.115,
+        "maxUs": 16564.063
+      },
+      "offerToReply": {
+        "p50Us": 429.951,
+        "p99Us": 776.025,
+        "p999Us": 3733.945,
+        "maxUs": 13898.682
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 60000
+      },
+      "inWindowGoodput": 1000.0
+    },
+    {
+      "case": "r2000",
+      "rate": 2000,
+      "seconds": 60,
+      "sync": 0,
+      "latency": {
+        "p50Us": 410.385,
+        "p99Us": 1175.892,
+        "p999Us": 8431.067,
+        "maxUs": 30792.377
+      },
+      "offerToReply": {
+        "p50Us": 398.183,
+        "p99Us": 899.532,
+        "p999Us": 7374.099,
+        "maxUs": 30728.853
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 120000
+      },
+      "inWindowGoodput": 2000.0
+    },
+    {
+      "case": "r5000",
+      "rate": 5000,
+      "seconds": 36,
+      "sync": 0,
+      "latency": {
+        "p50Us": 345.007,
+        "p99Us": 3900.836,
+        "p999Us": 12231.5,
+        "maxUs": 30281.173
+      },
+      "offerToReply": {
+        "p50Us": 322.429,
+        "p99Us": 3198.096,
+        "p999Us": 11287.375,
+        "maxUs": 30250.882
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 180000
+      },
+      "inWindowGoodput": 4999.972222222223
+    },
+    {
+      "case": "r8000",
+      "rate": 8000,
+      "seconds": 22,
+      "sync": 0,
+      "latency": {
+        "p50Us": 294.396,
+        "p99Us": 5257.741,
+        "p999Us": 13644.511,
+        "maxUs": 24333.914
+      },
+      "offerToReply": {
+        "p50Us": 270.43,
+        "p99Us": 4481.902,
+        "p999Us": 11427.847,
+        "maxUs": 24306.073
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 176000
+      },
+      "inWindowGoodput": 7999.909090909091
+    },
+    {
+      "case": "r12000",
+      "rate": 12000,
+      "seconds": 15,
+      "sync": 0,
+      "latency": null,
+      "offerToReply": {
+        "p50Us": 222.097,
+        "p99Us": 7412.593,
+        "p999Us": 18939.751,
+        "maxUs": 35681.15
+      },
+      "gates": {
+        "allAccepted": false,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": false,
+        "p999AtMost100ms": false,
+        "everyMinuteP99AtMost25ms": false
+      },
+      "registeredGatePass": false,
+      "counts": {
+        "ACCEPTED": 179957,
+        "NOT_SENT": 43
+      },
+      "inWindowGoodput": 11997.066666666668
+    },
+    {
+      "case": "r12000-repeat",
+      "rate": 12000,
+      "seconds": 15,
+      "sync": 0,
+      "latency": null,
+      "offerToReply": {
+        "p50Us": 221.716,
+        "p99Us": 7655.531,
+        "p999Us": 13952.173,
+        "maxUs": 41595.022
+      },
+      "gates": {
+        "allAccepted": false,
+        "noUnknown": true,
+        "sourceTimingValid": false,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": false,
+        "p999AtMost100ms": false,
+        "everyMinuteP99AtMost25ms": false
+      },
+      "registeredGatePass": false,
+      "counts": {
+        "ACCEPTED": 179851,
+        "NOT_SENT": 149
+      },
+      "inWindowGoodput": 11989.866666666667
+    }
+  ],
+  "highestPassingRate": 8000,
+  "rule": "first failing rung stops escalation and is repeated once; knee = highest rate whose rung passed all registered gates"
+}
