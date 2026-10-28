@@ -50,6 +50,11 @@ SOURCE3 = TWO[:3] + [LAYOUT['spinSource'][:-1]]
 CONFIGS['c2spinsrc3'] = dict(cpuSets=SOURCE3, maxParkNs=0, jvmExtra=SPIN_HYGIENE, sourceJvmExtra=QUIET_SOURCE)
 CONFIGS['c2spinsrc3pin'] = dict(CONFIGS['c2spinsrc3'],
                                 pinThreads=dict(housekeeping=LAYOUT['spinSource'][-1:], roles=[0, 1, 2]))
+# No periodic "Cleanup" safepoints: with nodes pinned, the p99.9 tail was 100% non-GC, led by the guaranteed
+# once-a-second safepoint waiting 21 ms for threads on the shared housekeeping CPU. Both arms get the flag.
+QUIET_SAFEPOINTS = SPIN_HYGIENE + ['-XX:GuaranteedSafepointInterval=0']
+CONFIGS['c2spinsrc3g'] = dict(CONFIGS['c2spinsrc3'], jvmExtra=QUIET_SAFEPOINTS)
+CONFIGS['c2spinsrc3gpin'] = dict(CONFIGS['c2spinsrc3pin'], jvmExtra=QUIET_SAFEPOINTS)
 # The configuration sweep stays fixed so results remain comparable across runs.
 SWEEP_CONFIGS = ('c1p100', 'c2p100', 'c2p1', 'c2spin')
 BASELINE = 'c1p100'
