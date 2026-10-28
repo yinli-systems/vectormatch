@@ -1,0 +1,366 @@
+{
+  "boot": "a708ba5a-b36f-4a78-bdae-0603ed26456b",
+  "host": "9e57ef0914c2",
+  "portBase": 26000,
+  "rate": 100,
+  "qualSeconds": 60,
+  "soakSeconds": 1800,
+  "sourceCollector": "G1",
+  "heapInitial": "1g",
+  "heapMax": "2g",
+  "activeProcessors": 4,
+  "cpuSets": [
+    [
+      67,
+      163
+    ],
+    [
+      15,
+      111
+    ],
+    [
+      22,
+      118
+    ],
+    [
+      78,
+      174
+    ]
+  ],
+  "leader": 0,
+  "archiveSyncLevel": 2,
+  "selection": "First six originals in order. Every A/B source/completion/correctness gate and exact joins must pass, states must agree. Both B latency gates must pass: p99<=25ms,p999<=100ms,every-minute-p99<=25ms. EACH pair B/A p99<=0.90,p999<=1.00. Only then run confirm-b1 (a third 22s B window at 8000/s). No default promotion.",
+  "scope": "sync0 ABAB; sole switch c2spinst (A) vs c2spinstpin (B); pod z01seweximrhz8 cpu layout {\"one\": [[67, 163], [15, 111], [22, 118], [78, 174]], \"two\": [[67, 71, 163, 167], [15, 31, 111, 127], [22, 61, 118, 157], [78, 174]], \"spinSource\": [78, 95, 174, 191]}; runtime-r5 (busy-spin option for node data path and client driver); three replicas and source on one host over loopback (no physical failure domain); 180,000-original probe bound",
+  "cases": {
+    "functional-a": {
+      "mode": "MATCHING",
+      "traceEnabled": true,
+      "preallocate": false,
+      "forceWait": false,
+      "initializeRecording": true,
+      "archiveDataSync1": false,
+      "collector": "G1",
+      "jvmExtra": [
+        "-Dvectormatch.client.driverMaxParkNs=0",
+        "-XX:-UseDynamicNumberOfGCThreads"
+      ],
+      "sync": 0,
+      "auditMode": "base",
+      "cpuSets": [
+        [
+          67,
+          71,
+          163,
+          167
+        ],
+        [
+          15,
+          31,
+          111,
+          127
+        ],
+        [
+          22,
+          61,
+          118,
+          157
+        ],
+        [
+          78,
+          95,
+          174,
+          191
+        ]
+      ],
+      "maxParkNs": 0,
+      "rate": 10,
+      "seconds": 2
+    },
+    "functional-b": {
+      "mode": "MATCHING",
+      "traceEnabled": true,
+      "preallocate": false,
+      "forceWait": false,
+      "initializeRecording": true,
+      "archiveDataSync1": false,
+      "collector": "G1",
+      "jvmExtra": [
+        "-Dvectormatch.client.driverMaxParkNs=0",
+        "-XX:-UseDynamicNumberOfGCThreads"
+      ],
+      "sync": 0,
+      "auditMode": "base",
+      "cpuSets": [
+        [
+          67,
+          71,
+          163,
+          167
+        ],
+        [
+          15,
+          31,
+          111,
+          127
+        ],
+        [
+          22,
+          61,
+          118,
+          157
+        ],
+        [
+          78,
+          95,
+          174,
+          191
+        ]
+      ],
+      "maxParkNs": 0,
+      "pinThreads": {
+        "housekeeping": [
+          191
+        ]
+      },
+      "rate": 10,
+      "seconds": 2
+    },
+    "ab-a1": {
+      "mode": "MATCHING",
+      "traceEnabled": true,
+      "preallocate": false,
+      "forceWait": false,
+      "initializeRecording": true,
+      "archiveDataSync1": false,
+      "collector": "G1",
+      "jvmExtra": [
+        "-Dvectormatch.client.driverMaxParkNs=0",
+        "-XX:-UseDynamicNumberOfGCThreads"
+      ],
+      "sync": 0,
+      "auditMode": "base",
+      "cpuSets": [
+        [
+          67,
+          71,
+          163,
+          167
+        ],
+        [
+          15,
+          31,
+          111,
+          127
+        ],
+        [
+          22,
+          61,
+          118,
+          157
+        ],
+        [
+          78,
+          95,
+          174,
+          191
+        ]
+      ],
+      "maxParkNs": 0,
+      "rate": 8000,
+      "seconds": 22
+    },
+    "ab-b1": {
+      "mode": "MATCHING",
+      "traceEnabled": true,
+      "preallocate": false,
+      "forceWait": false,
+      "initializeRecording": true,
+      "archiveDataSync1": false,
+      "collector": "G1",
+      "jvmExtra": [
+        "-Dvectormatch.client.driverMaxParkNs=0",
+        "-XX:-UseDynamicNumberOfGCThreads"
+      ],
+      "sync": 0,
+      "auditMode": "base",
+      "cpuSets": [
+        [
+          67,
+          71,
+          163,
+          167
+        ],
+        [
+          15,
+          31,
+          111,
+          127
+        ],
+        [
+          22,
+          61,
+          118,
+          157
+        ],
+        [
+          78,
+          95,
+          174,
+          191
+        ]
+      ],
+      "maxParkNs": 0,
+      "pinThreads": {
+        "housekeeping": [
+          191
+        ]
+      },
+      "rate": 8000,
+      "seconds": 22
+    },
+    "ab-a2": {
+      "mode": "MATCHING",
+      "traceEnabled": true,
+      "preallocate": false,
+      "forceWait": false,
+      "initializeRecording": true,
+      "archiveDataSync1": false,
+      "collector": "G1",
+      "jvmExtra": [
+        "-Dvectormatch.client.driverMaxParkNs=0",
+        "-XX:-UseDynamicNumberOfGCThreads"
+      ],
+      "sync": 0,
+      "auditMode": "base",
+      "cpuSets": [
+        [
+          67,
+          71,
+          163,
+          167
+        ],
+        [
+          15,
+          31,
+          111,
+          127
+        ],
+        [
+          22,
+          61,
+          118,
+          157
+        ],
+        [
+          78,
+          95,
+          174,
+          191
+        ]
+      ],
+      "maxParkNs": 0,
+      "rate": 8000,
+      "seconds": 22
+    },
+    "ab-b2": {
+      "mode": "MATCHING",
+      "traceEnabled": true,
+      "preallocate": false,
+      "forceWait": false,
+      "initializeRecording": true,
+      "archiveDataSync1": false,
+      "collector": "G1",
+      "jvmExtra": [
+        "-Dvectormatch.client.driverMaxParkNs=0",
+        "-XX:-UseDynamicNumberOfGCThreads"
+      ],
+      "sync": 0,
+      "auditMode": "base",
+      "cpuSets": [
+        [
+          67,
+          71,
+          163,
+          167
+        ],
+        [
+          15,
+          31,
+          111,
+          127
+        ],
+        [
+          22,
+          61,
+          118,
+          157
+        ],
+        [
+          78,
+          95,
+          174,
+          191
+        ]
+      ],
+      "maxParkNs": 0,
+      "pinThreads": {
+        "housekeeping": [
+          191
+        ]
+      },
+      "rate": 8000,
+      "seconds": 22
+    },
+    "confirm-b1": {
+      "mode": "MATCHING",
+      "traceEnabled": true,
+      "preallocate": false,
+      "forceWait": false,
+      "initializeRecording": true,
+      "archiveDataSync1": false,
+      "collector": "G1",
+      "jvmExtra": [
+        "-Dvectormatch.client.driverMaxParkNs=0",
+        "-XX:-UseDynamicNumberOfGCThreads"
+      ],
+      "sync": 0,
+      "auditMode": "base",
+      "cpuSets": [
+        [
+          67,
+          71,
+          163,
+          167
+        ],
+        [
+          15,
+          31,
+          111,
+          127
+        ],
+        [
+          22,
+          61,
+          118,
+          157
+        ],
+        [
+          78,
+          95,
+          174,
+          191
+        ]
+      ],
+      "maxParkNs": 0,
+      "pinThreads": {
+        "housekeeping": [
+          191
+        ]
+      },
+      "rate": 8000,
+      "seconds": 22
+    }
+  },
+  "settleSeconds": 30,
+  "stageCapacity": 2097152
+}
