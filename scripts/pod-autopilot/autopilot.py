@@ -2,7 +2,8 @@
 
 Usage: VM_LAYOUT='{"one": [...], "two": [...], "spinSource": [...]}' autopilot.py STAGING_DIR [SWEEP_ROOT|run]
 With "run" (the default) the sync0 configuration sweep is the first stage; "abab:A:B" skips the sweep and
-confirms configuration B against A, then runs the ladders on the winner. Every decision follows a fixed, logged rule. Each stage gets a fresh write-once root; a failing stage is
+confirms configuration B against A, then runs the ladders on the winner; "ladders:C" runs only the two
+ladders on configuration C (one an earlier ABAB already selected). Every decision follows a fixed, logged rule. Each stage gets a fresh write-once root; a failing stage is
 recorded and the pipeline continues with the stages that do not depend on it."""
 from pathlib import Path
 import glob, json, os, signal, subprocess, sys, time, traceback
@@ -10,7 +11,7 @@ import glob, json, os, signal, subprocess, sys, time, traceback
 STAGE = Path(sys.argv[1])
 SWEEP_ARG = sys.argv[2] if len(sys.argv) > 2 else 'run'
 EXPERIMENTS = Path('/opt/vectormatch-b/experiments')
-RUNTIME = '/opt/vectormatch-b/runtime-r6'
+RUNTIME = '/opt/vectormatch-b/runtime-r7'
 STAMP = time.strftime('%Y%m%d-%H%M%S', time.gmtime())
 HOME = EXPERIMENTS / ('autopilot-' + STAMP)
 LOG = HOME / 'AUTOPILOT.log'
@@ -72,7 +73,7 @@ DURABLE_RATES = [1000, 2000, 3000, 5000, 8000, 12000]
 SELECTION = ("First six originals in order. Every A/B source/completion/correctness gate and exact joins must pass, states "
              "must agree. Both B latency gates must pass: p99<=25ms,p999<=100ms,every-minute-p99<=25ms. EACH pair B/A "
              "p99<=0.90,p999<=1.00. Only then run confirm-b1 (a third 22s B window at 8000/s). No default promotion.")
-COMMON_SCOPE = ("pod " + os.environ.get('RUNPOD_POD_ID', 'unknown') + " cpu layout " + json.dumps(LAYOUT) + "; runtime-r6 (busy-spin option; probe pipelined warm-up, audit reads preWindowCommands); "
+COMMON_SCOPE = ("pod " + os.environ.get('RUNPOD_POD_ID', 'unknown') + " cpu layout " + json.dumps(LAYOUT) + "; runtime-r7 (busy-spin option; probe pipelined warm-up skipping never-offered orders, audit reads preWindowCommands); "
                 "three replicas and source on one host over loopback (no physical failure domain); 180,000-original probe bound")
 VENDOR = [dict(source='AWS 2025 (Adaptive): Aeron Cluster Premium round trip', us=98,
                url='https://aws.amazon.com/blogs/industries/aeron-on-aws-2025-performance-benchmark-results/'),
@@ -271,7 +272,7 @@ def main():
     state = dict(stamp=STAMP, sweepArgument=SWEEP_ARG, runtime=RUNTIME, layout=LAYOUT, errors=[])
     log(event='autopilot_start', home=str(HOME))
     try:
-        if SWEEP_ARG.startswith('abab:'):
+        if SWEEP_ARG.startswith(('abab:', 'ladders:')):
             raise SkipSweep
         if SWEEP_ARG == 'run':
             sweep = {'%s-r%d' % (k, rate): case(SYNC0, k, rate, seconds) for rate, seconds in [(1000, 60), (8000, 22), (20000, 9)] for k in SWEEP_CONFIGS}
@@ -287,8 +288,12 @@ def main():
                      pickRule='lowest p99 at 8000/s among gate-passing configurations, else at 1000/s, else baseline')
         log(event='picked', config=picked, rate=at, p99Us=p99, sweepRows=len(state['sweep']))
     except SkipSweep:
-        _, base, picked = SWEEP_ARG.split(':')
-        state.update(baseline=base, picked=picked, pickRule='named on the command line; no sweep')
+        if SWEEP_ARG.startswith('ladders:'):
+            config = SWEEP_ARG.split(':', 1)[1]
+            state.update(baseline=config, picked=config, pickRule='ladders only, on a configuration named on the command line')
+        else:
+            _, base, picked = SWEEP_ARG.split(':')
+            state.update(baseline=base, picked=picked, pickRule='named on the command line; no sweep')
     except Exception:
         state['errors'].append(dict(stage='sweep', traceback=traceback.format_exc()))
         state.update(picked=BASELINE, pickRule='sweep unreadable; baseline')

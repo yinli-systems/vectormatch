@@ -4,12 +4,14 @@ import io.aeron.DirectBufferVector;
 import io.aeron.cluster.service.ClientSession;
 import io.aeron.logbuffer.BufferClaim;
 import io.vectormatch.core.MatchingEngine;
+import io.vectormatch.core.MatchingEngine.*;
 import org.agrona.DirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
 import java.nio.file.Files;
+import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ReplicatedPathProbeTest {
@@ -59,6 +61,54 @@ class ReplicatedPathProbeTest {
         assertThrows(IllegalArgumentException.class, () -> ReplicatedPathProbe.run(new String[]{out.toString(),"26000","1000","1800","MATCHING"}));
         assertFalse(Files.exists(out));
     }
+    /** A cluster-side engine produces the replies; the reference must reach the same state from accepted orders only. */
+    private static ReplicatedPathProbe.Pipeline warmup(MatchingEngine cluster, String... outcomes) {
+        Place[] commands = new Place[outcomes.length];
+        for (int i = 0; i < outcomes.length; i++) commands[i] = ReplicatedPathProbe.warmup(256 + i);
+        var pipeline = new ReplicatedPathProbe.Pipeline(commands);
+        for (int i = 0; i < outcomes.length; i++) {
+            pipeline.outcomes[i] = outcomes[i];
+            if (outcomes[i].equals("ACCEPTED")) {
+                var result = cluster.apply(commands[i]).result();
+                pipeline.replies[i] = new CommandCodec.Reply(i, result, false, cluster.lastCommandSeq(), cluster.lastEventSeq(),
+                        cluster.lastMarketSeq(), "", "");
+            }
+        }
+        return pipeline;
+    }
+
+    private static MatchingEngine seeded() {
+        MatchingEngine engine = ClusterCapacity.newEngine(ClusterCapacity.StateProfile.CAPACITY_190K_V1);
+        for (Command seed : ReplicatedPathProbe.setup(100)) engine.apply(seed);
+        return engine;
+    }
+
+    @Test void warmupSkipsOrdersThatNeverReachedTheClusterAndReplaysTheRest() {
+        MatchingEngine cluster = seeded(), reference = seeded();
+        var w = warmup(cluster, "ACCEPTED", "NOT_SENT", "ACCEPTED", "NOT_RELEASED", "ACCEPTED");
+        assertEquals(3, ReplicatedPathProbe.acceptWarmup(w, reference));
+        assertEquals(cluster.lastCommandSeq(), reference.lastCommandSeq());
+        assertArrayEquals(cluster.snapshot(), reference.snapshot());
+    }
+
+    @Test void warmupOrderWithUnknownOrRejectedOutcomeRefusesTheRun() {
+        for (String outcome : List.of("UNKNOWN", "REJECTED", "QUEUED")) {
+            var w = warmup(seeded(), "ACCEPTED", outcome);
+            assertThrows(IllegalStateException.class, () -> ReplicatedPathProbe.acceptWarmup(w, seeded()), outcome);
+        }
+    }
+
+    @Test void warmupReplyThatDisagreesWithTheReferenceRefusesTheRun() {
+        var w = warmup(seeded(), "ACCEPTED");
+        w.replies[0] = new CommandCodec.Reply(0, new MatchingEngine.Result(MatchingEngine.ResultCode.REJECTED, "x", 0, 0, 0, 0),
+                false, 0, 0, 0, "", "");
+        assertThrows(IllegalStateException.class, () -> ReplicatedPathProbe.acceptWarmup(w, seeded()));
+    }
+
+    @Test void noopWarmupCountsAcceptedOrdersWithoutAReference() {
+        assertEquals(2, ReplicatedPathProbe.acceptWarmup(warmup(seeded(), "ACCEPTED", "NOT_SENT", "ACCEPTED"), null));
+    }
+
     @Test void pipelinedWarmupBeyondRetainedOrderCapacityIsRejectedBeforeDirectoryCreation() {
         Path out = temp.resolve("warm");
         System.setProperty(ReplicatedPathProbe.WARMUP_ORDERS_PROPERTY, "20000");

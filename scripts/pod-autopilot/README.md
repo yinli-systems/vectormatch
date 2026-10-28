@@ -19,7 +19,8 @@ run on one host over loopback, so nothing here is a physical failure-domain clai
    (p99 ≤ 5 ms and p99.9 ≤ 20 ms) as well as the registered 25 ms gates.
 
 `autopilot.py STAGING abab:A:B` skips stages 1–2: it confirms configuration B against A by ABAB and runs the
-ladders on the winner.
+ladders on the winner. `autopilot.py STAGING ladders:C` runs only the two ladders on configuration C, for a
+configuration an earlier ABAB already selected.
 
 Ladder rule: the first rung that fails its gates stops escalation and is repeated once. Rungs whose stage audit
 refuses the stream (for example orders the source could not send) are still recorded from `samples.csv`.
@@ -74,9 +75,15 @@ so their GC still counts.
 Configurations with `warmupSeconds` (`c2spinsrc3gw`, `c2spinsrc3gwpin`) make the probe send that many seconds
 of orders, capped at 16,000, through the same pipeline at the window rate just before the measured window
 (`-Dvectormatch.probe.warmupOrders`). With nodes pinned, the whole p99.9 tail of one pinned run was a single
-57 ms stall 0.24 s into the window. The warm-up orders are accepted, replayed by the reference engine and
-recorded in `window.json` (`warmupOrders`, `preWindowCommands`), from which the audit derives the expected
-sequence numbers; without them it assumes the original 259 pre-window commands.
+57 ms stall 0.24 s into the window. Warm-up orders the source could not offer (its 512-order bound overflowed during
+a cold-start stall, as at 20,000/s) never reach the cluster and are skipped; every offered warm-up order must be
+accepted, and those are replayed by the reference engine and counted in `window.json` (`warmupOrders`,
+`warmupAccepted`, `preWindowCommands`), from which the audit derives the expected sequence numbers; without
+them it assumes the original 259 pre-window commands.
+
+In durable configurations each node has a second, mostly idle thread named `archive-conduct`; it is created
+after the recording agent, so the creation-order rule keeps the busy recorder on its own CPU and confines the
+second one to housekeeping, which the governor reports as one overflow agent per node.
 
 After an ABAB the autopilot runs `tail_attribution.py` on each 8000/s case, writes
 `<case>-TAIL_ATTRIBUTION.json` and adds a table to `SUMMARY.md`: the p99 threshold, how many slow orders
@@ -94,7 +101,7 @@ Agrona 2.6.1 from Maven Central, run on Temurin 21.0.13+9. On the pod:
    `patch_runtime.py runtime-r4 runtime-r5 ... ClusterNodeMain.java ClusterClient.java ReplicatedPathProbe.java`
    (sources from this branch), then `patch_runtime.py runtime-r5 runtime-r6tmp ... ReplicatedPathProbe.java` and
    `replace_runtime_files.py runtime-r6tmp runtime-r6 ... audit-replicated-path-probe.py=scripts/audit-replicated-path-probe.py`
-   (the autopilot runs `runtime-r6`).
+   then `patch_runtime.py runtime-r6 runtime-r7 ... ReplicatedPathProbe.java` (the autopilot runs `runtime-r7`).
 4. Map the pod's cpuset to complete physical cores (both hyperthreads), preferring same-L3 pairs per node, then:
 
 ```bash

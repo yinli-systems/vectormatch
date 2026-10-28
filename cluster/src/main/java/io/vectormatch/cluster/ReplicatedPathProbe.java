@@ -59,6 +59,7 @@ public final class ReplicatedPathProbe {
             }
             if (client.leaderMemberId() != 0) throw new IllegalStateException("leader0 required");
             client.enableAsynchronousOwner(256);
+            int warmupAccepted = 0;
             if (pipelinedWarmup > 0) {
                 // Same pipeline and rate as the window, so its first stall (JIT, first use of the asynchronous
                 // path) happens here; every warm-up order must be accepted and joins the reference replay.
@@ -67,12 +68,9 @@ public final class ReplicatedPathProbe {
                 Pipeline w = new Pipeline(warm);
                 long warmStart = StageTrace.clock() + 200_000_000L;
                 w.pump(client, rate, warmStart, warmStart + pipelinedWarmup * 1_000_000_000L / rate);
-                for (int i = 0; i < pipelinedWarmup; i++) {
-                    if (!"ACCEPTED".equals(w.outcomes[i])) throw new IllegalStateException("pipelined warm-up order " + i + " " + w.outcomes[i]);
-                    if (mode.equals("MATCHING") && !reference.apply(warm[i]).result().equals(w.replies[i].result()))
-                        throw new IllegalStateException("pipelined warm-up mismatch");
-                }
-                System.out.println("VECTOR_PROBE_WARMUP orders=" + pipelinedWarmup + " rate=" + rate + " peakPending=" + w.peakPending);
+                warmupAccepted = acceptWarmup(w, mode.equals("MATCHING") ? reference : null);
+                System.out.println("VECTOR_PROBE_WARMUP orders=" + pipelinedWarmup + " accepted=" + warmupAccepted
+                        + " rate=" + rate + " peakPending=" + w.peakPending);
             }
             origin = StageTrace.clock() + 1_000_000_000L; windowEnd = origin + seconds * 1_000_000_000L;
             long approximateStartEpochMs = System.currentTimeMillis() + 1000;
@@ -85,7 +83,7 @@ public final class ReplicatedPathProbe {
             while (StageTrace.clock() < telemetryTail) { client.asynchronousPoll(); LockSupport.parkNanos(1_000_000); }
             // All CSV serialization and matching replay occur after the measured arrival/drain window.
             writeRows(out, commands, outcomes, released, offered, confirmed, correlations, replies, origin, rate);
-            Files.writeString(out.resolve("window.json"), "{\"mode\":\"" + mode + "\",\"rate\":" + rate + ",\"seconds\":" + seconds + ",\"planned\":" + count + ",\"originNs\":" + origin + ",\"deadlineNs\":" + windowEnd + ",\"approximateStartEpochMs\":" + approximateStartEpochMs + ",\"sessionId\":" + client.clusterSessionId() + ",\"peakPending\":" + window.peakPending + ",\"observedPeakQueue\":" + window.peakQueue + ",\"leaderChangeObservations\":" + window.leaderChanges + ",\"warmupOrders\":" + pipelinedWarmup + ",\"preWindowCommands\":" + (FIXED_PRE_WINDOW_COMMANDS + pipelinedWarmup) + ",\"archiveSyncLevel\":2,\"sourceRecordsDurableDuringWindow\":false}\n");
+            Files.writeString(out.resolve("window.json"), "{\"mode\":\"" + mode + "\",\"rate\":" + rate + ",\"seconds\":" + seconds + ",\"planned\":" + count + ",\"originNs\":" + origin + ",\"deadlineNs\":" + windowEnd + ",\"approximateStartEpochMs\":" + approximateStartEpochMs + ",\"sessionId\":" + client.clusterSessionId() + ",\"peakPending\":" + window.peakPending + ",\"observedPeakQueue\":" + window.peakQueue + ",\"leaderChangeObservations\":" + window.leaderChanges + ",\"warmupOrders\":" + pipelinedWarmup + ",\"warmupAccepted\":" + warmupAccepted + ",\"preWindowCommands\":" + (FIXED_PRE_WINDOW_COMMANDS + warmupAccepted) + ",\"archiveSyncLevel\":2,\"sourceRecordsDurableDuringWindow\":false}\n");
             if (mode.equals("MATCHING")) {
                 boolean resultsAgree = true;
                 for (int i = 0; i < count; i++) if (offered[i] != 0) {
@@ -112,6 +110,25 @@ public final class ReplicatedPathProbe {
         }
         Files.writeString(out.resolve("complete.json"), "{\"closed\":true}\n");
     }
+    /**
+     * Checks a pipelined warm-up and replays it into the reference (null for NOOP); returns the accepted count.
+     * An order never offered (the arrival queue was full, or it was never released) never reached the cluster
+     * and is skipped: request sequences may have gaps. Any order that was offered must have been accepted,
+     * otherwise the cluster's state is unknown and the run is refused.
+     */
+    static int acceptWarmup(Pipeline warmup, MatchingEngine reference) {
+        int accepted = 0;
+        for (int i = 0; i < warmup.commands.length; i++) {
+            String outcome = warmup.outcomes[i];
+            if (outcome.equals("NOT_SENT") || outcome.equals("NOT_RELEASED")) continue;
+            if (!outcome.equals("ACCEPTED")) throw new IllegalStateException("pipelined warm-up order " + i + " " + outcome);
+            if (reference != null && !reference.apply(warmup.commands[i]).result().equals(warmup.replies[i].result()))
+                throw new IllegalStateException("pipelined warm-up mismatch at order " + i);
+            accepted++;
+        }
+        return accepted;
+    }
+
     /** Absolute arrival clock feeding at most 256 pipelined orders; records every order's outcome and times. */
     static final class Pipeline {
         final Place[] commands;
