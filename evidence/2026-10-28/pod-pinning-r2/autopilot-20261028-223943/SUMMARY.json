@@ -1,0 +1,498 @@
+{
+  "stamp": "20261028-223943",
+  "sweepArgument": "abab:c2spinsrc3g:c2spinsrc3gpin",
+  "runtime": "/opt/vectormatch-b/runtime-r5",
+  "layout": {
+    "one": [
+      [
+        67,
+        163
+      ],
+      [
+        15,
+        111
+      ],
+      [
+        22,
+        118
+      ],
+      [
+        78,
+        174
+      ]
+    ],
+    "two": [
+      [
+        67,
+        71,
+        163,
+        167
+      ],
+      [
+        15,
+        31,
+        111,
+        127
+      ],
+      [
+        22,
+        61,
+        118,
+        157
+      ],
+      [
+        78,
+        174
+      ]
+    ],
+    "spinSource": [
+      78,
+      95,
+      174,
+      191
+    ]
+  },
+  "errors": [],
+  "baseline": "c2spinsrc3g",
+  "picked": "c2spinsrc3gpin",
+  "pickRule": "named on the command line; no sweep",
+  "abab": {
+    "root": "/opt/vectormatch-b/experiments/sync0-abab-20261028-223943",
+    "a": "c2spinsrc3g",
+    "b": "c2spinsrc3gpin",
+    "pairs": [
+      {
+        "a": "ab-a1",
+        "b": "ab-b1",
+        "p99Ratio": 0.2608435157418253,
+        "p999Ratio": 0.5530941297535228,
+        "baselineLatencyGate": true,
+        "baselineNonLatencyGates": true,
+        "candidateGate": true,
+        "passes": true
+      },
+      {
+        "a": "ab-a2",
+        "b": "ab-b2",
+        "p99Ratio": 0.3313112822114672,
+        "p999Ratio": 1.7275836000367724,
+        "baselineLatencyGate": true,
+        "baselineNonLatencyGates": true,
+        "candidateGate": true,
+        "passes": false
+      }
+    ],
+    "finalStateEqual": true,
+    "candidateSelected": false,
+    "rule": "First six originals in order. Every A/B source/completion/correctness gate and exact joins must pass, states must agree. Both B latency gates must pass: p99<=25ms,p999<=100ms,every-minute-p99<=25ms. EACH pair B/A p99<=0.90,p999<=1.00. Only then run confirm-b1 (a third 22s B window at 8000/s). No default promotion.",
+    "tails": {
+      "ab-a1": {
+        "thresholdUs": 9875.856,
+        "slowOrders": 1761,
+        "slowOrderShare": {
+          "leaderOrSource": 0.2697,
+          "followerOnly": 0.0886,
+          "none": 0.6417
+        },
+        "slowOrderGcOverlap": {
+          "leader": 0.2697,
+          "follower1": 0.1777,
+          "follower2": 0.0534,
+          "source": 0.0
+        },
+        "gcPauses": {
+          "leader": {
+            "count": 7,
+            "totalMs": 63.272,
+            "maxMs": 13.19
+          },
+          "follower1": {
+            "count": 7,
+            "totalMs": 67.598,
+            "maxMs": 14.377
+          },
+          "follower2": {
+            "count": 8,
+            "totalMs": 80.642,
+            "maxMs": 15.252
+          },
+          "source": {
+            "count": 0,
+            "totalMs": 0.0,
+            "maxMs": 0.0
+          }
+        },
+        "episodes": 17,
+        "largestEpisode": {
+          "startMs": 2520.5,
+          "spanMs": 174.781,
+          "orders": 681,
+          "maxLatencyMs": 16.795,
+          "gcPauses": []
+        }
+      },
+      "ab-b1": {
+        "thresholdUs": 2576.053,
+        "slowOrders": 1761,
+        "slowOrderShare": {
+          "leaderOrSource": 0.2368,
+          "followerOnly": 0.0528,
+          "none": 0.7104
+        },
+        "slowOrderGcOverlap": {
+          "leader": 0.2368,
+          "follower1": 0.0284,
+          "follower2": 0.0528,
+          "source": 0.0
+        },
+        "gcPauses": {
+          "leader": {
+            "count": 8,
+            "totalMs": 70.442,
+            "maxMs": 16.692
+          },
+          "follower1": {
+            "count": 8,
+            "totalMs": 83.057,
+            "maxMs": 17.045
+          },
+          "follower2": {
+            "count": 8,
+            "totalMs": 83.979,
+            "maxMs": 17.4
+          },
+          "source": {
+            "count": 0,
+            "totalMs": 0.0,
+            "maxMs": 0.0
+          }
+        },
+        "episodes": 141,
+        "largestEpisode": {
+          "startMs": 47.5,
+          "spanMs": 28.3,
+          "orders": 190,
+          "maxLatencyMs": 13.905,
+          "gcPauses": []
+        }
+      },
+      "ab-a2": {
+        "thresholdUs": 11249.798,
+        "slowOrders": 1761,
+        "slowOrderShare": {
+          "leaderOrSource": 0.2425,
+          "followerOnly": 0.0426,
+          "none": 0.7149
+        },
+        "slowOrderGcOverlap": {
+          "leader": 0.2425,
+          "follower1": 0.0386,
+          "follower2": 0.0392,
+          "source": 0.0
+        },
+        "gcPauses": {
+          "leader": {
+            "count": 8,
+            "totalMs": 82.423,
+            "maxMs": 30.557
+          },
+          "follower1": {
+            "count": 8,
+            "totalMs": 119.581,
+            "maxMs": 47.125
+          },
+          "follower2": {
+            "count": 6,
+            "totalMs": 52.541,
+            "maxMs": 11.617
+          },
+          "source": {
+            "count": 0,
+            "totalMs": 0.0,
+            "maxMs": 0.0
+          }
+        },
+        "episodes": 20,
+        "largestEpisode": {
+          "startMs": 557.25,
+          "spanMs": 132.021,
+          "orders": 626,
+          "maxLatencyMs": 18.888,
+          "gcPauses": []
+        }
+      },
+      "ab-b2": {
+        "thresholdUs": 3727.185,
+        "slowOrders": 1761,
+        "slowOrderShare": {
+          "leaderOrSource": 0.2334,
+          "followerOnly": 0.0011,
+          "none": 0.7655
+        },
+        "slowOrderGcOverlap": {
+          "leader": 0.2334,
+          "follower1": 0.0591,
+          "follower2": 0.0,
+          "source": 0.0
+        },
+        "gcPauses": {
+          "leader": {
+            "count": 8,
+            "totalMs": 68.632,
+            "maxMs": 15.599
+          },
+          "follower1": {
+            "count": 8,
+            "totalMs": 90.278,
+            "maxMs": 17.603
+          },
+          "follower2": {
+            "count": 8,
+            "totalMs": 86.81,
+            "maxMs": 17.136
+          },
+          "source": {
+            "count": 0,
+            "totalMs": 0.0,
+            "maxMs": 0.0
+          }
+        },
+        "episodes": 20,
+        "largestEpisode": {
+          "startMs": 239.5,
+          "spanMs": 65.083,
+          "orders": 466,
+          "maxLatencyMs": 53.497,
+          "gcPauses": []
+        }
+      }
+    }
+  },
+  "ladderConfig": "c2spinsrc3g",
+  "sync0Ladder": [
+    {
+      "case": "r1000",
+      "rate": 1000,
+      "seconds": 60,
+      "sync": 0,
+      "latency": {
+        "p50Us": 34.407,
+        "p99Us": 3683.405,
+        "p999Us": 8684.973,
+        "maxUs": 14703.504
+      },
+      "offerToReply": {
+        "p50Us": 33.08,
+        "p99Us": 3046.201,
+        "p999Us": 8683.35,
+        "maxUs": 14701.618
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 60000
+      },
+      "inWindowGoodput": 1000.0
+    },
+    {
+      "case": "r2000",
+      "rate": 2000,
+      "seconds": 60,
+      "sync": 0,
+      "latency": {
+        "p50Us": 35.152,
+        "p99Us": 2844.982,
+        "p999Us": 7432.517,
+        "maxUs": 14818.434
+      },
+      "offerToReply": {
+        "p50Us": 33.411,
+        "p99Us": 2638.522,
+        "p999Us": 7329.718,
+        "maxUs": 14816.817
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 120000
+      },
+      "inWindowGoodput": 2000.0
+    },
+    {
+      "case": "r5000",
+      "rate": 5000,
+      "seconds": 36,
+      "sync": 0,
+      "latency": {
+        "p50Us": 35.719,
+        "p99Us": 5897.613,
+        "p999Us": 12422.899,
+        "maxUs": 26605.016
+      },
+      "offerToReply": {
+        "p50Us": 33.921,
+        "p99Us": 5664.335,
+        "p999Us": 12046.418,
+        "maxUs": 26368.597
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 180000
+      },
+      "inWindowGoodput": 4999.972222222223
+    },
+    {
+      "case": "r8000",
+      "rate": 8000,
+      "seconds": 22,
+      "sync": 0,
+      "latency": {
+        "p50Us": 35.765,
+        "p99Us": 9025.32,
+        "p999Us": 17288.29,
+        "maxUs": 23934.001
+      },
+      "offerToReply": {
+        "p50Us": 32.309,
+        "p99Us": 8933.26,
+        "p999Us": 17284.978,
+        "maxUs": 23929.47
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 176000
+      },
+      "inWindowGoodput": 8000.0
+    },
+    {
+      "case": "r12000",
+      "rate": 12000,
+      "seconds": 15,
+      "sync": 0,
+      "latency": {
+        "p50Us": 36.124,
+        "p99Us": 11977.479,
+        "p999Us": 15944.58,
+        "maxUs": 19617.828
+      },
+      "offerToReply": {
+        "p50Us": 34.432,
+        "p99Us": 10643.663,
+        "p999Us": 15147.619,
+        "maxUs": 19028.131
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 180000
+      },
+      "inWindowGoodput": 12000.0
+    },
+    {
+      "case": "r20000",
+      "rate": 20000,
+      "seconds": 9,
+      "sync": 0,
+      "latency": null,
+      "offerToReply": {
+        "p50Us": 33.821,
+        "p99Us": 18189.9,
+        "p999Us": 34280.138,
+        "maxUs": 35750.196
+      },
+      "gates": {
+        "allAccepted": false,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": false,
+        "p999AtMost100ms": false,
+        "everyMinuteP99AtMost25ms": false
+      },
+      "registeredGatePass": false,
+      "counts": {
+        "ACCEPTED": 178534,
+        "NOT_SENT": 1466
+      },
+      "inWindowGoodput": 19837.11111111111
+    },
+    {
+      "case": "r20000-repeat",
+      "rate": 20000,
+      "seconds": 9,
+      "sync": 0,
+      "latency": null,
+      "offerToReply": {
+        "p50Us": 34.393,
+        "p99Us": 19983.438,
+        "p999Us": 25998.105,
+        "maxUs": 28753.982
+      },
+      "gates": {
+        "allAccepted": false,
+        "noUnknown": true,
+        "sourceTimingValid": false,
+        "leaderFixed": true,
+        "inWindow99Percent": false,
+        "p99AtMost25ms": false,
+        "p999AtMost100ms": false,
+        "everyMinuteP99AtMost25ms": false
+      },
+      "registeredGatePass": false,
+      "counts": {
+        "ACCEPTED": 177385,
+        "NOT_SENT": 2615
+      },
+      "inWindowGoodput": 19709.444444444445
+    }
+  ],
+  "sync0LadderRoot": "/opt/vectormatch-b/experiments/sync0-ladder-20261028-223943"
+}

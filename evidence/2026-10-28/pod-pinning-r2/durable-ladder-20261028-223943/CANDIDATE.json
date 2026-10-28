@@ -1,0 +1,117 @@
+{
+  "sourceCommit": "19e68684 + ClusterNodeMain opt-in vectormatch.archive.dataSyncLevel",
+  "derivedFrom": "/opt/vectormatch-cpu/experiments/recording-initialization-20261027-r1",
+  "derivedFromSourceCommit": "8d373f9cc68be38b49e7eb30958cb42e95204024",
+  "replacedClasses": [
+    "io/vectormatch/cluster/ClusterNodeMain$Configuration.class",
+    "io/vectormatch/cluster/ClusterNodeMain$DataPathIdlePolicy.class",
+    "io/vectormatch/cluster/ClusterNodeMain.class"
+  ],
+  "unchangedJarEntries": 320,
+  "files": {
+    "lib/agrona-2.6.1.jar": {
+      "sha256": "84c07eb02695c06bfda3d6c3a20c1984e3ff1bbd617b2f8e678140baf973fa28",
+      "bytes": 491990
+    },
+    "lib/aeron-all-1.53.3.jar": {
+      "sha256": "4c6c8a5014a2b67424051170392a005daa9a998ac963302d2819d0f3db749ef2",
+      "bytes": 3544128
+    },
+    "lib/core-0.1.0-SNAPSHOT.jar": {
+      "sha256": "24038fe13e51df6505dce3a6a41b5d6cfbf6387610f01625dc7e6284706ac513",
+      "bytes": 111079
+    },
+    "lib/cluster-0.1.0-SNAPSHOT.jar": {
+      "sha256": "6807cfebf72ef3c56b91e7d3b9292b96008e6b69c172648bcc7c376fcbcc7001",
+      "bytes": 970757
+    },
+    "soak-agent.jar": {
+      "sha256": "0f89f410e2490cdb66c9c41b7183266d9e6abfd39581c18fdba9131e34125df4",
+      "bytes": 7151
+    },
+    "stage-patch.jar": {
+      "sha256": "e027055627385d975636cb843700633fbdba907a4050f8957ec41e71f7e9c41b",
+      "bytes": 47722
+    },
+    "libvmclock.so": {
+      "sha256": "5805ab5a6d42421c844ea8d704b9f9b529b9d3075e93326590c9aecd84301c90",
+      "bytes": 16784
+    },
+    "libvmforce.so": {
+      "sha256": "5285e895253bed4894455e9bbb9ab1ba95bb6f117f3305572b39acd97976f47d",
+      "bytes": 21936
+    },
+    "audit-recording-initialization.py": {
+      "sha256": "2db39e585f310fadf4bb55f0fd023e490bb3d4db72fc69b3ac59383e0cc61ce7",
+      "bytes": 3591
+    },
+    "audit-replicated-stage-trace.py": {
+      "sha256": "932d348fa1f6e75f176c2f6c2af39f5b816c7026132b5fbb44baf4a39f69c778",
+      "bytes": 8330
+    },
+    "audit-replicated-path-probe.py": {
+      "sha256": "28a0f5e1db4d44970d8f66f6a7633d877271d5ec116edb473f29770960729d71",
+      "bytes": 9011
+    },
+    "audit-force-wait.py": {
+      "sha256": "eaa8b45b253319b03aab18e241e57271f6f4c85cb5c7efb46082c560a29d596f",
+      "bytes": 8009
+    },
+    "process_agent.py": {
+      "sha256": "6db804cab7234306d89caddd69d195fefacc9eae007d57b03f8140b87b165918",
+      "bytes": 3107
+    }
+  },
+  "javaPath": "/root/tools/jdk-21.0.13+9/bin/java",
+  "javaBinarySha256": "9cad3f2620d3ef2ed10b26f922af7e773d54fdaa05f615d6d6df014f3fec4155",
+  "patches": [
+    {
+      "note": "PendingReplies drained from log callbacks (Aeron forbids egress in doBackgroundWork)",
+      "replaced": [
+        "io/vectormatch/cluster/MatchingClusteredService.class"
+      ],
+      "added": [
+        "io/vectormatch/cluster/PendingReplies$Backlog.class",
+        "io/vectormatch/cluster/PendingReplies.class"
+      ],
+      "sources": {
+        "PendingReplies.java": "033abf7eba81220608d5bd79fab1b897e7ed357f720d039bccad11b488762347",
+        "MatchingClusteredService.java": "0f49b1716ae65c8f9fa05c5a0bb329c40e92612537ce5a5c51b02ff464bbe6e9"
+      }
+    },
+    {
+      "note": "diagnostic node accepts sync0 (Aeron default durability) for vendor-equivalent comparison",
+      "replaced": [
+        "io/vectormatch/cluster/ReplicatedPathProbeNode$MeasuredService.class",
+        "io/vectormatch/cluster/ReplicatedPathProbeNode$NoopService.class",
+        "io/vectormatch/cluster/ReplicatedPathProbeNode.class"
+      ],
+      "added": [],
+      "sources": {
+        "ReplicatedPathProbeNode.java": "58186d4b7c2bd44ab20318c8ab0995b522893621032fd640038745e3c5c29fc7"
+      }
+    },
+    {
+      "note": "busy-spin option: node dataPathMaxParkNs=0, client driverMaxParkNs=0, probe response loop spins",
+      "replaced": [
+        "io/vectormatch/cluster/ClusterClient$1.class",
+        "io/vectormatch/cluster/ClusterClient$TransportCounters.class",
+        "io/vectormatch/cluster/ClusterClient.class",
+        "io/vectormatch/cluster/ClusterNodeMain$Configuration.class",
+        "io/vectormatch/cluster/ClusterNodeMain$DataPathIdlePolicy.class",
+        "io/vectormatch/cluster/ClusterNodeMain.class",
+        "io/vectormatch/cluster/ReplicatedPathProbe.class"
+      ],
+      "added": [],
+      "sources": {
+        "ClusterNodeMain.java": "646bae591f202078ad3b1ad3158a31cf6ccc8a809b1aa8cf980010e8ca1ea39e",
+        "ClusterClient.java": "8df885db21684da28cc0db3c772126820a6438927df33fdad639a0ef3896a42a",
+        "ReplicatedPathProbe.java": "ac7422bc3f5c74496469e596c96234d684025b30bd917a1bd8fe8e568d32fe2f"
+      }
+    }
+  ],
+  "adaptedForHost": {
+    "file": "audit-recording-initialization.py",
+    "change": "f['device']==48 -> same device as experiment root"
+  }
+}

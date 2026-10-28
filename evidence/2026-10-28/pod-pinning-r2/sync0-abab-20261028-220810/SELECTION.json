@@ -1,0 +1,27 @@
+{
+  "pairs": [
+    {
+      "a": "ab-a1",
+      "b": "ab-b1",
+      "p99Ratio": 0.32352704391361725,
+      "p999Ratio": 1.1080272784652936,
+      "baselineLatencyGate": true,
+      "baselineNonLatencyGates": true,
+      "candidateGate": true,
+      "passes": false
+    },
+    {
+      "a": "ab-a2",
+      "b": "ab-b2",
+      "p99Ratio": 0.2964393873995579,
+      "p999Ratio": 1.2735054970066424,
+      "baselineLatencyGate": true,
+      "baselineNonLatencyGates": true,
+      "candidateGate": true,
+      "passes": false
+    }
+  ],
+  "finalStateEqual": true,
+  "candidateSelected": false,
+  "rule": "First six originals in order. Every A/B source/completion/correctness gate and exact joins must pass, states must agree. Both B latency gates must pass: p99<=25ms,p999<=100ms,every-minute-p99<=25ms. EACH pair B/A p99<=0.90,p999<=1.00. Only then run confirm-b1 (a third 22s B window at 8000/s). No default promotion."
+}
