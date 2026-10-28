@@ -55,7 +55,11 @@ stopped; confined to housekeeping, the first pinned runs saw time-to-safepoint o
 copying. JIT compiler threads stay on housekeeping at normal priority. Renicing them (`compilerNice`, used by
 `c2spinpin`, `c2spinstpin` and `c2spinsrcpin` to reproduce earlier runs) is harmful: `-XX:+SafepointTimeout`
 named a niced C2 compiler thread as the one holding safepoints for up to 156 ms, because a compiler inside
-the VM must acknowledge each safepoint. `c2spinsrcpin5` leaves compiler priority alone. Pinned configurations also run with
+the VM must acknowledge each safepoint. `c2spinsrcpin5` leaves compiler priority alone; with it, the threads late to safepoints were the JFR telemetry
+stream and the source's compilers, and the source's time-to-safepoint reached 30 ms, because all four JVMs
+shared one housekeeping CPU. `c2spinsrc3pin` therefore pins the three nodes only (`roles: [0, 1, 2]`): the
+load generator runs unpinned on three CPUs and the fourth is the nodes' housekeeping CPU; its baseline
+`c2spinsrc3` uses the same source CPUs. Pinned configurations also run with
 `-XX:-UseDynamicNumberOfGCThreads` (in both ABAB arms), so every GC worker exists, and is pinned, before
 measurement.
 

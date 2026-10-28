@@ -215,6 +215,15 @@ class GovernorTest(unittest.TestCase):
         g.step()
         self.assertEqual([520], self.nice.calls)
 
+    def test_roles_filter_leaves_the_source_untouched(self):
+        self.proc.process(100, NODE_CMD, [(100, "java"), (110, "archive-conduct"), (120, "C2 CompilerThre")])
+        self.proc.process(500, SOURCE_CMD, source_threads())
+        g = self.governor(dict(CONFIG, roles=[0, 1, 2], expectedAgents={"node": 1, "source": 3}))
+        self.assertEqual(3, g.step())
+        self.assertEqual({100, 110, 120}, set(self.affinity.current))
+        self.assertEqual(["100"], list(g.summary(CONFIG)["agentHistory"]))
+        self.assertEqual([], g.drift())
+
     def test_ignores_other_cases_and_non_java_processes(self):
         self.proc.process(600, NODE_CMD.replace(CASE, "ab-a1"), [(601, "archive-conduct")])
         self.proc.process(700, NODE_CMD, [(701, "archive-conduct")], comm="python3")

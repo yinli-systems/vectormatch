@@ -22,6 +22,8 @@ CONFIG_JSON keys:
   expectedAgents  optional {"node": n, "source": n}; more agents than expected are reported at once, and a
                   JVM whose peak agent count differs is listed as drift in the summary (thread naming drift)
   compilerNice    optional nice value for JIT compiler threads; absent or null leaves their priority alone
+  roles           optional list of roles to govern (0-2 nodes, 3 source); default all four. Leaving the source
+                  out keeps the load generator's safepoints independent of the nodes' housekeeping CPU
 
 Agent CPUs are sticky: an agent keeps its CPU for its whole life, and new agents take free CPUs in creation
 (tid) order, so threads that exist when measurement starts win over later ones. An agent that finds no free
@@ -129,6 +131,7 @@ class Governor:
         self.housekeeping = frozenset(config['housekeeping'])
         self.expected = config.get('expectedAgents', {})
         self.compiler_nice = config.get('compilerNice')
+        self.roles = frozenset(config.get('roles', range(4)))
         if len(self.cpu_sets) != 4 or not self.housekeeping:
             raise PinningError('four CPU sets and at least one housekeeping CPU are required')
         self.proc, self.set_affinity, self.set_nice, self.log = Path(proc), set_affinity, set_nice, log
@@ -157,7 +160,7 @@ class Governor:
             if comm is None or cmdline is None or comm.strip() != b'java':
                 continue
             role = role_of(cmdline.replace(b'\0', b' ').decode(errors='replace'), self.case_name)
-            if role is not None:
+            if role in self.roles:
                 found[int(d.name)] = role
         return found
 

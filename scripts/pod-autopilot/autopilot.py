@@ -43,6 +43,13 @@ CONFIGS['c2spinsrc'] = dict(cpuSets=SPIN, maxParkNs=0, jvmExtra=SPIN_HYGIENE, so
 # niced compiler thread held safepoints for up to 156 ms.
 CONFIGS['c2spinsrcpin'] = dict(CONFIGS['c2spinsrc'], pinThreads=dict(housekeeping=LAYOUT['spinSource'][-1:], compilerNice=19))
 CONFIGS['c2spinsrcpin5'] = dict(CONFIGS['c2spinsrc'], pinThreads=dict(housekeeping=LAYOUT['spinSource'][-1:]))
+# Pin the nodes only: the load generator runs unpinned on three CPUs and the fourth is the nodes' housekeeping
+# CPU, so the source's safepoints never wait on node housekeeping threads (with all four JVMs sharing one
+# housekeeping CPU, the source's time-to-safepoint reached 30 ms). Both arms use the same source CPUs.
+SOURCE3 = TWO[:3] + [LAYOUT['spinSource'][:-1]]
+CONFIGS['c2spinsrc3'] = dict(cpuSets=SOURCE3, maxParkNs=0, jvmExtra=SPIN_HYGIENE, sourceJvmExtra=QUIET_SOURCE)
+CONFIGS['c2spinsrc3pin'] = dict(CONFIGS['c2spinsrc3'],
+                                pinThreads=dict(housekeeping=LAYOUT['spinSource'][-1:], roles=[0, 1, 2]))
 # The configuration sweep stays fixed so results remain comparable across runs.
 SWEEP_CONFIGS = ('c1p100', 'c2p100', 'c2p1', 'c2spin')
 BASELINE = 'c1p100'
