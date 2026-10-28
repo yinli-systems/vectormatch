@@ -86,8 +86,24 @@ public final class ClusterClient implements AutoCloseable, EgressListener {
             throw new IllegalArgumentException("Shared client MediaDriver requires independently resolved egress port 0");
     }
 
+    static final String DRIVER_MAX_PARK_PROPERTY = "vectormatch.client.driverMaxParkNs";
+
     static MediaDriver launchDriver(Path driverDirectory, NetworkTransport transport) {
-        return launchDriver(driverDirectory, transport, new BackoffIdleStrategy());
+        return launchDriver(driverDirectory, transport, driverIdle(System.getProperty(DRIVER_MAX_PARK_PROPERTY)));
+    }
+
+    /** Unset keeps Agrona's default backoff (up to 1 ms park); 0 busy-spins; 1000..1000000 bounds the park. */
+    static IdleStrategy driverIdle(String maxParkNs) {
+        if (maxParkNs == null) return new BackoffIdleStrategy();
+        if (!maxParkNs.matches("0|[1-9][0-9]{0,6}"))
+            throw new IllegalArgumentException(DRIVER_MAX_PARK_PROPERTY + " must be canonical decimal 0 (busy spin) or 1000..1000000");
+        long value = Long.parseLong(maxParkNs);
+        if (value != 0 && (value < 1000 || value > 1_000_000))
+            throw new IllegalArgumentException(DRIVER_MAX_PARK_PROPERTY + " must be 0 (busy spin) or 1000..1000000");
+        BackoffIdleStrategy idle = value == 0 ? new BackoffIdleStrategy(Long.MAX_VALUE, 0, 1, 1)
+                : new BackoffIdleStrategy(10, 20, 1000, value);
+        System.out.println("VECTOR_CLIENT_DRIVER_IDLE maxParkNs=" + value + " configuration=" + idle.toString().replace(" ", ""));
+        return idle;
     }
 
     /** Retention-only experiments can supply their exact owned shared-driver instance. */

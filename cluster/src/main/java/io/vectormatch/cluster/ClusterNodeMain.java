@@ -215,11 +215,11 @@ public final class ClusterNodeMain {
             if (inherited != null) throw new IllegalArgumentException(DATA_PATH_MAX_PARK_ENV + " requires explicit JVM property " + DATA_PATH_MAX_PARK_PROPERTY);
             return null;
         }
-        if (!property.matches("[1-9][0-9]{0,6}"))
-            throw new IllegalArgumentException(DATA_PATH_MAX_PARK_PROPERTY + " must be canonical decimal 1000..1000000");
+        if (!property.matches("0|[1-9][0-9]{0,6}"))
+            throw new IllegalArgumentException(DATA_PATH_MAX_PARK_PROPERTY + " must be canonical decimal 0 (busy spin) or 1000..1000000");
         long value = Long.parseLong(property);
-        if (value < 1000 || value > 1_000_000)
-            throw new IllegalArgumentException(DATA_PATH_MAX_PARK_PROPERTY + " must be 1000..1000000");
+        if (value != 0 && (value < 1000 || value > 1_000_000))
+            throw new IllegalArgumentException(DATA_PATH_MAX_PARK_PROPERTY + " must be 0 (busy spin) or 1000..1000000");
         if (inherited != null && !property.equals(inherited))
             throw new IllegalArgumentException("Conflicting " + DATA_PATH_MAX_PARK_ENV + " and " + DATA_PATH_MAX_PARK_PROPERTY);
         return value;
@@ -234,7 +234,7 @@ public final class ClusterNodeMain {
         private final Set<String> observedRoles = new LinkedHashSet<>();
 
         DataPathIdlePolicy(int node, ThreadingMode threading, long maxParkNs) {
-            if (maxParkNs < 1000 || maxParkNs > 1_000_000) throw new IllegalArgumentException("Invalid data-path max park");
+            if (maxParkNs != 0 && (maxParkNs < 1000 || maxParkNs > 1_000_000)) throw new IllegalArgumentException("Invalid data-path max park");
             this.node = node; this.threading = threading; this.maxParkNs = maxParkNs;
         }
 
@@ -243,7 +243,9 @@ public final class ClusterNodeMain {
         BackoffIdleStrategy agent(String role) { return create(role, 20, true); }
 
         private synchronized BackoffIdleStrategy create(String role, long yields, boolean runnerSelected) {
-            BackoffIdleStrategy idle = new BackoffIdleStrategy(10, yields, 1000, maxParkNs);
+            // 0 means busy spin: the spin phase never ends, so the agent neither yields nor parks.
+            BackoffIdleStrategy idle = maxParkNs == 0 ? new BackoffIdleStrategy(Long.MAX_VALUE, 0, 1, 1)
+                    : new BackoffIdleStrategy(10, yields, 1000, maxParkNs);
             if (instances.containsKey(idle)) throw new IllegalStateException("Data-path idle instance reused");
             int instance = instances.size() + 1;
             instances.put(idle, instance); observedRoles.add(role);

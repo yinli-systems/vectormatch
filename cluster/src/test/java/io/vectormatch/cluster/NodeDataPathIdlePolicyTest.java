@@ -23,12 +23,12 @@ class NodeDataPathIdlePolicyTest {
 
     @Test void canonicalPropertyAndMatchingLauncherEnvironmentAreRequired() {
         assertNull(ClusterNodeMain.dataPathMaxParkNs(null, Map.of()));
-        for (String value : List.of("1000", "100000", "1000000")) {
+        for (String value : List.of("0", "1000", "100000", "1000000")) {
             assertEquals(Long.valueOf(value), ClusterNodeMain.dataPathMaxParkNs(value, Map.of()));
             assertEquals(Long.valueOf(value), ClusterNodeMain.dataPathMaxParkNs(value,
                     Map.of(ClusterNodeMain.DATA_PATH_MAX_PARK_ENV, value)));
         }
-        for (String value : List.of("", "0", "999", "1000001", "01000", "+1000", "1000 ", " 1000", "1e5", "100us", "999999999999999999999"))
+        for (String value : List.of("", "00", "-0", "999", "1000001", "01000", "+1000", "1000 ", " 1000", "1e5", "100us", "999999999999999999999"))
             assertThrows(IllegalArgumentException.class, () -> ClusterNodeMain.dataPathMaxParkNs(value, Map.of()), value);
         assertThrows(IllegalArgumentException.class, () -> ClusterNodeMain.dataPathMaxParkNs(null,
                 Map.of(ClusterNodeMain.DATA_PATH_MAX_PARK_ENV, "100000")));

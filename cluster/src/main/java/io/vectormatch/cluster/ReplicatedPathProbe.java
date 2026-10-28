@@ -11,6 +11,8 @@ import java.util.concurrent.locks.LockSupport;
 /** Independent absolute arrival clock; no synchronous evidence writes inside the arrival window. */
 public final class ReplicatedPathProbe {
     private ReplicatedPathProbe() {}
+    /** The response loop follows the client driver: with a busy-spinning driver it spins too (parkNanos sleeps ~50 µs). */
+    static final boolean SPIN = "0".equals(System.getProperty(ClusterClient.DRIVER_MAX_PARK_PROPERTY));
     static Place command(int index) { return new Place(1, "probe-buyer", index + 2L, "probe-" + index, Side.BUY, 10000, 1, TimeInForce.IOC); }
     static List<Command> setup(int count) { return List.of(new Deposit(1, "probe-buyer", 1, Asset.QUOTE, 10_000L * (count + 1000)),
             new Deposit(2, "probe-seller", 1, Asset.BASE, count + 1000L),
@@ -89,7 +91,7 @@ public final class ReplicatedPathProbe {
                     }
                     peakPending = Math.max(peakPending, active); peakQueue = Math.max(peakQueue, queue.size());
                     if (now >= nextProgress) { nextProgress = now + 60_000_000_000L; System.out.println("VECTOR_PROBE_PROGRESS elapsedNs=" + (now - origin) + " pending=" + active + " queued=" + queue.size()); }
-                    if (work == 0) LockSupport.parkNanos(1000);
+                    if (work == 0) { if (SPIN) Thread.onSpinWait(); else LockSupport.parkNanos(1000); }
                 }
             } finally { source.interrupt(); source.join(); }
             for (int i : pending) if (i >= 0) { outcomes[i] = offered[i] == 0 ? "NOT_SENT" : "UNKNOWN"; client.asynchronousCancel(correlations[i]); }
