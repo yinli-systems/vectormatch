@@ -95,6 +95,17 @@ class AttributionTest(unittest.TestCase):
     def test_slow_orders_are_split_by_blame(self):
         self.assertEqual({"leaderOrSource": 0.3333, "followerOnly": 0.3333, "none": 0.3333}, self.report["slowOrderShare"])
         self.assertEqual({"count": 1, "totalMs": 5.0, "maxMs": 5.0}, self.report["gcPauses"]["leader"])
+        self.assertEqual({"leader": 0.3333, "follower1": 0.3333, "follower2": 0.0, "source": 0.0},
+                         self.report["slowOrderGcOverlap"])
+
+    def test_overlap_counts_every_role_an_order_touches(self):
+        # A 20 ms stall: p99 (990th of 1000) is the 10th-smallest stalled latency, so 11 orders are slow.
+        pauses = {0: [(100 * MS, 120 * MS)], 1: [], 2: [], 3: [(101 * MS, 118 * MS)]}
+        report = tail.attribute(window_orders([(100, 120)]), pauses, q=0.99, gap_ns=MS)
+        self.assertEqual(11, report["slowOrders"])
+        self.assertEqual(1.0, report["slowOrderGcOverlap"]["leader"])
+        self.assertEqual(1.0, report["slowOrderGcOverlap"]["source"])
+        self.assertEqual(1.0, report["slowOrderShare"]["leaderOrSource"])
 
     def test_per_second_profile_and_inputs_are_untouched(self):
         self.assertEqual([0], [s["second"] for s in self.report["perSecond"]])

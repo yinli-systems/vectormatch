@@ -35,6 +35,7 @@ refuses the stream (for example orders the source could not send) are still reco
 | `patch_runtime.py` | Derives a runtime whose cluster jar differs only by classes compiled from given sources |
 | `pin_threads.py` | Thread-level CPU isolation while a case runs (cases with `pinThreads`); tested by `scripts/tests/test_pod_thread_pinning.py` |
 | `tail_attribution.py` | Places every JVM's GC pauses on the window timeline and attributes the orders at or above p99 to GC or not; tested by `scripts/tests/test_pod_tail_attribution.py` |
+| `queue.sh` | Starts an autopilot run once the running one (and its JVMs) has exited |
 | `fsync_floor.py` | 4 KiB append + `fdatasync`/`fsync` latency on the pod's root filesystem |
 
 ## Thread pinning
@@ -55,6 +56,13 @@ housekeeping Java threads (JFR, Aeron client conductors) reach safepoints prompt
 pinned runs saw time-to-safepoint of 28–39 ms and 70 ms young-GC copying. Pinned configurations also run with
 `-XX:-UseDynamicNumberOfGCThreads` (in both ABAB arms), so every GC worker exists, and is pinned, before
 measurement.
+
+Busy-spin configurations `c2spinsrc`/`c2spinsrcpin` add measurement hygiene to both arms: static GC workers,
+`-XX:+SafepointTimeout -XX:SafepointTimeoutDelay=20` (each JVM names the threads that are late to a safepoint
+in its `stdout.log`), and, for the load generator only (`sourceJvmExtra`), a fixed pre-touched 8 GiB heap with a
+6 GiB young generation. The source keeps every command and reply for post-window verification; without this its
+own young collections (up to 24 ms) delayed arrivals and counted against the cluster. Node JVMs are unchanged,
+so their GC still counts.
 
 After an ABAB the autopilot runs `tail_attribution.py` on each 8000/s case, writes
 `<case>-TAIL_ATTRIBUTION.json` and adds a table to `SUMMARY.md`: the p99 threshold, how many slow orders

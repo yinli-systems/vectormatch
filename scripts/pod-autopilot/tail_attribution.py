@@ -84,8 +84,11 @@ def attribute(orders, pauses_by_role, q=0.99, gap_ns=1_000_000):
     starts = {r: [s for s, _ in p] for r, p in pauses_by_role.items()}
     slow = sorted((o for o in orders if o['confirmed'] - o['planned'] >= threshold), key=lambda o: o['planned'])
     blame = {name: 0 for name in ('leaderOrSource', 'followerOnly', 'none')}
+    by_role = {ROLES[r]: 0 for r in sorted(pauses_by_role)}
     for o in slow:
         roles = {r for r, p in pauses_by_role.items() if overlapping(p, starts[r], o['planned'], o['confirmed'])}
+        for r in roles:
+            by_role[ROLES[r]] += 1
         if roles & {0, 3}:
             blame['leaderOrSource'] += 1
         elif roles:
@@ -112,6 +115,8 @@ def attribute(orders, pauses_by_role, q=0.99, gap_ns=1_000_000):
     total = len(slow) or 1
     return dict(quantile=q, thresholdUs=threshold / 1e3 if threshold is not None else None, slowOrders=len(slow),
                 slowOrderShare={k: round(v / total, 4) for k, v in blame.items()},
+                # Not exclusive: an order overlapping pauses of two roles counts for both.
+                slowOrderGcOverlap={k: round(v / total, 4) for k, v in by_role.items()},
                 gcPauses={ROLES[r]: dict(count=len(p), totalMs=round(sum(e - s for s, e in p) / 1e6, 3),
                                          maxMs=round(max((e - s for s, e in p), default=0) / 1e6, 3))
                           for r, p in sorted(pauses_by_role.items())},

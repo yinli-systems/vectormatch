@@ -58,6 +58,9 @@ def config(role, case, seconds):
              '-Xlog:gc*,safepoint:file=' + run + '/gc.log:time,uptime,level,tags:filecount=2,filesize=10M']
     # Collector tuning applies to all four JVMs; process_agent places these after its fixed heap/collector flags.
     props += spec.get('jvmExtra', [])
+    if role == 3:
+        # Load-generator only (e.g. a young generation large enough that it never collects during the window).
+        props += spec.get('sourceJvmExtra', [])
     if role < 3:
         props += ['-Daeron.cluster.appointed.leader.id=0', '-Dvectormatch.node.dataPathMaxParkNs=' + str(spec['maxParkNs'])]
         if spec['archiveDataSync1']:

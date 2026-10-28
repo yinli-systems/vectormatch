@@ -32,6 +32,14 @@ CONFIGS = {'c1p100': dict(cpuSets=ONE, maxParkNs=100000),
            'c2spinstpin': dict(cpuSets=SPIN, maxParkNs=0,
                                jvmExtra=['-Dvectormatch.client.driverMaxParkNs=0', '-XX:-UseDynamicNumberOfGCThreads'],
                                pinThreads=dict(housekeeping=LAYOUT['spinSource'][-1:]))}
+# Measurement hygiene for busy spin: static GC workers, JVMs that name threads late to a safepoint (>20 ms),
+# and a load generator whose young generation never fills during a window, so its own GC (it keeps every
+# command and reply for post-window verification) does not count against the cluster.
+SPIN_HYGIENE = ['-Dvectormatch.client.driverMaxParkNs=0', '-XX:-UseDynamicNumberOfGCThreads',
+                '-XX:+UnlockDiagnosticVMOptions', '-XX:+SafepointTimeout', '-XX:SafepointTimeoutDelay=20']
+QUIET_SOURCE = ['-Xms8g', '-Xmx8g', '-Xmn6g', '-XX:+AlwaysPreTouch']
+CONFIGS['c2spinsrc'] = dict(cpuSets=SPIN, maxParkNs=0, jvmExtra=SPIN_HYGIENE, sourceJvmExtra=QUIET_SOURCE)
+CONFIGS['c2spinsrcpin'] = dict(CONFIGS['c2spinsrc'], pinThreads=dict(housekeeping=LAYOUT['spinSource'][-1:]))
 # The configuration sweep stays fixed so results remain comparable across runs.
 SWEEP_CONFIGS = ('c1p100', 'c2p100', 'c2p1', 'c2spin')
 BASELINE = 'c1p100'
@@ -139,7 +147,8 @@ def attribute_tails(root, cases):
         if q.returncode == 0:
             report = json.loads(q.stdout)
             (root / (name + '-TAIL_ATTRIBUTION.json')).write_text(q.stdout)
-            out[name] = {k: report[k] for k in ('thresholdUs', 'slowOrders', 'slowOrderShare', 'gcPauses', 'episodes')}
+            out[name] = {k: report[k] for k in ('thresholdUs', 'slowOrders', 'slowOrderShare', 'slowOrderGcOverlap',
+                                                'gcPauses', 'episodes')}
             out[name]['largestEpisode'] = report['largestEpisodes'][0] if report['largestEpisodes'] else None
         else:
             out[name] = {'error': q.stderr[-400:]}
@@ -194,16 +203,17 @@ def summarize(state):
                   json.dumps({k: v for k, v in state['abab'].items() if k != 'tails'}, indent=2), '```', '']
         if tails:
             lines += ['Tail attribution (slow = at or above p99; GC = a pause overlapping the order):', '',
-                      '| case | p99 µs | slow orders | leader/source GC | follower GC only | no GC | largest stall |',
-                      '|---|---|---|---|---|---|---|']
+                      '| case | p99 µs | slow orders | leader GC | source GC | follower GC only | no GC | largest stall |',
+                      '|---|---|---|---|---|---|---|---|']
             for name, t in tails.items():
                 if 'error' in t:
-                    lines.append('| %s | error | | | | | |' % name)
+                    lines.append('| %s | error | | | | | | |' % name)
                     continue
                 share, big = t['slowOrderShare'], t['largestEpisode'] or {}
-                lines.append('| %s | %s | %d | %s | %s | %s | %s orders over %s ms |' % (
-                    name, t['thresholdUs'], t['slowOrders'], share['leaderOrSource'], share['followerOnly'], share['none'],
-                    big.get('orders'), big.get('spanMs')))
+                overlap = t.get('slowOrderGcOverlap', {})
+                lines.append('| %s | %s | %d | %s | %s | %s | %s | %s orders over %s ms |' % (
+                    name, t['thresholdUs'], t['slowOrders'], overlap.get('leader'), overlap.get('source'),
+                    share['followerOnly'], share['none'], big.get('orders'), big.get('spanMs')))
             lines.append('')
     for key, title in [('sync0Ladder', 'Sync0 capacity ladder (Aeron default durability)'),
                        ('durableLadder', 'Durable capacity ladder (sync2 consensus/catalog, sync1 recording data)')]:
