@@ -19,8 +19,9 @@ public final class ReplicatedPathProbeNode {
         String mode = args[0];
         if (!mode.equals("NOOP") && !mode.equals("MATCHING")) throw new IllegalArgumentException("NOOP or MATCHING required");
         var c = ClusterNodeMain.configuration(Arrays.copyOfRange(args, 2, args.length), System.getenv());
-        if (c.sync() != 2 || !c.topology().localOnly() || Files.exists(c.base()))
-            throw new IllegalArgumentException("Fresh same-host sync2 diagnostic state required");
+        // sync0 is Aeron Cluster's default durability (quorum replication, no per-write force); sync2 forces.
+        if ((c.sync() != 0 && c.sync() != 2) || !c.topology().localOnly() || Files.exists(c.base()))
+            throw new IllegalArgumentException("Fresh same-host sync0 or sync2 diagnostic state required");
         var service = new MeasuredService(mode.equals("NOOP") ? new NoopService()
                 : new MatchingClusteredService(c.outboxCapacity(), c.stateProfile()), Path.of(args[1]));
         Runtime.getRuntime().addShutdownHook(new Thread(service::save, "probe-timing-close"));
