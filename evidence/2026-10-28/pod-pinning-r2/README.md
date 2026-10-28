@@ -9,8 +9,7 @@ run is an ABAB at 8000/s (sync0), then a sync0 and a durable ladder on the basel
 selected. Kept here: summaries, selections, per-case audits, ladder rows, thread-pinning summaries, tail
 attributions, and the pinned arms' `stdout.log` files with the SafepointTimeout output.
 
-**v7 is still running** (`20261028-223943`): its ABAB and sync0 ladder are complete; its durable ladder had
-finished 1000/s and 2000/s when this was recorded.
+All three runs completed with no autopilot errors.
 
 ## ABAB at 8000/s
 
@@ -42,18 +41,18 @@ All originals accepted on every passing rung. p50 / p99 / p99.9:
 
 Durable (consensus and catalog sync2, recording data sync1, a force per commit):
 
-| Rate/s | v5 | v6 | v7 (partial) |
+| Rate/s | v5 | v6 | v7 |
 |---|---|---|---|
 | 1000 | 69 µs / 7.18 ms / 10.6 ms | 64 µs / 3.04 ms / 11.0 ms | 74 µs / 3.12 ms / 7.1 ms |
 | 2000 | 65 µs / 4.53 ms / 10.0 ms | 62 µs / 3.91 ms / 13.9 ms | 63 µs / 3.87 ms / 11.6 ms |
-| 3000 | 62 µs / 4.56 ms / 12.0 ms | 60 µs / 5.64 ms / 12.5 ms | running |
-| 5000 | 63 µs / 5.38 ms / 14.1 ms | 60 µs / 7.12 ms / 17.6 ms | |
-| 8000 | 65 µs / 10.95 ms / 16.4 ms | 65 µs / 8.50 ms / 16.9 ms | |
-| 12000 | 58 µs / 11.57 ms / 18.9 ms | 65 µs / 13.27 ms / 28.2 ms | |
+| 3000 | 62 µs / 4.56 ms / 12.0 ms | 60 µs / 5.64 ms / 12.5 ms | 63 µs / 3.45 ms / 10.5 ms |
+| 5000 | 63 µs / 5.38 ms / 14.1 ms | 60 µs / 7.12 ms / 17.6 ms | 61 µs / 5.61 ms / 11.6 ms |
+| 8000 | 65 µs / 10.95 ms / 16.4 ms | 65 µs / 8.50 ms / 16.9 ms | 67 µs / 7.74 ms / 14.5 ms |
+| 12000 | 58 µs / 11.57 ms / 18.9 ms | 65 µs / 13.27 ms / 28.2 ms | 66 µs / 13.33 ms / 19.0 ms |
 
-Knees by the ladder rule: sync0 20,000/s (v5) and 12,000/s (v6, v7); durable at least 12,000/s in v5 and v6
+Knees by the ladder rule: sync0 20,000/s (v5) and 12,000/s (v6, v7); durable at least 12,000/s in all three
 (every rung passed). The production target (p99 ≤ 5 ms and p99.9 ≤ 20 ms) holds for sync0 at 1000–2000/s in
-every run, and for durable at 2000–3000/s (v5), 1000–2000/s (v6) and 1000–2000/s so far (v7).
+every run, and for durable at 2000–3000/s (v5), 1000–2000/s (v6) and 1000–3000/s (v7).
 
 Single runs per rung; the same configuration varies between runs (durable 1000/s p99 3.0–7.2 ms), so
 single-rung differences of a millisecond or two are not meaningful.

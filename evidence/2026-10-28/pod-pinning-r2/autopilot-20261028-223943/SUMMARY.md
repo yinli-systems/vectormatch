@@ -60,6 +60,17 @@ Tail attribution (slow = at or above p99; GC = a pause overlapping the order):
 | r20000 | 20000 | None | None | None | 33.821 | {'ACCEPTED': 178534, 'NOT_SENT': 1466} | FAIL | no |
 | r20000-repeat | 20000 | None | None | None | 34.393 | {'ACCEPTED': 177385, 'NOT_SENT': 2615} | FAIL | no |
 
+## Durable capacity ladder (sync2 consensus/catalog, sync1 recording data) — config c2spinsrc3g
+
+| rung | rate/s | p50 µs | p99 µs | p99.9 µs | offer→reply p50 µs | counts | 25 ms gates | production target (p99≤5 ms, p99.9≤20 ms) |
+|---|---|---|---|---|---|---|---|---|
+| r1000 | 1000 | 73.965 | 3123.181 | 7113.864 | 71.789 | {'ACCEPTED': 60000} | pass | yes |
+| r2000 | 2000 | 63.043 | 3869.512 | 11551.614 | 61.904 | {'ACCEPTED': 120000} | pass | yes |
+| r3000 | 3000 | 62.616 | 3448.304 | 10496.457 | 61.493 | {'ACCEPTED': 180000} | pass | yes |
+| r5000 | 5000 | 61.011 | 5607.644 | 11588.133 | 59.94 | {'ACCEPTED': 180000} | pass | no |
+| r8000 | 8000 | 66.962 | 7736.997 | 14465.683 | 63.587 | {'ACCEPTED': 176000} | pass | no |
+| r12000 | 12000 | 65.957 | 13331.747 | 19014.885 | 64.919 | {'ACCEPTED': 180000} | pass | no |
+
 ## Vendor reference points (not like-for-like)
 
 - AWS 2025 (Adaptive): Aeron Cluster Premium round trip: 98 µs ([source](https://aws.amazon.com/blogs/industries/aeron-on-aws-2025-performance-benchmark-results/))

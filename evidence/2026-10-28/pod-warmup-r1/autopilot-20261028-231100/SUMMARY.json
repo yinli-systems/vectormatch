@@ -1,0 +1,566 @@
+{
+  "stamp": "20261028-231100",
+  "sweepArgument": "abab:c2spinsrc3gw:c2spinsrc3gwpin",
+  "runtime": "/opt/vectormatch-b/runtime-r6",
+  "layout": {
+    "one": [
+      [
+        67,
+        163
+      ],
+      [
+        15,
+        111
+      ],
+      [
+        22,
+        118
+      ],
+      [
+        78,
+        174
+      ]
+    ],
+    "two": [
+      [
+        67,
+        71,
+        163,
+        167
+      ],
+      [
+        15,
+        31,
+        111,
+        127
+      ],
+      [
+        22,
+        61,
+        118,
+        157
+      ],
+      [
+        78,
+        174
+      ]
+    ],
+    "spinSource": [
+      78,
+      95,
+      174,
+      191
+    ]
+  },
+  "errors": [],
+  "baseline": "c2spinsrc3gw",
+  "picked": "c2spinsrc3gwpin",
+  "pickRule": "named on the command line; no sweep",
+  "abab": {
+    "root": "/opt/vectormatch-b/experiments/sync0-abab-20261028-231100",
+    "a": "c2spinsrc3gw",
+    "b": "c2spinsrc3gwpin",
+    "pairs": [
+      {
+        "a": "ab-a1",
+        "b": "ab-b1",
+        "p99Ratio": 0.3237388400990241,
+        "p999Ratio": 0.6554729580033198,
+        "baselineLatencyGate": true,
+        "baselineNonLatencyGates": true,
+        "candidateGate": true,
+        "passes": true
+      },
+      {
+        "a": "ab-a2",
+        "b": "ab-b2",
+        "p99Ratio": 0.16397356166875202,
+        "p999Ratio": 0.48349386071375466,
+        "baselineLatencyGate": true,
+        "baselineNonLatencyGates": true,
+        "candidateGate": true,
+        "passes": true
+      }
+    ],
+    "finalStateEqual": true,
+    "candidateSelected": true,
+    "rule": "First six originals in order. Every A/B source/completion/correctness gate and exact joins must pass, states must agree. Both B latency gates must pass: p99<=25ms,p999<=100ms,every-minute-p99<=25ms. EACH pair B/A p99<=0.90,p999<=1.00. Only then run confirm-b1 (a third 22s B window at 8000/s). No default promotion.",
+    "tails": {
+      "ab-a1": {
+        "thresholdUs": 3389.479,
+        "slowOrders": 1761,
+        "slowOrderShare": {
+          "leaderOrSource": 0.2794,
+          "followerOnly": 0.0642,
+          "none": 0.6564
+        },
+        "slowOrderGcOverlap": {
+          "leader": 0.2794,
+          "follower1": 0.0642,
+          "follower2": 0.0369,
+          "source": 0.0
+        },
+        "gcPauses": {
+          "leader": {
+            "count": 8,
+            "totalMs": 108.305,
+            "maxMs": 38.758
+          },
+          "follower1": {
+            "count": 7,
+            "totalMs": 105.87,
+            "maxMs": 29.992
+          },
+          "follower2": {
+            "count": 8,
+            "totalMs": 89.389,
+            "maxMs": 17.001
+          },
+          "source": {
+            "count": 0,
+            "totalMs": 0.0,
+            "maxMs": 0.0
+          }
+        },
+        "episodes": 62,
+        "largestEpisode": {
+          "startMs": 444.5,
+          "spanMs": 90.025,
+          "orders": 292,
+          "maxLatencyMs": 5.996,
+          "gcPauses": []
+        }
+      },
+      "ab-b1": {
+        "thresholdUs": 1097.306,
+        "slowOrders": 1761,
+        "slowOrderShare": {
+          "leaderOrSource": 0.2743,
+          "followerOnly": 0.0006,
+          "none": 0.7252
+        },
+        "slowOrderGcOverlap": {
+          "leader": 0.2743,
+          "follower1": 0.0,
+          "follower2": 0.0006,
+          "source": 0.0
+        },
+        "gcPauses": {
+          "leader": {
+            "count": 8,
+            "totalMs": 69.424,
+            "maxMs": 14.775
+          },
+          "follower1": {
+            "count": 8,
+            "totalMs": 86.988,
+            "maxMs": 18.015
+          },
+          "follower2": {
+            "count": 8,
+            "totalMs": 84.168,
+            "maxMs": 18.388
+          },
+          "source": {
+            "count": 0,
+            "totalMs": 0.0,
+            "maxMs": 0.0
+          }
+        },
+        "episodes": 122,
+        "largestEpisode": {
+          "startMs": 19039.375,
+          "spanMs": 17.461,
+          "orders": 131,
+          "maxLatencyMs": 15.051,
+          "gcPauses": [
+            {
+              "role": "leader",
+              "startMs": 19039.609,
+              "durationMs": 14.775
+            }
+          ]
+        }
+      },
+      "ab-a2": {
+        "thresholdUs": 2908.353,
+        "slowOrders": 1761,
+        "slowOrderShare": {
+          "leaderOrSource": 0.2731,
+          "followerOnly": 0.0239,
+          "none": 0.703
+        },
+        "slowOrderGcOverlap": {
+          "leader": 0.2731,
+          "follower1": 0.0403,
+          "follower2": 0.0358,
+          "source": 0.0
+        },
+        "gcPauses": {
+          "leader": {
+            "count": 8,
+            "totalMs": 65.931,
+            "maxMs": 16.594
+          },
+          "follower1": {
+            "count": 6,
+            "totalMs": 74.157,
+            "maxMs": 37.264
+          },
+          "follower2": {
+            "count": 8,
+            "totalMs": 83.666,
+            "maxMs": 16.386
+          },
+          "source": {
+            "count": 0,
+            "totalMs": 0.0,
+            "maxMs": 0.0
+          }
+        },
+        "episodes": 216,
+        "largestEpisode": {
+          "startMs": 18087.75,
+          "spanMs": 29.901,
+          "orders": 190,
+          "maxLatencyMs": 18.234,
+          "gcPauses": [
+            {
+              "role": "leader",
+              "startMs": 18089.899,
+              "durationMs": 16.594
+            }
+          ]
+        }
+      },
+      "ab-b2": {
+        "thresholdUs": 476.893,
+        "slowOrders": 1761,
+        "slowOrderShare": {
+          "leaderOrSource": 0.2198,
+          "followerOnly": 0.0341,
+          "none": 0.7462
+        },
+        "slowOrderGcOverlap": {
+          "leader": 0.2198,
+          "follower1": 0.0761,
+          "follower2": 0.088,
+          "source": 0.0
+        },
+        "gcPauses": {
+          "leader": {
+            "count": 7,
+            "totalMs": 53.478,
+            "maxMs": 12.723
+          },
+          "follower1": {
+            "count": 7,
+            "totalMs": 67.482,
+            "maxMs": 14.083
+          },
+          "follower2": {
+            "count": 8,
+            "totalMs": 91.355,
+            "maxMs": 16.836
+          },
+          "source": {
+            "count": 0,
+            "totalMs": 0.0,
+            "maxMs": 0.0
+          }
+        },
+        "episodes": 180,
+        "largestEpisode": {
+          "startMs": 14164.625,
+          "spanMs": 15.357,
+          "orders": 120,
+          "maxLatencyMs": 12.964,
+          "gcPauses": [
+            {
+              "role": "leader",
+              "startMs": 14165.432,
+              "durationMs": 12.723
+            }
+          ]
+        }
+      }
+    }
+  },
+  "ladderConfig": "c2spinsrc3gwpin",
+  "sync0Ladder": [
+    {
+      "case": "r1000",
+      "rate": 1000,
+      "seconds": 60,
+      "sync": 0,
+      "latency": {
+        "p50Us": 38.544,
+        "p99Us": 2260.172,
+        "p999Us": 5066.11,
+        "maxUs": 13067.314
+      },
+      "offerToReply": {
+        "p50Us": 36.486,
+        "p99Us": 200.103,
+        "p999Us": 4406.173,
+        "maxUs": 11272.277
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 60000
+      },
+      "inWindowGoodput": 1000.0
+    },
+    {
+      "case": "r2000",
+      "rate": 2000,
+      "seconds": 60,
+      "sync": 0,
+      "latency": {
+        "p50Us": 33.811,
+        "p99Us": 500.909,
+        "p999Us": 3075.609,
+        "maxUs": 14637.484
+      },
+      "offerToReply": {
+        "p50Us": 32.649,
+        "p99Us": 61.203,
+        "p999Us": 2777.974,
+        "maxUs": 14636.42
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 120000
+      },
+      "inWindowGoodput": 2000.0
+    },
+    {
+      "case": "r5000",
+      "rate": 5000,
+      "seconds": 36,
+      "sync": 0,
+      "latency": {
+        "p50Us": 34.834,
+        "p99Us": 511.08,
+        "p999Us": 6724.342,
+        "maxUs": 15567.835
+      },
+      "offerToReply": {
+        "p50Us": 32.88,
+        "p99Us": 68.805,
+        "p999Us": 6722.569,
+        "maxUs": 15565.994
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 180000
+      },
+      "inWindowGoodput": 5000.0
+    },
+    {
+      "case": "r8000",
+      "rate": 8000,
+      "seconds": 22,
+      "sync": 0,
+      "latency": {
+        "p50Us": 37.645,
+        "p99Us": 927.533,
+        "p999Us": 12036.026,
+        "maxUs": 26348.095
+      },
+      "offerToReply": {
+        "p50Us": 33.981,
+        "p99Us": 113.362,
+        "p999Us": 12030.331,
+        "maxUs": 26344.796
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 176000
+      },
+      "inWindowGoodput": 8000.0
+    },
+    {
+      "case": "r12000",
+      "rate": 12000,
+      "seconds": 15,
+      "sync": 0,
+      "latency": {
+        "p50Us": 36.58,
+        "p99Us": 6083.721,
+        "p999Us": 12052.046,
+        "maxUs": 16888.412
+      },
+      "offerToReply": {
+        "p50Us": 34.623,
+        "p99Us": 5842.003,
+        "p999Us": 12049.93,
+        "maxUs": 16886.608
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 180000
+      },
+      "inWindowGoodput": 12000.0
+    },
+    {
+      "case": "r20000",
+      "rate": 20000,
+      "seconds": 9,
+      "sync": 0,
+      "registeredGatePass": false,
+      "error": "854775807,maxYields=0,minParkPeriodNs=1,maxParkPeriodNs=1}\\nVECTOR_PROBE_PROGRESS elapsedNs=59 pending=0 queued=2\\n', 'stderr.log': 'Exception in thread \"main\" java.lang.IllegalStateException: pipelined warm-up order 1223 NOT_SENT\\n\\tat io.vectormatch.cluster.ReplicatedPathProbe.run(ReplicatedPathProbe.java:71)\\n\\tat io.vectormatch.cluster.ReplicatedPathProbe.main(ReplicatedPathProbe.java:27)\\n'})",
+      "traceback": "Probe.class\"\\n        ],\\n        \"added\": [],\\n        \"sources\": {\\n          \"ClusterNodeMain.java\": \"646bae591f202078ad3b1ad3158a31cf6ccc8a809b1aa8cf980010e8ca1ea39e\",\\n          \"ClusterClient.java\": \"8df885db21684da28cc0db3c772126820a6438927df33fdad639a0ef3896a42a\",\\n          \"ReplicatedPathProbe.java\": \"ac7422bc3f5c74496469e596c96234d684025b30bd917a1bd8fe8e568d32fe2f\"\\n        }\\n      },\\n      {\\n        \"note\": \"probe pipelined warm-up (vectormatch.probe.warmupOrders, default 0)\",\\n        \"replaced\": [\\n          \"io/vectormatch/cluster/ReplicatedPathProbe.class\"\\n        ],\\n        \"added\": [\\n          \"io/vectormatch/cluster/ReplicatedPathProbe$Pipeline.class\"\\n        ],\\n        \"sources\": {\\n          \"ReplicatedPathProbe.java\": \"3b6fc5c02c8527d241b37d433b86b6f54148241a5fd0fab2ffdc165f43020616\"\\n        }\\n      },\\n      {\\n        \"note\": \"audit derives expected sequences from window.json preWindowCommands (default 259)\",\\n        \"replacedFiles\": [\\n          \"audit-replicated-path-probe.py\"\\n        ],\\n        \"sources\": {\\n          \"audit-replicated-path-probe.py\": \"cc7c69d16ddcdac0ce39d43db9cf24803b24127ac00dfc41badf0ee8da1c4847\"\\n        }\\n      }\\n    ],\\n    \"adaptedForHost\": {\\n      \"file\": \"audit-recording-initialization.py\",\\n      \"change\": \"f[\\'device\\']==48 -> same device as experiment root\"\\n    }\\n  }\\n}', 'EXIT.json': '{\\n  \"returncode\": 1,\\n  \"reason\": \"natural-exit\",\\n  \"completedUTC\": \"2026-10-28T23:29:26Z\"\\n}', 'stdout.log': 'VECTOR_CLIENT_DRIVER_IDLE maxParkNs=0 configuration=BackoffIdleStrategy{alias=backoff,maxSpins=9223372036854775807,maxYields=0,minParkPeriodNs=1,maxParkPeriodNs=1}\\nVECTOR_PROBE_PROGRESS elapsedNs=59 pending=0 queued=2\\n', 'stderr.log': 'Exception in thread \"main\" java.lang.IllegalStateException: pipelined warm-up order 1223 NOT_SENT\\n\\tat io.vectormatch.cluster.ReplicatedPathProbe.run(ReplicatedPathProbe.java:71)\\n\\tat io.vectormatch.cluster.ReplicatedPathProbe.main(ReplicatedPathProbe.java:27)\\n'}\n",
+      "samplesError": "FileNotFoundError(2, 'No such file or directory')"
+    },
+    {
+      "case": "r20000-repeat",
+      "rate": 20000,
+      "seconds": 9,
+      "sync": 0,
+      "registeredGatePass": false,
+      "error": "6854775807,maxYields=0,minParkPeriodNs=1,maxParkPeriodNs=1}\\nVECTOR_PROBE_PROGRESS elapsedNs=49 pending=0 queued=1\\n', 'stderr.log': 'Exception in thread \"main\" java.lang.IllegalStateException: pipelined warm-up order 403 NOT_SENT\\n\\tat io.vectormatch.cluster.ReplicatedPathProbe.run(ReplicatedPathProbe.java:71)\\n\\tat io.vectormatch.cluster.ReplicatedPathProbe.main(ReplicatedPathProbe.java:27)\\n'})",
+      "traceback": "hProbe.class\"\\n        ],\\n        \"added\": [],\\n        \"sources\": {\\n          \"ClusterNodeMain.java\": \"646bae591f202078ad3b1ad3158a31cf6ccc8a809b1aa8cf980010e8ca1ea39e\",\\n          \"ClusterClient.java\": \"8df885db21684da28cc0db3c772126820a6438927df33fdad639a0ef3896a42a\",\\n          \"ReplicatedPathProbe.java\": \"ac7422bc3f5c74496469e596c96234d684025b30bd917a1bd8fe8e568d32fe2f\"\\n        }\\n      },\\n      {\\n        \"note\": \"probe pipelined warm-up (vectormatch.probe.warmupOrders, default 0)\",\\n        \"replaced\": [\\n          \"io/vectormatch/cluster/ReplicatedPathProbe.class\"\\n        ],\\n        \"added\": [\\n          \"io/vectormatch/cluster/ReplicatedPathProbe$Pipeline.class\"\\n        ],\\n        \"sources\": {\\n          \"ReplicatedPathProbe.java\": \"3b6fc5c02c8527d241b37d433b86b6f54148241a5fd0fab2ffdc165f43020616\"\\n        }\\n      },\\n      {\\n        \"note\": \"audit derives expected sequences from window.json preWindowCommands (default 259)\",\\n        \"replacedFiles\": [\\n          \"audit-replicated-path-probe.py\"\\n        ],\\n        \"sources\": {\\n          \"audit-replicated-path-probe.py\": \"cc7c69d16ddcdac0ce39d43db9cf24803b24127ac00dfc41badf0ee8da1c4847\"\\n        }\\n      }\\n    ],\\n    \"adaptedForHost\": {\\n      \"file\": \"audit-recording-initialization.py\",\\n      \"change\": \"f[\\'device\\']==48 -> same device as experiment root\"\\n    }\\n  }\\n}', 'EXIT.json': '{\\n  \"returncode\": 1,\\n  \"reason\": \"natural-exit\",\\n  \"completedUTC\": \"2026-10-28T23:30:05Z\"\\n}', 'stdout.log': 'VECTOR_CLIENT_DRIVER_IDLE maxParkNs=0 configuration=BackoffIdleStrategy{alias=backoff,maxSpins=9223372036854775807,maxYields=0,minParkPeriodNs=1,maxParkPeriodNs=1}\\nVECTOR_PROBE_PROGRESS elapsedNs=49 pending=0 queued=1\\n', 'stderr.log': 'Exception in thread \"main\" java.lang.IllegalStateException: pipelined warm-up order 403 NOT_SENT\\n\\tat io.vectormatch.cluster.ReplicatedPathProbe.run(ReplicatedPathProbe.java:71)\\n\\tat io.vectormatch.cluster.ReplicatedPathProbe.main(ReplicatedPathProbe.java:27)\\n'}\n",
+      "samplesError": "FileNotFoundError(2, 'No such file or directory')"
+    }
+  ],
+  "sync0LadderRoot": "/opt/vectormatch-b/experiments/sync0-ladder-20261028-231100",
+  "durableLadder": [
+    {
+      "case": "r1000",
+      "rate": 1000,
+      "seconds": 60,
+      "sync": 2,
+      "latency": {
+        "p50Us": 70.753,
+        "p99Us": 1570.943,
+        "p999Us": 7062.028,
+        "maxUs": 18465.511
+      },
+      "offerToReply": {
+        "p50Us": 68.704,
+        "p99Us": 193.063,
+        "p999Us": 7051.277,
+        "maxUs": 18463.94
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 60000
+      },
+      "inWindowGoodput": 1000.0
+    },
+    {
+      "case": "r2000",
+      "rate": 2000,
+      "seconds": 60,
+      "sync": 2,
+      "registeredGatePass": false,
+      "error": ").audit_wait(a.root)\\n  File \"/opt/vectormatch-b/experiments/durable-ladder-20261028-231100/audit-replicated-stage-trace.py\", line 58, in audit_stages\\n    assert row[\\'outcome\\']==\\'ACCEPTED\\',\\'Stage attribution requires every original outcome; base audit preserves any failed stream.\\'\\nAssertionError: Stage attribution requires every original outcome; base audit preserves any failed stream.\\n')",
+      "traceback": "Traceback (most recent call last):\n  File \"/opt/vectormatch-b/experiments/durable-ladder-20261028-231100/ladder.py\", line 28, in rung\n    audit = c.close(name)\n  File \"/opt/vectormatch-b/experiments/durable-ladder-20261028-231100/campaign.py\", line 285, in close\n    assert q.returncode == 0, q.stderr\nAssertionError: Traceback (most recent call last):\n  File \"/opt/vectormatch-b/experiments/durable-ladder-20261028-231100/audit-recording-initialization.py\", line 37, in <module>\n    v=load('base','audit-replicated-path-probe.py').audit(a.root,a.jfr);v['initialization']=initialization(a.root);v['stages']=load('stages','audit-replicated-stage-trace.py').audit_stages(a.root);v['forceWait']=load('force','audit-force-wait.py').audit_wait(a.root)\n  File \"/opt/vectormatch-b/experiments/durable-ladder-20261028-231100/audit-replicated-stage-trace.py\", line 58, in audit_stages\n    assert row['outcome']=='ACCEPTED','Stage attribution requires every original outcome; base audit preserves any failed stream.'\nAssertionError: Stage attribution requires every original outcome; base audit preserves any failed stream.\n\n",
+      "counts": {
+        "ACCEPTED": 119845,
+        "NOT_SENT": 155
+      },
+      "latencyFromSamples": {
+        "p50Us": 69.015,
+        "p99Us": 1351.578,
+        "p999Us": 147020.677,
+        "maxUs": 205982.29
+      }
+    },
+    {
+      "case": "r2000-repeat",
+      "rate": 2000,
+      "seconds": 60,
+      "sync": 2,
+      "latency": {
+        "p50Us": 69.31,
+        "p99Us": 2633.918,
+        "p999Us": 3807.428,
+        "maxUs": 12503.354
+      },
+      "offerToReply": {
+        "p50Us": 67.031,
+        "p99Us": 117.508,
+        "p999Us": 3432.737,
+        "maxUs": 11005.053
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 120000
+      },
+      "inWindowGoodput": 2000.0
+    }
+  ],
+  "durableLadderRoot": "/opt/vectormatch-b/experiments/durable-ladder-20261028-231100"
+}

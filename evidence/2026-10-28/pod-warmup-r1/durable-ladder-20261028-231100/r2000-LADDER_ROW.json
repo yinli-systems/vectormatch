@@ -1,0 +1,19 @@
+{
+  "case": "r2000",
+  "rate": 2000,
+  "seconds": 60,
+  "sync": 2,
+  "registeredGatePass": false,
+  "error": ").audit_wait(a.root)\\n  File \"/opt/vectormatch-b/experiments/durable-ladder-20261028-231100/audit-replicated-stage-trace.py\", line 58, in audit_stages\\n    assert row[\\'outcome\\']==\\'ACCEPTED\\',\\'Stage attribution requires every original outcome; base audit preserves any failed stream.\\'\\nAssertionError: Stage attribution requires every original outcome; base audit preserves any failed stream.\\n')",
+  "traceback": "Traceback (most recent call last):\n  File \"/opt/vectormatch-b/experiments/durable-ladder-20261028-231100/ladder.py\", line 28, in rung\n    audit = c.close(name)\n  File \"/opt/vectormatch-b/experiments/durable-ladder-20261028-231100/campaign.py\", line 285, in close\n    assert q.returncode == 0, q.stderr\nAssertionError: Traceback (most recent call last):\n  File \"/opt/vectormatch-b/experiments/durable-ladder-20261028-231100/audit-recording-initialization.py\", line 37, in <module>\n    v=load('base','audit-replicated-path-probe.py').audit(a.root,a.jfr);v['initialization']=initialization(a.root);v['stages']=load('stages','audit-replicated-stage-trace.py').audit_stages(a.root);v['forceWait']=load('force','audit-force-wait.py').audit_wait(a.root)\n  File \"/opt/vectormatch-b/experiments/durable-ladder-20261028-231100/audit-replicated-stage-trace.py\", line 58, in audit_stages\n    assert row['outcome']=='ACCEPTED','Stage attribution requires every original outcome; base audit preserves any failed stream.'\nAssertionError: Stage attribution requires every original outcome; base audit preserves any failed stream.\n\n",
+  "counts": {
+    "ACCEPTED": 119845,
+    "NOT_SENT": 155
+  },
+  "latencyFromSamples": {
+    "p50Us": 69.015,
+    "p99Us": 1351.578,
+    "p999Us": 147020.677,
+    "maxUs": 205982.29
+  }
+}

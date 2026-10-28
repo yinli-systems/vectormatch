@@ -1,0 +1,91 @@
+{
+  "rungs": [
+    {
+      "case": "r1000",
+      "rate": 1000,
+      "seconds": 60,
+      "sync": 2,
+      "latency": {
+        "p50Us": 70.753,
+        "p99Us": 1570.943,
+        "p999Us": 7062.028,
+        "maxUs": 18465.511
+      },
+      "offerToReply": {
+        "p50Us": 68.704,
+        "p99Us": 193.063,
+        "p999Us": 7051.277,
+        "maxUs": 18463.94
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 60000
+      },
+      "inWindowGoodput": 1000.0
+    },
+    {
+      "case": "r2000",
+      "rate": 2000,
+      "seconds": 60,
+      "sync": 2,
+      "registeredGatePass": false,
+      "error": ").audit_wait(a.root)\\n  File \"/opt/vectormatch-b/experiments/durable-ladder-20261028-231100/audit-replicated-stage-trace.py\", line 58, in audit_stages\\n    assert row[\\'outcome\\']==\\'ACCEPTED\\',\\'Stage attribution requires every original outcome; base audit preserves any failed stream.\\'\\nAssertionError: Stage attribution requires every original outcome; base audit preserves any failed stream.\\n')",
+      "traceback": "Traceback (most recent call last):\n  File \"/opt/vectormatch-b/experiments/durable-ladder-20261028-231100/ladder.py\", line 28, in rung\n    audit = c.close(name)\n  File \"/opt/vectormatch-b/experiments/durable-ladder-20261028-231100/campaign.py\", line 285, in close\n    assert q.returncode == 0, q.stderr\nAssertionError: Traceback (most recent call last):\n  File \"/opt/vectormatch-b/experiments/durable-ladder-20261028-231100/audit-recording-initialization.py\", line 37, in <module>\n    v=load('base','audit-replicated-path-probe.py').audit(a.root,a.jfr);v['initialization']=initialization(a.root);v['stages']=load('stages','audit-replicated-stage-trace.py').audit_stages(a.root);v['forceWait']=load('force','audit-force-wait.py').audit_wait(a.root)\n  File \"/opt/vectormatch-b/experiments/durable-ladder-20261028-231100/audit-replicated-stage-trace.py\", line 58, in audit_stages\n    assert row['outcome']=='ACCEPTED','Stage attribution requires every original outcome; base audit preserves any failed stream.'\nAssertionError: Stage attribution requires every original outcome; base audit preserves any failed stream.\n\n",
+      "counts": {
+        "ACCEPTED": 119845,
+        "NOT_SENT": 155
+      },
+      "latencyFromSamples": {
+        "p50Us": 69.015,
+        "p99Us": 1351.578,
+        "p999Us": 147020.677,
+        "maxUs": 205982.29
+      }
+    },
+    {
+      "case": "r2000-repeat",
+      "rate": 2000,
+      "seconds": 60,
+      "sync": 2,
+      "latency": {
+        "p50Us": 69.31,
+        "p99Us": 2633.918,
+        "p999Us": 3807.428,
+        "maxUs": 12503.354
+      },
+      "offerToReply": {
+        "p50Us": 67.031,
+        "p99Us": 117.508,
+        "p999Us": 3432.737,
+        "maxUs": 11005.053
+      },
+      "gates": {
+        "allAccepted": true,
+        "noUnknown": true,
+        "sourceTimingValid": true,
+        "leaderFixed": true,
+        "inWindow99Percent": true,
+        "p99AtMost25ms": true,
+        "p999AtMost100ms": true,
+        "everyMinuteP99AtMost25ms": true
+      },
+      "registeredGatePass": true,
+      "counts": {
+        "ACCEPTED": 120000
+      },
+      "inWindowGoodput": 2000.0
+    }
+  ],
+  "highestPassingRate": 1000,
+  "rule": "first failing rung stops escalation and is repeated once; knee = highest rate whose rung passed all registered gates"
+}
