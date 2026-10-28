@@ -10,7 +10,7 @@ import glob, json, os, signal, subprocess, sys, time, traceback
 STAGE = Path(sys.argv[1])
 SWEEP_ARG = sys.argv[2] if len(sys.argv) > 2 else 'run'
 EXPERIMENTS = Path('/opt/vectormatch-b/experiments')
-RUNTIME = '/opt/vectormatch-b/runtime-r5'
+RUNTIME = '/opt/vectormatch-b/runtime-r6'
 STAMP = time.strftime('%Y%m%d-%H%M%S', time.gmtime())
 HOME = EXPERIMENTS / ('autopilot-' + STAMP)
 LOG = HOME / 'AUTOPILOT.log'
@@ -55,6 +55,11 @@ CONFIGS['c2spinsrc3pin'] = dict(CONFIGS['c2spinsrc3'],
 QUIET_SAFEPOINTS = SPIN_HYGIENE + ['-XX:GuaranteedSafepointInterval=0']
 CONFIGS['c2spinsrc3g'] = dict(CONFIGS['c2spinsrc3'], jvmExtra=QUIET_SAFEPOINTS)
 CONFIGS['c2spinsrc3gpin'] = dict(CONFIGS['c2spinsrc3pin'], jvmExtra=QUIET_SAFEPOINTS)
+# Pipelined warm-up in both arms: with nodes pinned, the whole p99.9 tail of the v7 pinned pair 2 was one stall
+# 0.24 s into the window (first use of the pipelined path at full rate). Two seconds at the window rate run
+# through the same pipeline first.
+CONFIGS['c2spinsrc3gw'] = dict(CONFIGS['c2spinsrc3g'], warmupSeconds=2)
+CONFIGS['c2spinsrc3gwpin'] = dict(CONFIGS['c2spinsrc3gpin'], warmupSeconds=2)
 # The configuration sweep stays fixed so results remain comparable across runs.
 SWEEP_CONFIGS = ('c1p100', 'c2p100', 'c2p1', 'c2spin')
 BASELINE = 'c1p100'
@@ -67,7 +72,7 @@ DURABLE_RATES = [1000, 2000, 3000, 5000, 8000, 12000]
 SELECTION = ("First six originals in order. Every A/B source/completion/correctness gate and exact joins must pass, states "
              "must agree. Both B latency gates must pass: p99<=25ms,p999<=100ms,every-minute-p99<=25ms. EACH pair B/A "
              "p99<=0.90,p999<=1.00. Only then run confirm-b1 (a third 22s B window at 8000/s). No default promotion.")
-COMMON_SCOPE = ("pod " + os.environ.get('RUNPOD_POD_ID', 'unknown') + " cpu layout " + json.dumps(LAYOUT) + "; runtime-r5 (busy-spin option for node data path and client driver); "
+COMMON_SCOPE = ("pod " + os.environ.get('RUNPOD_POD_ID', 'unknown') + " cpu layout " + json.dumps(LAYOUT) + "; runtime-r6 (busy-spin option; probe pipelined warm-up, audit reads preWindowCommands); "
                 "three replicas and source on one host over loopback (no physical failure domain); 180,000-original probe bound")
 VENDOR = [dict(source='AWS 2025 (Adaptive): Aeron Cluster Premium round trip', us=98,
                url='https://aws.amazon.com/blogs/industries/aeron-on-aws-2025-performance-benchmark-results/'),
@@ -125,10 +130,17 @@ def running(fragment):
     return False
 
 
+WARMUP_CAP = 16_000  # probe orders (maker, warm-ups, window) must stay within 200,000 retained orders
+
+
 def case(base, config, rate, seconds):
     d = dict(base)
     d.update(CONFIGS[config])
     d.update(rate=rate, seconds=seconds)
+    if d.get('warmupSeconds'):
+        # Same pipeline and rate as the window, just before it; its orders join the reference replay.
+        orders = min(WARMUP_CAP, rate * d['warmupSeconds'])
+        d['sourceJvmExtra'] = list(d.get('sourceJvmExtra', [])) + ['-Dvectormatch.probe.warmupOrders=%d' % orders]
     return d
 
 

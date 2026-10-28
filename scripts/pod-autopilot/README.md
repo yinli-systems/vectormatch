@@ -33,6 +33,7 @@ refuses the stream (for example orders the source could not send) are still reco
 | `sweep.py`, `ladder.py` | Sweep and ladder runners on top of `campaign.py` |
 | `setup_b.py` | Creates a campaign root from a verified runtime (`VM_RUNTIME`, `VM_CPUSETS`) |
 | `patch_runtime.py` | Derives a runtime whose cluster jar differs only by classes compiled from given sources |
+| `replace_runtime_files.py` | Derives a runtime whose listed files (e.g. an audit script) are replaced and every other file is unchanged |
 | `pin_threads.py` | Thread-level CPU isolation while a case runs (cases with `pinThreads`); tested by `scripts/tests/test_pod_thread_pinning.py` |
 | `tail_attribution.py` | Places every JVM's GC pauses on the window timeline and attributes the orders at or above p99 to GC or not; tested by `scripts/tests/test_pod_tail_attribution.py` |
 | `queue.sh` | Starts an autopilot run once the running one (and its JVMs) has exited |
@@ -70,6 +71,13 @@ in its `stdout.log`), and, for the load generator only (`sourceJvmExtra`), a fix
 own young collections (up to 24 ms) delayed arrivals and counted against the cluster. Node JVMs are unchanged,
 so their GC still counts.
 
+Configurations with `warmupSeconds` (`c2spinsrc3gw`, `c2spinsrc3gwpin`) make the probe send that many seconds
+of orders, capped at 16,000, through the same pipeline at the window rate just before the measured window
+(`-Dvectormatch.probe.warmupOrders`). With nodes pinned, the whole p99.9 tail of one pinned run was a single
+57 ms stall 0.24 s into the window. The warm-up orders are accepted, replayed by the reference engine and
+recorded in `window.json` (`warmupOrders`, `preWindowCommands`), from which the audit derives the expected
+sequence numbers; without them it assumes the original 259 pre-window commands.
+
 After an ABAB the autopilot runs `tail_attribution.py` on each 8000/s case, writes
 `<case>-TAIL_ATTRIBUTION.json` and adds a table to `SUMMARY.md`: the p99 threshold, how many slow orders
 overlapped a leader or source GC pause, a follower-only pause or none, and the largest stall episode.
@@ -84,7 +92,9 @@ Agrona 2.6.1 from Maven Central, run on Temurin 21.0.13+9. On the pod:
 3. `patch_runtime.py runtime runtime-r3 ... PendingReplies.java MatchingClusteredService.java`, then
    `patch_runtime.py runtime-r3 runtime-r4 ... ReplicatedPathProbeNode.java`, then
    `patch_runtime.py runtime-r4 runtime-r5 ... ClusterNodeMain.java ClusterClient.java ReplicatedPathProbe.java`
-   (sources from this branch; the autopilot runs `runtime-r5`).
+   (sources from this branch), then `patch_runtime.py runtime-r5 runtime-r6tmp ... ReplicatedPathProbe.java` and
+   `replace_runtime_files.py runtime-r6tmp runtime-r6 ... audit-replicated-path-probe.py=scripts/audit-replicated-path-probe.py`
+   (the autopilot runs `runtime-r6`).
 4. Map the pod's cpuset to complete physical cores (both hyperthreads), preferring same-L3 pairs per node, then:
 
 ```bash

@@ -20,6 +20,10 @@ class Frame:
   n=self.read('i');assert 0<=n<=1024;v=self.b[self.p:self.p+n].decode();self.p+=n;return v
  def header(self,kind):assert self.read('i')==0x564d5731 and self.read('h')==2;v=self.read('q');assert self.read('B')==kind;return v
  def end(self):assert self.p==len(self.b)
+def expected_matching_reply(pre,sent):
+ """Reply fields of the sent-th accepted window order after pre commands (3 seeds, 256 synchronous warm-ups,
+ then any pipelined warm-ups): one IOC fill per order, two events and two market updates each."""
+ return (pre+sent,pre-2+sent,0,1,False,pre+sent,2*pre-3+2*sent,2*pre-5+2*sent)
 def audit(root,jfr):
  root=Path(root);manifest=json.loads((root/'MEMBER_MANIFEST.json').read_text())['files']
  for name,v in manifest.items():
@@ -40,7 +44,7 @@ def audit(root,jfr):
    assert r['offered_offset_ns'] and r['reply_base64'];confirm=int(r['confirmed_offset_ns']);assert confirm>=offer
    reply=Frame(r['reply_base64']);assert reply.header(1)==corr and reply.read('?') and reply.read('B')==0 and reply.string()=='accepted'
    cmd,order,remaining,trades=reply.read('qqqi');replayed=reply.read('?');seq,events,market=reply.read('qqq');assert reply.string()==reply.string()=='';reply.end()
-   if w['mode']=='MATCHING':assert (cmd,order,remaining,trades,replayed,seq,events,market)==(259+sent,257+sent,0,1,False,259+sent,515+2*sent,513+2*sent)
+   if w['mode']=='MATCHING':assert (cmd,order,remaining,trades,replayed,seq,events,market)==expected_matching_reply(w.get('preWindowCommands',259),sent)
    else:assert (cmd,order,remaining,trades,replayed,seq,events,market)==(0,0,0,0,False,0,0,0)
    lat.append(confirm-planned);rtt.append(confirm-offer);accepted.append((planned,confirm));within+=confirm<w['seconds']*10**9
   elif status=='NOT_SENT':assert not r['offered_offset_ns'] and not r['reply_base64']

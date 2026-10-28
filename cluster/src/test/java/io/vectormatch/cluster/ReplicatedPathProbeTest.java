@@ -59,6 +59,18 @@ class ReplicatedPathProbeTest {
         assertThrows(IllegalArgumentException.class, () -> ReplicatedPathProbe.run(new String[]{out.toString(),"26000","1000","1800","MATCHING"}));
         assertFalse(Files.exists(out));
     }
+    @Test void pipelinedWarmupBeyondRetainedOrderCapacityIsRejectedBeforeDirectoryCreation() {
+        Path out = temp.resolve("warm");
+        System.setProperty(ReplicatedPathProbe.WARMUP_ORDERS_PROPERTY, "20000");
+        try {
+            // 1 maker + 256 synchronous warm-ups + 20,000 pipelined warm-ups + 180,000 window orders > 200,000.
+            assertThrows(IllegalArgumentException.class, () -> ReplicatedPathProbe.run(new String[]{out.toString(),"26000","20000","9","MATCHING"}));
+            assertFalse(Files.exists(out));
+        } finally {
+            System.clearProperty(ReplicatedPathProbe.WARMUP_ORDERS_PROPERTY);
+        }
+    }
+
     static final class Capture implements ClientSession {
         byte[] bytes;
         @Override public long id() { return 1; }
