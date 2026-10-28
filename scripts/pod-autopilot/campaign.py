@@ -173,7 +173,8 @@ def capture_initialization(case):
 def start_governor(case, spec):
     """Thread-level isolation: one CPU per data-path agent, other JVM threads on housekeeping CPUs."""
     settings = dict(cpuSets=spec['cpuSets'], housekeeping=spec['pinThreads']['housekeeping'],
-                    expectedAgents=spec['pinThreads'].get('expectedAgents', {'node': 4, 'source': 3}))
+                    expectedAgents=spec['pinThreads'].get('expectedAgents', {'node': 4, 'source': 3}),
+                    compilerNice=spec['pinThreads'].get('compilerNice'))
     governor = subprocess.Popen(['python3', str(Path(__file__).with_name('pin_threads.py')),
                                  str(P / 'experiments' / case), json.dumps(settings)])
     time.sleep(1)

@@ -50,10 +50,12 @@ out in thread-creation order; the launcher's primordial thread is never an agent
 is confined to housekeeping and reported. Every decision goes to `thread-pinning.jsonl` in the case
 directory, and a summary goes to `<case>-THREAD_PINNING.json`.
 
-Two exceptions keep stop-the-world pauses short. GC workers and the VM Thread may use the JVM's whole set,
-because they work while every Java thread is stopped. JIT compiler threads stay on housekeeping at nice 19, so
-housekeeping Java threads (JFR, Aeron client conductors) reach safepoints promptly. Without these, the first
-pinned runs saw time-to-safepoint of 28–39 ms and 70 ms young-GC copying. Pinned configurations also run with
+GC workers and the VM Thread may use the JVM's whole set, because they work while every Java thread is
+stopped; confined to housekeeping, the first pinned runs saw time-to-safepoint of 28–39 ms and 70 ms young-GC
+copying. JIT compiler threads stay on housekeeping at normal priority. Renicing them (`compilerNice`, used by
+`c2spinpin`, `c2spinstpin` and `c2spinsrcpin` to reproduce earlier runs) is harmful: `-XX:+SafepointTimeout`
+named a niced C2 compiler thread as the one holding safepoints for up to 156 ms, because a compiler inside
+the VM must acknowledge each safepoint. `c2spinsrcpin5` leaves compiler priority alone. Pinned configurations also run with
 `-XX:-UseDynamicNumberOfGCThreads` (in both ABAB arms), so every GC worker exists, and is pinned, before
 measurement.
 

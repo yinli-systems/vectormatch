@@ -25,13 +25,13 @@ CONFIGS = {'c1p100': dict(cpuSets=ONE, maxParkNs=100000),
            'c2spin': dict(cpuSets=SPIN, maxParkNs=0, jvmExtra=['-Dvectormatch.client.driverMaxParkNs=0']),
            # Busy spin plus thread-level isolation: each data-path agent on its own CPU, other threads on housekeeping.
            'c2spinpin': dict(cpuSets=SPIN, maxParkNs=0, jvmExtra=['-Dvectormatch.client.driverMaxParkNs=0'],
-                             pinThreads=dict(housekeeping=LAYOUT['spinSource'][-1:])),
+                             pinThreads=dict(housekeeping=LAYOUT['spinSource'][-1:], compilerNice=19)),
            # Static GC worker count: every GC thread exists at startup, so pinning can place it before measurement.
            'c2spinst': dict(cpuSets=SPIN, maxParkNs=0,
                             jvmExtra=['-Dvectormatch.client.driverMaxParkNs=0', '-XX:-UseDynamicNumberOfGCThreads']),
            'c2spinstpin': dict(cpuSets=SPIN, maxParkNs=0,
                                jvmExtra=['-Dvectormatch.client.driverMaxParkNs=0', '-XX:-UseDynamicNumberOfGCThreads'],
-                               pinThreads=dict(housekeeping=LAYOUT['spinSource'][-1:]))}
+                               pinThreads=dict(housekeeping=LAYOUT['spinSource'][-1:], compilerNice=19))}
 # Measurement hygiene for busy spin: static GC workers, JVMs that name threads late to a safepoint (>20 ms),
 # and a load generator whose young generation never fills during a window, so its own GC (it keeps every
 # command and reply for post-window verification) does not count against the cluster.
@@ -39,7 +39,10 @@ SPIN_HYGIENE = ['-Dvectormatch.client.driverMaxParkNs=0', '-XX:-UseDynamicNumber
                 '-XX:+UnlockDiagnosticVMOptions', '-XX:+SafepointTimeout', '-XX:SafepointTimeoutDelay=20']
 QUIET_SOURCE = ['-Xms8g', '-Xmx8g', '-Xmn6g', '-XX:+AlwaysPreTouch']
 CONFIGS['c2spinsrc'] = dict(cpuSets=SPIN, maxParkNs=0, jvmExtra=SPIN_HYGIENE, sourceJvmExtra=QUIET_SOURCE)
-CONFIGS['c2spinsrcpin'] = dict(CONFIGS['c2spinsrc'], pinThreads=dict(housekeeping=LAYOUT['spinSource'][-1:]))
+# compilerNice=19 reproduces the governor-v3/v4 runs; c2spinsrcpin5 leaves compiler priority alone, because a
+# niced compiler thread held safepoints for up to 156 ms.
+CONFIGS['c2spinsrcpin'] = dict(CONFIGS['c2spinsrc'], pinThreads=dict(housekeeping=LAYOUT['spinSource'][-1:], compilerNice=19))
+CONFIGS['c2spinsrcpin5'] = dict(CONFIGS['c2spinsrc'], pinThreads=dict(housekeeping=LAYOUT['spinSource'][-1:]))
 # The configuration sweep stays fixed so results remain comparable across runs.
 SWEEP_CONFIGS = ('c1p100', 'c2p100', 'c2p1', 'c2spin')
 BASELINE = 'c1p100'

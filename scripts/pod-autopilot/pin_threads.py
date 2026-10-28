@@ -4,14 +4,13 @@
 Busy-spinning data-path agents lose milliseconds whenever another thread of the same JVM (JIT compiler,
 JFR stream, Aeron client conductor, VM housekeeping) is scheduled onto their CPU. This governor gives each
 agent a CPU of its own and confines every other thread to the housekeeping CPUs, with two exceptions that
-keep stop-the-world pauses short:
+keep stop-the-world pauses short: GC workers and the VM Thread may use the JVM's whole CPU set. They do
+their work while every Java thread is stopped at a safepoint, when the agents' CPUs are idle anyway;
+starving them on a crowded housekeeping CPU multiplied GC pause times.
 
-* GC workers and the VM Thread may use the JVM's whole CPU set. They do their work while every Java thread
-  is stopped at a safepoint, when the agents' CPUs are idle anyway; starving them on a crowded housekeeping
-  CPU multiplied GC pause times.
-* JIT compiler threads stay on housekeeping but run at nice 19, so housekeeping Java threads (JFR, Aeron
-  client conductors) always get the CPU first. Otherwise a runnable Java thread waiting behind a compile
-  delays every safepoint (time-to-safepoint reached 39 ms without this).
+JIT compiler threads stay on housekeeping at normal priority by default. Lowering it (compilerNice) is
+available but harmful: a compiler thread must acknowledge safepoints whenever it is inside the VM, and at
+nice 19 it waited up to 156 ms for CPU, holding every safepoint of its JVM for that long.
 
 Run the JVMs with -XX:-UseDynamicNumberOfGCThreads so all GC workers exist, and are pinned, before
 measurement: a worker created on demand inherits its creator's housekeeping affinity until the next pass.
@@ -22,6 +21,7 @@ CONFIG_JSON keys:
   housekeeping    CPUs for non-agent threads; never given to an agent
   expectedAgents  optional {"node": n, "source": n}; more agents than expected are reported at once, and a
                   JVM whose peak agent count differs is listed as drift in the summary (thread naming drift)
+  compilerNice    optional nice value for JIT compiler threads; absent or null leaves their priority alone
 
 Agent CPUs are sticky: an agent keeps its CPU for its whole life, and new agents take free CPUs in creation
 (tid) order, so threads that exist when measurement starts win over later ones. An agent that finds no free
@@ -40,7 +40,6 @@ NODE_AGENTS = frozenset({'archive-conduct', 'consensus-modul', 'clustered-servi'
 SOURCE_AGENTS = frozenset({'java', 'probe-absolute-'})
 SOURCE_ROLE = 3
 INTERVAL_SECONDS = 0.5
-COMPILER_NICE = 19
 SYSCALLS = {'cpus': 'sched_setaffinity', 'nice': 'setpriority'}
 
 
@@ -115,8 +114,8 @@ def role_of(cmdline, case_name):
     return None
 
 
-def _renice(tid):
-    os.setpriority(os.PRIO_PROCESS, tid, COMPILER_NICE)
+def _renice(tid, value):
+    os.setpriority(os.PRIO_PROCESS, tid, value)
 
 
 class Governor:
@@ -129,6 +128,7 @@ class Governor:
         self.cpu_sets = [sorted(c) for c in config['cpuSets']]
         self.housekeeping = frozenset(config['housekeeping'])
         self.expected = config.get('expectedAgents', {})
+        self.compiler_nice = config.get('compilerNice')
         if len(self.cpu_sets) != 4 or not self.housekeeping:
             raise PinningError('four CPU sets and at least one housekeeping CPU are required')
         self.proc, self.set_affinity, self.set_nice, self.log = Path(proc), set_affinity, set_nice, log
@@ -225,10 +225,11 @@ class Governor:
                         pid, role, tid, names[tid], 'cpus', lambda: self.set_affinity(tid, cpus), sorted(cpus)):
                     self.applied[key] = cpus
                     changes += 1
-            for tid in sorted(compilers(role, pid, threads)):
+            for tid in sorted(compilers(role, pid, threads)) if self.compiler_nice is not None else ():
                 key = (pid, tid, names[tid])
                 if key not in self.niced and self._apply(
-                        pid, role, tid, names[tid], 'nice', lambda: self.set_nice(tid), COMPILER_NICE):
+                        pid, role, tid, names[tid], 'nice', lambda: self.set_nice(tid, self.compiler_nice),
+                        self.compiler_nice):
                     self.niced.add(key)
                     self.counts['nicedCompilers'] += 1
         # Forget exited threads and processes so a reused TID is handled again from scratch.

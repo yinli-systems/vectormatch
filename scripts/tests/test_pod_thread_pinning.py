@@ -56,12 +56,14 @@ class FakeProc:
 class Nice:
     def __init__(self):
         self.calls = []
+        self.values = set()
         self.fail = {}
 
-    def __call__(self, tid):
+    def __call__(self, tid, value):
         if tid in self.fail:
             raise self.fail[tid]
         self.calls.append(tid)
+        self.values.add(value)
 
 
 class Affinity:
@@ -181,20 +183,29 @@ class GovernorTest(unittest.TestCase):
         self.assertEqual(0, g.step())
         self.assertEqual(2, g.counts["passes"])
 
-    def test_vm_thread_uses_the_jvm_set_and_compilers_are_reniced_once(self):
-        self.proc.process(500, SOURCE_CMD, source_threads() + [(510, "VM Thread"), (522, "C1 CompilerThre")])
+    def test_compilers_keep_their_priority_by_default(self):
+        self.proc.process(500, SOURCE_CMD, source_threads())
         g = self.governor()
+        g.step()
+        self.assertEqual([], self.nice.calls)
+        self.assertEqual(HOUSEKEEPING, self.affinity.current[520])
+        self.assertEqual(0, g.counts["nicedCompilers"])
+
+    def test_vm_thread_uses_the_jvm_set_and_compilers_are_reniced_once_when_asked(self):
+        self.proc.process(500, SOURCE_CMD, source_threads() + [(510, "VM Thread"), (522, "C1 CompilerThre")])
+        g = self.governor(dict(CONFIG, compilerNice=19))
         g.step()
         g.step()
         self.assertEqual(sorted(SOURCE_CPUS), self.affinity.current[510])
         self.assertEqual(HOUSEKEEPING, self.affinity.current[520])
         self.assertEqual([520, 522], self.nice.calls)
+        self.assertEqual({19}, self.nice.values)
         self.assertEqual(2, g.counts["nicedCompilers"])
 
     def test_renice_failure_is_reported_once_and_retried(self):
         self.proc.process(500, SOURCE_CMD, source_threads())
         self.nice.fail = {520: PermissionError("denied")}
-        g = self.governor()
+        g = self.governor(dict(CONFIG, compilerNice=19))
         g.step()
         g.step()
         errors = [e["error"] for e in self.events() if "error" in e]
