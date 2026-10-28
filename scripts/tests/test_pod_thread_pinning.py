@@ -2,6 +2,7 @@ import importlib.util
 import io
 import json
 from pathlib import Path
+import shutil
 import signal
 import subprocess
 import sys
@@ -48,6 +49,20 @@ class FakeProc:
         (t / "comm").unlink()
         t.rmdir()
 
+    def exit_process(self, pid):
+        shutil.rmtree(self.root / str(pid))
+
+
+class Nice:
+    def __init__(self):
+        self.calls = []
+        self.fail = {}
+
+    def __call__(self, tid):
+        if tid in self.fail:
+            raise self.fail[tid]
+        self.calls.append(tid)
+
 
 class Affinity:
     def __init__(self):
@@ -80,9 +95,12 @@ class ClassifyTest(unittest.TestCase):
         self.assertEqual("agent", pin.classify(3, 1, 2, "probe-absolute-"))
         self.assertEqual("other", pin.classify(3, 1, 2, "archive-conduct"))
 
-    def test_gc_workers_and_everything_else(self):
-        self.assertEqual("gc", pin.classify(0, 1, 2, "GC Thread#3"))
-        for name in ("G1 Conc#0", "C2 CompilerThre", "aeron-client", "soak-jfr-stream", "VM Thread"):
+    def test_safepoint_threads_compilers_and_everything_else(self):
+        self.assertEqual("stopped", pin.classify(0, 1, 2, "GC Thread#3"))
+        self.assertEqual("stopped", pin.classify(3, 1, 2, "VM Thread"))
+        self.assertEqual("compiler", pin.classify(0, 1, 2, "C2 CompilerThre"))
+        self.assertEqual("compiler", pin.classify(3, 1, 2, "C1 CompilerThre"))
+        for name in ("G1 Conc#0", "G1 Refine#0", "aeron-client", "soak-jfr-stream", "VM Periodic Tas"):
             self.assertEqual("other", pin.classify(0, 1, 2, name), name)
 
 
@@ -145,10 +163,12 @@ class GovernorTest(unittest.TestCase):
         self.addCleanup(self.temporary.cleanup)
         self.proc = FakeProc(self.temporary.name)
         self.affinity = Affinity()
+        self.nice = Nice()
         self.log = io.StringIO()
 
     def governor(self, config=CONFIG):
-        return pin.Governor(Path("/x/experiments") / CASE, config, proc=self.proc.root, set_affinity=self.affinity, log=self.log)
+        return pin.Governor(Path("/x/experiments") / CASE, config, proc=self.proc.root, set_affinity=self.affinity,
+                            set_nice=self.nice, log=self.log)
 
     def events(self):
         return [json.loads(line) for line in self.log.getvalue().splitlines()]
@@ -160,6 +180,29 @@ class GovernorTest(unittest.TestCase):
         self.assertEqual([174], self.affinity.current[530])
         self.assertEqual(0, g.step())
         self.assertEqual(2, g.counts["passes"])
+
+    def test_vm_thread_uses_the_jvm_set_and_compilers_are_reniced_once(self):
+        self.proc.process(500, SOURCE_CMD, source_threads() + [(510, "VM Thread"), (522, "C1 CompilerThre")])
+        g = self.governor()
+        g.step()
+        g.step()
+        self.assertEqual(sorted(SOURCE_CPUS), self.affinity.current[510])
+        self.assertEqual(HOUSEKEEPING, self.affinity.current[520])
+        self.assertEqual([520, 522], self.nice.calls)
+        self.assertEqual(2, g.counts["nicedCompilers"])
+
+    def test_renice_failure_is_reported_once_and_retried(self):
+        self.proc.process(500, SOURCE_CMD, source_threads())
+        self.nice.fail = {520: PermissionError("denied")}
+        g = self.governor()
+        g.step()
+        g.step()
+        errors = [e["error"] for e in self.events() if "error" in e]
+        self.assertEqual(1, len(errors))
+        self.assertTrue(errors[0].startswith("setpriority(520, 19)"), errors[0])
+        self.nice.fail = {}
+        g.step()
+        self.assertEqual([520], self.nice.calls)
 
     def test_ignores_other_cases_and_non_java_processes(self):
         self.proc.process(600, NODE_CMD.replace(CASE, "ab-a1"), [(601, "archive-conduct")])
@@ -196,6 +239,40 @@ class GovernorTest(unittest.TestCase):
                           "expected 3 agents, found 4"], errors)
         self.assertEqual(1, g.counts["overflowAgents"])
         self.assertEqual(HOUSEKEEPING, self.affinity.current[540])
+        self.assertEqual([{"pid": 500, "role": 3, "expected": 3, "peak": 4}], g.drift())
+
+    def test_startup_ramp_is_neither_an_error_nor_drift(self):
+        threads = source_threads()
+        self.proc.process(500, SOURCE_CMD, [t for t in threads if t[1] != "/opt/vectormatc" and t[1] != "probe-absolute-"])
+        g = self.governor(dict(CONFIG, expectedAgents={"source": 3}))
+        g.step()
+        self.proc.thread(500, 525, "/opt/vectormatc")
+        g.step()
+        self.proc.thread(500, 530, "probe-absolute-")
+        g.step()
+        self.assertEqual([], [e for e in self.events() if "error" in e])
+        self.assertEqual([], g.drift())
+        self.assertEqual({"501": ["java", 78], "525": ["/opt/vectormatc", 95], "530": ["probe-absolute-", 174]},
+                         g.summary(CONFIG)["agentHistory"]["500"]["agents"])
+
+    def test_agent_that_never_appears_is_drift(self):
+        self.proc.process(100, NODE_CMD, [(100, "java"), (110, "/opt/vectormatc"), (111, "archive-conduct"),
+                                          (112, "consensus-modul")])
+        g = self.governor(dict(CONFIG, expectedAgents={"node": 4}))
+        g.step()
+        self.assertEqual([{"pid": 100, "role": 0, "expected": 4, "peak": 3}], g.drift())
+        self.assertEqual(0, g.counts["errors"])
+
+    def test_assignment_of_an_exited_jvm_stays_in_the_summary(self):
+        self.proc.process(500, SOURCE_CMD, source_threads())
+        g = self.governor()
+        g.step()
+        self.proc.exit_process(500)
+        g.step()
+        summary = g.summary(CONFIG)
+        self.assertEqual(3, summary["agentHistory"]["500"]["role"])
+        self.assertEqual(["probe-absolute-", 174], summary["agentHistory"]["500"]["agents"]["530"])
+        self.assertEqual(0, summary["pinnedThreads"])
 
     def test_configuration_is_validated(self):
         with self.assertRaises(pin.PinningError):

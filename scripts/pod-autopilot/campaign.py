@@ -305,12 +305,14 @@ def main():
             pairs = []
             for a, b in [(cases[2], cases[3]), (cases[4], cases[5])]:
                 x, y = audits[a], audits[b]
-                q = y['fullLatency']['p99Us'] / x['fullLatency']['p99Us']
-                qq = y['fullLatency']['p999Us'] / x['fullLatency']['p999Us']
+                # fullLatency is null unless every original was accepted; such a pair cannot pass.
+                measured = x['fullLatency'] is not None and y['fullLatency'] is not None
+                q = y['fullLatency']['p99Us'] / x['fullLatency']['p99Us'] if measured else None
+                qq = y['fullLatency']['p999Us'] / x['fullLatency']['p999Us'] if measured else None
                 base_ok = all(v for k, v in x['gates'].items() if k not in ['p99AtMost25ms', 'p999AtMost100ms', 'everyMinuteP99AtMost25ms'])
                 pairs.append(dict(a=a, b=b, p99Ratio=q, p999Ratio=qq, baselineLatencyGate=x['registeredGatePass'], baselineNonLatencyGates=base_ok,
                                   candidateGate=y['registeredGatePass'],
-                                  passes=state_equal and base_ok and y['registeredGatePass'] and q <= .90 and qq <= 1.0))
+                                  passes=measured and state_equal and base_ok and y['registeredGatePass'] and q <= .90 and qq <= 1.0))
             selected = all(v['passes'] for v in pairs)
             save(P / 'SELECTION.json', dict(pairs=pairs, finalStateEqual=state_equal, candidateSelected=selected, rule=PLAN['selection']))
             progress({'stage': 'selection', 'pairs': pairs, 'candidateSelected': selected})

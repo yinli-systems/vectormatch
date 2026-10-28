@@ -25,7 +25,15 @@ CONFIGS = {'c1p100': dict(cpuSets=ONE, maxParkNs=100000),
            'c2spin': dict(cpuSets=SPIN, maxParkNs=0, jvmExtra=['-Dvectormatch.client.driverMaxParkNs=0']),
            # Busy spin plus thread-level isolation: each data-path agent on its own CPU, other threads on housekeeping.
            'c2spinpin': dict(cpuSets=SPIN, maxParkNs=0, jvmExtra=['-Dvectormatch.client.driverMaxParkNs=0'],
-                             pinThreads=dict(housekeeping=LAYOUT['spinSource'][-1:]))}
+                             pinThreads=dict(housekeeping=LAYOUT['spinSource'][-1:])),
+           # Static GC worker count: every GC thread exists at startup, so pinning can place it before measurement.
+           'c2spinst': dict(cpuSets=SPIN, maxParkNs=0,
+                            jvmExtra=['-Dvectormatch.client.driverMaxParkNs=0', '-XX:-UseDynamicNumberOfGCThreads']),
+           'c2spinstpin': dict(cpuSets=SPIN, maxParkNs=0,
+                               jvmExtra=['-Dvectormatch.client.driverMaxParkNs=0', '-XX:-UseDynamicNumberOfGCThreads'],
+                               pinThreads=dict(housekeeping=LAYOUT['spinSource'][-1:]))}
+# The configuration sweep stays fixed so results remain comparable across runs.
+SWEEP_CONFIGS = ('c1p100', 'c2p100', 'c2p1', 'c2spin')
 BASELINE = 'c1p100'
 SYNC0 = dict(mode='MATCHING', traceEnabled=True, preallocate=False, forceWait=False, initializeRecording=True,
              archiveDataSync1=False, collector='G1', jvmExtra=[], sync=0, auditMode='base')
@@ -110,7 +118,7 @@ def stage(name, cases, scope, runner):
     env = dict(os.environ, VM_RUNTIME=RUNTIME, VM_CPUSETS=json.dumps(ONE))
     subprocess.run(['python3', str(STAGE / 'setup_b.py'), str(root), str(spec), str(STAGE / 'campaign.py')],
                    env=env, check=True, capture_output=True, text=True)
-    for helper in {runner, 'pin_threads.py'} - {'campaign.py'}:
+    for helper in {runner, 'pin_threads.py', 'tail_attribution.py'} - {'campaign.py'}:
         (root / helper).write_bytes((STAGE / helper).read_bytes())
     log(stage=name, event='start', root=str(root), cases=list(cases))
     with (root / (runner + '.out')).open('w') as out:
@@ -119,6 +127,23 @@ def stage(name, cases, scope, runner):
     clean_jvms()
     log(stage=name, event='finish', root=str(root), returncode=rc)
     return root
+
+
+def attribute_tails(root, cases):
+    """Run tail_attribution.py on each case of a stage; failures are recorded, never fatal."""
+    jfr = str(Path(json.loads((root / 'CANDIDATE.json').read_text())['javaPath']).with_name('jfr'))
+    out = {}
+    for name in cases:
+        q = subprocess.run(['python3', str(STAGE / 'tail_attribution.py'), str(root / 'experiments' / name), '--jfr', jfr],
+                           capture_output=True, text=True, timeout=900)
+        if q.returncode == 0:
+            report = json.loads(q.stdout)
+            (root / (name + '-TAIL_ATTRIBUTION.json')).write_text(q.stdout)
+            out[name] = {k: report[k] for k in ('thresholdUs', 'slowOrders', 'slowOrderShare', 'gcPauses', 'episodes')}
+            out[name]['largestEpisode'] = report['largestEpisodes'][0] if report['largestEpisodes'] else None
+        else:
+            out[name] = {'error': q.stderr[-400:]}
+    return out
 
 
 def read_rows(root, suffix):
@@ -164,7 +189,22 @@ def summarize(state):
                                                               rtt.get('p50Us'), 'pass' if r.get('registeredGatePass') else 'FAIL'))
         lines += ['', 'Pick rule: %s → **%s**' % (state['pickRule'], state['picked']), '']
     if 'abab' in state:
-        lines += ['## Sync0 ABAB confirmation at 8000/s', '', '```', json.dumps(state['abab'], indent=2), '```', '']
+        tails = state['abab'].get('tails', {})
+        lines += ['## Sync0 ABAB confirmation at 8000/s', '', '```',
+                  json.dumps({k: v for k, v in state['abab'].items() if k != 'tails'}, indent=2), '```', '']
+        if tails:
+            lines += ['Tail attribution (slow = at or above p99; GC = a pause overlapping the order):', '',
+                      '| case | p99 µs | slow orders | leader/source GC | follower GC only | no GC | largest stall |',
+                      '|---|---|---|---|---|---|---|']
+            for name, t in tails.items():
+                if 'error' in t:
+                    lines.append('| %s | error | | | | | |' % name)
+                    continue
+                share, big = t['slowOrderShare'], t['largestEpisode'] or {}
+                lines.append('| %s | %s | %d | %s | %s | %s | %s orders over %s ms |' % (
+                    name, t['thresholdUs'], t['slowOrders'], share['leaderOrSource'], share['followerOnly'], share['none'],
+                    big.get('orders'), big.get('spanMs')))
+            lines.append('')
     for key, title in [('sync0Ladder', 'Sync0 capacity ladder (Aeron default durability)'),
                        ('durableLadder', 'Durable capacity ladder (sync2 consensus/catalog, sync1 recording data)')]:
         rows = state.get(key)
@@ -197,7 +237,7 @@ def main():
         if SWEEP_ARG.startswith('abab:'):
             raise SkipSweep
         if SWEEP_ARG == 'run':
-            sweep = {'%s-r%d' % (k, rate): case(SYNC0, k, rate, seconds) for rate, seconds in [(1000, 60), (8000, 22), (20000, 9)] for k in CONFIGS}
+            sweep = {'%s-r%d' % (k, rate): case(SYNC0, k, rate, seconds) for rate, seconds in [(1000, 60), (8000, 22), (20000, 9)] for k in SWEEP_CONFIGS}
             SWEEP = stage('sync0-sweep', sweep, 'exploratory sync0 sweep of CPU layout and idle park; no selection', 'sweep.py')
         else:
             SWEEP = Path(SWEEP_ARG)
@@ -228,6 +268,7 @@ def main():
             root = stage('sync0-abab', cases, 'sync0 ABAB; sole switch %s (A) vs %s (B)' % (a, b), 'campaign.py')
             selection = json.loads((root / 'SELECTION.json').read_text())
             state['abab'] = dict(root=str(root), a=a, b=b, **selection)
+            state['abab']['tails'] = attribute_tails(root, ['ab-a1', 'ab-b1', 'ab-a2', 'ab-b2'])
             if selection['candidateSelected']:
                 ladder_config = b
         except Exception:
