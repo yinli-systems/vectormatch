@@ -167,9 +167,35 @@ def capture_initialization(case):
     save(P / (case + '-INITIALIZATION.json'), v)
 
 
+def start_governor(case, spec):
+    """Thread-level isolation: one CPU per data-path agent, other JVM threads on housekeeping CPUs."""
+    settings = dict(cpuSets=spec['cpuSets'], housekeeping=spec['pinThreads']['housekeeping'],
+                    expectedAgents=spec['pinThreads'].get('expectedAgents', {'node': 4, 'source': 3}))
+    governor = subprocess.Popen(['python3', str(Path(__file__).with_name('pin_threads.py')),
+                                 str(P / 'experiments' / case), json.dumps(settings)])
+    time.sleep(1)
+    if governor.poll() is not None:
+        raise RuntimeError('thread governor exited at startup with %s' % governor.returncode)
+    return governor
+
+
+def stop_governor(case, governor):
+    governor.terminate()
+    try:
+        governor.wait(timeout=30)
+    except subprocess.TimeoutExpired:
+        governor.kill()
+        governor.wait()
+    summary = P / 'experiments' / case / 'thread-pinning-summary.json'
+    result = json.loads(summary.read_text()) if summary.exists() else None
+    save(P / (case + '-THREAD_PINNING.json'), dict(returncode=governor.returncode, summary=result))
+
+
 def run(case, seconds):
     progress({'stage': 'native_start', 'case': case, 'seconds': seconds})
     assert not java_processes() and shutil.disk_usage(ROOT).free > 1_800_000_000
+    spec = PLAN['cases'][case]
+    governor = None
     try:
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
             list(pool.map(lambda i: start(config(i, case, seconds)), range(3)))
@@ -183,6 +209,8 @@ def run(case, seconds):
             raise RuntimeError('cluster startup timeout')
         save(P / (case + '-nodes-ready.json'), ss)
         capture_initialization(case)
+        if spec.get('pinThreads'):
+            governor = start_governor(case, spec)
         start(config(3, case, seconds))
         until = time.monotonic() + seconds + 700
         next_progress = 0
@@ -202,6 +230,8 @@ def run(case, seconds):
         else:
             raise RuntimeError('client watchdog')
     finally:
+        if governor is not None:
+            stop_governor(case, governor)
         stop_all(case)
     save(P / (case + '-closed.json'), status(case))
     progress({'stage': 'native_closed', 'case': case})

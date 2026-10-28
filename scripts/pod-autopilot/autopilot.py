@@ -1,7 +1,8 @@
 """Unattended pod-B pipeline: sweep -> pick -> ABAB confirm -> sync0 ladder -> durable ladder -> summary.
 
 Usage: VM_LAYOUT='{"one": [...], "two": [...], "spinSource": [...]}' autopilot.py STAGING_DIR [SWEEP_ROOT|run]
-With "run" (the default) the sync0 configuration sweep is the first stage. Every decision follows a fixed, logged rule. Each stage gets a fresh write-once root; a failing stage is
+With "run" (the default) the sync0 configuration sweep is the first stage; "abab:A:B" skips the sweep and
+confirms configuration B against A, then runs the ladders on the winner. Every decision follows a fixed, logged rule. Each stage gets a fresh write-once root; a failing stage is
 recorded and the pipeline continues with the stages that do not depend on it."""
 from pathlib import Path
 import glob, json, os, signal, subprocess, sys, time, traceback
@@ -21,7 +22,10 @@ SPIN = TWO[:3] + [LAYOUT['spinSource']]
 CONFIGS = {'c1p100': dict(cpuSets=ONE, maxParkNs=100000),
            'c2p100': dict(cpuSets=TWO, maxParkNs=100000),
            'c2p1': dict(cpuSets=TWO, maxParkNs=1000),
-           'c2spin': dict(cpuSets=SPIN, maxParkNs=0, jvmExtra=['-Dvectormatch.client.driverMaxParkNs=0'])}
+           'c2spin': dict(cpuSets=SPIN, maxParkNs=0, jvmExtra=['-Dvectormatch.client.driverMaxParkNs=0']),
+           # Busy spin plus thread-level isolation: each data-path agent on its own CPU, other threads on housekeeping.
+           'c2spinpin': dict(cpuSets=SPIN, maxParkNs=0, jvmExtra=['-Dvectormatch.client.driverMaxParkNs=0'],
+                             pinThreads=dict(housekeeping=LAYOUT['spinSource'][-1:]))}
 BASELINE = 'c1p100'
 SYNC0 = dict(mode='MATCHING', traceEnabled=True, preallocate=False, forceWait=False, initializeRecording=True,
              archiveDataSync1=False, collector='G1', jvmExtra=[], sync=0, auditMode='base')
@@ -38,6 +42,10 @@ VENDOR = [dict(source='AWS 2025 (Adaptive): Aeron Cluster Premium round trip', u
                url='https://aws.amazon.com/blogs/industries/aeron-on-aws-2025-performance-benchmark-results/'),
           dict(source='Google Cloud 2024 (Adaptive): Aeron open-source transport round trip', us=57,
                url='https://weareadaptive.com/2024/02/21/aeron-google-cloud-performance-testing/')]
+
+
+class SkipSweep(Exception):
+    pass
 
 
 def log(**event):
@@ -102,8 +110,8 @@ def stage(name, cases, scope, runner):
     env = dict(os.environ, VM_RUNTIME=RUNTIME, VM_CPUSETS=json.dumps(ONE))
     subprocess.run(['python3', str(STAGE / 'setup_b.py'), str(root), str(spec), str(STAGE / 'campaign.py')],
                    env=env, check=True, capture_output=True, text=True)
-    if runner != 'campaign.py':
-        (root / runner).write_bytes((STAGE / runner).read_bytes())
+    for helper in {runner, 'pin_threads.py'} - {'campaign.py'}:
+        (root / helper).write_bytes((STAGE / helper).read_bytes())
     log(stage=name, event='start', root=str(root), cases=list(cases))
     with (root / (runner + '.out')).open('w') as out:
         rc = subprocess.run(['python3', str(root / runner)], cwd=root, env=dict(os.environ, VM_ROOT=str(root)),
@@ -186,6 +194,8 @@ def main():
     state = dict(stamp=STAMP, sweepArgument=SWEEP_ARG, runtime=RUNTIME, layout=LAYOUT, errors=[])
     log(event='autopilot_start', home=str(HOME))
     try:
+        if SWEEP_ARG.startswith('abab:'):
+            raise SkipSweep
         if SWEEP_ARG == 'run':
             sweep = {'%s-r%d' % (k, rate): case(SYNC0, k, rate, seconds) for rate, seconds in [(1000, 60), (8000, 22), (20000, 9)] for k in CONFIGS}
             SWEEP = stage('sync0-sweep', sweep, 'exploratory sync0 sweep of CPU layout and idle park; no selection', 'sweep.py')
@@ -199,14 +209,18 @@ def main():
         state.update(picked=picked, pickRate=at, pickP99Us=p99,
                      pickRule='lowest p99 at 8000/s among gate-passing configurations, else at 1000/s, else baseline')
         log(event='picked', config=picked, rate=at, p99Us=p99, sweepRows=len(state['sweep']))
+    except SkipSweep:
+        _, base, picked = SWEEP_ARG.split(':')
+        state.update(baseline=base, picked=picked, pickRule='named on the command line; no sweep')
     except Exception:
         state['errors'].append(dict(stage='sweep', traceback=traceback.format_exc()))
         state.update(picked=BASELINE, pickRule='sweep unreadable; baseline')
     summarize(state)
 
-    ladder_config = BASELINE
-    if state['picked'] != BASELINE:
-        a, b = BASELINE, state['picked']
+    baseline = state.get('baseline', BASELINE)
+    ladder_config = baseline
+    if state['picked'] != baseline:
+        a, b = baseline, state['picked']
         cases = {'functional-a': case(SYNC0, a, 10, 2), 'functional-b': case(SYNC0, b, 10, 2),
                  'ab-a1': case(SYNC0, a, 8000, 22), 'ab-b1': case(SYNC0, b, 8000, 22),
                  'ab-a2': case(SYNC0, a, 8000, 22), 'ab-b2': case(SYNC0, b, 8000, 22), 'confirm-b1': case(SYNC0, b, 8000, 22)}

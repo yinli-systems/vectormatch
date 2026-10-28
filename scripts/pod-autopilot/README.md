@@ -18,6 +18,9 @@ run on one host over loopback, so nothing here is a physical failure-domain clai
 6. **Summary**: `SUMMARY.md` / `SUMMARY.json` after every stage, marking which rungs meet the production target
    (p99 ≤ 5 ms and p99.9 ≤ 20 ms) as well as the registered 25 ms gates.
 
+`autopilot.py STAGING abab:A:B` skips stages 1–2: it confirms configuration B against A by ABAB and runs the
+ladders on the winner.
+
 Ladder rule: the first rung that fails its gates stops escalation and is repeated once. Rungs whose stage audit
 refuses the stream (for example orders the source could not send) are still recorded from `samples.csv`.
 
@@ -30,7 +33,20 @@ refuses the stream (for example orders the source could not send) are still reco
 | `sweep.py`, `ladder.py` | Sweep and ladder runners on top of `campaign.py` |
 | `setup_b.py` | Creates a campaign root from a verified runtime (`VM_RUNTIME`, `VM_CPUSETS`) |
 | `patch_runtime.py` | Derives a runtime whose cluster jar differs only by classes compiled from given sources |
+| `pin_threads.py` | Thread-level CPU isolation while a case runs (cases with `pinThreads`); tested by `scripts/tests/test_pod_thread_pinning.py` |
 | `fsync_floor.py` | 4 KiB append + `fdatasync`/`fsync` latency on the pod's root filesystem |
+
+## Thread pinning
+
+Busy-spinning agents are preempted whenever another thread of their JVM (JIT, JFR, Aeron client conductor,
+VM housekeeping) is scheduled onto the same CPU, which costs a scheduler slice of a few milliseconds and
+shows up as the p99 tail. With `pinThreads` the controller runs `pin_threads.py` from the moment the nodes are
+ready until the case stops. Every 0.5 s it gives each data-path agent (node: media driver, archive,
+consensus, service; source: media driver, response loop, arrival clock) its own CPU, lets GC workers use the
+JVM's whole set, and confines every other thread to the housekeeping CPUs. Agent CPUs are sticky and handed
+out in thread-creation order; the launcher's primordial thread is never an agent; an agent with no free CPU
+is confined to housekeeping and reported. Every decision goes to `thread-pinning.jsonl` in the case
+directory, and a summary goes to `<case>-THREAD_PINNING.json`.
 
 ## Running on a fresh pod
 
